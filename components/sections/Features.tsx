@@ -106,7 +106,7 @@ export const Features = () => {
   ];
 
   return (
-    <section className="py-20 lg:py-32 bg-linear-to-b from-purple-50 to-white max-w-7xl mx-auto mt-10 px-6 lg:px-8 rounded-2xl">
+    <section id="features" className="py-20 lg:py-32 bg-linear-to-b from-purple-50 to-white max-w-7xl mx-auto mt-10 px-6 lg:px-8 rounded-2xl">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         {/* Section Header */}
         <div className="grid lg:grid-cols-2 gap-8 mb-16">

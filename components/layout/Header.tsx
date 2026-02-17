@@ -7,10 +7,11 @@ export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const navItems = [
-    { label: 'Home', href: '#' },
-    { label: 'Features', href: '#features' },
-    { label: 'Blog', href: '#blog' },
-    { label: 'Contact', href: '#contact' },
+    { label: 'Home', href: '/' },
+    { label: 'Features', href: '/#features' },
+    { label: 'Service', href: '/service' },
+    { label: 'Blog', href: '/blog' },
+    { label: 'Contact', href: '/contact' },
   ];
 
   return (
