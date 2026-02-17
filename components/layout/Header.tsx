@@ -2,16 +2,23 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useAuth } from '@/lib/auth/context';
 
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { isAuthenticated, isLoading, logout } = useAuth();
 
-  const navItems = [
+  const navItems: { label: string; href: string; hasDropdown?: boolean; authOnly?: boolean }[] = [
     { label: 'Home', href: '#' },
     { label: 'Features', href: '#features' },
     { label: 'Blog', href: '#blog' },
     { label: 'Contact', href: '#contact' },
+    { label: 'Dashboard', href: '/dashboard', authOnly: true },
   ];
+
+  const visibleNavItems = navItems.filter(
+    (item) => !item.authOnly || isAuthenticated
+  );
 
   return (
     <header className="fixed top-0 left-0 right-0 bg-white z-50 border-b border-gray-100">
@@ -27,7 +34,7 @@ export const Header = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-            {navItems.map((item) => (
+            {visibleNavItems.map((item) => (
               <div key={item.label} className="relative group">
                 <Link
                   href={item.href}
@@ -42,6 +49,25 @@ export const Header = () => {
                 </Link>
               </div>
             ))}
+
+            {/* Auth Buttons */}
+            {!isLoading && (
+              isAuthenticated ? (
+                <button
+                  onClick={logout}
+                  className="text-gray-700 hover:text-black font-medium text-sm transition-colors"
+                >
+                  Logout
+                </button>
+              ) : (
+                <Link
+                  href="/login"
+                  className="px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium text-sm rounded-full transition-colors"
+                >
+                  Login
+                </Link>
+              )
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -78,7 +104,7 @@ export const Header = () => {
         {/* Mobile Menu */}
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t border-gray-100">
-            {navItems.map((item) => (
+            {visibleNavItems.map((item) => (
               <Link
                 key={item.label}
                 href={item.href}
@@ -88,6 +114,24 @@ export const Header = () => {
                 {item.label}
               </Link>
             ))}
+            {!isLoading && (
+              isAuthenticated ? (
+                <button
+                  onClick={() => { logout(); setIsMenuOpen(false); }}
+                  className="block w-full text-left py-3 text-gray-700 hover:text-black font-medium"
+                >
+                  Logout
+                </button>
+              ) : (
+                <Link
+                  href="/login"
+                  className="block py-3 text-purple-600 font-medium"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Login
+                </Link>
+              )
+            )}
           </div>
         )}
       </nav>
