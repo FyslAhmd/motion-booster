@@ -14,8 +14,10 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, description, ico
   return (
     <div className="bg-gray-900 rounded-3xl p-8 flex flex-col items-center text-center h-full">
       {/* Icon */}
-      <div className={`w-16 h-16 ${iconColor} rounded-2xl flex items-center justify-center mb-6 transition-transform duration-700 hover:rotate-360`}>
-        {icon}
+      <div className={`w-16 h-16 ${iconColor} rounded-2xl flex items-center justify-center mb-6`}>
+        <div className="hover:flip-horizontal">
+          {icon}
+        </div>
       </div>
       
       {/* Title */}

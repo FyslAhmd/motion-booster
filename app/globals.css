@@ -67,9 +67,19 @@ html {
   animation: floatRight 3s ease-in-out infinite;
 }
 
-/* 360 degree rotation on hover */
-.hover\:rotate-360:hover {
-  transform: rotate(360deg);
+/* Horizontal flip animation on hover */
+@keyframes flipHorizontal {
+  0% {
+    transform: rotateY(0deg);
+  }
+  100% {
+    transform: rotateY(360deg);
+  }
+}
+
+.hover\:flip-horizontal:hover {
+  animation: flipHorizontal 0.6s ease-in-out;
+  transform-style: preserve-3d;
 }
 
 /* Continuous marquee animation for cards */
