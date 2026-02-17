@@ -7,7 +7,7 @@ export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const navItems = [
-    { label: 'Home', href: '#', hasDropdown: true },
+    { label: 'Home', href: '#' },
     { label: 'Features', href: '#features' },
     { label: 'Blog', href: '#blog' },
     { label: 'Contact', href: '#contact' },
@@ -42,14 +42,6 @@ export const Header = () => {
                 </Link>
               </div>
             ))}
-            
-            {/* Sign In Button */}
-            <Link
-              href="/login"
-              className="px-6 py-2.5 bg-green-500 hover:bg-green-600 text-white font-medium text-sm rounded-lg transition-colors"
-            >
-              Sign In
-            </Link>
           </div>
 
           {/* Mobile Menu Button */}
@@ -96,15 +88,6 @@ export const Header = () => {
                 {item.label}
               </Link>
             ))}
-            
-            {/* Sign In Button for Mobile */}
-            <Link
-              href="/login"
-              className="block mt-4 px-6 py-2.5 bg-green-500 hover:bg-green-600 text-white font-medium text-sm rounded-lg text-center transition-colors"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Sign In
-            </Link>
           </div>
         )}
       </nav>

@@ -57,7 +57,7 @@ export const Hero = () => {
               <Button variant="primary" href="#demo">
                 Get a Demo
               </Button>
-              <Button variant="outline" href="#start">
+              <Button variant="outline" href="/register">
                 Get Started Free
               </Button>
             </div>

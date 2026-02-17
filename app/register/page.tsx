@@ -3,27 +3,28 @@
 import { useState } from 'react';
 import Link from 'next/link';
 
-export default function LoginPage() {
+export default function RegisterPage() {
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
+  const [acceptTerms, setAcceptTerms] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle login logic here
-    console.log('Login attempt:', { email, password, rememberMe });
+    // Handle registration logic here
+    console.log('Register attempt:', { fullName, email, password, acceptTerms });
   };
 
   return (
     <div className="min-h-screen bg-linear-to-br from-purple-50 to-white flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
-        {/* Login Card */}
+        {/* Register Card */}
         <div className="bg-white rounded-3xl shadow-2xl p-8 md:p-10">
           {/* Header */}
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Login into account
+              Create an account
             </h1>
             <p className="text-gray-500 text-sm">
               Use your credentials to access your account
@@ -32,6 +33,33 @@ export default function LoginPage() {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Full Name Input */}
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <svg
+                  className="w-5 h-5 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  />
+                </svg>
+              </div>
+              <input
+                type="text"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="Full Name"
+                className="w-full pl-12 pr-4 py-3.5 border border-gray-300 rounded-full focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all"
+                required
+              />
+            </div>
+
             {/* Email Input */}
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -114,38 +142,41 @@ export default function LoginPage() {
               </button>
             </div>
 
-            {/* Remember Me & Forgot Password */}
-            <div className="flex items-center justify-between text-sm">
+            {/* Terms & Conditions */}
+            <div className="flex items-center text-sm">
               <label className="flex items-center cursor-pointer">
                 <input
                   type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
+                  checked={acceptTerms}
+                  onChange={(e) => setAcceptTerms(e.target.checked)}
                   className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                  required
                 />
-                <span className="ml-2 text-gray-600">Remember me</span>
+                <span className="ml-2 text-gray-600">
+                  I accept the{' '}
+                  <Link
+                    href="/terms"
+                    className="text-green-500 hover:text-green-600 font-medium transition-colors"
+                  >
+                    Terms & Conditions
+                  </Link>
+                </span>
               </label>
-              <Link
-                href="/forgot-password"
-                className="text-green-500 hover:text-green-600 font-medium transition-colors"
-              >
-                Forgot Password?
-              </Link>
             </div>
 
-            {/* Login Button */}
+            {/* Register Button */}
             <button
               type="submit"
               className="w-full py-3.5 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-full transition-all transform hover:scale-[1.02] focus:outline-none focus:ring-4 focus:ring-purple-200"
             >
-              Login Now
+              Register Now
             </button>
           </form>
 
           {/* Social Login */}
           <div className="mt-8">
             <p className="text-center text-gray-500 text-sm mb-4">
-              or signup with
+              or sign up with
             </p>
             <div className="flex justify-center gap-3">
               {/* LinkedIn */}
@@ -178,14 +209,14 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* Register Link */}
+          {/* Login Link */}
           <p className="mt-8 text-center text-gray-600 text-sm">
-            Don&apos;t have an account?{' '}
+            Already have an account?{' '}
             <Link
-              href="/register"
+              href="/login"
               className="text-green-500 hover:text-green-600 font-semibold transition-colors"
             >
-              Register here
+              Login here
             </Link>
           </p>
         </div>
