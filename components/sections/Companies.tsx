@@ -11,9 +11,9 @@ export const Companies = () => {
   ];
 
   return (
-    <section className="py-12 bg-white">
-      <div className="max-w-7xl mx-auto px-6 lg:px-8">
-        <p className="text-center text-gray-500 text-sm mb-8">
+    <section className="py-8 sm:py-10 md:py-12 bg-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <p className="text-center text-gray-500 text-xs sm:text-sm mb-6 sm:mb-8">
           Already Join 15K + Business Using GoSaas
         </p>
         
@@ -22,9 +22,9 @@ export const Companies = () => {
           <div className="flex animate-marquee-logo">
             {/* First set of logos */}
             {companies.map((company, index) => (
-              <div key={`first-${index}`} className="shrink-0 mx-8 lg:mx-12">
-                <div className="h-12 flex items-center justify-center">
-                  <span className="text-2xl lg:text-3xl font-bold text-gray-800 italic" style={{ 
+              <div key={`first-${index}`} className="shrink-0 mx-4 sm:mx-6 lg:mx-12">
+                <div className="h-10 sm:h-12 flex items-center justify-center">
+                  <span className="text-lg sm:text-2xl lg:text-3xl font-bold text-gray-800 italic" style={{ 
                     fontFamily: company.name === 'Lamborghini' ? 'serif' : 
                                company.name === 'Mosers' ? 'cursive' : 'sans-serif'
                   }}>
@@ -35,9 +35,9 @@ export const Companies = () => {
             ))}
             {/* Duplicate set for seamless loop */}
             {companies.map((company, index) => (
-              <div key={`second-${index}`} className="shrink-0 mx-8 lg:mx-12">
-                <div className="h-12 flex items-center justify-center">
-                  <span className="text-2xl lg:text-3xl font-bold text-gray-800 italic" style={{ 
+              <div key={`second-${index}`} className="shrink-0 mx-4 sm:mx-6 lg:mx-12">
+                <div className="h-10 sm:h-12 flex items-center justify-center">
+                  <span className="text-lg sm:text-2xl lg:text-3xl font-bold text-gray-800 italic" style={{ 
                     fontFamily: company.name === 'Lamborghini' ? 'serif' : 
                                company.name === 'Mosers' ? 'cursive' : 'sans-serif'
                   }}>

@@ -7,36 +7,28 @@ export const FAQ = () => {
 
   const faqs = [
     {
-      question: 'What data types does your analytics application support?',
-      answer: 'Our analytics application supports a wide range of data types including numerical, categorical, time-series, and custom data formats. You can easily import data from CSV, Excel, databases, and APIs.'
+      question: 'How does Meta Ads integration work?',
+      answer: 'Clients securely connect their Meta Ads account via OAuth. You get read-only access to view spending data. No passwords are shared.'
     },
     {
-      question: 'Do you offer a free trial of your analytics application?',
-      answer: 'Yes! We offer a 14-day free trial with full access to all features. No credit card required to start your trial.'
+      question: 'Is my data secure?',
+      answer: 'Yes! We use bank-level encryption (SSL/TLS), secure data storage, and comply with GDPR standards.'
     },
     {
-      question: 'Can I upgrade or downgrade my plan at any time?',
-      answer: 'Absolutely! You can upgrade or downgrade your subscription plan at any time. Changes will be reflected in your next billing cycle.'
+      question: 'Can I customize the dashboard?',
+      answer: 'Yes, you can add your agency logo and brand colors to give clients a white-label experience.'
     },
     {
-      question: 'Do you offer discounts for annual subscriptions?',
-      answer: 'Yes, we offer up to 20% discount for annual subscriptions compared to monthly billing. Contact our sales team for enterprise pricing options.'
+      question: 'What if my client has multiple ad accounts?',
+      answer: 'No problem! Clients can connect multiple Meta Ads accounts and switch between them easily.'
     },
     {
-      question: 'What support options are available if I need help?',
-      answer: 'We provide 24/7 email support, live chat during business hours, comprehensive documentation, video tutorials, and dedicated account managers for enterprise customers.'
+      question: 'Do you offer a free trial?',
+      answer: 'Yes! Try our platform free for 14 days. No credit card required.'
     },
     {
-      question: 'Is there a mobile app available?',
-      answer: 'Yes! Our mobile app is available for both iOS and Android devices, allowing you to access your analytics and reports on the go.'
-    },
-    {
-      question: 'What are benefits of using your analytics application?',
-      answer: 'Key benefits include real-time data insights, customizable dashboards, automated reporting, seamless integrations, data-driven decision making, and improved business efficiency.'
-    },
-    {
-      question: 'Is there any future prediction for business?',
-      answer: 'Yes! Our platform includes advanced predictive analytics and AI-powered forecasting tools to help you anticipate trends and make proactive business decisions.'
+      question: 'Can clients create or edit ads?',
+      answer: 'No, this is a reporting and communication platform. Clients can only view their ad performance data, not create or edit ads.'
     }
   ];
 
@@ -45,30 +37,30 @@ export const FAQ = () => {
   };
 
   return (
-    <section className="py-20 lg:py-32 bg-linear-to-b from-purple-50 to-white">
-      <div className="max-w-7xl mx-auto px-6 lg:px-8">
+    <section className="py-16 sm:py-20 lg:py-32 bg-linear-to-b from-purple-50 to-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 text-center mb-16">
-          Answers to Your Frequently<br />Asked Questions
+        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 text-center mb-12 sm:mb-16">
+          Answers to Your Frequently<br className="hidden sm:block" />Asked Questions
         </h2>
 
         {/* FAQ Grid */}
-        <div className="grid md:grid-cols-2 gap-6" suppressHydrationWarning>
+        <div className="grid md:grid-cols-2 gap-4 sm:gap-6" suppressHydrationWarning>
           {faqs.map((faq, index) => {
             const isOpen = openIndex === index;
             return (
               <div
                 key={`faq-${index}`}
-                className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow"
+                className="bg-white rounded-xl sm:rounded-2xl p-5 sm:p-6 shadow-sm hover:shadow-md transition-shadow"
               >
                 <button
                   onClick={() => toggleFAQ(index)}
                   className="w-full flex items-start justify-between gap-4 text-left"
                 >
-                <span className="font-medium text-gray-900 text-lg flex-1">
+                <span className="font-medium text-gray-900 text-base sm:text-lg flex-1">
                   {faq.question}
                 </span>
-                <span className="text-2xl text-gray-600 shrink-0 transition-transform duration-300" style={{ transform: isOpen ? 'rotate(45deg)' : 'rotate(0deg)' }}>
+                <span className="text-xl sm:text-2xl text-gray-600 shrink-0 transition-transform duration-300" style={{ transform: isOpen ? 'rotate(45deg)' : 'rotate(0deg)' }}>
                   +
                 </span>
               </button>
@@ -81,7 +73,7 @@ export const FAQ = () => {
                   opacity: isOpen ? 1 : 0
                 }}
               >
-                <p className="text-gray-600 mt-4 leading-relaxed">
+                <p className="text-gray-600 text-sm sm:text-base mt-4 leading-relaxed">
                   {faq.answer}
                 </p>
               </div>

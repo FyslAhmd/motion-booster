@@ -51,7 +51,10 @@ export default function ForgotPasswordPage() {
                     </svg>
                   </div>
                   <input
+                    id="email"
+                    name="email"
                     type="email"
+                    autoComplete="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Email Address"

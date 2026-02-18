@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { loginSchema, formatZodErrors } from '@/lib/validators/auth';
@@ -26,7 +26,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
 
   // ─── Field-level validation on blur ─────────────────
-  const validateField = (field: string, value: string) => {
+  const validateField = useCallback((field: string, value: string) => {
     setFieldErrors((prev) => {
       const next = { ...prev };
       delete next[field as keyof FieldErrors];
@@ -48,7 +48,7 @@ export default function LoginPage() {
           password: 'Password is required',
         }));
     }
-  };
+  }, []);
 
   // ─── Submit handler ─────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
@@ -159,7 +159,10 @@ export default function LoginPage() {
                   </svg>
                 </div>
                 <input
+                  id="email"
+                  name="email"
                   type="email"
+                  autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   onBlur={() => validateField('email', email)}
@@ -210,7 +213,10 @@ export default function LoginPage() {
                   </svg>
                 </div>
                 <input
+                  id="password"
+                  name="password"
                   type={showPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   onBlur={() => validateField('password', password)}

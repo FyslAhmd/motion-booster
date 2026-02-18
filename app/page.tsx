@@ -1,4 +1,4 @@
-import { Hero, Companies, Upgrade, Features, Automate, Testimonials, FAQ, CTA } from '@/components/sections';
+import { Hero, Features, Companies, HowItWorks, DashboardPreview, Automate, Testimonials, FAQ, CTA } from '@/components/sections';
 
 export default function Home() {
   return (
@@ -6,7 +6,8 @@ export default function Home() {
       <Hero />
       <Features />
       <Companies />
-      <Upgrade />
+      <HowItWorks />
+      <DashboardPreview />
       <Automate />
       <Testimonials />
       <FAQ />

@@ -2,26 +2,33 @@
 
 
 export const Testimonials = () => {
+  const stats = [
+    { value: '500+', label: 'Active Agencies' },
+    { value: '10,000+', label: 'Happy Clients' },
+    { value: '$50M+', label: 'Ad Spend Managed' },
+    { value: '4.9★', label: 'Average Rating' },
+  ];
+
   const testimonials = [
     {
-      name: 'Jhon Kubera',
-      title: 'Marketing Specialist',
+      name: 'Sarah Johnson',
+      title: 'Founder, Digital Growth Agency',
       image: '/testimonial-1.jpg',
-      review: 'As a marketing specialist, staying organized and on top of deadlines is crucial. Gosass has been a lifesaver. The platform is incredibly user-friendly, and I love how I can customize task lists to fit my workflow.',
+      review: 'This platform has transformed how we communicate with clients. They love seeing their ad data in real-time!',
       bgColor: 'bg-purple-100'
     },
     {
-      name: 'Sara Thomas',
-      title: 'Project Manager',
+      name: 'Mike Chen',
+      title: 'CEO, AdBoost Marketing',
       image: '/testimonial-2.jpg',
-      review: 'Gosass has completely transformed how we manage projects at our company. The intuitive interface makes it easy for everyone to get on board, and the powerful features like subtasks and dependencies.',
+      review: 'We saved 15 hours per week on client reporting. The ROI is incredible.',
       bgColor: 'bg-teal-50'
     },
     {
-      name: 'Wizard Bona',
-      title: 'Creative Director',
+      name: 'Priya Sharma',
+      title: 'Managing Director, Creative Ads Co.',
       image: '/testimonial-3.jpg',
-      review: 'Managing a creative team comes with its own set of challenges, but Gosass has made it so much easier. The customizable views allow us to organize tasks in a way that makes sense for our projects',
+      review: 'Our client retention improved by 40% after we started using this platform. Game changer!',
       bgColor: 'bg-purple-100'
     }
   ];
@@ -30,9 +37,23 @@ export const Testimonials = () => {
     <section className="py-20 lg:py-32 bg-white">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         {/* Section Header */}
-        <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 text-center mb-16">
-          Customer Reviews and<br />Success Stories
+        <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 text-center mb-12">
+          Trusted by Growing Agencies
         </h2>
+
+        {/* Stats Row */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-16">
+          {stats.map((stat, index) => (
+            <div key={index} className="text-center">
+              <div className="text-4xl lg:text-5xl font-bold text-blue-600 mb-2">
+                {stat.value}
+              </div>
+              <div className="text-gray-600 font-medium">
+                {stat.label}
+              </div>
+            </div>
+          ))}
+        </div>
 
         {/* Testimonials Marquee */}
         <div className="relative overflow-hidden">

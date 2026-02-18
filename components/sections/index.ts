@@ -1,9 +1,12 @@
 export { Hero } from './Hero';
 export { Companies } from './Companies';
-export { Upgrade } from './Upgrade';
 export { Features } from './Features';
-export { Service } from './Service';
+export { HowItWorks } from './HowItWorks';
+export { DashboardPreview } from './DashboardPreview';
 export { Automate } from './Automate';
 export { Testimonials } from './Testimonials';
+export { Pricing } from './Pricing';
 export { FAQ } from './FAQ';
 export { CTA } from './CTA';
+export { Upgrade } from './Upgrade';
+export { Service } from './Service';

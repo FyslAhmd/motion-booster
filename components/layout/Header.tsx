@@ -1,33 +1,42 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth/context';
+import { ChevronDown, LayoutDashboard, User } from 'lucide-react';
 
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { isAuthenticated, isLoading, logout } = useAuth();
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const { isAuthenticated, isLoading, user } = useAuth();
+  const profileMenuRef = useRef<HTMLDivElement>(null);
 
-<<<<<<< HEAD
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+        setShowProfileMenu(false);
+      }
+    };
+
+    if (showProfileMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showProfileMenu]);
+
   const navItems = [
     { label: 'Home', href: '/' },
     { label: 'Features', href: '/#features' },
     { label: 'Service', href: '/service' },
+    { label: 'About', href: '/about' },
     { label: 'Blog', href: '/blog' },
     { label: 'Contact', href: '/contact' },
-=======
-  const navItems: { label: string; href: string; hasDropdown?: boolean; authOnly?: boolean }[] = [
-    { label: 'Home', href: '#' },
-    { label: 'Features', href: '#features' },
-    { label: 'Blog', href: '#blog' },
-    { label: 'Contact', href: '#contact' },
-    { label: 'Dashboard', href: '/dashboard', authOnly: true },
->>>>>>> bee5b828c97f472c69bb1102bc16a7f0f72b37d0
   ];
 
-  const visibleNavItems = navItems.filter(
-    (item) => !item.authOnly || isAuthenticated
-  );
+  const visibleNavItems = navItems;
 
   return (
     <header className="fixed top-0 left-0 right-0 bg-white z-50 border-b border-gray-100">
@@ -50,11 +59,6 @@ export const Header = () => {
                   className="text-gray-700 hover:text-black font-medium text-sm flex items-center gap-1 transition-colors"
                 >
                   {item.label}
-                  {item.hasDropdown && (
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  )}
                 </Link>
               </div>
             ))}
@@ -62,12 +66,48 @@ export const Header = () => {
             {/* Auth Buttons */}
             {!isLoading && (
               isAuthenticated ? (
-                <button
-                  onClick={logout}
-                  className="text-gray-700 hover:text-black font-medium text-sm transition-colors"
-                >
-                  Logout
-                </button>
+                <div className="relative" ref={profileMenuRef}>
+                  <button
+                    onClick={() => setShowProfileMenu(!showProfileMenu)}
+                    className="flex items-center gap-2 px-3 py-2 hover:bg-gray-50 rounded-lg transition-colors"
+                  >
+                    <div className="w-9 h-9 bg-linear-to-br from-green-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                      {user?.email?.charAt(0).toUpperCase() || 'U'}
+                    </div>
+                    <span className="text-gray-700 font-medium text-sm">
+                      {user?.email?.split('@')[0] || 'User'}
+                    </span>
+                    <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${showProfileMenu ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {/* Dropdown Menu */}
+                  {showProfileMenu && (
+                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                      <div className="px-4 py-2 border-b border-gray-100">
+                        <div className="font-medium text-gray-900 text-sm">{user?.email}</div>
+                        <div className="text-xs text-gray-500 mt-0.5">Client Account</div>
+                      </div>
+                      <Link href="/dashboard">
+                        <button
+                          onClick={() => setShowProfileMenu(false)}
+                          className="w-full flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50 text-sm transition-colors"
+                        >
+                          <LayoutDashboard className="w-4 h-4" />
+                          Dashboard
+                        </button>
+                      </Link>
+                      <Link href="/dashboard/profile">
+                        <button
+                          onClick={() => setShowProfileMenu(false)}
+                          className="w-full flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50 text-sm transition-colors"
+                        >
+                          <User className="w-4 h-4" />
+                          Profile
+                        </button>
+                      </Link>
+                    </div>
+                  )}
+                </div>
               ) : (
                 <Link
                   href="/login"
@@ -113,6 +153,18 @@ export const Header = () => {
         {/* Mobile Menu */}
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t border-gray-100">
+            {!isLoading && isAuthenticated && (
+              <div className="px-4 py-3 bg-gray-50 rounded-lg mb-4 flex items-center gap-3">
+                <div className="w-10 h-10 bg-linear-to-br from-green-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
+                  {user?.email?.charAt(0).toUpperCase() || 'U'}
+                </div>
+                <div>
+                  <div className="font-medium text-gray-900 text-sm">{user?.email?.split('@')[0] || 'User'}</div>
+                  <div className="text-xs text-gray-500">{user?.email}</div>
+                </div>
+              </div>
+            )}
+            
             {visibleNavItems.map((item) => (
               <Link
                 key={item.label}
@@ -123,14 +175,25 @@ export const Header = () => {
                 {item.label}
               </Link>
             ))}
+            
             {!isLoading && (
               isAuthenticated ? (
-                <button
-                  onClick={() => { logout(); setIsMenuOpen(false); }}
-                  className="block w-full text-left py-3 text-gray-700 hover:text-black font-medium"
-                >
-                  Logout
-                </button>
+                <>
+                  <Link
+                    href="/dashboard"
+                    className="block py-3 text-gray-700 hover:text-black font-medium"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Dashboard
+                  </Link>
+                  <Link
+                    href="/dashboard/profile"
+                    className="block py-3 text-gray-700 hover:text-black font-medium"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Profile
+                  </Link>
+                </>
               ) : (
                 <Link
                   href="/login"
