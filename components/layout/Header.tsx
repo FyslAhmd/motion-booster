@@ -29,7 +29,7 @@ export const Header = () => {
 
   const navItems = [
     { label: 'Home', href: '/' },
-    { label: 'Features', href: '/#features' },
+    { label: 'Features', href: '/features' },
     { label: 'Service', href: '/service' },
     { label: 'About', href: '/about' },
     { label: 'Blog', href: '/blog' },

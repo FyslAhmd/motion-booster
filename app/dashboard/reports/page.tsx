@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { motion } from 'framer-motion';
 import {
   ArrowLeft,
   Download,
@@ -54,34 +53,28 @@ export default function ReportsPage() {
   ];
 
   return (
-    <div className="h-full overflow-y-auto bg-gray-50">
+    <div className="h-full overflow-y-auto bg-gradient-to-br from-green-50 via-purple-50 to-white">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-gradient-to-r from-green-50 via-white to-purple-50">
         <div className="max-w-7xl mx-auto p-6">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <Link href="/dashboard">
-                <motion.button
-                  whileHover={{ scale: 1.1, x: -2 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="p-2 hover:bg-gray-100 rounded-lg"
+                <button className="p-2 hover:bg-gray-100 rounded-lg"
                 >
                   <ArrowLeft className="w-5 h-5 text-gray-600" />
-                </motion.button>
+                </button>
               </Link>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">Reports & Analytics</h1>
                 <p className="text-sm text-gray-600 mt-1">Comprehensive performance insights and metrics</p>
               </div>
             </div>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+            <button className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 flex items-center gap-2"
             >
               <Download className="w-5 h-5" />
               Export Report
-            </motion.button>
+            </button>
           </div>
 
           {/* Filters */}
@@ -89,7 +82,7 @@ export default function ReportsPage() {
             <select
               value={dateRange}
               onChange={(e) => setDateRange(e.target.value)}
-              className="px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
             >
               <option>Last 7 Days</option>
               <option>Last 30 Days</option>
@@ -109,15 +102,11 @@ export default function ReportsPage() {
       <div className="max-w-7xl mx-auto p-6 space-y-6">
         {/* Key Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-md transition-shadow"
+          <div className="bg-white/50 backdrop-blur-sm rounded-xl p-6 hover:bg-white/70 transition-all"
           >
             <div className="flex items-start justify-between mb-4">
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                <DollarSign className="w-6 h-6 text-blue-600" />
+              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                <DollarSign className="w-6 h-6 text-green-600" />
               </div>
               <div className="flex items-center gap-1 text-sm text-green-600">
                 <TrendingUp className="w-4 h-4" />
@@ -127,13 +116,9 @@ export default function ReportsPage() {
             <div className="text-sm text-gray-600 mb-1">Total Revenue</div>
             <div className="text-3xl font-bold text-gray-900">$24,350</div>
             <div className="text-sm text-gray-500 mt-2">vs. $21,645 last period</div>
-          </motion.div>
+          </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-md transition-shadow"
+          <div className="bg-white/50 backdrop-blur-sm rounded-xl p-6 hover:bg-white/70 transition-all"
           >
             <div className="flex items-start justify-between mb-4">
               <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
@@ -147,13 +132,9 @@ export default function ReportsPage() {
             <div className="text-sm text-gray-600 mb-1">Average ROAS</div>
             <div className="text-3xl font-bold text-gray-900">4.2x</div>
             <div className="text-sm text-gray-500 mt-2">$4.20 per $1 spent</div>
-          </motion.div>
+          </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-md transition-shadow"
+          <div className="bg-white/50 backdrop-blur-sm rounded-xl p-6 hover:bg-white/70 transition-all"
           >
             <div className="flex items-start justify-between mb-4">
               <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
@@ -167,13 +148,9 @@ export default function ReportsPage() {
             <div className="text-sm text-gray-600 mb-1">Total Clicks</div>
             <div className="text-3xl font-bold text-gray-900">14,600</div>
             <div className="text-sm text-gray-500 mt-2">CTR: 3.2%</div>
-          </motion.div>
+          </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-md transition-shadow"
+          <div className="bg-white/50 backdrop-blur-sm rounded-xl p-6 hover:bg-white/70 transition-all"
           >
             <div className="flex items-start justify-between mb-4">
               <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
@@ -187,15 +164,11 @@ export default function ReportsPage() {
             <div className="text-sm text-gray-600 mb-1">Total Impressions</div>
             <div className="text-3xl font-bold text-gray-900">203K</div>
             <div className="text-sm text-gray-500 mt-2">+26K from last period</div>
-          </motion.div>
+          </div>
         </div>
 
         {/* Performance Over Time */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="bg-white rounded-xl p-6 border border-gray-200"
+        <div className="bg-white/50 backdrop-blur-sm rounded-xl p-6"
         >
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-bold text-gray-900">Performance Over Time</h2>
@@ -249,16 +222,12 @@ export default function ReportsPage() {
               <Area type="monotone" dataKey="spend" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#colorSpend)" name="Spend ($)" />
             </AreaChart>
           </ResponsiveContainer>
-        </motion.div>
+        </div>
 
         {/* Two Column Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Campaign Distribution */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
-            className="bg-white rounded-xl p-6 border border-gray-200"
+          <div className="bg-white/50 backdrop-blur-sm rounded-xl p-6"
           >
             <h2 className="text-xl font-bold text-gray-900 mb-6">Campaign Distribution</h2>
             <ResponsiveContainer width="100%" height={300}>
@@ -288,14 +257,10 @@ export default function ReportsPage() {
                 </div>
               ))}
             </div>
-          </motion.div>
+          </div>
 
           {/* Device Performance */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.7 }}
-            className="bg-white rounded-xl p-6 border border-gray-200"
+          <div className="bg-white/50 backdrop-blur-sm rounded-xl p-6"
           >
             <h2 className="text-xl font-bold text-gray-900 mb-6">Device Performance</h2>
             <div className="space-y-6">
@@ -331,15 +296,11 @@ export default function ReportsPage() {
                 </div>
               ))}
             </div>
-          </motion.div>
+          </div>
         </div>
 
         {/* Top Performers */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.8 }}
-          className="bg-white rounded-xl p-6 border border-gray-200"
+        <div className="bg-white/50 backdrop-blur-sm rounded-xl p-6"
         >
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-bold text-gray-900">Top Performing Campaigns</h2>
@@ -349,11 +310,7 @@ export default function ReportsPage() {
           </div>
           <div className="space-y-4">
             {topPerformers.map((campaign, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.8 + index * 0.1 }}
+              <div key={index}
                 className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
               >
                 <div className="flex items-center gap-4">
@@ -380,43 +337,39 @@ export default function ReportsPage() {
                     </div>
                   </div>
                 </div>
-              </motion.div>
+              </div>
             ))}
           </div>
-        </motion.div>
+        </div>
 
         {/* Report Templates */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.9 }}
-          className="bg-white rounded-xl p-6 border border-gray-200"
+        <div className="bg-white/50 backdrop-blur-sm rounded-xl p-6"
         >
           <h2 className="text-xl font-bold text-gray-900 mb-6">Quick Report Templates</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 border-2 border-dashed border-gray-200 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all cursor-pointer group">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                <FileText className="w-5 h-5 text-blue-600" />
+            <div className="p-4 border-2 border-dashed border-gray-200 rounded-lg hover:border-green-400 hover:bg-green-50 transition-all cursor-pointer group">
+              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mb-3">
+                <FileText className="w-5 h-5 text-green-600" />
               </div>
               <h3 className="font-semibold text-gray-900 mb-1">Monthly Performance</h3>
               <p className="text-sm text-gray-600">Complete overview of monthly metrics</p>
             </div>
             <div className="p-4 border-2 border-dashed border-gray-200 rounded-lg hover:border-green-400 hover:bg-green-50 transition-all cursor-pointer group">
-              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mb-3">
                 <BarChart3 className="w-5 h-5 text-green-600" />
               </div>
               <h3 className="font-semibold text-gray-900 mb-1">Campaign Analysis</h3>
               <p className="text-sm text-gray-600">Detailed campaign performance breakdown</p>
             </div>
             <div className="p-4 border-2 border-dashed border-gray-200 rounded-lg hover:border-purple-400 hover:bg-purple-50 transition-all cursor-pointer group">
-              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mb-3">
                 <PieChart className="w-5 h-5 text-purple-600" />
               </div>
               <h3 className="font-semibold text-gray-900 mb-1">ROI Report</h3>
               <p className="text-sm text-gray-600">Return on investment analysis</p>
             </div>
           </div>
-        </motion.div>
+        </div>
       </div>
     </div>
   );

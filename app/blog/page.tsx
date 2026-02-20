@@ -105,7 +105,7 @@ export default function BlogPage() {
   return (
     <main className="min-h-screen bg-white pt-20">
       {/* Header Section */}
-      <section className="py-16 px-4 bg-linear-to-b from-purple-50 to-white">
+      <section className="py-16 px-4 bg-linear-to-br from-green-50 via-white to-purple-50">
         <div className="max-w-7xl mx-auto text-center">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
             Latest Insights & Updates
@@ -199,7 +199,7 @@ export default function BlogPage() {
                     className="bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow"
                   >
                     {/* Image */}
-                    <div className="relative h-48 bg-linear-to-br from-purple-100 to-blue-100">
+                    <div className="relative h-48 bg-green-100">
                       <div className="absolute inset-0 flex items-center justify-center">
                         <div className="text-gray-400 text-sm">Blog Image</div>
                       </div>
@@ -236,7 +236,7 @@ export default function BlogPage() {
                       {/* Read More Button */}
                       <Link
                         href={`/blog/${post.id}`}
-                        className="inline-block bg-linear-to-r from-purple-600 to-purple-700 text-white px-6 py-2 rounded-full text-sm font-semibold hover:from-purple-700 hover:to-purple-800 transition-all"
+                        className="inline-block bg-purple-600 text-white px-6 py-2 rounded-full text-sm font-semibold hover:bg-purple-700 transition-all"
                       >
                         Read More
                       </Link>
@@ -257,27 +257,40 @@ export default function BlogPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 px-4 bg-linear-to-b from-white to-purple-50">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-8">
+      <section className="relative py-16 sm:py-20 lg:py-32 bg-purple-600 overflow-hidden">
+        {/* Green Circle Decorations */}
+        <div className="absolute top-0 left-0 w-32 h-32 sm:w-48 sm:h-48 md:w-64 md:h-64 bg-green-500 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+        <div className="absolute bottom-0 right-0 w-48 h-48 sm:w-64 sm:h-64 md:w-96 md:h-96 bg-green-500 rounded-full translate-x-1/2 translate-y-1/2"></div>
+
+        <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 sm:mb-6 leading-tight">
             Ready to enhance your sales &<br />customer satisfaction?
           </h2>
-          <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-4 max-w-xl mx-auto">
+          <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-4 max-w-xl mx-auto mb-6">
             <input
               type="email"
               placeholder="Enter Your Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="flex-1 px-6 py-4 rounded-full border-2 border-gray-300 focus:border-purple-500 focus:outline-none transition-all"
+              className="flex-1 px-6 py-4 rounded-full border-2 border-white/30 bg-white/10 text-white placeholder-white/70 focus:border-white focus:bg-white/20 focus:outline-none transition-all"
             />
             <button
               type="submit"
-              className="px-8 py-4 bg-linear-to-r from-purple-600 to-purple-700 text-white rounded-full font-semibold hover:from-purple-700 hover:to-purple-800 transition-all shadow-lg hover:shadow-xl whitespace-nowrap"
+              className="px-8 py-4 bg-white text-purple-600 rounded-full font-bold hover:bg-gray-100 transition-all shadow-xl whitespace-nowrap"
             >
               Subscribe Now
             </button>
           </form>
+          <p className="text-white text-xs sm:text-sm opacity-80 mb-2">
+            No credit card required • Cancel anytime
+          </p>
+          <p className="text-white text-xs sm:text-sm opacity-70">
+            Questions? Contact us at{' '}
+            <a href="mailto:hello@youragency.com" className="underline hover:opacity-100">
+              hello@youragency.com
+            </a>
+          </p>
         </div>
       </section>
     </main>

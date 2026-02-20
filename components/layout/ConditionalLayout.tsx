@@ -7,11 +7,11 @@ import { Footer } from './Footer';
 export const ConditionalLayout = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
   
-  // Hide Header and Footer on dashboard routes and auth pages
+  // Hide Header and Footer only on dashboard routes and forgot-password page
   const isDashboard = pathname?.startsWith('/dashboard');
-  const isAuthPage = pathname === '/login' || pathname === '/register' || pathname === '/forgot-password';
+  const isForgotPassword = pathname === '/forgot-password';
   
-  const shouldHideLayout = isDashboard || isAuthPage;
+  const shouldHideLayout = isDashboard || isForgotPassword;
 
   return (
     <>

@@ -66,7 +66,7 @@ export default function ForgotPasswordPage() {
                 {/* Reset Button */}
                 <button
                   type="submit"
-                  className="w-full py-3.5 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-full transition-all transform hover:scale-[1.02] focus:outline-none focus:ring-4 focus:ring-purple-200"
+                  className="w-full py-3.5 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-full transition-all focus:outline-none focus:ring-4 focus:ring-purple-200"
                 >
                   Reset Password
                 </button>

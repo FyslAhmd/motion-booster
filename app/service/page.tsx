@@ -43,15 +43,11 @@ const ServiceCategory: React.FC<ServiceCategoryProps> = ({ icon, title, descript
       >
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-4 flex-1">
-            <motion.div 
-              className="shrink-0"
-              whileHover={{ scale: 1.15, rotate: 5 }}
-              transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            >
+            <div className="shrink-0">
               <div className="w-16 h-16 bg-white rounded-xl flex items-center justify-center shadow-md">
                 {icon}
               </div>
-            </motion.div>
+            </div>
             <div className="flex-1">
               <h3 className="text-2xl font-bold text-gray-900 mb-2">{title}</h3>
               <p className="text-gray-700 leading-relaxed">{description}</p>
@@ -83,7 +79,7 @@ const ServiceCategory: React.FC<ServiceCategoryProps> = ({ icon, title, descript
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.03 }}
               >
-                <Check className="w-5 h-5 text-blue-600 mt-0.5 shrink-0" />
+                <Check className="w-5 h-5 text-green-600 mt-0.5 shrink-0" />
                 <span className="text-sm">{service}</span>
               </motion.div>
             ))}
@@ -97,10 +93,10 @@ const ServiceCategory: React.FC<ServiceCategoryProps> = ({ icon, title, descript
 export default function ServicePage() {
   const serviceCategories = [
     {
-      icon: <TrendingUp className="w-8 h-8 text-blue-600" />,
+      icon: <TrendingUp className="w-8 h-8 text-green-600" />,
       title: 'Digital Marketing Services',
       description: 'Comprehensive digital marketing solutions to grow your online presence and drive results.',
-      color: 'bg-blue-50',
+      color: 'bg-green-50',
       services: [
         'Facebook & Instagram Ads Management',
         'LinkedIn & TikTok Marketing',
@@ -301,12 +297,12 @@ export default function ServicePage() {
   return (
     <main className="min-h-screen pt-20">
       {/* Hero Section */}
-      <section className="py-20 lg:py-32 bg-linear-to-br from-blue-50 via-purple-50 to-pink-50">
+      <section className="py-20 lg:py-32 bg-linear-to-br from-green-50 via-white to-purple-50">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="text-center max-w-4xl mx-auto">
             <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
               Complete Digital Solutions
-              <span className="block text-transparent bg-clip-text bg-linear-to-r from-blue-600 to-purple-600">
+              <span className="block text-green-600">
                 Under One Roof
               </span>
             </h1>
@@ -316,7 +312,7 @@ export default function ServicePage() {
             <div className="flex flex-wrap gap-4 justify-center">
               <Link
                 href="/contact"
-                className="px-8 py-4 bg-blue-600 text-white rounded-full font-semibold hover:bg-blue-700 transition-colors"
+                className="px-8 py-4 bg-purple-500 text-white rounded-full font-semibold hover:bg-purple-600 transition-colors"
               >
                 Get Started
               </Link>
@@ -386,13 +382,9 @@ export default function ServicePage() {
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1, duration: 0.5 }}
               >
-                <motion.div 
-                  className="w-20 h-20 bg-blue-600 text-white rounded-full mx-auto mb-4 flex items-center justify-center text-2xl font-bold"
-                  whileHover={{ scale: 1.1, rotate: 360 }}
-                  transition={{ type: "spring", stiffness: 200 }}
-                >
+                <div className="w-20 h-20 bg-green-500 text-white rounded-full mx-auto mb-4 flex items-center justify-center text-2xl font-bold">
                   {item.step}
-                </motion.div>
+                </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2">{item.title}</h3>
                 <p className="text-gray-600 text-sm">{item.desc}</p>
               </motion.div>
@@ -402,20 +394,35 @@ export default function ServicePage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-linear-to-br from-blue-600 to-purple-600">
-        <div className="max-w-4xl mx-auto px-6 lg:px-8 text-center">
-          <h2 className="text-4xl lg:text-5xl font-bold text-white mb-6">
+      <section className="relative py-16 sm:py-20 lg:py-32 bg-purple-600 overflow-hidden">
+        {/* Green Circle Decorations */}
+        <div className="absolute top-0 left-0 w-32 h-32 sm:w-48 sm:h-48 md:w-64 md:h-64 bg-green-500 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+        <div className="absolute bottom-0 right-0 w-48 h-48 sm:w-64 sm:h-64 md:w-96 md:h-96 bg-green-500 rounded-full translate-x-1/2 translate-y-1/2"></div>
+
+        <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 sm:mb-6 leading-tight">
             Ready to Start Your Project?
           </h2>
-          <p className="text-xl text-blue-100 mb-8">
-            Let&apos;s discuss how we can help bring your vision to life
+          <p className="text-base sm:text-lg md:text-xl text-white mb-8 sm:mb-10 opacity-90">
+            Let's discuss how we can help bring your vision to life
           </p>
-          <Link
-            href="/contact"
-            className="inline-block px-10 py-4 bg-white text-blue-600 rounded-full font-bold text-lg hover:bg-gray-100 transition-colors"
-          >
-            Contact Us Today
-          </Link>
+          <div className="flex justify-center mb-6">
+            <Link
+              href="/contact"
+              className="bg-white text-purple-600 px-8 sm:px-10 py-3 sm:py-4 rounded-full font-bold text-base sm:text-lg hover:bg-gray-100 transition-colors shadow-xl"
+            >
+              Contact Us Today
+            </Link>
+          </div>
+          <p className="text-white text-xs sm:text-sm opacity-80 mb-2">
+            No credit card required • Cancel anytime
+          </p>
+          <p className="text-white text-xs sm:text-sm opacity-70">
+            Questions? Contact us at{' '}
+            <a href="mailto:hello@youragency.com" className="underline hover:opacity-100">
+              hello@youragency.com
+            </a>
+          </p>
         </div>
       </section>
     </main>

@@ -3,7 +3,6 @@
 import { useAuth } from '@/lib/auth/context';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
-import { motion } from 'framer-motion';
 import {
   Home,
   MessageSquare,
@@ -32,11 +31,7 @@ export default function DashboardLayout({
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-            className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"
-          />
+          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4 animate-spin" />
           <p className="text-gray-600">Loading your dashboard...</p>
         </div>
       </div>
@@ -63,36 +58,28 @@ export default function DashboardLayout({
               <span className="text-black">Booster</span>
             </span>
           </Link>
-          <motion.button
-            whileTap={{ scale: 0.95 }}
+          <button
             onClick={logout}
             className="flex items-center gap-2 px-3 py-2 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
           >
             <LogOut className="w-4 h-4" />
             <span className="text-sm font-medium">Logout</span>
-          </motion.button>
+          </button>
         </div>
       </div>
 
       {/* Desktop Sidebar */}
-      <motion.aside
-        initial={{ x: -256 }}
-        animate={{ x: 0 }}
-        className="hidden md:flex w-64 shrink-0 bg-white border-r border-gray-200 flex-col overflow-y-auto"
-      >
+      <aside className="hidden md:flex w-64 shrink-0 bg-white border-r border-gray-200 flex-col overflow-y-auto">
         {/* Logo */}
         <div className="p-6 border-b border-gray-200">
           <Link href="/dashboard">
-            <motion.div 
-              whileHover={{ scale: 1.02 }}
-              className="cursor-pointer"
-            >
+            <div className="cursor-pointer">
               <span className="text-2xl font-bold">
                 <span className="text-green-500">Motion</span>
                 <span className="text-black">Booster</span>
               </span>
               <div className="text-xs text-gray-500 mt-1">Client Dashboard</div>
-            </motion.div>
+            </div>
           </Link>
         </div>
 
@@ -102,11 +89,9 @@ export default function DashboardLayout({
             const isActive = pathname === item.href;
             return (
               <Link key={index} href={item.href}>
-                <motion.div
-                  whileHover={{ x: 4 }}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer transition-colors ${
+                <div className={`flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer transition-colors ${
                     isActive
-                      ? 'bg-blue-50 text-blue-600'
+                      ? 'bg-green-50 text-green-600'
                       : 'text-gray-600 hover:bg-gray-50'
                   }`}
                 >
@@ -117,7 +102,7 @@ export default function DashboardLayout({
                       {item.badge}
                     </span>
                   )}
-                </motion.div>
+                </div>
               </Link>
             );
           })}
@@ -125,16 +110,15 @@ export default function DashboardLayout({
 
         {/* Logout Button */}
         <div className="p-4 border-t border-gray-200">
-          <motion.button
-            whileHover={{ x: 4 }}
+          <button
             onClick={logout}
             className="flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer transition-colors text-red-600 hover:bg-red-50 w-full"
           >
             <LogOut className="w-5 h-5" />
             <span className="font-medium">Logout</span>
-          </motion.button>
+          </button>
         </div>
-      </motion.aside>
+      </aside>
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden pt-16 md:pt-0 pb-16 md:pb-0">
@@ -148,11 +132,9 @@ export default function DashboardLayout({
             const isActive = pathname === item.href;
             return (
               <Link key={index} href={item.href} className="relative">
-                <motion.div
-                  whileTap={{ scale: 0.95 }}
-                  className={`flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-colors ${
+                <div className={`flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-colors ${
                     isActive
-                      ? 'text-blue-600'
+                      ? 'text-green-600'
                       : 'text-gray-600'
                   }`}
                 >
@@ -165,7 +147,7 @@ export default function DashboardLayout({
                     )}
                   </div>
                   <span className="text-[10px] font-medium">{item.label}</span>
-                </motion.div>
+                </div>
               </Link>
             );
           })}

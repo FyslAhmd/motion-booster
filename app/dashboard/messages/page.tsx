@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search,
   Send,
@@ -228,11 +227,11 @@ export default function MessagesPage() {
   };
 
   return (
-    <div className="flex h-full bg-white overflow-hidden">
+    <div className="flex h-full bg-gradient-to-br from-green-50 via-purple-50 to-white overflow-hidden">
       {/* Conversations Sidebar */}
       <div className="w-105 shrink-0 bg-white border-r border-gray-200 flex flex-col">
         {/* Header */}
-        <div className="p-6 border-b border-gray-100">
+        <div className="p-6">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Messages</h1>
           
           {/* Search */}
@@ -248,7 +247,7 @@ export default function MessagesPage() {
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-6 border-b border-gray-100">
+          <div className="flex gap-6">
             <button
               onClick={() => setActiveTab('all')}
               className={`pb-3 text-sm font-medium relative ${
@@ -257,10 +256,7 @@ export default function MessagesPage() {
             >
               All Message
               {activeTab === 'all' && (
-                <motion.div
-                  layoutId="activeTab"
-                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600"
-                />
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-green-500" />
               )}
             </button>
             <button
@@ -271,10 +267,7 @@ export default function MessagesPage() {
             >
               Group Chat
               {activeTab === 'group' && (
-                <motion.div
-                  layoutId="activeTab"
-                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600"
-                />
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-green-500" />
               )}
             </button>
             <button
@@ -285,10 +278,7 @@ export default function MessagesPage() {
             >
               Contacts
               {activeTab === 'contacts' && (
-                <motion.div
-                  layoutId="activeTab"
-                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600"
-                />
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-green-500" />
               )}
             </button>
           </div>
@@ -297,15 +287,11 @@ export default function MessagesPage() {
         {/* Conversation List */}
         <div className="flex-1 overflow-y-auto">
           {conversations.map((conversation, index) => (
-            <motion.div
-              key={conversation.id}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.05 }}
+            <div key={conversation.id}
               onClick={() => setSelectedConversation(index)}
               className={`px-6 py-4 cursor-pointer transition-all relative ${
                 selectedConversation === index
-                  ? 'bg-blue-50 border-r-4 border-r-blue-600'
+                  ? 'bg-green-50 border-r-4 border-r-green-500'
                   : 'hover:bg-gray-50'
               }`}
             >
@@ -333,7 +319,7 @@ export default function MessagesPage() {
                   </div>
                 )}
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
       </div>
@@ -341,7 +327,7 @@ export default function MessagesPage() {
       {/* Chat Area */}
       <div className="flex-1 flex flex-col bg-gray-50">
         {/* Chat Header */}
-        <div className="bg-white border-b border-gray-100 px-8 py-4">
+        <div className="bg-gradient-to-r from-green-50 via-white to-purple-50 px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="relative">
@@ -362,37 +348,25 @@ export default function MessagesPage() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="p-2.5 hover:bg-gray-100 rounded-lg transition-colors"
+              <button className="p-2.5 hover:bg-gray-100 rounded-lg transition-colors"
               >
                 <Phone className="w-5 h-5 text-gray-600" />
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="p-2.5 hover:bg-gray-100 rounded-lg transition-colors"
+              </button>
+              <button className="p-2.5 hover:bg-gray-100 rounded-lg transition-colors"
               >
                 <Video className="w-5 h-5 text-gray-600" />
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setShowFilePanel(!showFilePanel)}
+              </button>
+              <button onClick={() => setShowFilePanel(!showFilePanel)}
                 className={`p-2.5 rounded-lg transition-colors ${
-                  showFilePanel ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-100 text-gray-600'
+                  showFilePanel ? 'bg-green-50 text-green-600' : 'hover:bg-gray-100 text-gray-600'
                 }`}
               >
                 <Folder className="w-5 h-5" />
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="p-2.5 hover:bg-gray-100 rounded-lg transition-colors"
+              </button>
+              <button className="p-2.5 hover:bg-gray-100 rounded-lg transition-colors"
               >
                 <MoreVertical className="w-5 h-5 text-gray-600" />
-              </motion.button>
+              </button>
             </div>
           </div>
         </div>
@@ -400,11 +374,7 @@ export default function MessagesPage() {
         {/* Messages */}
         <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6">
           {messages.map((message, index) => (
-            <motion.div
-              key={message.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.03 }}
+            <div key={message.id}
               className={`flex ${message.isMe ? 'justify-end' : 'justify-start'}`}
             >
               <div className={`flex gap-3 max-w-2xl ${message.isMe ? 'flex-row-reverse' : 'flex-row'}`}>
@@ -428,7 +398,7 @@ export default function MessagesPage() {
                     {message.isMe && (
                       <span>
                         {message.read ? (
-                          <CheckCheck className="w-4 h-4 text-blue-600" />
+                          <CheckCheck className="w-4 h-4 text-green-600" />
                         ) : (
                           <Check className="w-4 h-4 text-gray-400" />
                         )}
@@ -442,48 +412,35 @@ export default function MessagesPage() {
                   </div>
                 )}
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
 
         {/* Message Input */}
         <div className="bg-white border-t border-gray-100 px-8 py-4">
           {/* Selected Files Preview */}
-          <AnimatePresence>
-            {selectedFiles.length > 0 && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                className="mb-3 space-y-2"
-              >
-                {selectedFiles.map((file, index) => (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-100 rounded-xl"
+          {selectedFiles.length > 0 && (
+            <div className="mb-3 space-y-2">
+              {selectedFiles.map((file, index) => (
+                <div key={index}
+                  className="flex items-center gap-3 p-3 bg-green-50 border border-green-100 rounded-xl"
+                >
+                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                    <File className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-gray-900 text-sm truncate">{file.name}</div>
+                    <div className="text-xs text-gray-500">{(file.size / 1024).toFixed(1)} KB</div>
+                  </div>
+                  <button onClick={() => removeSelectedFile(index)}
+                    className="p-1.5 hover:bg-green-100 rounded-lg"
                   >
-                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <File className="w-5 h-5 text-blue-600" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium text-gray-900 text-sm truncate">{file.name}</div>
-                      <div className="text-xs text-gray-500">{(file.size / 1024).toFixed(1)} KB</div>
-                    </div>
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => removeSelectedFile(index)}
-                      className="p-1.5 hover:bg-blue-100 rounded-lg"
-                    >
-                      <X className="w-4 h-4 text-gray-600" />
-                    </motion.button>
-                  </motion.div>
-                ))}
-              </motion.div>
-            )}
-          </AnimatePresence>
+                    <X className="w-4 h-4 text-gray-600" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Input Area */}
           <div 
@@ -494,10 +451,10 @@ export default function MessagesPage() {
             onDrop={handleDrop}
           >
             {dragActive && (
-              <div className="absolute inset-0 bg-blue-50 bg-opacity-95 flex items-center justify-center z-10 border-2 border-dashed border-blue-400 rounded-2xl">
+              <div className="absolute inset-0 bg-green-50 bg-opacity-95 flex items-center justify-center z-10 border-2 border-dashed border-green-400 rounded-2xl">
                 <div className="text-center">
-                  <ImageIcon className="w-12 h-12 text-blue-600 mx-auto mb-2" />
-                  <p className="text-sm font-medium text-blue-900">Drop files here</p>
+                  <ImageIcon className="w-12 h-12 text-green-600 mx-auto mb-2" />
+                  <p className="text-sm font-medium text-green-900">Drop files here</p>
                 </div>
               </div>
             )}
@@ -512,13 +469,9 @@ export default function MessagesPage() {
             
             <div className="flex items-center gap-2">
               <label htmlFor="file-upload">
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="p-2.5 hover:bg-gray-100 rounded-lg cursor-pointer transition-colors"
-                >
+                <div className="p-2.5 hover:bg-gray-100 rounded-lg cursor-pointer transition-colors">
                   <Paperclip className="w-5 h-5 text-gray-500" />
-                </motion.div>
+                </div>
               </label>
             </div>
 
@@ -538,19 +491,13 @@ export default function MessagesPage() {
               />
             </div>
 
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="p-2.5 hover:bg-gray-100 rounded-lg transition-colors"
+            <button className="p-2.5 hover:bg-gray-100 rounded-lg transition-colors"
             >
               <Smile className="w-5 h-5 text-gray-500" />
-            </motion.button>
+            </button>
 
             {/* Voice Recording Button */}
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => {
+            <button onClick={() => {
                 if (isRecording) {
                   setIsRecording(false);
                   setRecordingTime(0);
@@ -571,55 +518,41 @@ export default function MessagesPage() {
               ) : (
                 <Mic className="w-5 h-5 text-gray-500" />
               )}
-            </motion.button>
+            </button>
 
             {isRecording && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="flex items-center gap-2 px-3 py-1.5 bg-red-50 rounded-lg"
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-red-50 rounded-lg"
               >
                 <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
                 <span className="text-sm font-medium text-red-600">
                   Recording... {Math.floor(recordingTime / 60)}:{(recordingTime % 60).toString().padStart(2, '0')}
                 </span>
-              </motion.div>
+              </div>
             )}
 
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleSendMessage}
+            <button onClick={handleSendMessage}
               disabled={!messageInput.trim() && selectedFiles.length === 0}
               className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium text-sm flex items-center gap-2"
             >
               <Send className="w-4 h-4" />
               Send
-            </motion.button>
+            </button>
           </div>
         </div>
       </div>
 
       {/* Files Panel */}
       {showFilePanel && (
-        <motion.div
-          initial={{ x: 300, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          exit={{ x: 300, opacity: 0 }}
-          className="w-80 bg-white border-l border-gray-200 flex flex-col"
-        >
+        <div className="w-80 bg-white/50 backdrop-blur-sm border-l border-green-100 flex flex-col">
           {/* Files Panel Header */}
-          <div className="p-4 border-b border-gray-200">
+          <div className="p-4">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold text-gray-900">Shared Files</h2>
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setShowFilePanel(false)}
+              <button onClick={() => setShowFilePanel(false)}
                 className="p-1 hover:bg-gray-100 rounded-lg"
               >
                 <X className="w-5 h-5 text-gray-600" />
-              </motion.button>
+              </button>
             </div>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -634,11 +567,7 @@ export default function MessagesPage() {
           {/* Files List */}
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
             {sharedFiles.map((file, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
+              <div key={index}
                 className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors group"
               >
                 <div className="flex items-start gap-3">
@@ -650,29 +579,22 @@ export default function MessagesPage() {
                     <div className="text-xs text-gray-500 mt-1">{file.size} • {file.date}</div>
                     <div className="text-xs text-gray-400 mt-0.5">By {file.sender}</div>
                   </div>
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="p-1.5 hover:bg-gray-100 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                  <button className="p-1.5 hover:bg-gray-100 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     <Download className="w-4 h-4 text-gray-600" />
-                  </motion.button>
+                  </button>
                 </div>
-              </motion.div>
+              </div>
             ))}
           </div>
 
           {/* Quick Actions */}
           <div className="p-4 border-t border-gray-200">
             <label htmlFor="quick-file-upload">
-              <motion.div
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2 cursor-pointer"
-              >
+              <div className="w-full px-4 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 flex items-center justify-center gap-2 cursor-pointer">
                 <Paperclip className="w-5 h-5" />
                 Upload Files
-              </motion.div>
+              </div>
             </label>
             <input
               type="file"
@@ -682,7 +604,7 @@ export default function MessagesPage() {
               className="hidden"
             />
           </div>
-        </motion.div>
+        </div>
       )}
     </div>
   );
