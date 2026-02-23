@@ -248,17 +248,17 @@ export default function FeaturesPage() {
     : features.filter(f => f.category === activeCategory);
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-green-50 via-white to-purple-50">
+    <div className="min-h-screen bg-white">
       {/* Hero Section */}
       <section className="pt-20 pb-12 px-4">
         <div className="max-w-7xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-full text-sm font-medium mb-6">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 rounded-full text-sm font-medium mb-6">
             <Rocket className="w-4 h-4" />
             Powerful Features for Growth
           </div>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6">
             Everything You Need to
-            <span className="block mt-2 text-green-600">
+            <span className="block mt-2 text-red-600">
               Supercharge Your Campaigns
             </span>
           </h1>
@@ -267,7 +267,7 @@ export default function FeaturesPage() {
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
             <Link href="/register">
-            <button className="px-8 py-4 bg-purple-500 text-white rounded-xl hover:bg-purple-600 transition-all shadow-lg hover:shadow-xl font-semibold flex items-center gap-2">
+            <button className="px-8 py-4 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-all shadow-lg hover:shadow-xl font-semibold flex items-center gap-2">
                 Start Free Trial
                 <ArrowRight className="w-5 h-5" />
               </button>
@@ -291,7 +291,7 @@ export default function FeaturesPage() {
                 onClick={() => setActiveCategory(cat.id)}
                 className={`px-6 py-2.5 rounded-lg font-medium transition-all ${
                   activeCategory === cat.id
-                    ? 'bg-purple-500 text-white shadow-md'
+                    ? 'bg-red-500 text-white shadow-md'
                     : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'
                 }`}
               >
@@ -323,7 +323,7 @@ export default function FeaturesPage() {
                 <ul className="space-y-3">
                   {feature.benefits.map((benefit, idx) => (
                     <li key={idx} className="flex items-start gap-3">
-                      <Check className="w-5 h-5 text-green-500 mt-0.5 shrink-0" />
+                      <Check className="w-5 h-5 text-red-500 mt-0.5 shrink-0" />
                       <span className="text-sm text-gray-700">{benefit}</span>
                     </li>
                   ))}
@@ -335,7 +335,7 @@ export default function FeaturesPage() {
       </section>
 
       {/* Platform Capabilities */}
-      <section className="py-20 px-4 bg-linear-to-br from-green-50 via-white to-purple-50">
+      <section className="py-20 px-4 bg-white">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
@@ -351,7 +351,7 @@ export default function FeaturesPage() {
                 key={index}
                 className="bg-white/70 backdrop-blur-sm rounded-xl p-6 hover:bg-white transition-all border border-gray-100"
               >
-                <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center mb-4">
+                <div className="w-12 h-12 bg-red-500 rounded-lg flex items-center justify-center mb-4">
                   <capability.icon className="w-6 h-6 text-white" />
                 </div>
                 <h3 className="text-lg font-bold text-gray-900 mb-2">
@@ -367,10 +367,10 @@ export default function FeaturesPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="relative py-16 sm:py-20 lg:py-32 bg-purple-600 overflow-hidden">
-        {/* Green Circle Decorations */}
-        <div className="absolute top-0 left-0 w-32 h-32 sm:w-48 sm:h-48 md:w-64 md:h-64 bg-green-500 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
-        <div className="absolute bottom-0 right-0 w-48 h-48 sm:w-64 sm:h-64 md:w-96 md:h-96 bg-green-500 rounded-full translate-x-1/2 translate-y-1/2"></div>
+      <section className="relative py-16 sm:py-20 lg:py-32 bg-red-600 overflow-hidden">
+        {/* Red Circle Decorations */}
+        <div className="absolute top-0 left-0 w-32 h-32 sm:w-48 sm:h-48 md:w-64 md:h-64 bg-red-400 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+        <div className="absolute bottom-0 right-0 w-48 h-48 sm:w-64 sm:h-64 md:w-96 md:h-96 bg-red-700 rounded-full translate-x-1/2 translate-y-1/2"></div>
 
         <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 sm:mb-6 leading-tight">
@@ -381,7 +381,7 @@ export default function FeaturesPage() {
           </p>
           <div className="flex flex-wrap gap-4 justify-center mb-6">
             <Link href="/register">
-              <button className="bg-white text-purple-600 px-8 sm:px-10 py-3 sm:py-4 rounded-full font-bold text-base sm:text-lg hover:bg-gray-100 transition-colors shadow-xl">
+              <button className="bg-white text-red-600 px-8 sm:px-10 py-3 sm:py-4 rounded-full font-bold text-base sm:text-lg hover:bg-gray-100 transition-colors shadow-xl">
                 Get Started Free
               </button>
             </Link>

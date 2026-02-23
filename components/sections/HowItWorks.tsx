@@ -1,26 +1,66 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+gsap.registerPlugin(ScrollTrigger);
+
 export const HowItWorks = () => {
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const stepsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (titleRef.current) {
+      gsap.from(titleRef.current, {
+        scrollTrigger: {
+          trigger: titleRef.current,
+          start: 'top 80%',
+        },
+        opacity: 0,
+        y: 30,
+        duration: 0.8,
+        ease: 'power3.out',
+      });
+    }
+
+    if (stepsRef.current) {
+      const steps = stepsRef.current.querySelectorAll('.step-card');
+      gsap.from(steps, {
+        scrollTrigger: {
+          trigger: stepsRef.current,
+          start: 'top 75%',
+        },
+        opacity: 0,
+        y: 50,
+        stagger: 0.2,
+        duration: 0.8,
+        ease: 'power3.out',
+      });
+    }
+  }, []);
+
   const steps = [
     {
       number: '1',
       icon: (
         <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
         </svg>
       ),
-      title: 'Sign Up Your Agency',
-      description: 'Create your account in 30 seconds. No credit card required.',
+      title: 'Explore Courses',
+      description: 'Browse through 45+ trending IT courses and find the perfect match for your career goals.',
     },
     {
       number: '2',
       icon: (
         <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       ),
-      title: 'Connect Meta Ads Accounts',
-      description: 'Your clients connect their Meta Ads accounts securely with one click.',
+      title: 'Register & Enroll',
+      description: 'Fill out a simple form, choose your preferred batch, and confirm your admission.',
     },
     {
       number: '3',
@@ -29,8 +69,8 @@ export const HowItWorks = () => {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
         </svg>
       ),
-      title: 'Start Managing & Reporting',
-      description: 'View spending, chat with clients, and generate reports instantly.',
+      title: 'Start Learning',
+      description: 'Attend classes, work on projects, and get certified. Launch your IT career!',
     },
   ];
 
@@ -39,18 +79,18 @@ export const HowItWorks = () => {
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-16">
-          <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
-            Get Started in 3 Simple Steps
+          <h2 ref={titleRef} className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
+            Start Your IT Journey in 3 Simple Steps
           </h2>
         </div>
 
         {/* Steps Grid */}
-        <div className="grid md:grid-cols-3 gap-8 lg:gap-12 relative">
+        <div ref={stepsRef} className="grid md:grid-cols-3 gap-8 lg:gap-12 relative">
           {/* Connection Lines - Hidden on mobile */}
           <div className="hidden md:block absolute top-24 left-0 right-0 h-0.5 bg-linear-to-r from-blue-200 via-blue-400 to-blue-200" style={{ top: '60px' }}></div>
 
           {steps.map((step, index) => (
-            <div key={index} className="relative">
+            <div key={index} className="step-card relative">
               {/* Card */}
               <div className="bg-white rounded-2xl p-8 text-center shadow-lg hover:shadow-xl transition-shadow">
                 {/* Number Badge */}

@@ -7,28 +7,28 @@ export const FAQ = () => {
 
   const faqs = [
     {
-      question: 'How does Meta Ads integration work?',
-      answer: 'Clients securely connect their Meta Ads account via OAuth. You get read-only access to view spending data. No passwords are shared.'
+      question: 'What courses do you offer?',
+      answer: 'We offer 45+ courses including Web Development, Graphic Design, Digital Marketing, Video Editing, App Development, and more. All courses are job-oriented and industry-relevant.'
     },
     {
-      question: 'Is my data secure?',
-      answer: 'Yes! We use bank-level encryption (SSL/TLS), secure data storage, and comply with GDPR standards.'
+      question: 'Do I need prior experience?',
+      answer: 'No! Most of our courses are designed for beginners. We start from basics and gradually move to advanced topics with hands-on practice.'
     },
     {
-      question: 'Can I customize the dashboard?',
-      answer: 'Yes, you can add your agency logo and brand colors to give clients a white-label experience.'
+      question: 'What is the course duration and fee?',
+      answer: 'Course duration ranges from 3-6 months depending on the program. Fees vary by course. Contact us or visit our office for detailed information.'
     },
     {
-      question: 'What if my client has multiple ad accounts?',
-      answer: 'No problem! Clients can connect multiple Meta Ads accounts and switch between them easily.'
+      question: 'Do you provide job placement?',
+      answer: 'Yes! We offer job placement support, career counseling, resume building, and interview preparation. Many of our students are now working at top companies.'
     },
     {
-      question: 'Do you offer a free trial?',
-      answer: 'Yes! Try our platform free for 14 days. No credit card required.'
+      question: 'Will I get a certificate?',
+      answer: 'Absolutely! After successfully completing the course, you will receive an industry-recognized certificate from Motion Booster.'
     },
     {
-      question: 'Can clients create or edit ads?',
-      answer: 'No, this is a reporting and communication platform. Clients can only view their ad performance data, not create or edit ads.'
+      question: 'Can I attend classes online?',
+      answer: 'We offer both online and offline batches. You can choose the mode that suits you best based on your location and schedule.'
     }
   ];
 
@@ -37,30 +37,30 @@ export const FAQ = () => {
   };
 
   return (
-    <section className="py-16 sm:py-20 lg:py-32 bg-linear-to-b from-purple-50 to-white">
+    <section className="py-12 sm:py-16 md:py-20 lg:py-32 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 text-center mb-12 sm:mb-16">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 text-center mb-8 sm:mb-12 md:mb-16 px-4">
           Answers to Your Frequently<br className="hidden sm:block" />Asked Questions
         </h2>
 
         {/* FAQ Grid */}
-        <div className="grid md:grid-cols-2 gap-4 sm:gap-6" suppressHydrationWarning>
+        <div className="grid md:grid-cols-2 gap-3 sm:gap-4 md:gap-6" suppressHydrationWarning>
           {faqs.map((faq, index) => {
             const isOpen = openIndex === index;
             return (
               <div
                 key={`faq-${index}`}
-                className="bg-white rounded-xl sm:rounded-2xl p-5 sm:p-6 shadow-sm hover:shadow-md transition-shadow"
+                className="faq-item bg-white rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 shadow-sm hover:shadow-md transition-shadow"
               >
                 <button
                   onClick={() => toggleFAQ(index)}
-                  className="w-full flex items-start justify-between gap-4 text-left"
+                  className="w-full flex items-start justify-between gap-3 sm:gap-4 text-left"
                 >
-                <span className="font-medium text-gray-900 text-base sm:text-lg flex-1">
+                <span className="font-medium text-gray-900 text-sm sm:text-base md:text-lg flex-1">
                   {faq.question}
                 </span>
-                <span className="text-xl sm:text-2xl text-gray-600 shrink-0 transition-transform duration-300" style={{ transform: isOpen ? 'rotate(45deg)' : 'rotate(0deg)' }}>
+                <span className="text-lg sm:text-xl md:text-2xl text-gray-600 shrink-0 transition-transform duration-300" style={{ transform: isOpen ? 'rotate(45deg)' : 'rotate(0deg)' }}>
                   +
                 </span>
               </button>
@@ -73,7 +73,7 @@ export const FAQ = () => {
                   opacity: isOpen ? 1 : 0
                 }}
               >
-                <p className="text-gray-600 text-sm sm:text-base mt-4 leading-relaxed">
+                <p className="text-gray-600 text-xs sm:text-sm md:text-base mt-3 sm:mt-4 leading-relaxed">
                   {faq.answer}
                 </p>
               </div>

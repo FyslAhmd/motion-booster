@@ -136,7 +136,7 @@ export default function DashboardPage() {
       performance: 92,
       spend: 500.00,
       purchaseValue: 2600.00,
-      thumbnailColor: 'from-blue-500 to-purple-500'
+      thumbnailColor: 'from-red-500 to-rose-500'
     },
     { 
       id: 'ad_789',
@@ -154,7 +154,7 @@ export default function DashboardPage() {
       performance: 85,
       spend: 380.00,
       purchaseValue: 1558.00,
-      thumbnailColor: 'from-green-500 to-teal-500'
+      thumbnailColor: 'from-orange-400 to-amber-500'
     },
     { 
       id: 'ad_321',
@@ -172,14 +172,14 @@ export default function DashboardPage() {
       performance: 72,
       spend: 250.00,
       purchaseValue: 800.00,
-      thumbnailColor: 'from-indigo-500 to-blue-500'
+      thumbnailColor: 'from-rose-500 to-red-400'
     },
   ];
 
   const activities = [
-    { icon: MessageSquare, text: 'New message from Sarah (Agency)', time: '5 minutes ago', color: 'text-blue-600' },
-    { icon: TrendingUp, text: 'Campaign Summer Sale spent $250 today', time: '2 hours ago', color: 'text-green-600' },
-    { icon: FolderOpen, text: 'New report uploaded: Monthly_Performance.pdf', time: 'Yesterday', color: 'text-purple-600' },
+    { icon: MessageSquare, text: 'New message from Sarah (Agency)', time: '5 minutes ago', color: 'text-red-500' },
+    { icon: TrendingUp, text: 'Campaign Summer Sale spent $250 today', time: '2 hours ago', color: 'text-orange-500' },
+    { icon: FolderOpen, text: 'New report uploaded: Monthly_Performance.pdf', time: 'Yesterday', color: 'text-rose-500' },
     { icon: Bell, text: 'Budget alert: Campaign reaching limit', time: '2 days ago', color: 'text-orange-600' },
   ];
 
@@ -234,9 +234,9 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="h-full overflow-y-auto bg-gradient-to-br from-green-50 via-purple-50 to-white">
+    <div className="h-full overflow-y-auto bg-gray-50">
         {/* Welcome Header */}
-        <div className="bg-gradient-to-r from-green-50 via-white to-purple-50 px-6 py-6">
+        <div className="bg-white border-b border-gray-100 px-6 py-6">
           <div className="max-w-7xl mx-auto">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
               <div>
@@ -251,7 +251,7 @@ export default function DashboardPage() {
                 <select
                   value={selectedRange}
                   onChange={(e) => setSelectedRange(e.target.value)}
-                  className="px-3 sm:px-4 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent flex-1 sm:flex-none"
+                  className="px-3 sm:px-4 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-red-400 focus:border-transparent flex-1 sm:flex-none"
                 >
                   <option>Today</option>
                   <option>Yesterday</option>
@@ -259,7 +259,7 @@ export default function DashboardPage() {
                   <option>Last 30 Days</option>
                   <option>This Month</option>
                 </select>
-                <button className="px-3 sm:px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 flex items-center gap-2 text-sm"
+                <button className="px-3 sm:px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 flex items-center gap-2 text-sm"
                 >
                   <Download className="w-4 h-4" />
                   <span className="hidden sm:inline">Export</span>
@@ -281,10 +281,10 @@ export default function DashboardPage() {
             <div className="bg-white/50 backdrop-blur-sm rounded-xl p-4 sm:p-6 hover:bg-white/70 transition-all"
             >
               <div className="flex items-start justify-between mb-3 sm:mb-4">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-full flex items-center justify-center">
-                  <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-red-100 rounded-full flex items-center justify-center">
+                  <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-red-500" />
                 </div>
-                <div className="flex items-center gap-1 text-xs sm:text-sm text-green-600">
+                <div className="flex items-center gap-1 text-xs sm:text-sm text-red-500">
                   <ArrowUp className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span>12.5%</span>
                 </div>
@@ -298,8 +298,8 @@ export default function DashboardPage() {
             <div className="bg-white/50 backdrop-blur-sm rounded-xl p-4 sm:p-6 hover:bg-white/70 transition-all"
             >
               <div className="flex items-start justify-between mb-3 sm:mb-4">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                  <Eye className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-rose-100 rounded-full flex items-center justify-center">
+                  <Eye className="w-5 h-5 sm:w-6 sm:h-6 text-rose-500" />
                 </div>
                 <div className="flex items-center gap-1 text-xs sm:text-sm text-green-600">
                   <ArrowUp className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -315,8 +315,8 @@ export default function DashboardPage() {
             <div className="bg-white/50 backdrop-blur-sm rounded-xl p-4 sm:p-6 hover:bg-white/70 transition-all"
             >
               <div className="flex items-start justify-between mb-3 sm:mb-4">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-cyan-100 rounded-full flex items-center justify-center">
-                  <MousePointer className="w-5 h-5 sm:w-6 sm:h-6 text-cyan-600" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-orange-100 rounded-full flex items-center justify-center">
+                  <MousePointer className="w-5 h-5 sm:w-6 sm:h-6 text-orange-500" />
                 </div>
                 <div className="flex items-center gap-1 text-xs sm:text-sm text-green-600">
                   <ArrowUp className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -332,10 +332,10 @@ export default function DashboardPage() {
             <div className="bg-white/50 backdrop-blur-sm rounded-xl p-4 sm:p-6 hover:bg-white/70 transition-all"
             >
               <div className="flex items-start justify-between mb-3 sm:mb-4">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-full flex items-center justify-center">
-                  <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-red-100 rounded-full flex items-center justify-center">
+                  <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-red-500" />
                 </div>
-                <div className="flex items-center gap-1 text-xs sm:text-sm text-green-600">
+                <div className="flex items-center gap-1 text-xs sm:text-sm text-red-500">
                   <ArrowUp className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span>+0.5x</span>
                 </div>
@@ -352,7 +352,7 @@ export default function DashboardPage() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 sm:mb-6">
               <h2 className="text-lg sm:text-xl font-bold text-gray-900">Ad Spending Over Time</h2>
               <div className="flex gap-2">
-              <button className="px-2 sm:px-3 py-1 text-xs sm:text-sm bg-purple-50 text-purple-600 rounded-lg font-medium">Day</button>
+              <button className="px-2 sm:px-3 py-1 text-xs sm:text-sm bg-red-50 text-red-500 rounded-lg font-medium">Day</button>
                 <button className="px-2 sm:px-3 py-1 text-xs sm:text-sm text-gray-600 hover:bg-gray-50 rounded-lg">Week</button>
                 <button className="px-2 sm:px-3 py-1 text-xs sm:text-sm text-gray-600 hover:bg-gray-50 rounded-lg">Month</button>
               </div>
@@ -362,8 +362,8 @@ export default function DashboardPage() {
               <AreaChart data={spendingData}>
                 <defs>
                   <linearGradient id="colorSpend" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -378,7 +378,7 @@ export default function DashboardPage() {
                     return [value, name || ''];
                   }}
                 />
-                <Area type="monotone" dataKey="spend" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorSpend)" />
+                <Area type="monotone" dataKey="spend" stroke="#ef4444" strokeWidth={2} fillOpacity={1} fill="url(#colorSpend)" />
               </AreaChart>
             </ResponsiveContainer>
             </div>
@@ -397,7 +397,7 @@ export default function DashboardPage() {
                     <input
                       type="text"
                       placeholder="Search campaigns..."
-                      className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-red-400 focus:border-transparent"
                     />
                   </div>
                 </div>
@@ -424,7 +424,7 @@ export default function DashboardPage() {
                             <div className="font-medium text-gray-900">{campaign.name}</div>
                             <span className={`inline-block px-2 py-0.5 text-xs rounded-full mt-1 ${
                               campaign.status === 'ACTIVE' 
-                                ? 'bg-green-100 text-green-700' 
+                                ? 'bg-red-50 text-red-600' 
                                 : campaign.status === 'PAUSED'
                                 ? 'bg-yellow-100 text-yellow-700'
                                 : 'bg-gray-100 text-gray-700'
@@ -438,7 +438,7 @@ export default function DashboardPage() {
                         <td className="py-3 px-4 text-gray-600">{(campaign.clicks / 1000).toFixed(1)}K</td>
                         <td className="py-3 px-4 text-gray-600">${campaign.cpc.toFixed(2)}</td>
                         <td className="py-3 px-4">
-                          <span className="text-green-600 font-medium">{campaign.roas.toFixed(1)}x</span>
+                          <span className="text-red-500 font-medium">{campaign.roas.toFixed(1)}x</span>
                         </td>
                         <td className="py-3 px-4">
                           <div className="flex gap-2">
@@ -466,7 +466,7 @@ export default function DashboardPage() {
                 <div className="space-y-3">
                   {topAds.map((ad, index) => (
                     <div key={ad.id} className="flex items-center gap-2 sm:gap-3">
-                      <div className={`w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br ${ad.thumbnailColor} rounded-lg shrink-0 flex items-center justify-center text-white font-bold text-sm`}>
+                      <div className={`w-10 h-10 sm:w-12 sm:h-12 bg-linear-to-br ${ad.thumbnailColor} rounded-lg shrink-0 flex items-center justify-center text-white font-bold text-sm`}>
                         #{index + 1}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -474,7 +474,7 @@ export default function DashboardPage() {
                         <div className="text-xs text-green-600 font-medium">{ad.metric}</div>
                         <div className="w-full bg-gray-100 rounded-full h-1.5 mt-1">
                           <div 
-                            className="bg-green-500 h-1.5 rounded-full" 
+                            className="bg-red-500 h-1.5 rounded-full" 
                             style={{ width: `${ad.performance}%` }}
                           ></div>
                         </div>
@@ -482,7 +482,7 @@ export default function DashboardPage() {
                     </div>
                   ))}
                 </div>
-                <button className="w-full mt-4 text-sm text-green-600 hover:text-green-700 font-medium">
+                <button className="w-full mt-4 text-sm text-red-500 hover:text-red-600 font-medium">
                   View All Ads →
                 </button>
               </div>
@@ -504,7 +504,7 @@ export default function DashboardPage() {
                     </div>
                   ))}
                 </div>
-                <button className="w-full mt-4 text-sm text-green-600 hover:text-green-700 font-medium">
+                <button className="w-full mt-4 text-sm text-red-500 hover:text-red-600 font-medium">
                   View All Activity →
                 </button>
               </div>
@@ -644,7 +644,7 @@ export default function DashboardPage() {
               <div className="flex items-center gap-4 text-sm">
                 <div>
                   <span className="text-gray-600">Total Revenue: </span>
-                  <span className="font-bold text-green-600">$10,350.45</span>
+                  <span className="font-bold text-red-500">$10,350.45</span>
                 </div>
                 <div>
                   <span className="text-gray-600">Cost Per Purchase: </span>
@@ -652,7 +652,7 @@ export default function DashboardPage() {
                 </div>
                 <div>
                   <span className="text-gray-600">ROAS: </span>
-                  <span className="font-bold text-green-600">4.2x</span>
+                  <span className="font-bold text-red-500">4.2x</span>
                 </div>
               </div>
             </div>
@@ -663,11 +663,11 @@ export default function DashboardPage() {
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-3">
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold ${
-                        index === 0 ? 'bg-green-500' :
-                        index === 1 ? 'bg-purple-500' :
-                        index === 2 ? 'bg-cyan-500' :
-                        index === 3 ? 'bg-orange-500' :
-                        'bg-green-600'
+                        index === 0 ? 'bg-red-500' :
+                        index === 1 ? 'bg-rose-500' :
+                        index === 2 ? 'bg-orange-500' :
+                        index === 3 ? 'bg-amber-500' :
+                        'bg-red-600'
                       }`}>
                         {index + 1}
                       </div>
@@ -685,11 +685,11 @@ export default function DashboardPage() {
                   <div className="w-full bg-gray-100 rounded-full h-3">
                     <div 
                       className={`h-3 rounded-full ${
-                        index === 0 ? 'bg-green-500' :
-                        index === 1 ? 'bg-purple-500' :
-                        index === 2 ? 'bg-cyan-500' :
-                        index === 3 ? 'bg-orange-500' :
-                        'bg-green-600'
+                        index === 0 ? 'bg-red-500' :
+                        index === 1 ? 'bg-rose-500' :
+                        index === 2 ? 'bg-orange-500' :
+                        index === 3 ? 'bg-amber-500' :
+                        'bg-red-600'
                       }`}
                       style={{ width: `${index === 0 ? 100 : (stage.value / conversionFunnel[0].value) * 100}%` }}
                     ></div>
@@ -708,34 +708,34 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6"
           >
             <div className="bg-white/40 backdrop-blur-sm rounded-xl p-4 sm:p-6 hover:bg-white/60 transition-colors">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-lg flex items-center justify-center mb-3 sm:mb-4">
-                <LinkIcon className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-red-100 rounded-lg flex items-center justify-center mb-3 sm:mb-4">
+                <LinkIcon className="w-5 h-5 sm:w-6 sm:h-6 text-red-500" />
               </div>
               <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-2">Connect Ad Account</h3>
               <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">Add another Meta Ads account</p>
-            <button className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 w-full text-sm font-medium">
+            <button className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 w-full text-sm font-medium">
                 Connect
               </button>
             </div>
 
             <div className="bg-white/40 backdrop-blur-sm rounded-xl p-4 sm:p-6 hover:bg-white/60 transition-colors">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-lg flex items-center justify-center mb-3 sm:mb-4">
-                <MessageSquare className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-red-100 rounded-lg flex items-center justify-center mb-3 sm:mb-4">
+                <MessageSquare className="w-5 h-5 sm:w-6 sm:h-6 text-red-500" />
               </div>
               <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-2">Message Agency</h3>
               <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">Have questions? Chat with us</p>
-            <button className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 w-full text-sm font-medium">
+            <button className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 w-full text-sm font-medium">
                 Start Chat
               </button>
             </div>
 
             <div className="bg-white/40 backdrop-blur-sm rounded-xl p-4 sm:p-6 hover:bg-white/60 transition-colors">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-lg flex items-center justify-center mb-3 sm:mb-4">
-                <FileDown className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-red-100 rounded-lg flex items-center justify-center mb-3 sm:mb-4">
+                <FileDown className="w-5 h-5 sm:w-6 sm:h-6 text-red-500" />
               </div>
               <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-2">Export Report</h3>
               <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">Download your data as PDF/CSV</p>
-            <button className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 w-full text-sm font-medium">
+            <button className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 w-full text-sm font-medium">
                 Export
               </button>
             </div>

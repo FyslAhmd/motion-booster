@@ -3,13 +3,26 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth/context';
-import { ChevronDown, LayoutDashboard, User } from 'lucide-react';
+import { ChevronDown, LayoutDashboard, User, Phone, Mail, Search, Bell, Home, Briefcase, Users, Menu } from 'lucide-react';
+import { MoreDrawer } from '@/components/ui/MoreDrawer';
 
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [language, setLanguage] = useState('EN');
+  const [scrolled, setScrolled] = useState(false);
+  const [showMoreDrawer, setShowMoreDrawer] = useState(false);
   const { isAuthenticated, isLoading, user } = useAuth();
   const profileMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 50);
+    };
+    window.addEventListener('scroll', handleScroll);
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -29,9 +42,9 @@ export const Header = () => {
 
   const navItems = [
     { label: 'Home', href: '/' },
+    { label: 'About us', href: '/about' },
     { label: 'Features', href: '/features' },
     { label: 'Service', href: '/service' },
-    { label: 'About', href: '/about' },
     { label: 'Blog', href: '/blog' },
     { label: 'Contact', href: '/contact' },
   ];
@@ -39,39 +52,119 @@ export const Header = () => {
   const visibleNavItems = navItems;
 
   return (
-    <header className="fixed top-0 left-0 right-0 bg-white z-50 border-b border-gray-100">
-      <nav className="max-w-7xl mx-auto px-6 lg:px-8">
+    <header className={`z-50 lg:fixed lg:top-0 lg:left-0 lg:right-0 transition-all duration-300 ${scrolled ? 'bg-white shadow-md' : 'bg-transparent'}`}>
+      {/* Mobile Top Bar - Logo + Icons */}
+      <div className="lg:hidden py-3 px-4" style={{ background: 'linear-gradient(214.38deg, #ff8079 -2.24%, #ff1e1e 59.38%)' }}>
+        <div className="flex items-center justify-between">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-2">
+            <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-md">
+              <span className="text-red-500 font-bold text-lg">M</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-base font-bold leading-tight text-white">MOTION</span>
+              <span className="text-xs font-semibold text-white/90 leading-tight">BOOSTER</span>
+            </div>
+          </Link>
+
+          {/* Icons: Search, Notification, Profile */}
+          <div className="flex items-center gap-3">
+            <button className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors">
+              <Search className="w-5 h-5 text-white" />
+            </button>
+            <button className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors relative">
+              <Bell className="w-5 h-5 text-white" />
+              <span className="absolute top-1 right-1 w-2 h-2 bg-yellow-400 rounded-full"></span>
+            </button>
+            <Link href={isAuthenticated ? "/dashboard/profile" : "/login"} className="w-9 h-9 flex items-center justify-center rounded-full bg-white hover:bg-white/90 transition-colors shadow-md">
+              {isAuthenticated ? (
+                <span className="text-red-500 font-bold text-sm">{user?.email?.charAt(0).toUpperCase() || 'U'}</span>
+              ) : (
+                <User className="w-5 h-5 text-red-500" />
+              )}
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop Top Bar */}
+      <div className="hidden lg:block text-white" style={{ background: 'linear-gradient(214.38deg, #ff8079 -2.24%, #ff1e1e 59.38%)', padding: '7px 0' }}>
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="flex items-center justify-between text-sm">
+            {/* Contact Info */}
+            <div className="flex items-center gap-6">
+              <a href="tel:+8801790939394" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                <Phone className="w-4 h-4" />
+                <span className="hidden sm:inline">+880 1790-939394</span>
+              </a>
+              <a href="mailto:info@motionbooster.com" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                <Mail className="w-4 h-4" />
+                <span className="hidden md:inline">info@motionbooster.com</span>
+              </a>
+            </div>
+            
+            {/* Language Switcher */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setLanguage('BN')}
+                className={`px-3 py-1 rounded-md font-medium transition-colors ${
+                  language === 'BN' ? 'bg-white text-red-600' : 'hover:bg-red-700'
+                }`}
+              >
+                BN
+              </button>
+              <button
+                onClick={() => setLanguage('EN')}
+                className={`px-3 py-1 rounded-md font-medium transition-colors ${
+                  language === 'EN' ? 'bg-white text-red-600' : 'hover:bg-red-700'
+                }`}
+              >
+                EN
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Navigation */}
+      <nav className="hidden lg:block max-w-7xl mx-auto px-6 lg:px-8 mt-2">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
-          <Link href="/" className="flex items-center">
-            <span className="text-2xl font-bold">
-              <span className="text-green-500">Motion</span>
-              <span className="text-black">Booster</span>
-            </span>
+          <Link href="/" className="flex items-center gap-3">
+            <div className="flex items-center">
+              <div className="w-12 h-12 bg-linear-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center">
+                <span className="text-white font-bold text-xl">M</span>
+              </div>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-xl font-bold leading-tight">
+                <span className="text-red-500">MOTION</span>
+              </span>
+              <span className="text-sm font-semibold text-gray-700 leading-tight">BOOSTER</span>
+            </div>
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
+          <div className="hidden lg:flex items-center space-x-8">
             {visibleNavItems.map((item) => (
-              <div key={item.label} className="relative group">
-                <Link
-                  href={item.href}
-                  className="text-gray-700 hover:text-black font-medium text-sm flex items-center gap-1 transition-colors"
-                >
-                  {item.label}
-                </Link>
-              </div>
+              <Link
+                key={item.label}
+                href={item.href}
+                className="text-gray-700 hover:text-red-500 font-semibold text-base transition-colors"
+              >
+                {item.label}
+              </Link>
             ))}
 
-            {/* Auth Buttons */}
-            {!isLoading && (
-              isAuthenticated ? (
+            {/* Auth & Login Button */}
+            <div className="flex items-center gap-4">
+              {!isLoading && isAuthenticated ? (
                 <div className="relative" ref={profileMenuRef}>
                   <button
                     onClick={() => setShowProfileMenu(!showProfileMenu)}
                     className="flex items-center gap-2 px-3 py-2 hover:bg-gray-50 rounded-lg transition-colors"
                   >
-                    <div className="w-9 h-9 bg-linear-to-br from-green-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                    <div className="w-9 h-9 bg-linear-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
                       {user?.email?.charAt(0).toUpperCase() || 'U'}
                     </div>
                     <span className="text-gray-700 font-medium text-sm">
@@ -111,102 +204,50 @@ export const Header = () => {
               ) : (
                 <Link
                   href="/login"
-                  className="px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium text-sm rounded-full transition-colors"
+                  className="flex items-center gap-2 px-6 py-3 bg-linear-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold rounded-lg transition-all shadow-md hover:shadow-lg"
                 >
                   Login
                 </Link>
-              )
-            )}
-          </div>
-
-          {/* Mobile Menu Button */}
-          <button
-            className="md:hidden p-2"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            aria-label="Toggle menu"
-          >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              {isMenuOpen ? (
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              ) : (
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
               )}
-            </svg>
-          </button>
-        </div>
-
-        {/* Mobile Menu */}
-        {isMenuOpen && (
-          <div className="md:hidden py-4 border-t border-gray-100">
-            {!isLoading && isAuthenticated && (
-              <div className="px-4 py-3 bg-gray-50 rounded-lg mb-4 flex items-center gap-3">
-                <div className="w-10 h-10 bg-linear-to-br from-green-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
-                  {user?.email?.charAt(0).toUpperCase() || 'U'}
-                </div>
-                <div>
-                  <div className="font-medium text-gray-900 text-sm">{user?.email?.split('@')[0] || 'User'}</div>
-                  <div className="text-xs text-gray-500">{user?.email}</div>
-                </div>
-              </div>
-            )}
-            
-            {visibleNavItems.map((item) => (
-              <Link
-                key={item.label}
-                href={item.href}
-                className="block py-3 text-gray-700 hover:text-black font-medium"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                {item.label}
-              </Link>
-            ))}
-            
-            {!isLoading && (
-              isAuthenticated ? (
-                <>
-                  <Link
-                    href="/dashboard"
-                    className="block py-3 text-gray-700 hover:text-black font-medium"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Dashboard
-                  </Link>
-                  <Link
-                    href="/dashboard/profile"
-                    className="block py-3 text-gray-700 hover:text-black font-medium"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Profile
-                  </Link>
-                </>
-              ) : (
-                <Link
-                  href="/login"
-                  className="block py-3 text-purple-600 font-medium"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Login
-                </Link>
-              )
-            )}
+            </div>
           </div>
-        )}
+
+        </div>
       </nav>
+
+      {/* Bottom Navbar for Mobile */}
+      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 shadow-lg flex lg:hidden justify-around items-center h-16 px-2">
+        <Link
+          href="/"
+          className="flex flex-col items-center justify-center gap-1 px-3 py-2 text-red-500 transition-colors flex-1"
+        >
+          <Home className="w-5 h-5" />
+          <span className="text-xs font-medium">Home</span>
+        </Link>
+        <Link
+          href="/service"
+          className="flex flex-col items-center justify-center gap-1 px-3 py-2 text-gray-500 hover:text-red-500 transition-colors flex-1"
+        >
+          <Briefcase className="w-5 h-5" />
+          <span className="text-xs font-medium">Service</span>
+        </Link>
+        <Link
+          href="/team"
+          className="flex flex-col items-center justify-center gap-1 px-3 py-2 text-gray-500 hover:text-red-500 transition-colors flex-1"
+        >
+          <Users className="w-5 h-5" />
+          <span className="text-xs font-medium">Team</span>
+        </Link>
+        <button
+          onClick={() => setShowMoreDrawer(true)}
+          className="flex flex-col items-center justify-center gap-1 px-3 py-2 text-gray-500 hover:text-red-500 transition-colors flex-1"
+        >
+          <Menu className="w-5 h-5" />
+          <span className="text-xs font-medium">More</span>
+        </button>
+      </nav>
+
+      <MoreDrawer open={showMoreDrawer} onClose={() => setShowMoreDrawer(false)} />
     </header>
   );
 };

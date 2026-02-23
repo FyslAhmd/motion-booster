@@ -8,6 +8,7 @@ import {
   Smile,
   MoreVertical,
   Phone,
+  ArrowLeft,
   Video,
   X,
   Folder,
@@ -23,9 +24,9 @@ import {
 
 export default function MessagesPage() {
   const [selectedConversation, setSelectedConversation] = useState(0);
+  const [showChat, setShowChat] = useState(false);
   const [messageInput, setMessageInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<'all' | 'group' | 'contacts'>('all');
   const [showFilePanel, setShowFilePanel] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [dragActive, setDragActive] = useState(false);
@@ -227,60 +228,24 @@ export default function MessagesPage() {
   };
 
   return (
-    <div className="flex h-full bg-gradient-to-br from-green-50 via-purple-50 to-white overflow-hidden">
+    <div className="flex h-full bg-white overflow-hidden">
       {/* Conversations Sidebar */}
-      <div className="w-105 shrink-0 bg-white border-r border-gray-200 flex flex-col">
+      <div className={`w-full md:w-80 lg:w-96 shrink-0 bg-white border-r border-gray-200 flex flex-col ${
+        showChat ? 'hidden md:flex' : 'flex'
+      }`}>
         {/* Header */}
-        <div className="p-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Messages</h1>
-          
+        <div className="p-4 md:p-6">
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900 mb-4">Messages</h1>
           {/* Search */}
-          <div className="relative mb-4">
+          <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
               placeholder="Search..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border-0 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+              className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border-0 rounded-lg text-sm focus:ring-2 focus:ring-red-400 focus:bg-white transition-all"
             />
-          </div>
-
-          {/* Tabs */}
-          <div className="flex gap-6">
-            <button
-              onClick={() => setActiveTab('all')}
-              className={`pb-3 text-sm font-medium relative ${
-                activeTab === 'all' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              All Message
-              {activeTab === 'all' && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-green-500" />
-              )}
-            </button>
-            <button
-              onClick={() => setActiveTab('group')}
-              className={`pb-3 text-sm font-medium relative ${
-                activeTab === 'group' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              Group Chat
-              {activeTab === 'group' && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-green-500" />
-              )}
-            </button>
-            <button
-              onClick={() => setActiveTab('contacts')}
-              className={`pb-3 text-sm font-medium relative ${
-                activeTab === 'contacts' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              Contacts
-              {activeTab === 'contacts' && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-green-500" />
-              )}
-            </button>
           </div>
         </div>
 
@@ -288,10 +253,10 @@ export default function MessagesPage() {
         <div className="flex-1 overflow-y-auto">
           {conversations.map((conversation, index) => (
             <div key={conversation.id}
-              onClick={() => setSelectedConversation(index)}
-              className={`px-6 py-4 cursor-pointer transition-all relative ${
+              onClick={() => { setSelectedConversation(index); setShowChat(true); }}
+              className={`px-4 md:px-6 py-4 cursor-pointer transition-all relative ${
                 selectedConversation === index
-                  ? 'bg-green-50 border-r-4 border-r-green-500'
+                  ? 'bg-red-50 border-r-4 border-r-red-500'
                   : 'hover:bg-gray-50'
               }`}
             >
@@ -325,89 +290,88 @@ export default function MessagesPage() {
       </div>
 
       {/* Chat Area */}
-      <div className="flex-1 flex flex-col bg-gray-50">
+      <div className={`flex-1 flex flex-col bg-gray-50 min-w-0 ${
+        showChat ? 'flex' : 'hidden md:flex'
+      }`}>
         {/* Chat Header */}
-        <div className="bg-gradient-to-r from-green-50 via-white to-purple-50 px-8 py-4">
+        <div className="bg-white border-b border-gray-100 px-4 md:px-8 py-3 md:py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
+              {/* Back button — mobile only */}
+              <button
+                onClick={() => setShowChat(false)}
+                className="md:hidden p-1.5 -ml-1 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <ArrowLeft className="w-5 h-5 text-gray-600" />
+              </button>
               <div className="relative">
-                <div className={`w-12 h-12 bg-linear-to-br ${conversations[selectedConversation].color} rounded-full flex items-center justify-center text-white font-semibold`}>
+                <div className={`w-10 h-10 md:w-12 md:h-12 bg-linear-to-br ${conversations[selectedConversation].color} rounded-full flex items-center justify-center text-white font-semibold text-sm`}>
                   {conversations[selectedConversation].avatar}
                 </div>
                 {conversations[selectedConversation].online && (
-                  <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white"></div>
+                  <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
                 )}
               </div>
               <div>
-                <h2 className="font-semibold text-gray-900 text-lg">
+                <h2 className="font-semibold text-gray-900 text-base md:text-lg leading-tight">
                   {conversations[selectedConversation].name}
                 </h2>
-                <p className="text-sm text-green-600 font-medium">
+                <p className="text-xs md:text-sm text-green-600 font-medium">
                   {conversations[selectedConversation].online ? 'Active Now' : 'Offline'}
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <button className="p-2.5 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <Phone className="w-5 h-5 text-gray-600" />
+            <div className="flex items-center gap-1">
+              <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                <Phone className="w-4 h-4 md:w-5 md:h-5 text-gray-600" />
               </button>
-              <button className="p-2.5 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <Video className="w-5 h-5 text-gray-600" />
+              <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors hidden sm:block">
+                <Video className="w-4 h-4 md:w-5 md:h-5 text-gray-600" />
               </button>
-              <button onClick={() => setShowFilePanel(!showFilePanel)}
-                className={`p-2.5 rounded-lg transition-colors ${
-                  showFilePanel ? 'bg-green-50 text-green-600' : 'hover:bg-gray-100 text-gray-600'
+              <button
+                onClick={() => setShowFilePanel(!showFilePanel)}
+                className={`p-2 rounded-lg transition-colors hidden sm:block ${
+                  showFilePanel ? 'bg-red-50 text-red-500' : 'hover:bg-gray-100 text-gray-600'
                 }`}
               >
-                <Folder className="w-5 h-5" />
+                <Folder className="w-4 h-4 md:w-5 md:h-5" />
               </button>
-              <button className="p-2.5 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <MoreVertical className="w-5 h-5 text-gray-600" />
+              <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                <MoreVertical className="w-4 h-4 md:w-5 md:h-5 text-gray-600" />
               </button>
             </div>
           </div>
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6">
-          {messages.map((message, index) => (
-            <div key={message.id}
-              className={`flex ${message.isMe ? 'justify-end' : 'justify-start'}`}
-            >
-              <div className={`flex gap-3 max-w-2xl ${message.isMe ? 'flex-row-reverse' : 'flex-row'}`}>
+        <div className="flex-1 overflow-y-auto px-4 md:px-8 py-4 md:py-6 space-y-4 md:space-y-6">
+          {messages.map((message) => (
+            <div key={message.id} className={`flex ${message.isMe ? 'justify-end' : 'justify-start'}`}>
+              <div className={`flex gap-2 md:gap-3 max-w-[85%] md:max-w-2xl ${message.isMe ? 'flex-row-reverse' : 'flex-row'}`}>
                 {!message.isMe && (
-                  <div className={`w-10 h-10 shrink-0 bg-linear-to-br ${conversations[selectedConversation].color} rounded-full flex items-center justify-center text-white font-semibold text-sm`}>
+                  <div className={`w-8 h-8 md:w-10 md:h-10 shrink-0 bg-linear-to-br ${conversations[selectedConversation].color} rounded-full flex items-center justify-center text-white font-semibold text-xs md:text-sm`}>
                     {conversations[selectedConversation].avatar}
                   </div>
                 )}
                 <div className={`flex flex-col ${message.isMe ? 'items-end' : 'items-start'}`}>
-                  <div
-                    className={`rounded-2xl px-5 py-3 ${
-                      message.isMe
-                        ? 'bg-blue-600 text-white rounded-tr-sm'
-                        : 'bg-white text-gray-900 border border-gray-100 rounded-tl-sm shadow-sm'
-                    }`}
-                  >
+                  <div className={`rounded-2xl px-4 py-2.5 md:px-5 md:py-3 ${
+                    message.isMe
+                      ? 'bg-red-500 text-white rounded-tr-sm'
+                      : 'bg-white text-gray-900 border border-gray-100 rounded-tl-sm shadow-sm'
+                  }`}>
                     <p className="text-sm leading-relaxed">{message.text}</p>
                   </div>
-                  <div className={`flex items-center gap-2 mt-1.5 ${message.isMe ? 'flex-row-reverse' : 'flex-row'}`}>
-                    <span className="text-xs text-gray-500">{message.time}</span>
+                  <div className={`flex items-center gap-1.5 mt-1 ${message.isMe ? 'flex-row-reverse' : 'flex-row'}`}>
+                    <span className="text-xs text-gray-400">{message.time}</span>
                     {message.isMe && (
-                      <span>
-                        {message.read ? (
-                          <CheckCheck className="w-4 h-4 text-green-600" />
-                        ) : (
-                          <Check className="w-4 h-4 text-gray-400" />
-                        )}
-                      </span>
+                      message.read
+                        ? <CheckCheck className="w-3.5 h-3.5 text-green-500" />
+                        : <Check className="w-3.5 h-3.5 text-gray-400" />
                     )}
                   </div>
                 </div>
                 {message.isMe && (
-                  <div className="w-10 h-10 shrink-0 bg-linear-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                  <div className="w-8 h-8 md:w-10 md:h-10 shrink-0 bg-linear-to-br from-red-500 to-rose-600 rounded-full flex items-center justify-center text-white font-semibold text-xs md:text-sm">
                     ME
                   </div>
                 )}
@@ -417,16 +381,16 @@ export default function MessagesPage() {
         </div>
 
         {/* Message Input */}
-        <div className="bg-white border-t border-gray-100 px-8 py-4">
+        <div className="bg-white border-t border-gray-100 px-3 md:px-8 py-3 md:py-4">
           {/* Selected Files Preview */}
           {selectedFiles.length > 0 && (
             <div className="mb-3 space-y-2">
               {selectedFiles.map((file, index) => (
                 <div key={index}
-                  className="flex items-center gap-3 p-3 bg-green-50 border border-green-100 rounded-xl"
+                  className="flex items-center gap-3 p-2.5 bg-red-50 border border-red-100 rounded-xl"
                 >
-                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                    <File className="w-5 h-5 text-green-600" />
+                  <div className="w-9 h-9 bg-red-100 rounded-lg flex items-center justify-center">
+                    <File className="w-5 h-5 text-red-500" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="font-medium text-gray-900 text-sm truncate">{file.name}</div>
@@ -486,7 +450,7 @@ export default function MessagesPage() {
                   }
                 }}
                 placeholder="Type your message..."
-                className="w-full px-5 py-3.5 bg-gray-50 border-0 rounded-xl resize-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-sm"
+                className="w-full px-4 py-2.5 bg-gray-50 border-0 rounded-xl resize-none focus:ring-2 focus:ring-red-400 focus:bg-white transition-all text-sm"
                 rows={1}
               />
             </div>
@@ -532,10 +496,10 @@ export default function MessagesPage() {
 
             <button onClick={handleSendMessage}
               disabled={!messageInput.trim() && selectedFiles.length === 0}
-              className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium text-sm flex items-center gap-2"
+              className="p-2.5 md:px-5 md:py-2.5 bg-red-500 text-white rounded-xl hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all font-medium text-sm flex items-center gap-1.5"
             >
               <Send className="w-4 h-4" />
-              Send
+              <span className="hidden md:inline">Send</span>
             </button>
           </div>
         </div>
@@ -591,7 +555,7 @@ export default function MessagesPage() {
           {/* Quick Actions */}
           <div className="p-4 border-t border-gray-200">
             <label htmlFor="quick-file-upload">
-              <div className="w-full px-4 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 flex items-center justify-center gap-2 cursor-pointer">
+              <div className="w-full px-4 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 flex items-center justify-center gap-2 cursor-pointer text-sm font-medium">
                 <Paperclip className="w-5 h-5" />
                 Upload Files
               </div>

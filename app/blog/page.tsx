@@ -181,7 +181,7 @@ export default function BlogPage() {
                   {popularTags.map((tag) => (
                     <button
                       key={tag}
-                      className="px-4 py-2 rounded-full border border-gray-300 text-sm text-gray-700 hover:bg-purple-50 hover:border-purple-500 hover:text-purple-600 transition-all"
+                      className="px-4 py-2 rounded-full border border-gray-300 text-sm text-gray-700 hover:bg-red-50 hover:border-red-500 hover:text-red-600 transition-all"
                     >
                       {tag}
                     </button>
@@ -199,7 +199,7 @@ export default function BlogPage() {
                     className="bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow"
                   >
                     {/* Image */}
-                    <div className="relative h-48 bg-green-100">
+                    <div className="relative h-48 bg-red-100">
                       <div className="absolute inset-0 flex items-center justify-center">
                         <div className="text-gray-400 text-sm">Blog Image</div>
                       </div>
@@ -236,7 +236,7 @@ export default function BlogPage() {
                       {/* Read More Button */}
                       <Link
                         href={`/blog/${post.id}`}
-                        className="inline-block bg-purple-600 text-white px-6 py-2 rounded-full text-sm font-semibold hover:bg-purple-700 transition-all"
+                        className="inline-block bg-red-600 text-white px-6 py-2 rounded-full text-sm font-semibold hover:bg-red-700 transition-all"
                       >
                         Read More
                       </Link>
@@ -257,10 +257,10 @@ export default function BlogPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="relative py-16 sm:py-20 lg:py-32 bg-purple-600 overflow-hidden">
-        {/* Green Circle Decorations */}
-        <div className="absolute top-0 left-0 w-32 h-32 sm:w-48 sm:h-48 md:w-64 md:h-64 bg-green-500 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
-        <div className="absolute bottom-0 right-0 w-48 h-48 sm:w-64 sm:h-64 md:w-96 md:h-96 bg-green-500 rounded-full translate-x-1/2 translate-y-1/2"></div>
+      <section className="relative py-16 sm:py-20 lg:py-32 bg-red-600 overflow-hidden">
+        {/* Red Circle Decorations */}
+        <div className="absolute top-0 left-0 w-32 h-32 sm:w-48 sm:h-48 md:w-64 md:h-64 bg-red-400 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+        <div className="absolute bottom-0 right-0 w-48 h-48 sm:w-64 sm:h-64 md:w-96 md:h-96 bg-red-700 rounded-full translate-x-1/2 translate-y-1/2"></div>
 
         <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 sm:mb-6 leading-tight">
@@ -277,7 +277,7 @@ export default function BlogPage() {
             />
             <button
               type="submit"
-              className="px-8 py-4 bg-white text-purple-600 rounded-full font-bold hover:bg-gray-100 transition-all shadow-xl whitespace-nowrap"
+              className="px-8 py-4 bg-white text-red-600 rounded-full font-bold hover:bg-gray-100 transition-all shadow-xl whitespace-nowrap"
             >
               Subscribe Now
             </button>

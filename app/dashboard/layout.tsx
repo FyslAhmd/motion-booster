@@ -31,7 +31,7 @@ export default function DashboardLayout({
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4 animate-spin" />
+          <div className="w-12 h-12 border-4 border-red-500 border-t-transparent rounded-full mx-auto mb-4 animate-spin" />
           <p className="text-gray-600">Loading your dashboard...</p>
         </div>
       </div>
@@ -54,7 +54,7 @@ export default function DashboardLayout({
         <div className="flex items-center justify-between p-4">
           <Link href="/dashboard" className="flex items-center">
             <span className="text-xl font-bold">
-              <span className="text-green-500">Motion</span>
+              <span className="text-red-500">Motion</span>
               <span className="text-black">Booster</span>
             </span>
           </Link>
@@ -75,7 +75,7 @@ export default function DashboardLayout({
           <Link href="/dashboard">
             <div className="cursor-pointer">
               <span className="text-2xl font-bold">
-                <span className="text-green-500">Motion</span>
+                <span className="text-red-500">Motion</span>
                 <span className="text-black">Booster</span>
               </span>
               <div className="text-xs text-gray-500 mt-1">Client Dashboard</div>
@@ -91,7 +91,7 @@ export default function DashboardLayout({
               <Link key={index} href={item.href}>
                 <div className={`flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer transition-colors ${
                     isActive
-                      ? 'bg-green-50 text-green-600'
+                      ? 'bg-red-50 text-red-600'
                       : 'text-gray-600 hover:bg-gray-50'
                   }`}
                 >
@@ -134,7 +134,7 @@ export default function DashboardLayout({
               <Link key={index} href={item.href} className="relative">
                 <div className={`flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-colors ${
                     isActive
-                      ? 'text-green-600'
+                      ? 'text-red-600'
                       : 'text-gray-600'
                   }`}
                 >

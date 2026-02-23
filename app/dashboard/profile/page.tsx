@@ -74,9 +74,9 @@ export default function ProfilePage() {
   ];
 
   return (
-    <div className="h-full overflow-y-auto bg-gradient-to-br from-green-50 via-purple-50 to-white">
+    <div className="h-full overflow-y-auto bg-gray-50">
       {/* Header */}
-      <div className="bg-gradient-to-r from-green-50 via-white to-purple-50">
+      <div className="bg-white border-b border-gray-100">
         <div className="max-w-5xl mx-auto p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -106,7 +106,7 @@ export default function ProfilePage() {
                   onClick={() => setActiveTab(tab.id as 'profile' | 'security' | 'notifications' | 'billing')}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors ${
                     activeTab === tab.id
-                      ? 'bg-green-50 text-green-600'
+                      ? 'bg-red-50 text-red-500'
                       : 'text-gray-600 hover:bg-gray-50'
                   }`}
                 >
@@ -122,51 +122,48 @@ export default function ProfilePage() {
             {/* Profile Tab */}
             {activeTab === 'profile' && (
               <div className="bg-white/50 backdrop-blur-sm rounded-xl p-6 space-y-6">
-                {/* Profile Header */}
-                <div className="flex items-start justify-between pb-6">
-                  <div className="flex items-center gap-4">
-                    <div className="relative">
-                      <div className="w-20 h-20 bg-linear-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-2xl">
-                        {formData.fullName.charAt(0)}
-                      </div>
-                    <button className="absolute bottom-0 right-0 p-1.5 bg-purple-500 text-white rounded-full shadow-lg hover:bg-purple-600"
-                      >
-                        <Camera className="w-3.5 h-3.5" />
-                      </button>
+                {/* Profile Header — MoreDrawer style */}
+                <div className="flex flex-col items-center pb-8 pt-2 border-b border-gray-100">
+                  <div className="relative mb-4">
+                    <div className="w-24 h-24 rounded-full bg-gray-100 border-4 border-red-400 flex items-center justify-center">
+                      <User className="w-12 h-12 text-gray-400" />
                     </div>
-                    <div>
-                      <h2 className="text-xl font-bold text-gray-900">{formData.fullName}</h2>
-                      <p className="text-sm text-gray-600">{formData.email}</p>
-                      <div className="flex items-center gap-2 mt-2">
-                        <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full">
-                          Active Account
-                        </span>
-                        <span className="text-xs text-gray-500">Member since Jan 2024</span>
-                      </div>
-                    </div>
+                    <button className="absolute bottom-0 right-0 p-1.5 bg-red-500 text-white rounded-full shadow-lg hover:bg-red-600 transition-colors">
+                      <Camera className="w-3.5 h-3.5" />
+                    </button>
                   </div>
-                  <button onClick={() => {
-                      if (isEditing) {
-                        // Save changes
-                        setIsEditing(false);
-                      } else {
-                        setIsEditing(true);
-                      }
-                    }}
-                    className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 flex items-center gap-2 text-sm font-medium"
-                  >
-                    {isEditing ? (
-                      <>
-                        <Save className="w-4 h-4" />
-                        Save Changes
-                      </>
-                    ) : (
-                      <>
-                        <Edit2 className="w-4 h-4" />
-                        Edit Profile
-                      </>
-                    )}
-                  </button>
+                  <h2 className="text-xl font-bold text-gray-900">{formData.fullName}</h2>
+                  <p className="text-sm text-gray-500 mt-0.5">{formData.email}</p>
+                  <div className="flex items-center gap-2 mt-3">
+                    <span className="px-3 py-1 bg-red-50 text-red-600 text-xs font-semibold rounded-full">
+                      Active Account
+                    </span>
+                    <span className="text-xs text-gray-400">Member since Jan 2024</span>
+                  </div>
+                  <div className="flex gap-2 mt-4">
+                    <button
+                      onClick={() => {
+                        if (isEditing) {
+                          setIsEditing(false);
+                        } else {
+                          setIsEditing(true);
+                        }
+                      }}
+                      className="flex items-center gap-2 px-5 py-2 bg-red-500 text-white rounded-full text-sm font-semibold hover:bg-red-600 transition-colors"
+                    >
+                      {isEditing ? (
+                        <>
+                          <Save className="w-4 h-4" />
+                          Save Changes
+                        </>
+                      ) : (
+                        <>
+                          <Edit2 className="w-4 h-4" />
+                          Edit Profile
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 {/* Profile Form */}
@@ -281,7 +278,7 @@ export default function ProfilePage() {
                     onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
                     disabled={!isEditing}
                     rows={4}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-600 resize-none"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-400 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-600 resize-none"
                   />
                 </div>
               </div>
@@ -360,7 +357,7 @@ export default function ProfilePage() {
                   </div>
 
                   <button onClick={handlePasswordChange}
-                  className="w-full py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 font-medium"
+                  className="w-full py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 font-medium"
                   >
                     Update Password
                   </button>
@@ -370,7 +367,7 @@ export default function ProfilePage() {
                   <h3 className="text-lg font-bold text-gray-900 mb-3">Two-Factor Authentication</h3>
                   <div className="flex items-start justify-between p-4 bg-gray-50 rounded-lg">
                     <div className="flex items-start gap-3">
-                      <Shield className="w-5 h-5 text-green-600 mt-0.5" />
+                      <Shield className="w-5 h-5 text-red-500 mt-0.5" />
                       <div>
                         <h4 className="font-medium text-gray-900">Not Enabled</h4>
                         <p className="text-sm text-gray-600 mt-1">
@@ -378,7 +375,7 @@ export default function ProfilePage() {
                         </p>
                       </div>
                     </div>
-                    <button className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 text-sm font-medium"
+                    <button className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 text-sm font-medium"
                     >
                       Enable
                     </button>
@@ -409,7 +406,7 @@ export default function ProfilePage() {
                       <button
                         onClick={() => setNotifications({ ...notifications, [key]: !value })}
                         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                          value ? 'bg-green-500' : 'bg-gray-300'
+                          value ? 'bg-red-500' : 'bg-gray-300'
                         }`}
                       >
                         <span
@@ -433,7 +430,7 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Current Plan */}
-                <div className="p-6 bg-linear-to-br from-blue-50 to-purple-50 rounded-xl border border-blue-200">
+                <div className="p-6 bg-linear-to-br from-red-50 to-rose-50 rounded-xl border border-red-100">
                   <div className="flex items-start justify-between">
                     <div>
                       <h3 className="text-lg font-bold text-gray-900">Professional Plan</h3>
@@ -443,12 +440,12 @@ export default function ProfilePage() {
                         <span className="text-gray-600">/month</span>
                       </div>
                     </div>
-                    <button className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 text-sm font-medium"
+                    <button className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 text-sm font-medium"
                     >
                       Upgrade Plan
                     </button>
                   </div>
-                  <div className="mt-4 pt-4 border-t border-green-200">
+                  <div className="mt-4 pt-4 border-t border-red-100">
                     <p className="text-sm text-gray-600">
                       Next billing date: <span className="font-medium text-gray-900">March 1, 2026</span>
                     </p>
@@ -460,7 +457,7 @@ export default function ProfilePage() {
                   <h3 className="text-lg font-bold text-gray-900 mb-3">Payment Method</h3>
                   <div className="p-4 bg-gray-50 rounded-lg flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-8 bg-green-500 rounded flex items-center justify-center text-white text-xs font-bold">
+                      <div className="w-12 h-8 bg-red-500 rounded flex items-center justify-center text-white text-xs font-bold">
                         VISA
                       </div>
                       <div>
@@ -468,7 +465,7 @@ export default function ProfilePage() {
                         <p className="text-sm text-gray-600">Expires 12/2026</p>
                       </div>
                     </div>
-                    <button className="text-green-600 hover:text-green-700 text-sm font-medium"
+                    <button className="text-red-500 hover:text-red-600 text-sm font-medium"
                     >
                       Update
                     </button>
@@ -494,10 +491,10 @@ export default function ProfilePage() {
                         </div>
                         <div className="flex items-center gap-4">
                           <span className="font-medium text-gray-900">{invoice.amount}</span>
-                          <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full">
+                          <span className="px-2 py-1 bg-red-50 text-red-600 text-xs font-medium rounded-full">
                             {invoice.status}
                           </span>
-                          <button className="text-green-600 hover:text-green-700"
+                          <button className="text-red-500 hover:text-red-600"
                           >
                             Download
                           </button>

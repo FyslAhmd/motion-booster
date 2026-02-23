@@ -1,6 +1,45 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+gsap.registerPlugin(ScrollTrigger);
+
 export const Automate = () => {
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (titleRef.current) {
+      gsap.from(titleRef.current, {
+        scrollTrigger: {
+          trigger: titleRef.current,
+          start: 'top 80%',
+        },
+        opacity: 0,
+        y: 30,
+        duration: 0.8,
+        ease: 'power3.out',
+      });
+    }
+
+    if (gridRef.current) {
+      const cards = gridRef.current.querySelectorAll('.benefit-card');
+      gsap.from(cards, {
+        scrollTrigger: {
+          trigger: gridRef.current,
+          start: 'top 75%',
+        },
+        opacity: 0,
+        y: 40,
+        stagger: 0.15,
+        duration: 0.8,
+        ease: 'power3.out',
+      });
+    }
+  }, []);
+
   const benefits = [
     {
       icon: (
@@ -49,15 +88,15 @@ export const Automate = () => {
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-16">
-          <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
+          <h2 ref={titleRef} className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
             Why Agencies Love Our Platform
           </h2>
         </div>
 
         {/* Benefits Grid */}
-        <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
+        <div ref={gridRef} className="grid md:grid-cols-2 gap-8 lg:gap-12">
           {benefits.map((benefit, index) => (
-            <div key={index} className="bg-white rounded-2xl p-8 shadow-sm hover:shadow-lg transition-shadow">
+            <div key={index} className="benefit-card bg-white rounded-2xl p-8 shadow-sm hover:shadow-lg transition-shadow">
               {/* Icon */}
               <div className={`inline-flex items-center justify-center w-16 h-16 ${benefit.iconColor} text-white rounded-2xl mb-6`}>
                 {benefit.icon}

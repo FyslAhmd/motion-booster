@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
 import { 
   TrendingUp, 
   Palette, 
@@ -23,80 +22,59 @@ interface ServiceCategoryProps {
   title: string;
   description: string;
   services: string[];
-  color: string;
+  gradient: string;
 }
 
-const ServiceCategory: React.FC<ServiceCategoryProps> = ({ icon, title, description, services, color }) => {
+const ServiceCategory: React.FC<ServiceCategoryProps> = ({ icon, title, description, services, gradient }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
-    <motion.div 
-      className="bg-white border-2 border-gray-100 rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300"
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5 }}
-    >
+    <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300">
       <div 
-        className={`p-6 ${color} cursor-pointer`}
+        className={`p-6 bg-linear-to-br ${gradient} cursor-pointer`}
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-4 flex-1">
             <div className="shrink-0">
-              <div className="w-16 h-16 bg-white rounded-xl flex items-center justify-center shadow-md">
+              <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-md">
                 {icon}
               </div>
             </div>
             <div className="flex-1">
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">{title}</h3>
-              <p className="text-gray-700 leading-relaxed">{description}</p>
+              <h3 className="text-xl font-bold text-white mb-2">{title}</h3>
+              <p className="text-white/90 leading-relaxed text-sm">{description}</p>
             </div>
           </div>
-          <motion.button 
-            className="ml-4 mt-2"
-            animate={{ rotate: isExpanded ? 180 : 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <ChevronDown className="w-6 h-6 text-gray-900" />
-          </motion.button>
+          <button className={`ml-4 mt-2 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
+            <ChevronDown className="w-6 h-6 text-white" />
+          </button>
         </div>
       </div>
       
       {isExpanded && (
-        <motion.div 
-          className="p-6 bg-gray-50"
-          initial={{ height: 0, opacity: 0 }}
-          animate={{ height: "auto", opacity: 1 }}
-          transition={{ duration: 0.3 }}
-        >
+        <div className="p-6 bg-gray-50">
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
             {services.map((service, index) => (
-              <motion.div 
-                key={index}
-                className="flex items-start gap-2 text-gray-700"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.03 }}
-              >
-                <Check className="w-5 h-5 text-green-600 mt-0.5 shrink-0" />
+              <div key={index} className="flex items-start gap-2 text-gray-700">
+                <Check className="w-5 h-5 text-red-600 mt-0.5 shrink-0" />
                 <span className="text-sm">{service}</span>
-              </motion.div>
+              </div>
             ))}
           </div>
-        </motion.div>
+        </div>
       )}
-    </motion.div>
+    </div>
   );
 };
 
 export default function ServicePage() {
   const serviceCategories = [
     {
-      icon: <TrendingUp className="w-8 h-8 text-green-600" />,
+      icon: <TrendingUp className="w-8 h-8 text-white" />,
       title: 'Digital Marketing Services',
       description: 'Comprehensive digital marketing solutions to grow your online presence and drive results.',
-      color: 'bg-green-50',
+      gradient: 'from-red-500 to-red-600',
       services: [
         'Facebook & Instagram Ads Management',
         'LinkedIn & TikTok Marketing',
@@ -113,10 +91,10 @@ export default function ServicePage() {
       ],
     },
     {
-      icon: <Palette className="w-8 h-8 text-purple-600" />,
+      icon: <Palette className="w-8 h-8 text-white" />,
       title: 'Graphics Design Services',
       description: 'Creative design solutions that make your brand stand out and communicate effectively.',
-      color: 'bg-purple-50',
+      gradient: 'from-rose-500 to-red-500',
       services: [
         'Logo Design & Brand Identity',
         'Business Card & Stationery',
@@ -133,10 +111,10 @@ export default function ServicePage() {
       ],
     },
     {
-      icon: <Code className="w-8 h-8 text-green-600" />,
+      icon: <Code className="w-8 h-8 text-white" />,
       title: 'Software Development Services',
       description: 'Custom software solutions tailored to your business needs and workflows.',
-      color: 'bg-green-50',
+      gradient: 'from-red-600 to-red-700',
       services: [
         'Custom Web Applications',
         'CRM & ERP Systems',
@@ -153,10 +131,10 @@ export default function ServicePage() {
       ],
     },
     {
-      icon: <Globe className="w-8 h-8 text-cyan-600" />,
+      icon: <Globe className="w-8 h-8 text-white" />,
       title: 'Web Development Services',
       description: 'Professional websites that are fast, responsive, and optimized for conversions.',
-      color: 'bg-cyan-50',
+      gradient: 'from-red-500 to-rose-600',
       services: [
         'Corporate & E-commerce Websites',
         'Landing Page Development',
@@ -173,10 +151,10 @@ export default function ServicePage() {
       ],
     },
     {
-      icon: <Smartphone className="w-8 h-8 text-pink-600" />,
+      icon: <Smartphone className="w-8 h-8 text-white" />,
       title: 'Mobile App Development',
       description: 'Native and cross-platform mobile apps that deliver exceptional user experiences.',
-      color: 'bg-pink-50',
+      gradient: 'from-red-500 to-red-600',
       services: [
         'iOS App Development (Swift)',
         'Android App Development (Kotlin)',
@@ -193,10 +171,10 @@ export default function ServicePage() {
       ],
     },
     {
-      icon: <Layers className="w-8 h-8 text-orange-600" />,
+      icon: <Layers className="w-8 h-8 text-white" />,
       title: 'UI/UX Design Services',
       description: 'User-centered design that creates intuitive and engaging digital experiences.',
-      color: 'bg-orange-50',
+      gradient: 'from-rose-500 to-red-500',
       services: [
         'Website & App UI Design',
         'Dashboard & Admin Panel Design',
@@ -213,10 +191,10 @@ export default function ServicePage() {
       ],
     },
     {
-      icon: <Sparkles className="w-8 h-8 text-yellow-600" />,
+      icon: <Sparkles className="w-8 h-8 text-white" />,
       title: 'Branding & Creative Services',
       description: 'Build a memorable brand identity that resonates with your target audience.',
-      color: 'bg-yellow-50',
+      gradient: 'from-red-600 to-red-700',
       services: [
         'Brand Strategy & Positioning',
         'Brand Messaging & Voice',
@@ -233,10 +211,10 @@ export default function ServicePage() {
       ],
     },
     {
-      icon: <Video className="w-8 h-8 text-red-600" />,
+      icon: <Video className="w-8 h-8 text-white" />,
       title: 'Video & Animation Services',
       description: 'Engaging video content and animations that tell your story effectively.',
-      color: 'bg-red-50',
+      gradient: 'from-red-500 to-rose-600',
       services: [
         'Corporate Video Production',
         'Product Demo Videos',
@@ -253,10 +231,10 @@ export default function ServicePage() {
       ],
     },
     {
-      icon: <Briefcase className="w-8 h-8 text-indigo-600" />,
+      icon: <Briefcase className="w-8 h-8 text-white" />,
       title: 'Business Consulting Services',
       description: 'Strategic guidance to help your business grow and achieve digital transformation.',
-      color: 'bg-indigo-50',
+      gradient: 'from-red-500 to-red-600',
       services: [
         'Digital Transformation Consulting',
         'Technology Stack Selection',
@@ -273,10 +251,10 @@ export default function ServicePage() {
       ],
     },
     {
-      icon: <Zap className="w-8 h-8 text-teal-600" />,
+      icon: <Zap className="w-8 h-8 text-white" />,
       title: 'Specialized Services',
       description: 'Advanced technical services for complex integrations and optimizations.',
-      color: 'bg-teal-50',
+      gradient: 'from-rose-500 to-red-500',
       services: [
         'Payment Gateway Integration',
         'Social Media API Integration',
@@ -295,14 +273,14 @@ export default function ServicePage() {
   ];
 
   return (
-    <main className="min-h-screen pt-20">
+    <main className="min-h-screen pt-20 pb-16 lg:pb-0">
       {/* Hero Section */}
-      <section className="py-20 lg:py-32 bg-linear-to-br from-green-50 via-white to-purple-50">
+      <section className="py-20 lg:py-32 bg-linear-to-br from-red-50 via-white to-rose-50">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="text-center max-w-4xl mx-auto">
             <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
               Complete Digital Solutions
-              <span className="block text-green-600">
+              <span className="block text-red-600">
                 Under One Roof
               </span>
             </h1>
@@ -312,13 +290,13 @@ export default function ServicePage() {
             <div className="flex flex-wrap gap-4 justify-center">
               <Link
                 href="/contact"
-                className="px-8 py-4 bg-purple-500 text-white rounded-full font-semibold hover:bg-purple-600 transition-colors"
+                className="px-8 py-4 bg-red-500 text-white rounded-full font-semibold hover:bg-red-600 transition-colors shadow-lg"
               >
                 Get Started
               </Link>
               <Link
                 href="/about"
-                className="px-8 py-4 bg-white text-gray-900 rounded-full font-semibold border-2 border-gray-200 hover:border-gray-300 transition-colors"
+                className="px-8 py-4 bg-white text-gray-900 rounded-full font-semibold border-2 border-gray-200 hover:border-red-500 hover:text-red-600 transition-colors"
               >
                 Learn More
               </Link>
@@ -347,7 +325,7 @@ export default function ServicePage() {
                 title={category.title}
                 description={category.description}
                 services={category.services}
-                color={category.color}
+                gradient={category.gradient}
               />
             ))}
           </div>
@@ -374,30 +352,23 @@ export default function ServicePage() {
               { step: '04', title: 'Launch', desc: 'Testing, deployment, and go-live support' },
               { step: '05', title: 'Support', desc: 'Ongoing maintenance and optimization' },
             ].map((item, index) => (
-              <motion.div 
-                key={index} 
-                className="text-center"
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1, duration: 0.5 }}
-              >
-                <div className="w-20 h-20 bg-green-500 text-white rounded-full mx-auto mb-4 flex items-center justify-center text-2xl font-bold">
+              <div key={index} className="text-center">
+                <div className="w-20 h-20 bg-red-500 text-white rounded-full mx-auto mb-4 flex items-center justify-center text-2xl font-bold">
                   {item.step}
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2">{item.title}</h3>
                 <p className="text-gray-600 text-sm">{item.desc}</p>
-              </motion.div>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="relative py-16 sm:py-20 lg:py-32 bg-purple-600 overflow-hidden">
-        {/* Green Circle Decorations */}
-        <div className="absolute top-0 left-0 w-32 h-32 sm:w-48 sm:h-48 md:w-64 md:h-64 bg-green-500 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
-        <div className="absolute bottom-0 right-0 w-48 h-48 sm:w-64 sm:h-64 md:w-96 md:h-96 bg-green-500 rounded-full translate-x-1/2 translate-y-1/2"></div>
+      <section className="relative py-16 sm:py-20 lg:py-32 bg-red-600 overflow-hidden">
+        {/* Red Circle Decorations */}
+        <div className="absolute top-0 left-0 w-32 h-32 sm:w-48 sm:h-48 md:w-64 md:h-64 bg-red-400 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+        <div className="absolute bottom-0 right-0 w-48 h-48 sm:w-64 sm:h-64 md:w-96 md:h-96 bg-red-700 rounded-full translate-x-1/2 translate-y-1/2"></div>
 
         <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 sm:mb-6 leading-tight">
@@ -409,18 +380,18 @@ export default function ServicePage() {
           <div className="flex justify-center mb-6">
             <Link
               href="/contact"
-              className="bg-white text-purple-600 px-8 sm:px-10 py-3 sm:py-4 rounded-full font-bold text-base sm:text-lg hover:bg-gray-100 transition-colors shadow-xl"
+              className="bg-white text-red-600 px-8 sm:px-10 py-3 sm:py-4 rounded-full font-bold text-base sm:text-lg hover:bg-gray-100 transition-colors shadow-xl"
             >
               Contact Us Today
             </Link>
           </div>
           <p className="text-white text-xs sm:text-sm opacity-80 mb-2">
-            No credit card required • Cancel anytime
+            Free consultation • Fast turnaround
           </p>
           <p className="text-white text-xs sm:text-sm opacity-70">
             Questions? Contact us at{' '}
-            <a href="mailto:hello@youragency.com" className="underline hover:opacity-100">
-              hello@youragency.com
+            <a href="mailto:hello@motionbooster.com" className="underline hover:opacity-100">
+              hello@motionbooster.com
             </a>
           </p>
         </div>

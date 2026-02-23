@@ -1,4 +1,5 @@
 export { Hero } from './Hero';
+export { HeroSlider } from './HeroSlider';
 export { Companies } from './Companies';
 export { Features } from './Features';
 export { HowItWorks } from './HowItWorks';
@@ -10,3 +11,8 @@ export { FAQ } from './FAQ';
 export { CTA } from './CTA';
 export { Upgrade } from './Upgrade';
 export { Service } from './Service';
+export { HeaderBanner } from './HeaderBanner';
+export { CategorySlider } from './CategorySlider';
+export { PopularCourses } from './PopularCourses';
+export { CourseListing } from './CourseListing';
+export { AchievementStats } from './AchievementStats';

@@ -105,7 +105,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-purple-50 to-white flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-linear-to-br from-red-50 to-white flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
         <div className="bg-white rounded-3xl shadow-2xl p-8 md:p-10">
           {/* Header */}
@@ -170,7 +170,7 @@ export default function LoginPage() {
                   className={`w-full pl-12 pr-4 py-3.5 border ${
                     fieldErrors.email
                       ? 'border-red-400 focus:border-red-500 focus:ring-red-200'
-                      : 'border-gray-300 focus:border-purple-500 focus:ring-purple-200'
+                      : 'border-gray-300 focus:border-red-500 focus:ring-red-200'
                   } rounded-full focus:outline-none focus:ring-2 transition-all text-sm`}
                 />
               </div>
@@ -224,7 +224,7 @@ export default function LoginPage() {
                   className={`w-full pl-12 pr-12 py-3.5 border ${
                     fieldErrors.password
                       ? 'border-red-400 focus:border-red-500 focus:ring-red-200'
-                      : 'border-gray-300 focus:border-purple-500 focus:ring-purple-200'
+                      : 'border-gray-300 focus:border-red-500 focus:ring-red-200'
                   } rounded-full focus:outline-none focus:ring-2 transition-all text-sm`}
                 />
                 <button
@@ -283,13 +283,13 @@ export default function LoginPage() {
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                  className="w-4 h-4 text-red-500 border-gray-300 rounded focus:ring-red-500"
                 />
                 <span className="ml-2 text-gray-600">Remember me</span>
               </label>
               <Link
                 href="/forgot-password"
-                className="text-green-500 hover:text-green-600 font-medium transition-colors"
+                className="text-red-500 hover:text-red-600 font-medium transition-colors"
               >
                 Forgot Password?
               </Link>
@@ -299,7 +299,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3.5 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 disabled:cursor-not-allowed text-white font-semibold rounded-full transition-all focus:outline-none focus:ring-4 focus:ring-purple-200 flex items-center justify-center gap-2"
+              className="w-full py-3.5 bg-red-500 hover:bg-red-600 disabled:bg-red-400 disabled:cursor-not-allowed text-white font-semibold rounded-full transition-all focus:outline-none focus:ring-4 focus:ring-red-200 flex items-center justify-center gap-2"
             >
               {isLoading ? (
                 <>
@@ -336,7 +336,7 @@ export default function LoginPage() {
             Don&apos;t have an account?{' '}
             <Link
               href="/register"
-              className="text-green-500 hover:text-green-600 font-semibold transition-colors"
+              className="text-red-500 hover:text-red-600 font-semibold transition-colors"
             >
               Register here
             </Link>
