@@ -104,8 +104,8 @@ export const CategorySlider = () => {
                 className="category-card group shrink-0 flex flex-col items-center justify-center w-28 h-24 sm:w-36 sm:h-30 md:w-40 md:h-32.5 bg-white border border-gray-100 rounded-xl sm:rounded-2xl shadow-sm hover:shadow-xl hover:border-red-200 transition-all duration-300 px-2 sm:px-4"
               >
                 <div className="mb-1.5 sm:mb-3">
-                  {React.cloneElement(category.icon as React.ReactElement, {
-                    className: 'w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 ' + (category.icon as React.ReactElement).props.className.split(' ').slice(2).join(' ')
+                  {React.cloneElement(category.icon as React.ReactElement<{ className?: string }>, {
+                    className: 'w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 ' + ((category.icon as React.ReactElement<{ className?: string }>).props.className ?? '').split(' ').slice(2).join(' ')
                   })}
                 </div>
                 <span className="text-xs sm:text-sm font-bold text-gray-800 group-hover:text-red-500 text-center leading-tight transition-colors">

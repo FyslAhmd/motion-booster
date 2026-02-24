@@ -284,7 +284,7 @@ export const PopularCourses = () => {
                 <div className={`relative p-4 sm:p-6 bg-linear-to-br ${service.gradient}`}>
                   <div className="flex items-center gap-2.5 sm:gap-3 mb-2 sm:mb-3">
                     <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 backdrop-blur-sm rounded-lg sm:rounded-xl flex items-center justify-center shrink-0">
-                      {React.cloneElement(service.icon as React.ReactElement, {
+                      {React.cloneElement(service.icon as React.ReactElement<{ className?: string }>, {
                         className: 'w-6 h-6 sm:w-8 sm:h-8 text-white'
                       })}
                     </div>
