@@ -42,7 +42,7 @@ export default function DashboardLayout({
 
   const navItems = [
     { icon: Home, label: 'Dashboard', href: '/dashboard' },
-    { icon: MessageSquare, label: 'Chat', href: '/dashboard/messages', badge: 3 },
+    { icon: MessageSquare, label: 'Chat', href: '/dashboard/messages' },
     { icon: BarChart3, label: 'Reports', href: '/dashboard/reports' },
     { icon: User, label: 'Profile', href: '/dashboard/profile' },
   ];
@@ -97,11 +97,6 @@ export default function DashboardLayout({
                 >
                   <item.icon className="w-5 h-5" />
                   <span className="font-medium">{item.label}</span>
-                  {item.badge && (
-                    <span className="ml-auto bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
-                      {item.badge}
-                    </span>
-                  )}
                 </div>
               </Link>
             );
@@ -140,11 +135,6 @@ export default function DashboardLayout({
                 >
                   <div className="relative">
                     <item.icon className="w-5 h-5" />
-                    {item.badge && (
-                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full">
-                        {item.badge}
-                      </span>
-                    )}
                   </div>
                   <span className="text-[10px] font-medium">{item.label}</span>
                 </div>

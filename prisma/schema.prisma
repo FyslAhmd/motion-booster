@@ -39,6 +39,8 @@ model User {
   updatedAt     DateTime   @updatedAt @map("updated_at")
 
   refreshTokens RefreshToken[]
+  sentMessages     Message[]      @relation("sender")
+  conversations    Conversation[] @relation("ConversationParticipants")
 
   @@index([email])
   @@index([username])
@@ -64,4 +66,40 @@ model RefreshToken {
   @@index([tokenHash])
   @@index([familyId])
   @@map("refresh_tokens")
+}
+
+// ─── CONVERSATIONS ────────────────────────────────────
+
+enum MessageStatus {
+  SENT
+  DELIVERED
+  READ
+}
+
+model Conversation {
+  id           String    @id @default(cuid())
+  participants User[]    @relation("ConversationParticipants")
+  messages     Message[]
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  @@map("conversations")
+}
+
+// ─── MESSAGES ─────────────────────────────────────────
+
+model Message {
+  id             String        @id @default(cuid())
+  conversationId String        @map("conversation_id")
+  senderId       String        @map("sender_id")
+  content        String
+  status         MessageStatus @default(SENT)
+  createdAt      DateTime      @default(now()) @map("created_at")
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation("sender", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([senderId])
+  @@map("messages")
 }

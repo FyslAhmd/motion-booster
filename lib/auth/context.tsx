@@ -19,6 +19,7 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
+  accessToken: string | null;
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (accessToken: string, user: User) => void;
@@ -29,6 +30,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // Check for existing session on mount
@@ -39,6 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (token && storedUser) {
       try {
         setUser(JSON.parse(storedUser));
+        setAccessToken(token);
       } catch {
         sessionStorage.removeItem('accessToken');
         sessionStorage.removeItem('user');
@@ -47,15 +50,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(false);
   }, []);
 
-  const login = useCallback((accessToken: string, userData: User) => {
-    sessionStorage.setItem('accessToken', accessToken);
+  const login = useCallback((newToken: string, userData: User) => {
+    sessionStorage.setItem('accessToken', newToken);
     sessionStorage.setItem('user', JSON.stringify(userData));
+    setAccessToken(newToken);
     setUser(userData);
   }, []);
 
   const logout = useCallback(() => {
     sessionStorage.removeItem('accessToken');
     sessionStorage.removeItem('user');
+    setAccessToken(null);
     setUser(null);
   }, []);
 
@@ -63,6 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider
       value={{
         user,
+        accessToken,
         isLoading,
         isAuthenticated: !!user,
         login,
