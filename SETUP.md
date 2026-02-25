@@ -1,7 +1,6 @@
 # Motion Booster — Project Setup Guide
 
 ## Prerequisites
-
 - **Node.js** v18+ (recommended: v20+)
 - **npm** (comes with Node.js)
 - **Git**
