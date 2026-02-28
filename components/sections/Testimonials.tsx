@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Star } from 'lucide-react';
+import { AdminStore, TestimonialItem } from '@/lib/admin/store';
 
 const stats = [
   {
@@ -48,8 +49,9 @@ const stats = [
   },
 ];
 
-const reviews = [
+const staticReviews: TestimonialItem[] = [
   {
+    id: '1',
     name: 'Rafiq Ahmed',
     role: 'CEO, TechVenture BD',
     avatar: 'RA',
@@ -59,6 +61,7 @@ const reviews = [
     service: 'Web Development',
   },
   {
+    id: '2',
     name: 'Fatima Khatun',
     role: 'Founder, GreenLeaf Organics',
     avatar: 'FK',
@@ -68,6 +71,7 @@ const reviews = [
     service: 'Digital Marketing',
   },
   {
+    id: '3',
     name: 'Tanvir Hasan',
     role: 'MD, BuildRight Construction',
     avatar: 'TH',
@@ -77,6 +81,7 @@ const reviews = [
     service: 'Branding & Creative',
   },
   {
+    id: '4',
     name: 'Nusrat Jahan',
     role: 'Co-founder, EduTech Solutions',
     avatar: 'NJ',
@@ -86,6 +91,7 @@ const reviews = [
     service: 'Mobile App Development',
   },
   {
+    id: '5',
     name: 'Kamal Uddin',
     role: 'Owner, KamalFoods International',
     avatar: 'KU',
@@ -95,6 +101,7 @@ const reviews = [
     service: 'Digital Marketing',
   },
   {
+    id: '6',
     name: 'Sadia Rahman',
     role: 'Creative Director, PixelStudio',
     avatar: 'SR',
@@ -104,6 +111,7 @@ const reviews = [
     service: 'Graphics Design',
   },
   {
+    id: '7',
     name: 'Mohammad Ali',
     role: 'CTO, FinanceHub BD',
     avatar: 'MA',
@@ -113,6 +121,7 @@ const reviews = [
     service: 'Software Development',
   },
   {
+    id: '8',
     name: 'Ayesha Begum',
     role: 'Marketing Head, FashionBD',
     avatar: 'AB',
@@ -122,6 +131,7 @@ const reviews = [
     service: 'Video & Animation',
   },
   {
+    id: '9',
     name: 'Imran Khan',
     role: 'Startup Founder, HealthFirst',
     avatar: 'IK',
@@ -131,6 +141,7 @@ const reviews = [
     service: 'UI/UX Design',
   },
   {
+    id: '10',
     name: 'Rubina Akter',
     role: 'Director, GlobalTrade BD',
     avatar: 'RA',
@@ -142,7 +153,15 @@ const reviews = [
 ];
 
 export const Testimonials = () => {
+  const [reviews, setReviews] = useState<TestimonialItem[]>(staticReviews);
   const statsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const load = () => setReviews(AdminStore.getTestimonials());
+    load();
+    window.addEventListener('storage', load);
+    return () => window.removeEventListener('storage', load);
+  }, []);
 
   const scrollStats = (direction: 'left' | 'right') => {
     if (statsRef.current) {
@@ -153,13 +172,18 @@ export const Testimonials = () => {
     }
   };
 
-  const ReviewCard = ({ review }: { review: typeof reviews[0] }) => (
+  const ReviewCard = ({ review }: { review: TestimonialItem }) => (
     <div className="shrink-0 w-80 sm:w-90 md:w-100 bg-white border border-gray-100 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm hover:shadow-lg transition-shadow cursor-default">
       <div className="flex items-start gap-3 sm:gap-4">
         {/* Avatar on left */}
-        <div className={`shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-linear-to-br ${review.avatarBg} flex items-center justify-center text-white font-bold text-base sm:text-lg shadow-md`}>
-          {review.avatar}
-        </div>
+        {review.avatarImage ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={review.avatarImage} alt={review.name} className="shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover shadow-md" />
+        ) : (
+          <div className={`shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-linear-to-br ${review.avatarBg} flex items-center justify-center text-white font-bold text-base sm:text-lg shadow-md`}>
+            {review.avatar || review.name.slice(0, 2).toUpperCase()}
+          </div>
+        )}
 
         <div className="flex-1 min-w-0">
           <h4 className="font-bold text-gray-900 text-sm sm:text-base">{review.name}</h4>

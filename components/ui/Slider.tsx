@@ -112,13 +112,18 @@ export const Slider: React.FC<SliderProps> = ({
         >
           {/* Slide Background Image */}
           <div className="relative w-full h-full">
-            <Image
-              src={slides[currentIndex].image}
-              alt={slides[currentIndex].title}
-              fill
-              className="object-cover"
-              priority={currentIndex === 0}
-            />
+            {slides[currentIndex].image.startsWith('data:') ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={slides[currentIndex].image} alt={slides[currentIndex].title} className="w-full h-full object-cover" />
+            ) : (
+              <Image
+                src={slides[currentIndex].image}
+                alt={slides[currentIndex].title}
+                fill
+                className="object-cover"
+                priority={currentIndex === 0}
+              />
+            )}
             {/* Overlay */}
             <div className="absolute inset-0 bg-linear-to-r from-black/70 via-black/50 to-transparent" />
           </div>

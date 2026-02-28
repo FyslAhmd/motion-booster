@@ -1,18 +1,26 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
-import { teamMembers } from '@/lib/data/team';
-
-const departments = ['All', 'Creative', 'Development', 'Design', 'Marketing', 'Management'];
+import { AdminStore, TeamMemberItem } from '@/lib/admin/store';
 
 export default function TeamPage() {
+  const [team, setTeam] = useState<TeamMemberItem[]>([]);
   const [activeTab, setActiveTab] = useState('All');
 
+  useEffect(() => {
+    setTeam(AdminStore.getTeam());
+    const onStorage = () => setTeam(AdminStore.getTeam());
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
+
+  const departments = ['All', ...Array.from(new Set(team.map(m => m.department).filter(Boolean)))];
+
   const filtered = activeTab === 'All'
-    ? teamMembers
-    : teamMembers.filter(m => m.department === activeTab);
+    ? team
+    : team.filter(m => m.department === activeTab);
 
   const featured = filtered.find(m => m.featured) ?? filtered[0];
   const rest = filtered.filter(m => m.id !== featured?.id);
@@ -53,12 +61,17 @@ export default function TeamPage() {
             <div className="flex items-center gap-4 p-4">
               {/* Avatar */}
               <div className="w-28 h-28 shrink-0 rounded-xl bg-gray-200 overflow-hidden flex items-center justify-center">
-                <span
-                  className="text-5xl font-extrabold text-white"
-                  style={{ textShadow: '0 2px 8px rgba(0,0,0,0.2)', background: 'linear-gradient(135deg, #ff8079, #ff1e1e)', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                >
-                  {featured.avatar}
-                </span>
+                {featured.avatarImage ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={featured.avatarImage} alt={featured.name} className="w-full h-full object-cover" />
+                ) : (
+                  <span
+                    className="text-5xl font-extrabold text-white"
+                    style={{ textShadow: '0 2px 8px rgba(0,0,0,0.2)', background: 'linear-gradient(135deg, #ff8079, #ff1e1e)', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  >
+                    {featured.avatar}
+                  </span>
+                )}
               </div>
 
               <div className="flex-1 min-w-0">
@@ -84,17 +97,22 @@ export default function TeamPage() {
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
           {rest.map(member => (
             <Link key={member.id} href={`/team/${member.id}`} className="block bg-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-              {/* Photo placeholder */}
+              {/* Photo */}
               <div
-                className="w-full aspect-square flex items-center justify-center"
+                className="w-full aspect-square flex items-center justify-center overflow-hidden"
                 style={{ background: 'linear-gradient(135deg, #f5f5f5, #e5e5e5)' }}
               >
-                <span
-                  className="text-5xl font-extrabold text-white"
-                  style={{ textShadow: '0 2px 8px rgba(0,0,0,0.15)', background: 'linear-gradient(135deg, #ff8079, #ff1e1e)', width: '80px', height: '80px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                >
-                  {member.avatar}
-                </span>
+                {member.avatarImage ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={member.avatarImage} alt={member.name} className="w-full h-full object-cover" />
+                ) : (
+                  <span
+                    className="text-5xl font-extrabold text-white"
+                    style={{ textShadow: '0 2px 8px rgba(0,0,0,0.15)', background: 'linear-gradient(135deg, #ff8079, #ff1e1e)', width: '80px', height: '80px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  >
+                    {member.avatar}
+                  </span>
+                )}
               </div>
 
               <div className="p-3">

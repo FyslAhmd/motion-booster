@@ -25,6 +25,73 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 export default function DashboardPage() {
   const { user } = useAuth();
   const [selectedRange, setSelectedRange] = useState('Last 30 Days');
+  const [showCustomRange, setShowCustomRange] = useState(false);
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
+
+  // Export Report Function
+  const handleExportReport = () => {
+    const reportData = {
+      generatedDate: new Date().toLocaleString(),
+      dateRange: selectedRange,
+      customDateRange: showCustomRange ? {
+        startDate: customStartDate,
+        endDate: customEndDate
+      } : null,
+      user: user?.email,
+      
+      metrics: {
+        dailySpend: 87.50,
+        dailyBudget: 100.00,
+        totalSpend: 2456.78,
+        totalImpressions: 125300,
+        linkClicks: 3425,
+        ctr: 2.73,
+        roas: 4.2
+      },
+      
+      spendingTrend: spendingData,
+      
+      campaigns: campaigns.map(c => ({
+        name: c.name,
+        status: c.status,
+        objective: c.objective,
+        spend: c.spend,
+        clicks: c.clicks,
+        engagement: c.engagement,
+        messages: c.messages,
+        roas: c.roas
+      })),
+      
+      topAds: topAds.map(ad => ({
+        name: ad.name,
+        metric: ad.metric,
+        spend: ad.spend,
+        purchaseValue: ad.purchaseValue
+      })),
+      
+      audienceInsights: {
+        age: ageData,
+        gender: genderData
+      },
+      
+      divisionDistribution: divisionData,
+      
+      conversionFunnel: conversionFunnel
+    };
+
+    // Create downloadable JSON file
+    const dataStr = JSON.stringify(reportData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `dashboard-report-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
 
   // Mock data based on Meta Marketing API structure
   const spendingData = [
@@ -64,7 +131,9 @@ export default function DashboardPage() {
       reach: 45000,
       frequency: 2.78,
       roas: 5.2,
-      purchaseValue: 6476.60
+      purchaseValue: 6476.60,
+      engagement: 2450,
+      messages: 156
     },
     { 
       id: 2, 
@@ -79,7 +148,9 @@ export default function DashboardPage() {
       reach: 35000,
       frequency: 2.80,
       roas: 3.8,
-      purchaseValue: 3383.00
+      purchaseValue: 3383.00,
+      engagement: 1875,
+      messages: 92
     },
     { 
       id: 3, 
@@ -94,7 +165,9 @@ export default function DashboardPage() {
       reach: 28000,
       frequency: 2.32,
       roas: 4.1,
-      purchaseValue: 2181.20
+      purchaseValue: 2181.20,
+      engagement: 3250,
+      messages: 64
     },
     { 
       id: 4, 
@@ -109,7 +182,9 @@ export default function DashboardPage() {
       reach: 8500,
       frequency: 1.46,
       roas: 2.8,
-      purchaseValue: 657.94
+      purchaseValue: 657.94,
+      engagement: 445,
+      messages: 28
     },
     { 
       id: 5, 
@@ -124,7 +199,9 @@ export default function DashboardPage() {
       reach: 15000,
       frequency: 1.87,
       roas: 5.3,
-      purchaseValue: 1717.20
+      purchaseValue: 1717.20,
+      engagement: 1234,
+      messages: 78
     },
   ];
 
@@ -196,32 +273,14 @@ export default function DashboardPage() {
     { name: 'Male', value: 40, color: '#10b981' },
   ];
 
-  // Placement Performance Data (from Meta API publisher_platform breakdown)
-  const placementData = [
-    { 
-      name: 'Facebook', 
-      spend: 1200.00, 
-      impressions: 120000, 
-      clicks: 3200,
-      percentage: 49,
-      color: '#10b981'
-    },
-    { 
-      name: 'Instagram', 
-      spend: 800.00, 
-      impressions: 95000, 
-      clicks: 2800,
-      percentage: 33,
-      color: '#8b5cf6'
-    },
-    { 
-      name: 'Audience Network', 
-      spend: 456.78, 
-      impressions: 50000, 
-      clicks: 1100,
-      percentage: 18,
-      color: '#06b6d4'
-    },
+  // Division Distribution Data
+  const divisionData = [
+    { name: 'Dhaka', value: 45, color: '#ef4444' },
+    { name: 'Chittagong', value: 25, color: '#8b5cf6' },
+    { name: 'Sylhet', value: 12, color: '#10b981' },
+    { name: 'Rajshahi', value: 10, color: '#f59e0b' },
+    { name: 'Khulna', value: 5, color: '#06b6d4' },
+    { name: 'Others', value: 3, color: '#6b7280' },
   ];
 
   // Conversion Funnel Data (from Meta API actions breakdown)
@@ -248,18 +307,78 @@ export default function DashboardPage() {
                 </p>
               </div>
               <div className="flex flex-wrap gap-2 sm:gap-3">
-                <select
-                  value={selectedRange}
-                  onChange={(e) => setSelectedRange(e.target.value)}
-                  className="px-3 sm:px-4 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-red-400 focus:border-transparent flex-1 sm:flex-none"
-                >
-                  <option>Today</option>
-                  <option>Yesterday</option>
-                  <option>Last 7 Days</option>
-                  <option>Last 30 Days</option>
-                  <option>This Month</option>
-                </select>
-                <button className="px-3 sm:px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 flex items-center gap-2 text-sm"
+                <div className="relative flex-1 sm:flex-none">
+                  <select
+                    value={selectedRange}
+                    onChange={(e) => {
+                      setSelectedRange(e.target.value);
+                      if (e.target.value === 'Custom Range') {
+                        setShowCustomRange(true);
+                      } else {
+                        setShowCustomRange(false);
+                      }
+                    }}
+                    className="px-3 sm:px-4 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-red-400 focus:border-transparent w-full"
+                  >
+                    <option>Today</option>
+                    <option>Yesterday</option>
+                    <option>Last 7 Days</option>
+                    <option>Last 30 Days</option>
+                    <option>This Month</option>
+                    <option>Custom Range</option>
+                  </select>
+                  
+                  {/* Custom Date Range Picker */}
+                  {showCustomRange && (
+                    <div className="absolute top-full right-0 mt-2 p-4 bg-white border border-gray-300 rounded-lg shadow-lg z-10 w-72">
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Start Date</label>
+                          <input
+                            type="date"
+                            value={customStartDate}
+                            onChange={(e) => setCustomStartDate(e.target.value)}
+                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-400 focus:border-transparent"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">End Date</label>
+                          <input
+                            type="date"
+                            value={customEndDate}
+                            onChange={(e) => setCustomEndDate(e.target.value)}
+                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-400 focus:border-transparent"
+                          />
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => {
+                              setShowCustomRange(false);
+                              // Apply custom date range logic here
+                            }}
+                            className="flex-1 px-3 py-2 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600"
+                          >
+                            Apply
+                          </button>
+                          <button
+                            onClick={() => {
+                              setShowCustomRange(false);
+                              setSelectedRange('Last 30 Days');
+                              setCustomStartDate('');
+                              setCustomEndDate('');
+                            }}
+                            className="flex-1 px-3 py-2 bg-gray-100 text-gray-700 text-sm rounded-lg hover:bg-gray-200"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <button 
+                  onClick={handleExportReport}
+                  className="px-3 sm:px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 flex items-center gap-2 text-sm"
                 >
                   <Download className="w-4 h-4" />
                   <span className="hidden sm:inline">Export</span>
@@ -276,8 +395,41 @@ export default function DashboardPage() {
         {/* Main Dashboard Content */}
         <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
           {/* Key Metrics Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Card 1: Total Ad Spend */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
+            {/* Card 1: Daily Spend */}
+            <div className="bg-white/50 backdrop-blur-sm rounded-xl p-4 sm:p-6 hover:bg-white/70 transition-all"
+            >
+              <div className="flex items-start justify-between mb-3 sm:mb-4">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                  <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500" />
+                </div>
+                <div className="flex items-center gap-1 text-xs sm:text-sm text-blue-500">
+                  <ArrowUp className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span>8.3%</span>
+                </div>
+              </div>
+              <div className="text-xs sm:text-sm text-gray-600 mb-1">Daily Spend</div>
+              <div className="text-2xl sm:text-3xl font-bold text-gray-900">$87.50</div>
+              <div className="text-xs sm:text-sm text-gray-500 mt-2">Today's ad spend</div>
+            </div>
+
+            {/* Card 2: Daily Budget */}
+            <div className="bg-white/50 backdrop-blur-sm rounded-xl p-4 sm:p-6 hover:bg-white/70 transition-all"
+            >
+              <div className="flex items-start justify-between mb-3 sm:mb-4">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                  <Target className="w-5 h-5 sm:w-6 sm:h-6 text-purple-500" />
+                </div>
+                <div className="flex items-center gap-1 text-xs sm:text-sm text-gray-600">
+                  <span>87.5%</span>
+                </div>
+              </div>
+              <div className="text-xs sm:text-sm text-gray-600 mb-1">Daily Budget</div>
+              <div className="text-2xl sm:text-3xl font-bold text-gray-900">$100.00</div>
+              <div className="text-xs sm:text-sm text-gray-500 mt-2">$12.50 remaining</div>
+            </div>
+
+            {/* Card 3: Total Spend */}
             <div className="bg-white/50 backdrop-blur-sm rounded-xl p-4 sm:p-6 hover:bg-white/70 transition-all"
             >
               <div className="flex items-start justify-between mb-3 sm:mb-4">
@@ -294,7 +446,7 @@ export default function DashboardPage() {
               <div className="text-xs sm:text-sm text-gray-500 mt-2">+$274.50 from last period</div>
             </div>
 
-            {/* Card 2: Impressions */}
+            {/* Card 4: Impressions */}
             <div className="bg-white/50 backdrop-blur-sm rounded-xl p-4 sm:p-6 hover:bg-white/70 transition-all"
             >
               <div className="flex items-start justify-between mb-3 sm:mb-4">
@@ -311,7 +463,7 @@ export default function DashboardPage() {
               <div className="text-xs sm:text-sm text-gray-500 mt-2">+8.2% vs last period</div>
             </div>
 
-            {/* Card 3: Link Clicks */}
+            {/* Card 5: Link Clicks */}
             <div className="bg-white/50 backdrop-blur-sm rounded-xl p-4 sm:p-6 hover:bg-white/70 transition-all"
             >
               <div className="flex items-start justify-between mb-3 sm:mb-4">
@@ -328,7 +480,7 @@ export default function DashboardPage() {
               <div className="text-xs sm:text-sm text-gray-500 mt-2">2.73% CTR</div>
             </div>
 
-            {/* Card 4: ROAS */}
+            {/* Card 6: ROAS */}
             <div className="bg-white/50 backdrop-blur-sm rounded-xl p-4 sm:p-6 hover:bg-white/70 transition-all"
             >
               <div className="flex items-start justify-between mb-3 sm:mb-4">
@@ -340,7 +492,7 @@ export default function DashboardPage() {
                   <span>+0.5x</span>
                 </div>
               </div>
-              <div className="text-xs sm:text-sm text-gray-600 mb-1">Return on Ad Spend</div>
+              <div className="text-xs sm:text-sm text-gray-600 mb-1">ROAS</div>
               <div className="text-2xl sm:text-3xl font-bold text-gray-900">4.2x</div>
               <div className="text-xs sm:text-sm text-gray-500 mt-2">$4.20 earned per $1 spent</div>
             </div>
@@ -359,7 +511,7 @@ export default function DashboardPage() {
             </div>
             <div className="h-[200px] sm:h-[250px] md:h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={spendingData}>
+              <AreaChart data={spendingData} margin={{ top: 10, right: 30, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorSpend" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3}/>
@@ -408,12 +560,12 @@ export default function DashboardPage() {
                   <thead>
                     <tr className="">
                       <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Campaign</th>
+                      <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Objective</th>
                       <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Spend</th>
-                      <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Impressions</th>
                       <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Clicks</th>
-                      <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">CPC</th>
+                      <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Engagement</th>
+                      <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Messages</th>
                       <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">ROAS</th>
-                      <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -422,33 +574,28 @@ export default function DashboardPage() {
                         <td className="py-3 px-4">
                           <div>
                             <div className="font-medium text-gray-900">{campaign.name}</div>
-                            <span className={`inline-block px-2 py-0.5 text-xs rounded-full mt-1 ${
+                            <span className={`inline-block px-2 py-1 text-xs rounded-full mt-1 ${
                               campaign.status === 'ACTIVE' 
-                                ? 'bg-red-50 text-red-600' 
+                                ? 'bg-green-50 text-green-600' 
                                 : campaign.status === 'PAUSED'
-                                ? 'bg-yellow-100 text-yellow-700'
-                                : 'bg-gray-100 text-gray-700'
+                                ? 'bg-green-50 text-green-600'
+                                : 'bg-green-50 text-green-600'
                             }`}>
-                              🟢 {campaign.status === 'ACTIVE' ? 'Active' : campaign.status === 'PAUSED' ? '🟡 Paused' : 'Completed'}
+                              {campaign.status === 'ACTIVE' ? 'Active' : campaign.status === 'PAUSED' ? 'Paused' : 'Completed'}
                             </span>
                           </div>
                         </td>
+                        <td className="py-3 px-4">
+                          <span className="inline-block px-2 py-1 text-xs rounded-full bg-blue-50 text-blue-700 font-medium">
+                            {campaign.objective.replace('_', ' ')}
+                          </span>
+                        </td>
                         <td className="py-3 px-4 text-gray-900 font-medium">${campaign.spend.toFixed(2)}</td>
-                        <td className="py-3 px-4 text-gray-600">{(campaign.impressions / 1000).toFixed(1)}K</td>
                         <td className="py-3 px-4 text-gray-600">{(campaign.clicks / 1000).toFixed(1)}K</td>
-                        <td className="py-3 px-4 text-gray-600">${campaign.cpc.toFixed(2)}</td>
+                        <td className="py-3 px-4 text-gray-600">{campaign.engagement.toLocaleString()}</td>
+                        <td className="py-3 px-4 text-gray-600">{campaign.messages}</td>
                         <td className="py-3 px-4">
                           <span className="text-red-500 font-medium">{campaign.roas.toFixed(1)}x</span>
-                        </td>
-                        <td className="py-3 px-4">
-                          <div className="flex gap-2">
-                            <button className="p-1 hover:bg-gray-100 rounded">
-                              <Eye className="w-4 h-4 text-gray-600" />
-                            </button>
-                            <button className="p-1 hover:bg-gray-100 rounded">
-                              <MoreVertical className="w-4 h-4 text-gray-600" />
-                            </button>
-                          </div>
                         </td>
                       </tr>
                     ))}
@@ -487,34 +634,47 @@ export default function DashboardPage() {
                 </button>
               </div>
 
-              {/* Recent Activity */}
+              {/* Division Distribution */}
               <div className="bg-white/50 backdrop-blur-sm rounded-xl p-4 sm:p-6"
               >
-                <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4">Recent Activity</h3>
-                <div className="space-y-4">
-                  {activities.map((activity, index) => (
-                    <div key={index} className="flex gap-3">
-                      <div className={`w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center shrink-0 ${activity.color}`}>
-                        <activity.icon className="w-4 h-4" />
+                <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4">Division Distribution</h3>
+                <div className="h-[200px] mb-4">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={divisionData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={40}
+                        outerRadius={70}
+                        paddingAngle={2}
+                        dataKey="value"
+                      >
+                        {divisionData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(value: any) => `${value}%`} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="space-y-2">
+                  {divisionData.map((item, index) => (
+                    <div key={index} className="flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
+                        <span className="text-gray-600">{item.name}</span>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-gray-900">{activity.text}</p>
-                        <p className="text-xs text-gray-500 mt-0.5">{activity.time}</p>
-                      </div>
+                      <span className="font-medium text-gray-900">{item.value}%</span>
                     </div>
                   ))}
                 </div>
-                <button className="w-full mt-4 text-sm text-red-500 hover:text-red-600 font-medium">
-                  View All Activity →
-                </button>
               </div>
             </div>
           </div>
 
-          {/* Audience Insights & Placement Performance */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Audience Insights */}
-            <div className="bg-white/50 backdrop-blur-sm rounded-xl p-4 sm:p-6">
+          {/* Audience Insights */}
+          <div className="bg-white/50 backdrop-blur-sm rounded-xl p-4 sm:p-6">
               <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6">Audience Insights</h2>
               
               <div className="grid grid-cols-2 gap-6">
@@ -592,51 +752,6 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Placement Performance */}
-            <div className="bg-white/50 backdrop-blur-sm rounded-xl p-4 sm:p-6">
-              <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6">Placement Performance</h2>
-              
-              <div className="h-[250px] mb-4">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={placementData} layout="vertical">
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                    <XAxis type="number" stroke="#6b7280" fontSize={10} />
-                    <YAxis dataKey="name" type="category" stroke="#6b7280" fontSize={10} width={100} />
-                    <Tooltip 
-                      contentStyle={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '8px 12px' }}
-                      formatter={(value: any) => [`$${value}`, 'Spend']}
-                    />
-                    <Bar dataKey="spend" radius={[0, 8, 8, 0]}>
-                      {placementData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-
-              <div className="space-y-3">
-                {placementData.map((placement, index) => (
-                  <div key={index} className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: placement.color + '20' }}>
-                        <div className="w-4 h-4 rounded" style={{ backgroundColor: placement.color }}></div>
-                      </div>
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">{placement.name}</div>
-                        <div className="text-xs text-gray-500">{placement.clicks.toLocaleString()} clicks</div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-sm font-bold text-gray-900">${placement.spend.toFixed(2)}</div>
-                      <div className="text-xs text-gray-500">{placement.percentage}%</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
           {/* Conversion Funnel */}
           <div className="bg-white/50 backdrop-blur-sm rounded-xl p-4 sm:p-6">
             <div className="flex items-center justify-between mb-4 sm:mb-6">
@@ -701,43 +816,6 @@ export default function DashboardPage() {
                   )}
                 </div>
               ))}
-            </div>
-          </div>
-
-          {/* Quick Actions */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6"
-          >
-            <div className="bg-white/40 backdrop-blur-sm rounded-xl p-4 sm:p-6 hover:bg-white/60 transition-colors">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-red-100 rounded-lg flex items-center justify-center mb-3 sm:mb-4">
-                <LinkIcon className="w-5 h-5 sm:w-6 sm:h-6 text-red-500" />
-              </div>
-              <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-2">Connect Ad Account</h3>
-              <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">Add another Meta Ads account</p>
-            <button className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 w-full text-sm font-medium">
-                Connect
-              </button>
-            </div>
-
-            <div className="bg-white/40 backdrop-blur-sm rounded-xl p-4 sm:p-6 hover:bg-white/60 transition-colors">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-red-100 rounded-lg flex items-center justify-center mb-3 sm:mb-4">
-                <MessageSquare className="w-5 h-5 sm:w-6 sm:h-6 text-red-500" />
-              </div>
-              <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-2">Message Agency</h3>
-              <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">Have questions? Chat with us</p>
-            <button className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 w-full text-sm font-medium">
-                Start Chat
-              </button>
-            </div>
-
-            <div className="bg-white/40 backdrop-blur-sm rounded-xl p-4 sm:p-6 hover:bg-white/60 transition-colors">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-red-100 rounded-lg flex items-center justify-center mb-3 sm:mb-4">
-                <FileDown className="w-5 h-5 sm:w-6 sm:h-6 text-red-500" />
-              </div>
-              <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-2">Export Report</h3>
-              <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">Download your data as PDF/CSV</p>
-            <button className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 w-full text-sm font-medium">
-                Export
-              </button>
             </div>
           </div>
         </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import {
   X, ChevronRight, Info, Users, Briefcase,
   HelpCircle, Phone, FileText, Image, MessageCircle,
@@ -20,12 +21,13 @@ const menuItems = [
   { label: 'Portfolio', icon: Image, href: '#' },
   { label: 'FAQ', icon: HelpCircle, href: '#faq' },
   { label: 'Contact Us', icon: Phone, href: '/contact' },
+  { label: 'Privacy Policy', icon: FileText, href: '/privacy-policy' },
   { label: 'Feedback & Suggestions', icon: MessageCircle, href: '#' },
-  { label: 'Terms & Conditions', icon: FileText, href: '#' },
 ];
 
 export const MoreDrawer = ({ open, onClose }: MoreDrawerProps) => {
   const { isAuthenticated, user, logout } = useAuth();
+  const pathname = usePathname();
 
   return (
     <>
@@ -110,22 +112,25 @@ export const MoreDrawer = ({ open, onClose }: MoreDrawerProps) => {
 
         {/* Menu Items */}
         <div className="px-4 py-2 divide-y divide-gray-100 pb-8">
-          {menuItems.map(({ label, icon: Icon, href }) => (
-            <Link
-              key={label}
-              href={href}
-              onClick={onClose}
-              className="flex items-center justify-between py-3.5"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center">
-                  <Icon className="w-5 h-5 text-red-500" />
+          {menuItems.map(({ label, icon: Icon, href }) => {
+            const isActive = pathname === href;
+            return (
+              <Link
+                key={label}
+                href={href}
+                onClick={onClose}
+                className={`flex items-center justify-between py-3.5 ${isActive ? 'bg-red-50' : ''}`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center ${isActive ? 'bg-red-500' : 'bg-gray-100'}`}>
+                    <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-red-500'}`} />
+                  </div>
+                  <span className={`font-semibold text-sm ${isActive ? 'text-red-500' : 'text-gray-800'}`}>{label}</span>
                 </div>
-                <span className="font-semibold text-gray-800 text-sm">{label}</span>
-              </div>
-              <ChevronRight className="w-4 h-4 text-gray-400" />
-            </Link>
-          ))}
+                <ChevronRight className="w-4 h-4 text-gray-400" />
+              </Link>
+            );
+          })}
         </div>
       </div>
     </>

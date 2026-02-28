@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { MapPin, Phone, Mail, Facebook, Linkedin, Youtube, Instagram } from 'lucide-react';
 
 export const Footer = () => {
@@ -44,12 +45,6 @@ export const Footer = () => {
             Get in touch with us today, take one step ahead towards a successful digital presence.
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
-            <Link
-              href="/contact"
-              className="px-6 py-3 border-2 border-white text-white font-semibold rounded-lg hover:bg-white hover:text-gray-900 transition-all"
-            >
-              Join Free Consultation
-            </Link>
             <Link
               href="/service"
               className="px-6 py-3 border-2 border-white text-white font-semibold rounded-lg hover:bg-white hover:text-gray-900 transition-all"
@@ -98,7 +93,7 @@ export const Footer = () => {
                 <li><Link href="/contact" className="text-gray-400 hover:text-white transition-colors">Contact</Link></li>
                 <li><Link href="#" className="text-gray-400 hover:text-white transition-colors">FAQ</Link></li>
                 <li><Link href="#" className="text-gray-400 hover:text-white transition-colors">Blog</Link></li>
-                <li><Link href="#" className="text-gray-400 hover:text-white transition-colors">Privacy Policy</Link></li>
+                <li><Link href="/privacy-policy" className="text-gray-400 hover:text-white transition-colors">Privacy Policy</Link></li>
               </ul>
             </div>
 
@@ -120,13 +115,11 @@ export const Footer = () => {
             <div>
               <h3 className="text-white font-bold text-lg mb-6">Others</h3>
               <ul className="space-y-3 text-sm">
-                <li><Link href="/about" className="text-gray-400 hover:text-white transition-colors">About Us</Link></li>
                 <li><Link href="#" className="text-gray-400 hover:text-white transition-colors">Our Facility</Link></li>
                 <li><Link href="#" className="text-gray-400 hover:text-white transition-colors">Our Achievement</Link></li>
                 <li><Link href="#" className="text-gray-400 hover:text-white transition-colors">Career Placement</Link></li>
                 <li><Link href="#" className="text-gray-400 hover:text-white transition-colors">Freelancing</Link></li>
                 <li><Link href="#" className="text-gray-400 hover:text-white transition-colors">Client Feedback</Link></li>
-                <li><Link href="/contact" className="text-gray-400 hover:text-white transition-colors">Contact</Link></li>
               </ul>
             </div>
           </div>
@@ -137,10 +130,15 @@ export const Footer = () => {
           <div className="max-w-7xl mx-auto px-6 lg:px-8 py-6 flex flex-col md:flex-row justify-between items-center gap-4">
             {/* Logo */}
             <Link href="/" className="flex items-center">
-              <span className="text-xl font-bold">
-                <span className="text-red-500">Motion</span>
-                <span className="text-white">Booster</span>
-              </span>
+              <div className="relative w-40 h-10">
+                <Image
+                  src="/Motion Booster Black Logo-01.svg"
+                  alt="Motion Booster Logo"
+                  fill
+                  className="object-contain brightness-0 invert"
+                  priority
+                />
+              </div>
             </Link>
 
             {/* Copyright */}

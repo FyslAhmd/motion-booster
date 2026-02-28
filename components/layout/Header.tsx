@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth/context';
 import { ChevronDown, LayoutDashboard, User, Phone, Mail, Search, Bell, Home, Briefcase, Users, Menu } from 'lucide-react';
 import { MoreDrawer } from '@/components/ui/MoreDrawer';
@@ -14,6 +16,7 @@ export const Header = () => {
   const [showMoreDrawer, setShowMoreDrawer] = useState(false);
   const { isAuthenticated, isLoading, user } = useAuth();
   const profileMenuRef = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -54,33 +57,35 @@ export const Header = () => {
   return (
     <header className={`z-50 lg:fixed lg:top-0 lg:left-0 lg:right-0 transition-all duration-300 ${scrolled ? 'bg-white shadow-md' : 'bg-transparent'}`}>
       {/* Mobile Top Bar - Logo + Icons */}
-      <div className="lg:hidden py-3 px-4" style={{ background: 'linear-gradient(214.38deg, #ff8079 -2.24%, #ff1e1e 59.38%)' }}>
+      <div className={`lg:hidden py-3 px-4 transition-all duration-300 ${scrolled ? 'bg-white shadow-md' : 'bg-transparent'}`}>
         <div className="flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-md">
-              <span className="text-red-500 font-bold text-lg">M</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-base font-bold leading-tight text-white">MOTION</span>
-              <span className="text-xs font-semibold text-white/90 leading-tight">BOOSTER</span>
+            <div className="relative w-40 h-12">
+              <Image
+                src="/Motion Booster Black Logo-01.svg"
+                alt="Motion Booster Logo"
+                fill
+                className="object-contain"
+                priority
+              />
             </div>
           </Link>
 
           {/* Icons: Search, Notification, Profile */}
           <div className="flex items-center gap-3">
-            <button className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors">
-              <Search className="w-5 h-5 text-white" />
+            <button className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
+              <Search className="w-5 h-5 text-gray-600" />
             </button>
-            <button className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors relative">
-              <Bell className="w-5 h-5 text-white" />
+            <button className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors relative">
+              <Bell className="w-5 h-5 text-gray-600" />
               <span className="absolute top-1 right-1 w-2 h-2 bg-yellow-400 rounded-full"></span>
             </button>
-            <Link href={isAuthenticated ? "/dashboard/profile" : "/login"} className="w-9 h-9 flex items-center justify-center rounded-full bg-white hover:bg-white/90 transition-colors shadow-md">
+            <Link href={isAuthenticated ? "/dashboard/profile" : "/login"} className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors shadow-sm">
               {isAuthenticated ? (
-                <span className="text-red-500 font-bold text-sm">{user?.email?.charAt(0).toUpperCase() || 'U'}</span>
+                <span className="text-gray-700 font-bold text-sm">{user?.email?.charAt(0).toUpperCase() || 'U'}</span>
               ) : (
-                <User className="w-5 h-5 text-red-500" />
+                <User className="w-5 h-5 text-gray-600" />
               )}
             </Link>
           </div>
@@ -131,30 +136,33 @@ export const Header = () => {
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3">
-            <div className="flex items-center">
-              <div className="w-12 h-12 bg-linear-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-xl">M</span>
-              </div>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-xl font-bold leading-tight">
-                <span className="text-red-500">MOTION</span>
-              </span>
-              <span className="text-sm font-semibold text-gray-700 leading-tight">BOOSTER</span>
+            <div className="relative w-48 h-14">
+              <Image
+                src="/Motion Booster Black Logo-01.svg"
+                alt="Motion Booster Logo"
+                fill
+                className="object-contain"
+                priority
+              />
             </div>
           </Link>
 
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center space-x-8">
-            {visibleNavItems.map((item) => (
-              <Link
-                key={item.label}
-                href={item.href}
-                className="text-gray-700 hover:text-red-500 font-semibold text-base transition-colors"
-              >
-                {item.label}
-              </Link>
-            ))}
+            {visibleNavItems.map((item) => {
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  className={`font-semibold text-base transition-colors ${
+                    isActive ? 'text-red-500' : 'text-gray-700 hover:text-red-500'
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
 
             {/* Auth & Login Button */}
             <div className="flex items-center gap-4">
@@ -219,31 +227,37 @@ export const Header = () => {
       <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 shadow-lg flex lg:hidden justify-around items-center h-16 px-2">
         <Link
           href="/"
-          className="flex flex-col items-center justify-center gap-1 px-3 py-2 text-red-500 transition-colors flex-1"
+          className={`flex flex-col items-center justify-center gap-1 px-3 py-2 transition-colors flex-1 ${
+            pathname === '/' ? 'text-red-500' : 'text-gray-500 hover:text-red-500'
+          }`}
         >
-          <Home className="w-5 h-5" />
-          <span className="text-xs font-medium">Home</span>
+          <Home className="w-6 h-6" />
+          <span className="text-[10px] font-medium">Home</span>
         </Link>
         <Link
           href="/service"
-          className="flex flex-col items-center justify-center gap-1 px-3 py-2 text-gray-500 hover:text-red-500 transition-colors flex-1"
+          className={`flex flex-col items-center justify-center gap-1 px-3 py-2 transition-colors flex-1 ${
+            pathname === '/service' ? 'text-red-500' : 'text-gray-500 hover:text-red-500'
+          }`}
         >
-          <Briefcase className="w-5 h-5" />
-          <span className="text-xs font-medium">Service</span>
+          <Briefcase className="w-6 h-6" />
+          <span className="text-[10px] font-medium">Service</span>
         </Link>
         <Link
           href="/team"
-          className="flex flex-col items-center justify-center gap-1 px-3 py-2 text-gray-500 hover:text-red-500 transition-colors flex-1"
+          className={`flex flex-col items-center justify-center gap-1 px-3 py-2 transition-colors flex-1 ${
+            pathname === '/team' ? 'text-red-500' : 'text-gray-500 hover:text-red-500'
+          }`}
         >
-          <Users className="w-5 h-5" />
-          <span className="text-xs font-medium">Team</span>
+          <Users className="w-6 h-6" />
+          <span className="text-[10px] font-medium">Team</span>
         </Link>
         <button
           onClick={() => setShowMoreDrawer(true)}
           className="flex flex-col items-center justify-center gap-1 px-3 py-2 text-gray-500 hover:text-red-500 transition-colors flex-1"
         >
-          <Menu className="w-5 h-5" />
-          <span className="text-xs font-medium">More</span>
+          <Menu className="w-6 h-6" />
+          <span className="text-[10px] font-medium">More</span>
         </button>
       </nav>
 

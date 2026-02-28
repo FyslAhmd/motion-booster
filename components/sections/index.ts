@@ -16,3 +16,5 @@ export { CategorySlider } from './CategorySlider';
 export { PopularCourses } from './PopularCourses';
 export { CourseListing } from './CourseListing';
 export { AchievementStats } from './AchievementStats';
+export { Portfolio } from './Portfolio';
+export { CompanyMarquee } from './CompanyMarquee';

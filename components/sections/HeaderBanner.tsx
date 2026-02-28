@@ -5,19 +5,19 @@ import Image from "next/image";
 
 const sliderImages = [
   {
-    src: "/hero_img_4.jpg",
+    src: "/header1.jpeg",
     alt: "IT Training Students",
     badge: "South Asia's Best IT Institute",
     year: "Awarded 2024"
   },
   {
-    src: "/hero_img_4.jpg",
+    src: "/header2.jpeg",
     alt: "Professional Training",
     badge: "45+ Trendy Courses",
     year: "Expert Mentors"
   },
   {
-    src: "/hero_img_4.jpg",
+    src: "/header3.jpeg",
     alt: "Career Success",
     badge: "20000+ Students Enrolled",
     year: "Join Today"
