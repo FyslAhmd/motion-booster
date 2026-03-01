@@ -24,6 +24,7 @@ import {
   MessageCircle,
   Share2,
   UserCog,
+  Building2,
 } from 'lucide-react';
 
 const navItems = [
@@ -37,6 +38,7 @@ const navItems = [
   { href: '/dashboard/testimonials', label: 'Testimonials', icon: Star },
   { href: '/dashboard/stats', label: 'Stats & Achievements', icon: BarChart2 },
   { href: '/dashboard/portfolio', label: 'Portfolio', icon: Briefcase },
+  { href: '/dashboard/companies', label: 'Companies', icon: Building2 },
   { href: '/dashboard/chat', label: 'Chat Messages', icon: MessageCircle },
   { href: '/dashboard/meta', label: 'Meta Connect', icon: Share2 },
   { href: '/dashboard/settings', label: 'Site Settings', icon: Settings },

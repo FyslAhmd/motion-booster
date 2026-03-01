@@ -178,7 +178,6 @@ export async function POST(
         conversationId,
         senderId: user.id,
         content: content?.trim() || '',
-        messageType,
         fileUrl: fileUrl || null,
         fileName: fileName || null,
         fileSize: fileSize ? Number(fileSize) : null,

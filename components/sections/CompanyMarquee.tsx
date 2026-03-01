@@ -1,53 +1,71 @@
 'use client';
 
-import React from 'react';
-
-const companies = [
-  { id: 1, name: 'Google' },
-  { id: 2, name: 'Microsoft' },
-  { id: 3, name: 'Amazon' },
-  { id: 4, name: 'Facebook' },
-  { id: 5, name: 'Apple' },
-  { id: 6, name: 'Netflix' },
-];
+import React, { useState, useEffect } from 'react';
+import { AdminStore, CompanyItem, defaultCompanies } from '@/lib/admin/store';
 
 export const CompanyMarquee = () => {
+  const [companies, setCompanies] = useState<CompanyItem[]>(defaultCompanies);
+
+  useEffect(() => {
+    const load = () => setCompanies(AdminStore.getCompanies());
+    load();
+    window.addEventListener('storage', load);
+    return () => window.removeEventListener('storage', load);
+  }, []);
+
+  const list = companies.length > 0 ? companies : defaultCompanies;
+
   return (
     <section className="py-8 md:py-10 bg-white border-y border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-6">
-          <h3 className="text-lg md:text-xl font-bold text-gray-900">
-            Trusted by Leading Companies
-          </h3>
+          <p className="text-xs sm:text-sm font-semibold text-gray-900 uppercase tracking-widest">
+            Trusted by Top Companies
+          </p>
         </div>
 
         {/* Marquee Container */}
         <div className="relative overflow-hidden">
+          {/* fade edges */}
+          <div className="absolute left-0 top-0 h-full w-12 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
+          <div className="absolute right-0 top-0 h-full w-12 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
           <div className="flex animate-marquee">
-            {/* First set of companies */}
-            {companies.map((company) => (
-              <div
-                key={`first-${company.id}`}
-                className="flex-shrink-0 mx-8 md:mx-12"
-              >
-                <div className="flex items-center justify-center h-16 md:h-20">
-                  <span className="text-3xl md:text-4xl lg:text-5xl font-extrabold italic text-gray-700 hover:text-red-500 transition-colors">
-                    {company.name}
-                  </span>
+            {/* First set */}
+            {list.map((company) => (
+              <div key={`first-${company.id}`} className="flex-shrink-0 mx-6 md:mx-10">
+                <div className="flex items-center justify-center h-14 md:h-16">
+                  {company.logoImage ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={company.logoImage}
+                      alt={company.name}
+                      className="h-8 md:h-10 w-auto object-contain transition-all"
+                    />
+                  ) : (
+                    <span className="text-2xl md:text-3xl lg:text-4xl font-extrabold italic text-gray-900 hover:text-red-500 transition-colors whitespace-nowrap">
+                      {company.name}
+                    </span>
+                  )}
                 </div>
               </div>
             ))}
-            {/* Duplicate set for seamless loop */}
-            {companies.map((company) => (
-              <div
-                key={`second-${company.id}`}
-                className="flex-shrink-0 mx-8 md:mx-12"
-              >
-                <div className="flex items-center justify-center h-16 md:h-20">
-                  <span className="text-3xl md:text-4xl lg:text-5xl font-extrabold italic text-gray-700 hover:text-red-500 transition-colors">
-                    {company.name}
-                  </span>
+            {/* Duplicate for seamless loop */}
+            {list.map((company) => (
+              <div key={`second-${company.id}`} className="flex-shrink-0 mx-6 md:mx-10">
+                <div className="flex items-center justify-center h-14 md:h-16">
+                  {company.logoImage ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={company.logoImage}
+                      alt={company.name}
+                      className="h-8 md:h-10 w-auto object-contain transition-all"
+                    />
+                  ) : (
+                    <span className="text-2xl md:text-3xl lg:text-4xl font-extrabold italic text-gray-900 hover:text-red-500 transition-colors whitespace-nowrap">
+                      {company.name}
+                    </span>
+                  )}
                 </div>
               </div>
             ))}
@@ -57,15 +75,11 @@ export const CompanyMarquee = () => {
 
       <style jsx>{`
         @keyframes marquee {
-          0% {
-            transform: translateX(0);
-          }
-          100% {
-            transform: translateX(-50%);
-          }
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
         }
         .animate-marquee {
-          animation: marquee 30s linear infinite;
+          animation: marquee 15s linear infinite;
         }
         .animate-marquee:hover {
           animation-play-state: paused;
