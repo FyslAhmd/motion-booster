@@ -1,5 +1,6 @@
 'use client';
 
+import AdminShell from './_components/AdminShell';
 import { useAuth } from '@/lib/auth/context';
 import { useState } from 'react';
 import {
@@ -293,6 +294,7 @@ export default function DashboardPage() {
   ];
 
   return (
+    <AdminShell>
     <div className="h-full overflow-y-auto bg-gray-50">
         {/* Welcome Header */}
         <div className="bg-white border-b border-gray-100 px-6 py-6">
@@ -677,9 +679,9 @@ export default function DashboardPage() {
           <div className="bg-white/50 backdrop-blur-sm rounded-xl p-4 sm:p-6">
               <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6">Audience Insights</h2>
               
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-2 gap-6 min-w-0">
                 {/* Age Breakdown */}
-                <div>
+                <div className="min-w-0">
                   <h3 className="text-sm font-semibold text-gray-700 mb-3">Age Distribution</h3>
                   <div className="h-[200px]">
                     <ResponsiveContainer width="100%" height="100%">
@@ -715,7 +717,7 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Gender Breakdown */}
-                <div>
+                <div className="min-w-0">
                   <h3 className="text-sm font-semibold text-gray-700 mb-3">Gender Distribution</h3>
                   <div className="h-[200px]">
                     <ResponsiveContainer width="100%" height="100%">
@@ -820,5 +822,6 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+    </AdminShell>
   );
 }

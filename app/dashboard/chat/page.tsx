@@ -1,5 +1,6 @@
 'use client';
 
+import AdminShell from '../_components/AdminShell';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/lib/auth/context';
 import { useSocket, type ChatMessage, type MessageType } from '@/lib/chat/use-socket';
@@ -717,6 +718,7 @@ export default function MessagesPage() {
     : null;
 
   return (
+    <AdminShell noPadding>
     <div className="flex h-full bg-white overflow-hidden">
       {/* ───────────────────── Conversations Sidebar ──────────────── */}
       <div
@@ -1305,5 +1307,6 @@ export default function MessagesPage() {
         )}
       </div>
     </div>
+    </AdminShell>
   );
 }

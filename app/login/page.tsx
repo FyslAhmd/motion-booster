@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { loginSchema, formatZodErrors } from '@/lib/validators/auth';
@@ -14,7 +14,13 @@ interface FieldErrors {
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, isAuthenticated, isLoading } = useAuth();
+
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      router.replace('/dashboard');
+    }
+  }, [isLoading, isAuthenticated, router]);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -23,7 +29,7 @@ export default function LoginPage() {
 
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [serverError, setServerError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // ─── Field-level validation on blur ─────────────────
   const validateField = useCallback((field: string, value: string) => {
@@ -67,7 +73,7 @@ export default function LoginPage() {
       }
     }
 
-    setIsLoading(true);
+    setIsSubmitting(true);
     try {
       const res = await fetch('/api/v1/auth/login', {
         method: 'POST',
@@ -100,7 +106,7 @@ export default function LoginPage() {
         'Network error. Please check your connection and try again.'
       );
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -298,10 +304,10 @@ export default function LoginPage() {
             {/* Login Button */}
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isSubmitting}
               className="w-full py-3.5 bg-red-500 hover:bg-red-600 disabled:bg-red-400 disabled:cursor-not-allowed text-white font-semibold rounded-full transition-all focus:outline-none focus:ring-4 focus:ring-red-200 flex items-center justify-center gap-2"
             >
-              {isLoading ? (
+              {isSubmitting ? (
                 <>
                   <svg
                     className="animate-spin h-5 w-5 text-white"

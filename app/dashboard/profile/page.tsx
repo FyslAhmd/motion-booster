@@ -1,5 +1,6 @@
 'use client';
 
+import AdminShell from '../_components/AdminShell';
 import { useState } from 'react';
 import { useAuth } from '@/lib/auth/context';
 import {
@@ -74,6 +75,7 @@ export default function ProfilePage() {
   ];
 
   return (
+    <AdminShell>
     <div className="h-full overflow-y-auto bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b border-gray-100">
@@ -509,5 +511,6 @@ export default function ProfilePage() {
         </div>
       </div>
     </div>
+    </AdminShell>
   );
 }
