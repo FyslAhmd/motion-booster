@@ -32,7 +32,12 @@ export async function GET(req: NextRequest) {
         messages: {
           orderBy: { createdAt: 'desc' },
           take: 1,
-          include: {
+          select: {
+            id: true,
+            content: true,
+            messageType: true,
+            fileName: true,
+            createdAt: true,
             sender: {
               select: { id: true, fullName: true },
             },

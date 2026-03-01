@@ -76,6 +76,14 @@ enum MessageStatus {
   READ
 }
 
+enum MessageType {
+  TEXT
+  IMAGE
+  VIDEO
+  FILE
+  VOICE
+}
+
 model Conversation {
   id           String    @id @default(cuid())
   participants User[]    @relation("ConversationParticipants")
@@ -93,6 +101,12 @@ model Message {
   conversationId String        @map("conversation_id")
   senderId       String        @map("sender_id")
   content        String
+  messageType    MessageType   @default(TEXT) @map("message_type")
+  fileUrl        String?       @map("file_url")
+  fileName       String?       @map("file_name")
+  fileSize       Int?          @map("file_size")
+  mimeType       String?       @map("mime_type")
+  duration       Int?          // Voice message duration in seconds
   status         MessageStatus @default(SENT)
   createdAt      DateTime      @default(now()) @map("created_at")
 

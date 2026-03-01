@@ -4,11 +4,11 @@ import bcrypt from 'bcryptjs';
 const prisma = new PrismaClient();
 
 const ADMIN_DATA = {
-  username: 'faysal',
-  email: 'info.faysal.32@gmail.com',
-  fullName: 'Faysal Ahmed',
-  phone: '+88801615553632',
-  password: 'AhmedFaysal@761',
+  username: 'abuZahed',
+  email: 'zahed04x@gmail.com',
+  fullName: 'Abu Zahed',
+  phone: '+8801647584756',
+  password: 'Abuzahed1234@',
   role: 'ADMIN' as const,
 };
 

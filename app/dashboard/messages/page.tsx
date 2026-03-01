@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/lib/auth/context';
-import { useSocket, type ChatMessage } from '@/lib/chat/use-socket';
+import { useSocket, type ChatMessage, type MessageType } from '@/lib/chat/use-socket';
 import {
   Search,
   Send,
@@ -14,6 +14,14 @@ import {
   WifiOff,
   Wifi,
   Circle,
+  Paperclip,
+  Mic,
+  X,
+  FileText,
+  Download,
+  Image as ImageIcon,
+  Film,
+  Square,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────
@@ -31,6 +39,8 @@ interface ConversationItem {
   lastMessage: {
     id: string;
     content: string;
+    messageType?: MessageType;
+    fileName?: string | null;
     createdAt: string;
     sender: { id: string; fullName: string };
   } | null;
@@ -43,6 +53,12 @@ interface ChatableUser {
   username: string;
   fullName: string;
   role: string;
+}
+
+interface PendingFile {
+  file: File;
+  preview?: string; // data URL for image previews
+  messageType: MessageType;
 }
 
 // ─── Helpers ──────────────────────────────────────────
@@ -91,6 +107,46 @@ function getAvatarColor(id: string): string {
   return colors[Math.abs(hash) % colors.length];
 }
 
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function detectMessageType(mimeType: string): MessageType {
+  if (mimeType.startsWith('image/')) return 'IMAGE';
+  if (mimeType.startsWith('video/')) return 'VIDEO';
+  if (mimeType.startsWith('audio/')) return 'VOICE';
+  return 'FILE';
+}
+
+function formatDuration(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+function getLastMessagePreview(msg: ConversationItem['lastMessage'], myId?: string): string {
+  if (!msg) return 'No messages yet';
+  const prefix = msg.sender.id === myId ? 'You: ' : '';
+  switch (msg.messageType) {
+    case 'IMAGE': return `${prefix}📷 Photo`;
+    case 'VIDEO': return `${prefix}🎬 Video`;
+    case 'FILE':  return `${prefix}📎 ${msg.fileName || 'File'}`;
+    case 'VOICE': return `${prefix}🎤 Voice message`;
+    default:      return `${prefix}${msg.content}`;
+  }
+}
+
+function getFileIcon(mimeType?: string | null) {
+  if (!mimeType) return <FileText className="w-5 h-5" />;
+  if (mimeType.startsWith('image/')) return <ImageIcon className="w-5 h-5" />;
+  if (mimeType.startsWith('video/')) return <Film className="w-5 h-5" />;
+  return <FileText className="w-5 h-5" />;
+}
+
 // ─── Component ────────────────────────────────────────
 
 export default function MessagesPage() {
@@ -110,6 +166,18 @@ export default function MessagesPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const selectedConvRef = useRef<ConversationItem | null>(null);
+
+  // ─── File attachment state ─────────────────────────
+  const [pendingFile, setPendingFile] = useState<PendingFile | null>(null);
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // ─── Voice recording state ────────────────────────
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingDuration, setRecordingDuration] = useState(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Keep ref in sync with state for socket callbacks
   useEffect(() => {
@@ -147,6 +215,8 @@ export default function MessagesPage() {
               lastMessage: {
                 id: message.id,
                 content: message.content,
+                messageType: message.messageType,
+                fileName: message.fileName,
                 createdAt: message.createdAt,
                 sender: {
                   id: message.sender.id,
@@ -336,7 +406,18 @@ export default function MessagesPage() {
   );
 
   // ─── Send via REST (fallback) ──────────────────────
-  const sendViaRest = useCallback(async (conversationId: string, content: string) => {
+  const sendViaRest = useCallback(async (
+    conversationId: string,
+    content: string,
+    metadata?: {
+      messageType?: MessageType;
+      fileUrl?: string;
+      fileName?: string;
+      fileSize?: number;
+      mimeType?: string;
+      duration?: number;
+    }
+  ) => {
     try {
       const res = await fetch(`/api/v1/chat/conversations/${conversationId}/messages`, {
         method: 'POST',
@@ -344,7 +425,7 @@ export default function MessagesPage() {
           'Content-Type': 'application/json',
           ...getAuthHeaders(),
         },
-        body: JSON.stringify({ content }),
+        body: JSON.stringify({ content, ...metadata }),
       });
       if (res.ok) {
         const data = await res.json();
@@ -360,8 +441,217 @@ export default function MessagesPage() {
     }
   }, [getAuthHeaders]);
 
+  // ─── Upload file to server ─────────────────────────
+  const uploadFile = useCallback(async (file: File): Promise<{
+    fileUrl: string;
+    fileName: string;
+    fileSize: number;
+    mimeType: string;
+  } | null> => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res = await fetch('/api/v1/chat/upload', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        alert(err.error || 'Upload failed');
+        return null;
+      }
+
+      return await res.json();
+    } catch (err) {
+      console.error('Upload failed:', err);
+      alert('Failed to upload file. Please try again.');
+      return null;
+    }
+  }, [getAuthHeaders]);
+
+  // ─── Handle file selection ─────────────────────────
+  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Reset input so the same file can be selected again
+    e.target.value = '';
+
+    const msgType = detectMessageType(file.type);
+    const isVoice = file.type.startsWith('audio/');
+
+    // Size validation (voice exempt)
+    if (!isVoice && file.size > MAX_FILE_SIZE) {
+      alert(`File must be under 10 MB. Your file is ${formatFileSize(file.size)}.`);
+      return;
+    }
+
+    // Create preview for images
+    let preview: string | undefined;
+    if (msgType === 'IMAGE') {
+      preview = URL.createObjectURL(file);
+    }
+
+    setPendingFile({ file, preview, messageType: msgType });
+  }, []);
+
+  // ─── Cancel pending file ──────────────────────────
+  const cancelPendingFile = useCallback(() => {
+    if (pendingFile?.preview) {
+      URL.revokeObjectURL(pendingFile.preview);
+    }
+    setPendingFile(null);
+  }, [pendingFile]);
+
+  // ─── Send file message ────────────────────────────
+  const sendFileMessage = useCallback(async () => {
+    if (!pendingFile || !selectedConversation) return;
+
+    setUploadingFile(true);
+    setSendingMessage(true);
+
+    const uploadResult = await uploadFile(pendingFile.file);
+    if (!uploadResult) {
+      setUploadingFile(false);
+      setSendingMessage(false);
+      return;
+    }
+
+    const caption = messageInput.trim();
+    const metadata = {
+      messageType: pendingFile.messageType,
+      fileUrl: uploadResult.fileUrl,
+      fileName: uploadResult.fileName,
+      fileSize: uploadResult.fileSize,
+      mimeType: uploadResult.mimeType,
+    };
+
+    // Clean up
+    cancelPendingFile();
+    setMessageInput('');
+    setUploadingFile(false);
+
+    if (isConnected) {
+      socketSendMessage(selectedConversation.id, caption, metadata, (response) => {
+        setSendingMessage(false);
+        if (response.error) {
+          sendViaRest(selectedConversation.id, caption, metadata);
+        }
+      });
+    } else {
+      sendViaRest(selectedConversation.id, caption, metadata);
+    }
+  }, [pendingFile, selectedConversation, messageInput, isConnected, uploadFile, cancelPendingFile, socketSendMessage, sendViaRest]);
+
+  // ─── Voice recording ─────────────────────────────
+  const startRecording = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+      // Try opus codec first, fall back to default
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+        ? 'audio/webm;codecs=opus'
+        : 'audio/webm';
+
+      const recorder = new MediaRecorder(stream, { mimeType });
+      audioChunksRef.current = [];
+
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          audioChunksRef.current.push(e.data);
+        }
+      };
+
+      recorder.start(100); // Collect in 100ms chunks
+      mediaRecorderRef.current = recorder;
+      setIsRecording(true);
+      setRecordingDuration(0);
+
+      // Start timer
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingDuration((d) => d + 1);
+      }, 1000);
+    } catch (err) {
+      console.error('Microphone error:', err);
+      alert('Could not access microphone. Please check permissions.');
+    }
+  }, []);
+
+  const cancelRecording = useCallback(() => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current.stream.getTracks().forEach((t) => t.stop());
+    }
+    if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+    audioChunksRef.current = [];
+    mediaRecorderRef.current = null;
+    setIsRecording(false);
+    setRecordingDuration(0);
+  }, []);
+
+  const sendVoiceMessage = useCallback(async () => {
+    if (!mediaRecorderRef.current || !selectedConversation) return;
+
+    const duration = recordingDuration;
+    const recorder = mediaRecorderRef.current;
+
+    // Stop recording
+    return new Promise<void>((resolve) => {
+      recorder.onstop = async () => {
+        // Stop mic stream
+        recorder.stream.getTracks().forEach((t) => t.stop());
+        if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+        setIsRecording(false);
+        setRecordingDuration(0);
+
+        const blob = new Blob(audioChunksRef.current, { type: recorder.mimeType });
+        const file = new File([blob], `voice-${Date.now()}.webm`, { type: recorder.mimeType });
+
+        setSendingMessage(true);
+        const uploadResult = await uploadFile(file);
+        if (!uploadResult) {
+          setSendingMessage(false);
+          resolve();
+          return;
+        }
+
+        const metadata = {
+          messageType: 'VOICE' as MessageType,
+          fileUrl: uploadResult.fileUrl,
+          fileName: uploadResult.fileName,
+          fileSize: uploadResult.fileSize,
+          mimeType: uploadResult.mimeType,
+          duration,
+        };
+
+        if (isConnected) {
+          socketSendMessage(selectedConversation.id, '', metadata, (response) => {
+            setSendingMessage(false);
+            if (response.error) {
+              sendViaRest(selectedConversation.id, '', metadata);
+            }
+          });
+        } else {
+          sendViaRest(selectedConversation.id, '', metadata);
+        }
+        resolve();
+      };
+
+      recorder.stop();
+    });
+  }, [selectedConversation, recordingDuration, isConnected, uploadFile, socketSendMessage, sendViaRest]);
+
   // ─── Send message ──────────────────────────────────
   const handleSendMessage = useCallback(() => {
+    // If there's a pending file, send that instead
+    if (pendingFile) {
+      sendFileMessage();
+      return;
+    }
+
     if (!messageInput.trim() || !selectedConversation || sendingMessage) return;
 
     const content = messageInput.trim();
@@ -372,7 +662,7 @@ export default function MessagesPage() {
     stopTyping(selectedConversation.id);
 
     if (isConnected) {
-      socketSendMessage(selectedConversation.id, content, (response) => {
+      socketSendMessage(selectedConversation.id, content, undefined, (response) => {
         setSendingMessage(false);
         if (response.error) {
           console.error('Socket send failed:', response.error);
@@ -383,7 +673,7 @@ export default function MessagesPage() {
     } else {
       sendViaRest(selectedConversation.id, content);
     }
-  }, [messageInput, selectedConversation, sendingMessage, isConnected, socketSendMessage, stopTyping, sendViaRest]);
+  }, [pendingFile, sendFileMessage, messageInput, selectedConversation, sendingMessage, isConnected, socketSendMessage, stopTyping, sendViaRest]);
 
   // ─── Typing indicator ──────────────────────────────
   const handleInputChange = (value: string) => {
@@ -590,11 +880,7 @@ export default function MessagesPage() {
                       )}
                     </div>
                     <p className="text-sm text-gray-600 truncate">
-                      {conv.lastMessage
-                        ? conv.lastMessage.sender.id === user?.id
-                          ? `You: ${conv.lastMessage.content}`
-                          : conv.lastMessage.content
-                        : 'No messages yet'}
+                      {getLastMessagePreview(conv.lastMessage, user?.id)}
                     </p>
                   </div>
                   {conv.unreadCount > 0 && (
@@ -723,15 +1009,105 @@ export default function MessagesPage() {
                           }`}
                         >
                           <div
-                            className={`rounded-2xl px-4 py-2.5 md:px-5 md:py-3 ${
+                            className={`rounded-2xl overflow-hidden ${
                               isMe
                                 ? 'bg-red-500 text-white rounded-tr-sm'
                                 : 'bg-white text-gray-900 border border-gray-100 rounded-tl-sm shadow-sm'
-                            }`}
+                            } ${message.messageType === 'IMAGE' || message.messageType === 'VIDEO' ? 'p-1' : 'px-4 py-2.5 md:px-5 md:py-3'}`}
                           >
-                            <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                              {message.content}
-                            </p>
+                            {/* ── IMAGE ── */}
+                            {message.messageType === 'IMAGE' && message.fileUrl && (
+                              <div>
+                                <a href={message.fileUrl} target="_blank" rel="noopener noreferrer">
+                                  <img
+                                    src={message.fileUrl}
+                                    alt={message.fileName || 'Image'}
+                                    className="max-w-70 max-h-75 rounded-xl object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                                    loading="lazy"
+                                  />
+                                </a>
+                                {message.content && (
+                                  <p className="text-sm leading-relaxed whitespace-pre-wrap px-3 py-2">
+                                    {message.content}
+                                  </p>
+                                )}
+                              </div>
+                            )}
+
+                            {/* ── VIDEO ── */}
+                            {message.messageType === 'VIDEO' && message.fileUrl && (
+                              <div>
+                                <video
+                                  src={message.fileUrl}
+                                  controls
+                                  preload="metadata"
+                                  className="max-w-75 max-h-70 rounded-xl"
+                                />
+                                {message.content && (
+                                  <p className="text-sm leading-relaxed whitespace-pre-wrap px-3 py-2">
+                                    {message.content}
+                                  </p>
+                                )}
+                              </div>
+                            )}
+
+                            {/* ── FILE (document) ── */}
+                            {message.messageType === 'FILE' && message.fileUrl && (
+                              <div>
+                                <a
+                                  href={message.fileUrl}
+                                  download={message.fileName || true}
+                                  className={`flex items-center gap-3 ${
+                                    isMe ? 'hover:bg-red-600' : 'hover:bg-gray-50'
+                                  } rounded-lg transition-colors p-1`}
+                                >
+                                  <div className={`w-10 h-10 flex items-center justify-center rounded-lg ${
+                                    isMe ? 'bg-red-400/30' : 'bg-gray-100'
+                                  }`}>
+                                    {getFileIcon(message.mimeType)}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium truncate max-w-45">
+                                      {message.fileName || 'File'}
+                                    </p>
+                                    <p className={`text-xs ${isMe ? 'text-red-200' : 'text-gray-400'}`}>
+                                      {message.fileSize ? formatFileSize(message.fileSize) : 'Download'}
+                                    </p>
+                                  </div>
+                                  <Download className={`w-4 h-4 shrink-0 ${isMe ? 'text-red-200' : 'text-gray-400'}`} />
+                                </a>
+                                {message.content && (
+                                  <p className="text-sm leading-relaxed whitespace-pre-wrap mt-1">
+                                    {message.content}
+                                  </p>
+                                )}
+                              </div>
+                            )}
+
+                            {/* ── VOICE ── */}
+                            {message.messageType === 'VOICE' && message.fileUrl && (
+                              <div className="flex items-center gap-3 min-w-50">
+                                <audio
+                                  src={message.fileUrl}
+                                  controls
+                                  preload="metadata"
+                                  className="h-8 max-w-55"
+                                  style={{ filter: isMe ? 'invert(1) brightness(2)' : 'none' }}
+                                />
+                                {message.duration != null && (
+                                  <span className={`text-xs shrink-0 ${isMe ? 'text-red-200' : 'text-gray-400'}`}>
+                                    {formatDuration(message.duration)}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+
+                            {/* ── TEXT (default) ── */}
+                            {(!message.messageType || message.messageType === 'TEXT') && (
+                              <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                                {message.content}
+                              </p>
+                            )}
                           </div>
                           <div
                             className={`flex items-center gap-1.5 mt-1 ${
@@ -789,36 +1165,124 @@ export default function MessagesPage() {
 
             {/* Message Input */}
             <div className="bg-white border-t border-gray-100 px-3 md:px-8 py-3 md:py-4">
-              <div className="flex items-center gap-3">
-                <div className="flex-1 relative">
-                  <textarea
-                    value={messageInput}
-                    onChange={(e) => handleInputChange(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSendMessage();
-                      }
-                    }}
-                    placeholder="Type your message..."
-                    className="w-full px-4 py-2.5 bg-gray-50 border-0 rounded-xl resize-none focus:ring-2 focus:ring-red-400 focus:bg-white transition-all text-sm"
-                    rows={1}
-                  />
-                </div>
+              {/* Hidden file input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                className="hidden"
+                accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt"
+                onChange={handleFileSelect}
+              />
 
-                <button
-                  onClick={handleSendMessage}
-                  disabled={!messageInput.trim() || sendingMessage}
-                  className="p-2.5 md:px-5 md:py-2.5 bg-red-500 text-white rounded-xl hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all font-medium text-sm flex items-center gap-1.5"
-                >
-                  {sendingMessage ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
+              {/* Pending file preview */}
+              {pendingFile && (
+                <div className="mb-3 flex items-center gap-3 bg-gray-50 rounded-xl p-3">
+                  {pendingFile.messageType === 'IMAGE' && pendingFile.preview ? (
+                    <img
+                      src={pendingFile.preview}
+                      alt="Preview"
+                      className="w-16 h-16 object-cover rounded-lg"
+                    />
                   ) : (
-                    <Send className="w-4 h-4" />
+                    <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center">
+                      {getFileIcon(pendingFile.file.type)}
+                    </div>
                   )}
-                  <span className="hidden md:inline">Send</span>
-                </button>
-              </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      {pendingFile.file.name}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {formatFileSize(pendingFile.file.size)}
+                    </p>
+                  </div>
+                  <button
+                    onClick={cancelPendingFile}
+                    className="p-1.5 hover:bg-gray-200 rounded-lg transition-colors"
+                  >
+                    <X className="w-4 h-4 text-gray-500" />
+                  </button>
+                </div>
+              )}
+
+              {/* Voice recording UI */}
+              {isRecording ? (
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={cancelRecording}
+                    className="p-2.5 hover:bg-gray-100 rounded-xl transition-colors"
+                    title="Cancel recording"
+                  >
+                    <X className="w-5 h-5 text-gray-600" />
+                  </button>
+                  <div className="flex-1 flex items-center gap-3 bg-red-50 rounded-xl px-4 py-2.5">
+                    <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
+                    <span className="text-sm font-medium text-red-700">
+                      Recording {formatDuration(recordingDuration)}
+                    </span>
+                  </div>
+                  <button
+                    onClick={sendVoiceMessage}
+                    className="p-2.5 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-all flex items-center gap-1.5"
+                    title="Send voice message"
+                  >
+                    <Send className="w-4 h-4" />
+                    <span className="hidden md:inline text-sm font-medium">Send</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  {/* Attachment button */}
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadingFile}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-40"
+                    title="Attach file"
+                  >
+                    <Paperclip className="w-5 h-5 text-gray-500" />
+                  </button>
+
+                  <div className="flex-1 relative">
+                    <textarea
+                      value={messageInput}
+                      onChange={(e) => handleInputChange(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSendMessage();
+                        }
+                      }}
+                      placeholder={pendingFile ? 'Add a caption...' : 'Type your message...'}
+                      className="w-full px-4 py-2.5 bg-gray-50 border-0 rounded-xl resize-none focus:ring-2 focus:ring-red-400 focus:bg-white transition-all text-sm"
+                      rows={1}
+                    />
+                  </div>
+
+                  {/* Show Send button when there's text or a pending file, otherwise show Mic */}
+                  {messageInput.trim() || pendingFile ? (
+                    <button
+                      onClick={handleSendMessage}
+                      disabled={(!messageInput.trim() && !pendingFile) || sendingMessage || uploadingFile}
+                      className="p-2.5 md:px-5 md:py-2.5 bg-red-500 text-white rounded-xl hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all font-medium text-sm flex items-center gap-1.5"
+                    >
+                      {sendingMessage || uploadingFile ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Send className="w-4 h-4" />
+                      )}
+                      <span className="hidden md:inline">Send</span>
+                    </button>
+                  ) : (
+                    <button
+                      onClick={startRecording}
+                      className="p-2.5 hover:bg-gray-100 rounded-xl transition-colors"
+                      title="Record voice message"
+                    >
+                      <Mic className="w-5 h-5 text-gray-500" />
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           </>
         ) : (

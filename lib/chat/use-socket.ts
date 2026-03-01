@@ -13,11 +13,19 @@ interface UseSocketOptions {
   onUserOffline?: (data: { userId: string }) => void;
 }
 
+export type MessageType = 'TEXT' | 'IMAGE' | 'VIDEO' | 'FILE' | 'VOICE';
+
 export interface ChatMessage {
   id: string;
   conversationId: string;
   senderId: string;
   content: string;
+  messageType: MessageType;
+  fileUrl?: string | null;
+  fileName?: string | null;
+  fileSize?: number | null;
+  mimeType?: string | null;
+  duration?: number | null;
   status: 'SENT' | 'DELIVERED' | 'READ';
   createdAt: string;
   sender: {
@@ -114,9 +122,21 @@ export function useSocket({
     (
       conversationId: string,
       content: string,
+      metadata?: {
+        messageType?: MessageType;
+        fileUrl?: string;
+        fileName?: string;
+        fileSize?: number;
+        mimeType?: string;
+        duration?: number;
+      },
       callback?: (response: { success?: boolean; message?: ChatMessage; error?: string }) => void
     ) => {
-      socketRef.current?.emit('message:send', { conversationId, content }, callback);
+      socketRef.current?.emit(
+        'message:send',
+        { conversationId, content, ...metadata },
+        callback
+      );
     },
     []
   );

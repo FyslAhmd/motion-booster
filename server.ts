@@ -1,12 +1,14 @@
 import { createServer } from 'http';
 import { parse } from 'url';
+import { join, extname } from 'path';
+import { existsSync, createReadStream, statSync } from 'fs';
 import next from 'next';
 import { Server as SocketIOServer } from 'socket.io';
 import { jwtVerify } from 'jose';
 import { PrismaClient } from './lib/generated/prisma/index.js';
 
 const dev = process.env.NODE_ENV !== 'production';
-const hostname = 'localhost';
+const hostname = dev ? 'localhost' : '0.0.0.0';
 const port = parseInt(process.env.PORT || '3000', 10);
 
 const app = next({ dev, hostname, port });
@@ -30,9 +32,56 @@ async function verifyToken(token: string) {
 // ─── Track online users: userId -> Set<socketId> ──────
 const onlineUsers = new Map<string, Set<string>>();
 
+// ─── MIME types for static file serving ───────────────
+const MIME_TYPES: Record<string, string> = {
+  '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png',
+  '.gif': 'image/gif', '.webp': 'image/webp', '.svg': 'image/svg+xml',
+  '.mp4': 'video/mp4', '.webm': 'video/webm', '.mov': 'video/quicktime',
+  '.pdf': 'application/pdf', '.doc': 'application/msword',
+  '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  '.xls': 'application/vnd.ms-excel',
+  '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  '.csv': 'text/csv', '.txt': 'text/plain',
+  '.ogg': 'audio/ogg', '.mp3': 'audio/mpeg', '.m4a': 'audio/mp4',
+};
+
 app.prepare().then(() => {
   const httpServer = createServer((req, res) => {
     const parsedUrl = parse(req.url!, true);
+    const pathname = parsedUrl.pathname || '';
+
+    // ─── Serve uploaded files from /uploads/* ─────────────
+    if (pathname.startsWith('/uploads/')) {
+      // Prevent directory traversal
+      const safePath = pathname.replace(/\.\./g, '');
+      const filePath = join(process.cwd(), safePath);
+
+      if (existsSync(filePath)) {
+        try {
+          const stat = statSync(filePath);
+          const ext = extname(filePath).toLowerCase();
+          const contentType = MIME_TYPES[ext] || 'application/octet-stream';
+
+          res.writeHead(200, {
+            'Content-Type': contentType,
+            'Content-Length': stat.size,
+            'Cache-Control': 'public, max-age=31536000, immutable',
+            'Access-Control-Allow-Origin': '*',
+          });
+          createReadStream(filePath).pipe(res);
+          return;
+        } catch {
+          res.writeHead(500);
+          res.end('Internal Server Error');
+          return;
+        }
+      } else {
+        res.writeHead(404);
+        res.end('Not Found');
+        return;
+      }
+    }
+
     handle(req, res, parsedUrl);
   });
 
@@ -89,10 +138,26 @@ app.prepare().then(() => {
     // ─── Send message ───────────────────────────────────
     socket.on('message:send', async (data, callback) => {
       try {
-        const { conversationId, content } = data;
+        const {
+          conversationId,
+          content,
+          messageType = 'TEXT',
+          fileUrl,
+          fileName,
+          fileSize,
+          mimeType,
+          duration,
+        } = data;
 
-        if (!conversationId || !content?.trim()) {
-          return callback?.({ error: 'Missing conversationId or content' });
+        // For TEXT messages, content is required. For file/voice, content is optional (caption).
+        if (!conversationId) {
+          return callback?.({ error: 'Missing conversationId' });
+        }
+        if (messageType === 'TEXT' && !content?.trim()) {
+          return callback?.({ error: 'Missing content for text message' });
+        }
+        if (messageType !== 'TEXT' && !fileUrl) {
+          return callback?.({ error: 'Missing fileUrl for non-text message' });
         }
 
         // Verify sender is a participant of this conversation
@@ -123,7 +188,13 @@ app.prepare().then(() => {
           data: {
             conversationId,
             senderId: user.id,
-            content: content.trim(),
+            content: content?.trim() || '',
+            messageType,
+            fileUrl: fileUrl || null,
+            fileName: fileName || null,
+            fileSize: fileSize ? Number(fileSize) : null,
+            mimeType: mimeType || null,
+            duration: duration ? Number(duration) : null,
             status: 'SENT',
           },
           include: {
@@ -252,7 +323,7 @@ app.prepare().then(() => {
     });
   });
 
-  httpServer.listen(port, () => {
+  httpServer.listen(port, hostname, () => {
     console.log(`\n  ▲ Server ready on http://${hostname}:${port}`);
     console.log(`  ⚡ Socket.IO running on /api/socket\n`);
   });

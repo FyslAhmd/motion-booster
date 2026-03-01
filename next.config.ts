@@ -1,7 +1,13 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Allow larger request bodies for file uploads (up to 12 MB)
+  serverExternalPackages: ['bcryptjs'],
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '12mb',
+    },
+  },
 };
 
 export default nextConfig;

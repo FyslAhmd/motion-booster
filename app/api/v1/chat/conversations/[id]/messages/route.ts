@@ -118,11 +118,26 @@ export async function POST(
 
     const { id: conversationId } = await params;
     const body = await req.json();
-    const { content } = body;
+    const {
+      content,
+      messageType = 'TEXT',
+      fileUrl,
+      fileName,
+      fileSize,
+      mimeType,
+      duration,
+    } = body;
 
-    if (!content?.trim()) {
+    // For TEXT messages, content is required. For file/voice, content is optional.
+    if (messageType === 'TEXT' && !content?.trim()) {
       return NextResponse.json(
         { error: 'Message content is required' },
+        { status: 400 }
+      );
+    }
+    if (messageType !== 'TEXT' && !fileUrl) {
+      return NextResponse.json(
+        { error: 'fileUrl is required for non-text messages' },
         { status: 400 }
       );
     }
@@ -162,7 +177,13 @@ export async function POST(
       data: {
         conversationId,
         senderId: user.id,
-        content: content.trim(),
+        content: content?.trim() || '',
+        messageType,
+        fileUrl: fileUrl || null,
+        fileName: fileName || null,
+        fileSize: fileSize ? Number(fileSize) : null,
+        mimeType: mimeType || null,
+        duration: duration ? Number(duration) : null,
         status: 'SENT',
       },
       include: {
