@@ -4,7 +4,10 @@
  * access-token never leaks to the browser.
  */
 
+import { cachedFetch } from './cache';
+
 const GRAPH_BASE = 'https://graph.facebook.com/v25.0';
+const CACHE_TTL = 2 * 60 * 1000; // 2 minutes
 
 function getToken(): string {
   const token = process.env.META_ACCESS_TOKEN;
@@ -41,9 +44,7 @@ export async function metaFetch<T = any>(
     url.searchParams.set(k, v);
   }
 
-  const res = await fetch(url.toString(), {
-    next: { revalidate: 0 }, // no cache – always fresh
-  });
+  const res = await fetch(url.toString());
 
   const json = await res.json();
 
@@ -92,19 +93,21 @@ export async function metaFetchAll<T = any>(
 }
 
 // ───────────────────────────────────────────────
-// Domain-specific fetchers
+// Domain-specific fetchers (all cached with 2-min TTL)
 // ───────────────────────────────────────────────
 
-/** Ad account info */
-export async function fetchAdAccount() {
-  const id = getAdAccountId();
-  return metaFetch(`/${id}`, {
-    fields: [
-      'id', 'name', 'account_status', 'currency', 'amount_spent',
-      'balance', 'spend_cap', 'business_name', 'timezone_name',
-      'min_daily_budget', 'created_time',
-    ].join(','),
-  });
+/** Ad account info (cached) */
+export function fetchAdAccount() {
+  return cachedFetch('meta:account', async () => {
+    const id = getAdAccountId();
+    return metaFetch(`/${id}`, {
+      fields: [
+        'id', 'name', 'account_status', 'currency', 'amount_spent',
+        'balance', 'spend_cap', 'business_name', 'timezone_name',
+        'min_daily_budget', 'created_time',
+      ].join(','),
+    });
+  }, CACHE_TTL);
 }
 
 /** All ad accounts for this token (for discovery) */
@@ -114,123 +117,121 @@ export async function fetchAdAccounts() {
   });
 }
 
-/** Campaigns list */
-export async function fetchCampaigns(status?: string) {
-  const id = getAdAccountId();
-  const params: Record<string, string> = {
-    fields: [
-      'id', 'name', 'objective', 'status', 'effective_status',
-      'daily_budget', 'lifetime_budget', 'budget_remaining',
-      'start_time', 'stop_time', 'created_time', 'updated_time',
-    ].join(','),
-  };
-  if (status) {
-    params.effective_status = JSON.stringify([status]);
-  }
-  return metaFetchAll(`/${id}/campaigns`, params);
+/** Campaigns list (cached – always fetches all; filtering done in route handler) */
+export function fetchCampaigns() {
+  return cachedFetch('meta:campaigns', async () => {
+    const id = getAdAccountId();
+    return metaFetchAll(`/${id}/campaigns`, {
+      fields: [
+        'id', 'name', 'objective', 'status', 'effective_status',
+        'daily_budget', 'lifetime_budget', 'budget_remaining',
+        'start_time', 'stop_time', 'created_time', 'updated_time',
+      ].join(','),
+    }, 5);
+  }, CACHE_TTL);
 }
 
-/** Ad sets list */
-export async function fetchAdSets(campaignId?: string) {
-  const id = getAdAccountId();
-  const params: Record<string, string> = {
-    fields: [
-      'id', 'name', 'status', 'effective_status', 'campaign_id',
-      'daily_budget', 'lifetime_budget', 'budget_remaining',
-      'bid_amount', 'billing_event', 'optimization_goal',
-      'start_time', 'end_time', 'created_time', 'targeting',
-    ].join(','),
-  };
-  if (campaignId) {
-    params.filtering = JSON.stringify([
-      { field: 'campaign.id', operator: 'EQUAL', value: campaignId },
-    ]);
-  }
-  return metaFetchAll(`/${id}/adsets`, params);
+/** Ad sets list (cached – always fetches all; filtering done in route handler) */
+export function fetchAdSets() {
+  return cachedFetch('meta:adsets', async () => {
+    const id = getAdAccountId();
+    return metaFetchAll(`/${id}/adsets`, {
+      fields: [
+        'id', 'name', 'status', 'effective_status', 'campaign_id',
+        'daily_budget', 'lifetime_budget', 'budget_remaining',
+        'bid_amount', 'billing_event', 'optimization_goal',
+        'start_time', 'end_time', 'created_time', 'targeting',
+      ].join(','),
+    }, 5);
+  }, CACHE_TTL);
 }
 
-/** Ads list */
-export async function fetchAds(adsetId?: string) {
-  const id = getAdAccountId();
-  const params: Record<string, string> = {
-    fields: [
-      'id', 'name', 'status', 'effective_status',
-      'adset_id', 'campaign_id', 'created_time',
-      'creative{id,name,thumbnail_url,body,title,image_url,object_story_spec}',
-    ].join(','),
-  };
-  if (adsetId) {
-    params.filtering = JSON.stringify([
-      { field: 'adset.id', operator: 'EQUAL', value: adsetId },
-    ]);
-  }
-  return metaFetchAll(`/${id}/ads`, params);
+/** Ads list (cached – reduced creative fields for speed) */
+export function fetchAds() {
+  return cachedFetch('meta:ads', async () => {
+    const id = getAdAccountId();
+    return metaFetchAll(`/${id}/ads`, {
+      fields: [
+        'id', 'name', 'status', 'effective_status',
+        'adset_id', 'campaign_id', 'created_time',
+        'creative{id,name,thumbnail_url,body,title}',
+      ].join(','),
+    }, 5);
+  }, CACHE_TTL);
 }
 
-/** Account-level insights */
-export async function fetchAccountInsights(
+/** Account-level insights (cached per preset) */
+export function fetchAccountInsights(
   datePreset = 'last_30d',
   timeIncrement?: string,
 ) {
-  const id = getAdAccountId();
-  const params: Record<string, string> = {
-    fields: [
-      'spend', 'impressions', 'clicks', 'cpc', 'cpm', 'ctr',
-      'reach', 'frequency', 'actions', 'cost_per_action_type',
-      'date_start', 'date_stop',
-    ].join(','),
-    date_preset: datePreset,
-  };
-  if (timeIncrement) params.time_increment = timeIncrement;
-  return metaFetchAll(`/${id}/insights`, params);
+  const cacheKey = `meta:insights:${datePreset}:${timeIncrement || 'none'}`;
+  return cachedFetch(cacheKey, async () => {
+    const id = getAdAccountId();
+    const params: Record<string, string> = {
+      fields: [
+        'spend', 'impressions', 'clicks', 'cpc', 'cpm', 'ctr',
+        'reach', 'frequency', 'actions', 'cost_per_action_type',
+        'date_start', 'date_stop',
+      ].join(','),
+      date_preset: datePreset,
+    };
+    if (timeIncrement) params.time_increment = timeIncrement;
+    return metaFetchAll(`/${id}/insights`, params);
+  }, CACHE_TTL);
 }
 
-/** Campaign-level insights */
-export async function fetchCampaignInsights(
+/** Campaign-level insights (cached per preset) */
+export function fetchCampaignInsights(
   datePreset = 'last_30d',
   timeIncrement?: string,
 ) {
-  const id = getAdAccountId();
-  const params: Record<string, string> = {
-    fields: [
-      'campaign_id', 'campaign_name',
-      'spend', 'impressions', 'clicks', 'cpc', 'cpm', 'ctr',
-      'reach', 'frequency', 'actions', 'cost_per_action_type',
-      'date_start', 'date_stop',
-    ].join(','),
-    level: 'campaign',
-    date_preset: datePreset,
-  };
-  if (timeIncrement) params.time_increment = timeIncrement;
-  return metaFetchAll(`/${id}/insights`, params);
+  const cacheKey = `meta:c-insights:${datePreset}:${timeIncrement || 'none'}`;
+  return cachedFetch(cacheKey, async () => {
+    const id = getAdAccountId();
+    const params: Record<string, string> = {
+      fields: [
+        'campaign_id', 'campaign_name',
+        'spend', 'impressions', 'clicks', 'cpc', 'cpm', 'ctr',
+        'reach', 'frequency', 'actions', 'cost_per_action_type',
+        'date_start', 'date_stop',
+      ].join(','),
+      level: 'campaign',
+      date_preset: datePreset,
+    };
+    if (timeIncrement) params.time_increment = timeIncrement;
+    return metaFetchAll(`/${id}/insights`, params);
+  }, CACHE_TTL);
 }
 
-/** Daily spend breakdown for charts */
-export async function fetchDailySpend(datePreset = 'last_30d') {
-  const id = getAdAccountId();
-  return metaFetchAll(`/${id}/insights`, {
-    fields: 'spend,impressions,clicks,reach,date_start,date_stop',
-    date_preset: datePreset,
-    time_increment: '1',
-  });
+/** Daily spend breakdown for charts (cached per preset) */
+export function fetchDailySpend(datePreset = 'last_30d') {
+  return cachedFetch(`meta:daily-spend:${datePreset}`, async () => {
+    const id = getAdAccountId();
+    return metaFetchAll(`/${id}/insights`, {
+      fields: 'spend,impressions,clicks,reach,date_start,date_stop',
+      date_preset: datePreset,
+      time_increment: '1',
+    });
+  }, CACHE_TTL);
 }
 
-/** Demographic breakdowns */
-export async function fetchDemographics(datePreset = 'last_30d') {
-  const id = getAdAccountId();
-
-  const [ageGender, country] = await Promise.all([
-    metaFetchAll(`/${id}/insights`, {
-      fields: 'spend,impressions,clicks,reach',
-      date_preset: datePreset,
-      breakdowns: 'age,gender',
-    }),
-    metaFetchAll(`/${id}/insights`, {
-      fields: 'spend,impressions,clicks,reach',
-      date_preset: datePreset,
-      breakdowns: 'country',
-    }),
-  ]);
-
-  return { ageGender, country };
+/** Demographic breakdowns (cached per preset) */
+export function fetchDemographics(datePreset = 'last_30d') {
+  return cachedFetch(`meta:demographics:${datePreset}`, async () => {
+    const id = getAdAccountId();
+    const [ageGender, country] = await Promise.all([
+      metaFetchAll(`/${id}/insights`, {
+        fields: 'spend,impressions,clicks,reach',
+        date_preset: datePreset,
+        breakdowns: 'age,gender',
+      }),
+      metaFetchAll(`/${id}/insights`, {
+        fields: 'spend,impressions,clicks,reach',
+        date_preset: datePreset,
+        breakdowns: 'country',
+      }),
+    ]);
+    return { ageGender, country };
+  }, CACHE_TTL);
 }
