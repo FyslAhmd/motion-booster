@@ -230,7 +230,7 @@ export default function CategoriesPage() {
       )}
 
       {/* Page Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Service Categories</h1>
           <p className="text-sm text-gray-500 mt-0.5">Manage the "Our Service" cards shown on the homepage. Drag to reorder.</p>

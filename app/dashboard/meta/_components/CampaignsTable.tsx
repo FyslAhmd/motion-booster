@@ -126,15 +126,9 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
   return (
     <div className="rounded-xl border border-gray-100 bg-white">
       {/* Controls */}
-<<<<<<< HEAD
-      <div className="flex flex-col gap-3 border-b border-gray-700/50 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
-        <h3 className="text-sm font-semibold text-gray-300">
-          Campaigns
-=======
       <div className="flex flex-col gap-3 border-b border-gray-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
         <h3 className="text-sm font-semibold text-gray-700">
-          Campaigns <span className="ml-1 text-xs text-gray-500">({pagination.total})</span>
->>>>>>> 9e38dd9 (updated dashbopard ui)
+          Campaigns {pageNum > 1 && <span className="ml-1 text-xs text-gray-500">Page {pageNum}</span>}
         </h3>
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative">
@@ -211,64 +205,15 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
           )}
 
           {/* Pagination */}
-<<<<<<< HEAD
           {(hasNext || hasPrev) && (
-            <div className="flex items-center justify-between border-t border-gray-700/50 px-6 py-3">
+            <div className="flex items-center justify-between border-t border-gray-100 px-6 py-3">
               <p className="text-xs text-gray-500">Page {pageNum}</p>
               <div className="flex items-center gap-1">
-                <button
-                  onClick={goPrev}
-                  disabled={!hasPrev}
-                  className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-700 disabled:opacity-30"
-                >
+                <button onClick={goPrev} disabled={!hasPrev} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 disabled:opacity-30">
                   <ChevronLeft className="h-4 w-4" />
                 </button>
-                <span className="min-w-[32px] rounded-lg bg-purple-600 px-2 py-1 text-center text-xs font-medium text-white">
-                  {pageNum}
-                </span>
-                <button
-                  onClick={goNext}
-                  disabled={!hasNext}
-                  className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-700 disabled:opacity-30"
-=======
-          {pagination.totalPages > 1 && (
-            <div className="flex items-center justify-between border-t border-gray-100 px-6 py-3">
-              <p className="text-xs text-gray-500">
-                Showing {(pagination.page - 1) * pagination.limit + 1}–
-                {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total}
-              </p>
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => goPage(pagination.page - 1)}
-                  disabled={pagination.page <= 1}
-                  className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 disabled:opacity-30"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </button>
-                {Array.from({ length: Math.min(pagination.totalPages, 5) }, (_, i) => {
-                  let pg: number;
-                  if (pagination.totalPages <= 5) pg = i + 1;
-                  else if (pagination.page <= 3) pg = i + 1;
-                  else if (pagination.page >= pagination.totalPages - 2) pg = pagination.totalPages - 4 + i;
-                  else pg = pagination.page - 2 + i;
-                  return (
-                    <button
-                      key={pg}
-                      onClick={() => goPage(pg)}
-                      className={`min-w-[32px] rounded-lg px-2 py-1 text-xs font-medium transition-colors ${
-                        pg === pagination.page ? 'bg-red-600 text-white' : 'text-gray-400 hover:bg-gray-100'
-                      }`}
-                    >
-                      {pg}
-                    </button>
-                  );
-                })}
-                <button
-                  onClick={() => goPage(pagination.page + 1)}
-                  disabled={pagination.page >= pagination.totalPages}
-                  className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 disabled:opacity-30"
->>>>>>> 9e38dd9 (updated dashbopard ui)
-                >
+                <span className="min-w-[32px] rounded-lg bg-red-600 px-2 py-1 text-center text-xs font-medium text-white">{pageNum}</span>
+                <button onClick={goNext} disabled={!hasNext} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 disabled:opacity-30">
                   <ChevronRight className="h-4 w-4" />
                 </button>
               </div>

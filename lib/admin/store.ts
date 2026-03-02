@@ -67,6 +67,8 @@ export interface SiteSettings {
   servicesSubtitle: string;
   welcomeModalImage?: string;      // base64 or URL for modal banner image
   welcomeModalExploreLink?: string; // where Explore button navigates
+  welcomeModalTitle?: string;       // modal heading text
+  welcomeModalBody?: string;        // modal description text
 }
 
 export interface PortfolioItem {
@@ -414,6 +416,8 @@ export const defaultSettings: SiteSettings = {
   servicesSubtitle: 'We offer a comprehensive platform with all the tools you need to streamline and grow your business efficiently.',
   welcomeModalImage: '',
   welcomeModalExploreLink: '/service',
+  welcomeModalTitle: 'Welcome to Motion Booster! 👋',
+  welcomeModalBody: 'We help businesses grow with creative branding, motion graphics, web development & digital marketing.',
 };
 
 export const defaultCompanies: CompanyItem[] = [

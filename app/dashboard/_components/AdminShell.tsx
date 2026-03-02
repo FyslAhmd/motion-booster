@@ -26,9 +26,12 @@ import {
   Building2,
   Flame,
   Quote,
+  Sparkles,
+  User,
+  MoreHorizontal,
 } from 'lucide-react';
+import { MoreDrawer } from '@/components/ui/MoreDrawer';
 
-<<<<<<< HEAD
 interface NavItem {
   href: string;
   label: string;
@@ -39,42 +42,100 @@ interface NavItem {
 const navItems: NavItem[] = [
   { href: '/dashboard', label: 'Overview', icon: LayoutDashboard, adminOnly: true },
   { href: '/dashboard/hero-slider', label: 'Hero Slider', icon: SlidersHorizontal, adminOnly: true },
-  { href: '/dashboard/services', label: 'Services', icon: Layers, adminOnly: true },
   { href: '/dashboard/categories', label: 'Service Categories', icon: LayoutGrid, adminOnly: true },
-  { href: '/dashboard/popular-services', label: 'Popular Services', icon: Briefcase, adminOnly: true },
+  { href: '/dashboard/popular-services', label: 'Popular Services', icon: Flame, adminOnly: true },
   { href: '/dashboard/team', label: 'Team', icon: Users, adminOnly: true },
-  { href: '/dashboard/faq', label: 'FAQ', icon: MessageSquare, adminOnly: true },
-  { href: '/dashboard/testimonials', label: 'Testimonials', icon: Star, adminOnly: true },
+  { href: '/dashboard/faq', label: 'FAQ', icon: HelpCircle, adminOnly: true },
+  { href: '/dashboard/testimonials', label: 'Testimonials', icon: Quote, adminOnly: true },
   { href: '/dashboard/stats', label: 'Stats & Achievements', icon: BarChart2, adminOnly: true },
-  { href: '/dashboard/portfolio', label: 'Portfolio', icon: Briefcase, adminOnly: true },
+  { href: '/dashboard/portfolio', label: 'Portfolio', icon: FolderOpen, adminOnly: true },
   { href: '/dashboard/companies', label: 'Companies', icon: Building2, adminOnly: true },
   { href: '/dashboard/chat', label: 'Chat Messages', icon: MessageCircle },
-  { href: '/dashboard/meta', label: 'Meta Connect', icon: Share2 },
+  { href: '/dashboard/meta', label: 'Ads Manager', icon: Megaphone },
+  { href: '/dashboard/welcome-modal', label: 'Welcome Popup', icon: Sparkles, adminOnly: true },
   { href: '/dashboard/settings', label: 'Site Settings', icon: Settings, adminOnly: true },
 ];
 
 // Routes accessible by normal users (no admin required)
 const USER_ALLOWED_ROUTES = [
+  '/dashboard',
   '/dashboard/chat',
   '/dashboard/meta',
   '/dashboard/profile',
-=======
-const navItems = [
-  { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
-  { href: '/dashboard/hero-slider', label: 'Hero Slider', icon: SlidersHorizontal },
-  { href: '/dashboard/categories', label: 'Service Categories', icon: LayoutGrid },
-  { href: '/dashboard/popular-services', label: 'Popular Services', icon: Flame },
-  { href: '/dashboard/team', label: 'Team', icon: Users },
-  { href: '/dashboard/faq', label: 'FAQ', icon: HelpCircle },
-  { href: '/dashboard/testimonials', label: 'Testimonials', icon: Quote },
-  { href: '/dashboard/stats', label: 'Stats & Achievements', icon: BarChart2 },
-  { href: '/dashboard/portfolio', label: 'Portfolio', icon: FolderOpen },
-  { href: '/dashboard/companies', label: 'Companies', icon: Building2 },
-  { href: '/dashboard/chat', label: 'Chat Messages', icon: MessageCircle },
-  { href: '/dashboard/meta', label: 'Ads Manager', icon: Megaphone },
-  { href: '/dashboard/settings', label: 'Site Settings', icon: Settings },
->>>>>>> 9e38dd9 (updated dashbopard ui)
 ];
+
+// ── User Shell (non-admin layout) ─────────────────────────────────────────
+function UserShell({ children, userName, noPadding }: { children: React.ReactNode; userName: string; noPadding?: boolean }) {
+  const pathname = usePathname();
+  const [moreOpen, setMoreOpen] = useState(false);
+
+  const userNavItems = [
+    { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
+    { href: '/dashboard/chat', label: 'Chat', icon: MessageCircle },
+  ];
+
+  const activeLabel = userNavItems.find(n => n.href === pathname)?.label ?? 'Dashboard';
+
+  return (
+    <div className={`${noPadding ? 'h-screen overflow-hidden' : 'min-h-screen'} bg-gray-50 flex flex-col`}>
+      {/* Top bar */}
+      <header className="sticky top-0 z-20 bg-white border-b border-gray-100 h-14 flex items-center px-4 justify-between shadow-sm">
+        <Link href="/dashboard">
+          <Image
+            src="/Motion Booster Black Logo-01.svg"
+            alt="Motion Booster"
+            width={130}
+            height={40}
+            className="h-8 w-auto"
+            priority
+          />
+        </Link>
+        <div className="flex items-center gap-2 text-sm text-gray-500 font-medium">
+          <span className="hidden sm:block">{activeLabel}</span>
+          <Link href="/dashboard/profile">
+            <div className="w-8 h-8 rounded-full bg-linear-to-br from-red-500 to-red-700 flex items-center justify-center text-white text-xs font-bold">
+              {userName.slice(0, 2).toUpperCase()}
+            </div>
+          </Link>
+        </div>
+      </header>
+
+      {/* Page content */}
+      <main className={`flex-1 ${noPadding ? 'overflow-hidden' : 'overflow-auto pb-20'}`}>
+        {children}
+      </main>
+
+      {/* Bottom nav */}
+      <nav className="fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-gray-200 shadow-lg flex justify-around items-center h-16 px-2">
+        {userNavItems.map(({ href, label, icon: Icon }) => {
+          const active = pathname === href;
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={`flex flex-col items-center justify-center gap-1 px-4 py-2 flex-1 transition-colors ${active ? 'text-red-500' : 'text-gray-500 hover:text-red-500'}`}
+            >
+              <Icon className="w-6 h-6" />
+              <span className="text-[10px] font-medium">{label}</span>
+            </Link>
+          );
+        })}
+
+        {/* More — uses same MoreDrawer as public website */}
+        <button
+          onClick={() => setMoreOpen(true)}
+          className="flex flex-col items-center justify-center gap-1 px-4 py-2 flex-1 text-gray-500 hover:text-red-500 transition-colors"
+        >
+          <MoreHorizontal className="w-6 h-6" />
+          <span className="text-[10px] font-medium">More</span>
+        </button>
+      </nav>
+
+      {/* Public-style MoreDrawer (slides from left) */}
+      <MoreDrawer open={moreOpen} onClose={() => setMoreOpen(false)} />
+    </div>
+  );
+}
 
 export default function AdminShell({ children, noPadding }: { children: React.ReactNode; noPadding?: boolean }) {
   const { isAuthenticated, isLoading, logout, user } = useAuth();
@@ -131,6 +192,11 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
     router.push('/login');
   };
 
+  // ── Non-admin users: custom user shell ───────────────────────────────────
+  if (!isAdmin) {
+    return <UserShell userName={adminName} noPadding={noPadding}>{children}</UserShell>;
+  }
+
   return (
     <div className={`${noPadding ? 'h-screen overflow-hidden' : 'min-h-screen'} bg-gray-50 flex`}>
       {/* Sidebar Overlay (mobile) */}
@@ -148,18 +214,6 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
         }`}
       >
         {/* Logo */}
-<<<<<<< HEAD
-        <div className="px-5 py-4 border-b border-gray-100">
-          <Image
-            src="/Motion Booster Black Logo-01.svg"
-            alt="Motion Booster"
-            width={160}
-            height={48}
-            className="h-9 w-auto"
-            priority
-          />
-          <div className="text-gray-400 text-xs mt-1 pl-0.5 font-medium tracking-wide uppercase">{isAdmin ? 'Admin Panel' : 'Dashboard'}</div>
-=======
         <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
           <div>
             <Image
@@ -170,7 +224,7 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
               className="h-9 w-auto"
               priority
             />
-            <div className="text-gray-400 text-xs mt-1 pl-0.5 font-medium tracking-wide uppercase">Admin Panel</div>
+            <div className="text-gray-400 text-xs mt-1 pl-0.5 font-medium tracking-wide uppercase">{isAdmin ? 'Admin Panel' : 'Dashboard'}</div>
           </div>
           <button
             onClick={() => setSidebarOpen(false)}
@@ -178,7 +232,6 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
           >
             <X className="w-5 h-5" />
           </button>
->>>>>>> 9e38dd9 (updated dashbopard ui)
         </div>
 
         {/* Navigation */}
@@ -219,7 +272,7 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
               // eslint-disable-next-line @next/next/no-img-element
               <img src={adminAvatar} alt="avatar" className="w-7 h-7 rounded-full object-cover shrink-0" />
             ) : (
-              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center text-white text-xs font-bold shrink-0">
+              <div className="w-7 h-7 rounded-full bg-linear-to-br from-red-500 to-red-700 flex items-center justify-center text-white text-xs font-bold shrink-0">
                 {adminName.slice(0, 2).toUpperCase()}
               </div>
             )}
@@ -258,13 +311,8 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
             >
               <Menu className="w-5 h-5" />
             </button>
-<<<<<<< HEAD
-            <div className="hidden sm:flex items-center gap-2 text-sm text-gray-500">
-              {visibleNavItems.find(n => n.href === pathname)?.label ?? (isAdmin ? 'Admin Panel' : 'Dashboard')}
-=======
             <div className="flex items-center gap-2 text-sm text-gray-600 font-medium">
-              {navItems.find(n => n.href === pathname)?.label ?? 'Admin Panel'}
->>>>>>> 9e38dd9 (updated dashbopard ui)
+              {visibleNavItems.find(n => n.href === pathname)?.label ?? (isAdmin ? 'Admin Panel' : 'Dashboard')}
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -274,7 +322,7 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={adminAvatar} alt="avatar" className="w-7 h-7 rounded-full object-cover" />
               ) : (
-                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center text-white text-xs font-bold">
+                <div className="w-7 h-7 rounded-full bg-linear-to-br from-red-500 to-red-700 flex items-center justify-center text-white text-xs font-bold">
                   {adminName.slice(0, 2).toUpperCase()}
                 </div>
               )}

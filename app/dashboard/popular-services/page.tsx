@@ -266,7 +266,7 @@ export default function PopularServicesPage() {
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Popular Services</h1>
           <p className="text-sm text-gray-500 mt-0.5">Manage the "Our Popular Services" cards on the homepage slider.</p>

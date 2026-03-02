@@ -28,7 +28,7 @@ async function apiFetch<T>(url: string): Promise<T> {
 
 export default function MetaOverviewSection() {
   const [datePreset, setDatePreset] = useState<DatePreset>('last_30d');
-  const [accountId, setAccountId] = useState('');
+  const [accountId, setAccountId] = useState('act_586481100654531');
   const [account, setAccount] = useState<MetaAccount | null>(null);
   const [insights, setInsights] = useState<InsightRow[]>([]);
   const [dailySpend, setDailySpend] = useState<InsightRow[]>([]);
@@ -74,17 +74,12 @@ export default function MetaOverviewSection() {
     <div className="rounded-2xl border border-gray-100 bg-white p-5 sm:p-6 space-y-5">
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-<<<<<<< HEAD
-        <h2 className="text-lg font-bold text-white">Meta Ads Performance</h2>
-        <div className="flex flex-wrap items-center gap-2">
-          <AccountSwitcher value={accountId} onChange={setAccountId} />
-=======
         <div>
           <h2 className="text-base font-bold text-gray-900">Meta Ads Performance</h2>
           <p className="text-xs text-gray-500 mt-0.5">Live data from your connected ad account</p>
         </div>
-        <div className="flex items-center gap-2">
->>>>>>> 9e38dd9 (updated dashbopard ui)
+        <div className="flex items-center gap-2 flex-wrap">
+          <AccountSwitcher value={accountId} onChange={setAccountId} />
           <DatePresetSelector value={datePreset} onChange={setDatePreset} />
           <button
             onClick={() => load(datePreset, accountId)}

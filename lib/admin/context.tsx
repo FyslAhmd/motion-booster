@@ -28,12 +28,12 @@ interface SiteDataContextValue {
 const SiteDataContext = createContext<SiteDataContextValue | null>(null);
 
 export function SiteDataProvider({ children }: { children: React.ReactNode }) {
-  const [services, setServices] = useState<ServiceItem[]>([]);
-  const [team, setTeam] = useState<TeamMemberItem[]>([]);
-  const [faqs, setFAQs] = useState<FAQItem[]>([]);
-  const [testimonials, setTestimonials] = useState<TestimonialItem[]>([]);
-  const [stats, setStats] = useState<StatItem[]>([]);
-  const [settings, setSettings] = useState<SiteSettings>(AdminStore.getSettings());
+  const [services, setServices] = useState<ServiceItem[]>(() => AdminStore.getServices());
+  const [team, setTeam] = useState<TeamMemberItem[]>(() => AdminStore.getTeam());
+  const [faqs, setFAQs] = useState<FAQItem[]>(() => AdminStore.getFAQs());
+  const [testimonials, setTestimonials] = useState<TestimonialItem[]>(() => AdminStore.getTestimonials());
+  const [stats, setStats] = useState<StatItem[]>(() => AdminStore.getStats());
+  const [settings, setSettings] = useState<SiteSettings>(() => AdminStore.getSettings());
 
   const refreshAll = useCallback(() => {
     setServices(AdminStore.getServices());

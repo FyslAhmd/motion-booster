@@ -309,7 +309,7 @@ export default function PortfolioPage() {
       )}
 
       {/* Page Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Portfolio</h1>
           <p className="text-sm text-gray-500 mt-0.5">{items.length} project{items.length !== 1 ? 's' : ''} · {items.filter(i => i.featured).length} featured</p>

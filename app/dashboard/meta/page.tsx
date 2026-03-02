@@ -15,29 +15,21 @@ const TABS: { id: Tab; label: string }[] = [
 
 export default function MetaDashboardPage() {
   const [tab, setTab] = useState<Tab>('campaigns');
-  const [accountId, setAccountId] = useState('');
+  const [accountId, setAccountId] = useState('act_586481100654531');
 
   return (
     <AdminShell>
       <div className="space-y-6">
         {/* Header */}
-<<<<<<< HEAD
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-white">Meta Ads Manager</h1>
-            <p className="mt-0.5 text-sm text-gray-400">
-              Manage and monitor your Meta campaigns, ad sets, and ads
-            </p>
-          </div>
-          <AccountSwitcher value={accountId} onChange={setAccountId} />
-=======
         <div>
           <h1 className="text-xl font-bold text-gray-900">Meta Ads Manager</h1>
           <p className="mt-0.5 text-sm text-gray-500">
             Manage and monitor your Meta campaigns, ad sets, and ads
           </p>
->>>>>>> 9e38dd9 (updated dashbopard ui)
         </div>
+
+        {/* Account Switcher */}
+        <AccountSwitcher value={accountId} onChange={setAccountId} />
 
         {/* Tabs */}
         <div className="flex gap-1 rounded-xl border border-gray-200 bg-gray-50 p-1">
@@ -58,14 +50,9 @@ export default function MetaDashboardPage() {
         </div>
 
         {/* Tab Content */}
-        {accountId && tab === 'campaigns' && <CampaignsTable accountId={accountId} />}
-        {accountId && tab === 'adsets' && <AdSetsTable accountId={accountId} />}
-        {accountId && tab === 'ads' && <AdsTable accountId={accountId} />}
-        {!accountId && (
-          <div className="flex items-center justify-center py-16 text-sm text-gray-500">
-            Loading account...
-          </div>
-        )}
+        {tab === 'campaigns' && <CampaignsTable accountId={accountId} />}
+        {tab === 'adsets' && <AdSetsTable accountId={accountId} />}
+        {tab === 'ads' && <AdsTable accountId={accountId} />}
       </div>
     </AdminShell>
   );

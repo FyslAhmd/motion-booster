@@ -33,6 +33,7 @@ model User {
   role          UserRole   @default(USER)
   status        UserStatus @default(ACTIVE)
   emailVerified Boolean    @default(false) @map("email_verified")
+  adsAccess     Boolean    @default(false) @map("ads_access")
   lastLoginAt   DateTime?  @map("last_login_at")
   lastLoginIp   String?    @map("last_login_ip")
   createdAt     DateTime   @default(now()) @map("created_at")

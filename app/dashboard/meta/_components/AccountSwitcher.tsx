@@ -62,7 +62,7 @@ export default function AccountSwitcher({ value, onChange }: AccountSwitcherProp
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 rounded-lg border border-gray-700 bg-gray-800/60 px-3 py-2 text-sm text-gray-400">
+      <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-400">
         <Loader2 className="h-4 w-4 animate-spin" />
         <span>Loading accounts...</span>
       </div>
@@ -75,15 +75,15 @@ export default function AccountSwitcher({ value, onChange }: AccountSwitcherProp
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 rounded-lg border border-gray-700 bg-gray-800/60 px-3 py-2 text-sm text-gray-200 transition-colors hover:border-purple-500/50 hover:bg-gray-700/60"
+        className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 transition-colors hover:border-red-300 hover:bg-gray-50"
       >
-        <Building2 className="h-4 w-4 text-purple-400" />
+        <Building2 className="h-4 w-4 text-red-500" />
         <span className="max-w-[200px] truncate">{selected?.name || 'Select account'}</span>
         <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full z-50 mt-1 w-72 rounded-xl border border-gray-700 bg-gray-800 shadow-xl shadow-black/30">
+        <div className="absolute left-0 top-full z-50 mt-1 w-72 rounded-xl border border-gray-200 bg-white shadow-xl shadow-black/10">
           <div className="max-h-80 overflow-y-auto py-1">
             {accounts.map((acc) => {
               const st = STATUS_MAP[acc.account_status] || { label: 'Unknown', color: 'bg-gray-500' };
@@ -93,14 +93,14 @@ export default function AccountSwitcher({ value, onChange }: AccountSwitcherProp
                   key={acc.id}
                   onClick={() => { onChange(acc.id); setOpen(false); }}
                   className={`flex w-full items-start gap-3 px-4 py-2.5 text-left transition-colors ${
-                    isActive ? 'bg-purple-600/20' : 'hover:bg-gray-700/50'
+                    isActive ? 'bg-red-50' : 'hover:bg-gray-50'
                   }`}
                 >
                   <div className="flex-1 min-w-0">
-                    <p className={`truncate text-sm font-medium ${isActive ? 'text-purple-300' : 'text-gray-200'}`}>
+                    <p className={`truncate text-sm font-medium ${isActive ? 'text-red-600' : 'text-gray-800'}`}>
                       {acc.name}
                     </p>
-                    <div className="mt-0.5 flex items-center gap-2 text-xs text-gray-500">
+                    <div className="mt-0.5 flex items-center gap-2 text-xs text-gray-400">
                       <span className={`inline-block h-1.5 w-1.5 rounded-full ${st.color}`} />
                       <span>{st.label}</span>
                       {acc.amount_spent && (
@@ -112,7 +112,7 @@ export default function AccountSwitcher({ value, onChange }: AccountSwitcherProp
                     </div>
                   </div>
                   {isActive && (
-                    <span className="mt-1 text-xs text-purple-400">✓</span>
+                    <span className="mt-1 text-xs text-red-500">✓</span>
                   )}
                 </button>
               );

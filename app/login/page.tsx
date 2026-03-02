@@ -99,8 +99,9 @@ export default function LoginPage() {
         login(data.data.accessToken, data.data.user);
       }
 
-      // Redirect to dashboard
-      router.push('/dashboard');
+      // Redirect based on role
+      const role = data.data?.user?.role;
+      router.push(role === 'ADMIN' ? '/dashboard' : '/dashboard/chat');
     } catch {
       setServerError(
         'Network error. Please check your connection and try again.'
