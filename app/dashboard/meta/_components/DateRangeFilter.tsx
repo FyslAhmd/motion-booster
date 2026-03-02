@@ -80,7 +80,7 @@ export default function DateRangeFilter({ onDateChange }: Props) {
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-gray-300 transition-colors hover:bg-gray-700"
+        className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100"
       >
         <Calendar className="h-4 w-4" />
         <span className="max-w-[180px] truncate">{label}</span>
@@ -90,7 +90,7 @@ export default function DateRangeFilter({ onDateChange }: Props) {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-30 mt-2 w-72 rounded-xl border border-gray-700 bg-gray-800 p-3 shadow-xl">
+        <div className="absolute right-0 top-full z-30 mt-2 w-72 rounded-xl border border-gray-200 bg-white p-3 shadow-xl">
           {/* Presets */}
           <div className="mb-3 space-y-1">
             {PRESETS.map((p) => (
@@ -100,8 +100,8 @@ export default function DateRangeFilter({ onDateChange }: Props) {
                 className={`w-full rounded-lg px-3 py-2 text-left text-sm transition-colors
                   ${
                     preset === p.id
-                      ? 'bg-purple-600 text-white'
-                      : 'text-gray-300 hover:bg-gray-700'
+                      ? 'bg-red-600 text-white'
+                      : 'text-gray-700 hover:bg-gray-100'
                   }`}
               >
                 {p.label}
@@ -111,14 +111,14 @@ export default function DateRangeFilter({ onDateChange }: Props) {
 
           {/* Custom range inputs */}
           {preset === 'custom' && (
-            <div className="space-y-2 border-t border-gray-700 pt-3">
+            <div className="space-y-2 border-t border-gray-200 pt-3">
               <div>
                 <label className="mb-1 block text-xs text-gray-400">Start Date</label>
                 <input
                   type="date"
                   value={customFrom}
                   onChange={(e) => setCustomFrom(e.target.value)}
-                  className="w-full rounded-lg border border-gray-600 bg-gray-900 px-3 py-2 text-sm text-gray-200 focus:border-purple-500 focus:outline-none"
+                  className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-red-400 focus:outline-none"
                 />
               </div>
               <div>
@@ -127,13 +127,13 @@ export default function DateRangeFilter({ onDateChange }: Props) {
                   type="date"
                   value={customTo}
                   onChange={(e) => setCustomTo(e.target.value)}
-                  className="w-full rounded-lg border border-gray-600 bg-gray-900 px-3 py-2 text-sm text-gray-200 focus:border-purple-500 focus:outline-none"
+                  className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-red-400 focus:outline-none"
                 />
               </div>
               <button
                 onClick={applyCustom}
                 disabled={!customFrom || !customTo}
-                className="w-full rounded-lg bg-purple-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-purple-700 disabled:opacity-40"
+                className="w-full rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-40"
               >
                 Apply Range
               </button>

@@ -71,17 +71,25 @@ export default function MetaOverviewSection() {
   }, [datePreset, accountId, load]);
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-gray-900 p-5 sm:p-6 space-y-5">
+    <div className="rounded-2xl border border-gray-100 bg-white p-5 sm:p-6 space-y-5">
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+<<<<<<< HEAD
         <h2 className="text-lg font-bold text-white">Meta Ads Performance</h2>
         <div className="flex flex-wrap items-center gap-2">
           <AccountSwitcher value={accountId} onChange={setAccountId} />
+=======
+        <div>
+          <h2 className="text-base font-bold text-gray-900">Meta Ads Performance</h2>
+          <p className="text-xs text-gray-500 mt-0.5">Live data from your connected ad account</p>
+        </div>
+        <div className="flex items-center gap-2">
+>>>>>>> 9e38dd9 (updated dashbopard ui)
           <DatePresetSelector value={datePreset} onChange={setDatePreset} />
           <button
             onClick={() => load(datePreset, accountId)}
             disabled={loading}
-            className="rounded-lg border border-gray-700 bg-gray-800 p-2 text-gray-300 transition-colors hover:bg-gray-700 disabled:opacity-50"
+            className="rounded-lg border border-gray-200 bg-white p-2 text-gray-500 transition-colors hover:bg-gray-50 disabled:opacity-50"
           >
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
           </button>
@@ -90,16 +98,16 @@ export default function MetaOverviewSection() {
 
       {/* Error */}
       {error && (
-        <div className="flex items-start gap-3 rounded-xl border border-red-500/30 bg-red-500/10 p-4">
-          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-400" />
-          <p className="text-sm text-red-400">{error}</p>
+        <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4">
+          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-500" />
+          <p className="text-sm text-red-600">{error}</p>
         </div>
       )}
 
       {/* Content */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-purple-500 border-t-transparent" />
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-red-500 border-t-transparent" />
         </div>
       ) : (
         <div className="space-y-5">

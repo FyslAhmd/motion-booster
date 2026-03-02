@@ -37,7 +37,7 @@ export default function InsightsCards({ insights }: Props) {
 
   if (!row) {
     return (
-      <div className="rounded-xl border border-gray-700/50 bg-gray-800/50 p-6">
+      <div className="rounded-xl border border-gray-100 bg-white p-6">
         <p className="text-sm text-gray-400">No insight data available for this period.</p>
       </div>
     );
@@ -50,14 +50,14 @@ export default function InsightsCards({ insights }: Props) {
         return (
           <div
             key={m.key}
-            className="rounded-xl border border-gray-700/50 bg-gray-800/50 p-4 
-                       transition-all hover:border-purple-500/30"
+            className="rounded-xl border border-gray-100 bg-white p-4 
+                       transition-all hover:border-red-400/40"
           >
             <div className="mb-1 flex items-center gap-2">
               <span className="text-base">{m.icon}</span>
               <span className="text-xs text-gray-500">{m.label}</span>
             </div>
-            <p className="text-xl font-bold text-white">{fmt(value, m.type)}</p>
+            <p className="text-xl font-bold text-gray-900">{fmt(value, m.type)}</p>
           </div>
         );
       })}

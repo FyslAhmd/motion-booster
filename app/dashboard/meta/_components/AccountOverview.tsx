@@ -4,16 +4,16 @@ import React from 'react';
 import type { MetaAccount } from './useMetaData';
 
 const STATUS_MAP: Record<number, { label: string; color: string }> = {
-  1: { label: 'Active', color: 'bg-green-500/20 text-green-400' },
-  2: { label: 'Disabled', color: 'bg-red-500/20 text-red-400' },
-  3: { label: 'Unsettled', color: 'bg-yellow-500/20 text-yellow-400' },
-  7: { label: 'Pending Risk Review', color: 'bg-orange-500/20 text-orange-400' },
-  8: { label: 'Pending Settlement', color: 'bg-yellow-500/20 text-yellow-400' },
-  9: { label: 'In Grace Period', color: 'bg-blue-500/20 text-blue-400' },
-  100: { label: 'Pending Closure', color: 'bg-gray-500/20 text-gray-400' },
-  101: { label: 'Closed', color: 'bg-gray-500/20 text-gray-400' },
-  201: { label: 'Any Active', color: 'bg-green-500/20 text-green-400' },
-  202: { label: 'Any Closed', color: 'bg-gray-500/20 text-gray-400' },
+  1: { label: 'Active', color: 'bg-green-50 text-green-700 border border-green-200' },
+  2: { label: 'Disabled', color: 'bg-red-50 text-red-600 border border-red-200' },
+  3: { label: 'Unsettled', color: 'bg-amber-50 text-amber-700 border border-amber-200' },
+  7: { label: 'Pending Risk Review', color: 'bg-orange-50 text-orange-700 border border-orange-200' },
+  8: { label: 'Pending Settlement', color: 'bg-amber-50 text-amber-700 border border-amber-200' },
+  9: { label: 'In Grace Period', color: 'bg-blue-50 text-blue-700 border border-blue-200' },
+  100: { label: 'Pending Closure', color: 'bg-gray-100 text-gray-500' },
+  101: { label: 'Closed', color: 'bg-gray-100 text-gray-500' },
+  201: { label: 'Any Active', color: 'bg-green-50 text-green-700 border border-green-200' },
+  202: { label: 'Any Closed', color: 'bg-gray-100 text-gray-500' },
 };
 
 function formatMoney(cents: string | undefined, currency: string) {
@@ -33,7 +33,7 @@ interface Props {
 export default function AccountOverview({ account }: Props) {
   if (!account) {
     return (
-      <div className="rounded-xl border border-gray-700/50 bg-gray-800/50 p-6">
+      <div className="rounded-xl border border-gray-100 bg-gray-50 p-6">
         <p className="text-sm text-gray-400">No account data available.</p>
       </div>
     );
@@ -75,11 +75,11 @@ export default function AccountOverview({ account }: Props) {
   ];
 
   return (
-    <div className="rounded-xl border border-gray-700/50 bg-gray-800/50 p-6">
+    <div className="rounded-xl border border-gray-100 bg-gray-50 p-5">
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-white">{account.name}</h3>
-          <p className="text-sm text-gray-400">Ad Account Overview</p>
+          <h3 className="text-sm font-semibold text-gray-900">{account.name}</h3>
+          <p className="text-xs text-gray-400 mt-0.5">Ad Account Overview</p>
         </div>
         <span className={`rounded-full px-3 py-1 text-xs font-medium ${status.color}`}>
           {status.label}
@@ -89,12 +89,10 @@ export default function AccountOverview({ account }: Props) {
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         {infoItems.map((item) => (
           <div key={item.label}>
-            <p className="text-xs text-gray-500">{item.label}</p>
-            <p
-              className={`mt-0.5 text-sm font-medium ${
-                item.highlight ? 'text-purple-400' : 'text-gray-200'
-              }`}
-            >
+            <p className="text-xs text-gray-400">{item.label}</p>
+            <p className={`mt-0.5 text-sm font-semibold ${
+              item.highlight ? 'text-red-600' : 'text-gray-800'
+            }`}>
               {item.value}
             </p>
           </div>

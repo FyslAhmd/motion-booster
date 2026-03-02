@@ -21,6 +21,7 @@ export default function MetaDashboardPage() {
     <AdminShell>
       <div className="space-y-6">
         {/* Header */}
+<<<<<<< HEAD
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold text-white">Meta Ads Manager</h1>
@@ -29,10 +30,17 @@ export default function MetaDashboardPage() {
             </p>
           </div>
           <AccountSwitcher value={accountId} onChange={setAccountId} />
+=======
+        <div>
+          <h1 className="text-xl font-bold text-gray-900">Meta Ads Manager</h1>
+          <p className="mt-0.5 text-sm text-gray-500">
+            Manage and monitor your Meta campaigns, ad sets, and ads
+          </p>
+>>>>>>> 9e38dd9 (updated dashbopard ui)
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 rounded-xl border border-gray-700/50 bg-gray-800/50 p-1">
+        <div className="flex gap-1 rounded-xl border border-gray-200 bg-gray-50 p-1">
           {TABS.map((t) => (
             <button
               key={t.id}
@@ -40,8 +48,8 @@ export default function MetaDashboardPage() {
               className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-all
                 ${
                   tab === t.id
-                    ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
-                    : 'text-gray-400 hover:bg-gray-700/50 hover:text-gray-200'
+                    ? 'bg-red-600 text-white shadow-sm shadow-red-500/20'
+                    : 'text-gray-500 hover:bg-white hover:text-gray-700'
                 }`}
             >
               {t.label}

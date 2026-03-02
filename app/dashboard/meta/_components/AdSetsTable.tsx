@@ -31,10 +31,10 @@ interface CursorPaging {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  ACTIVE: 'bg-green-500/20 text-green-400',
-  PAUSED: 'bg-yellow-500/20 text-yellow-400',
-  DELETED: 'bg-red-500/20 text-red-400',
-  ARCHIVED: 'bg-gray-500/20 text-gray-400',
+  ACTIVE: 'bg-green-50 text-green-700 border border-green-200',
+  PAUSED: 'bg-amber-50 text-amber-700 border border-amber-200',
+  DELETED: 'bg-red-50 text-red-600 border border-red-200',
+  ARCHIVED: 'bg-gray-100 text-gray-500',
 };
 
 function fmtBudget(val?: string) {
@@ -161,10 +161,17 @@ export default function AdSetsTable({ accountId }: AdSetsTableProps) {
   const hasPrev = cursorStack.length > 0;
 
   return (
-    <div className="rounded-xl border border-gray-700/50 bg-gray-800/50">
+    <div className="rounded-xl border border-gray-100 bg-white">
       {/* Controls */}
+<<<<<<< HEAD
       <div className="flex flex-col gap-3 border-b border-gray-700/50 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
         <h3 className="text-sm font-semibold text-gray-300">Ad Sets</h3>
+=======
+      <div className="flex flex-col gap-3 border-b border-gray-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <h3 className="text-sm font-semibold text-gray-700">
+          Ad Sets <span className="ml-1 text-xs text-gray-500">({pagination.total})</span>
+        </h3>
+>>>>>>> 9e38dd9 (updated dashbopard ui)
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
@@ -178,14 +185,14 @@ export default function AdSetsTable({ accountId }: AdSetsTableProps) {
                 searchTimerRef.current = setTimeout(() => handleSearch(val), 400);
               }}
               placeholder="Search ad sets..."
-              className="w-48 rounded-lg border border-gray-700 bg-gray-900 py-2 pl-9 pr-3 text-sm text-gray-200 placeholder-gray-500 focus:border-purple-500 focus:outline-none"
+              className="w-48 rounded-lg border border-gray-200 bg-gray-50 py-2 pl-9 pr-3 text-sm text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-red-400 focus:outline-none"
             />
           </div>
           {campaigns.length > 0 && (
             <select
               value={filterCampaign}
               onChange={(e) => handleCampaignFilter(e.target.value)}
-              className="rounded-lg border border-gray-700 bg-gray-800 px-2.5 py-2 text-xs text-gray-300 focus:border-purple-500 focus:outline-none"
+              className="rounded-lg border border-gray-200 bg-white px-2.5 py-2 text-xs text-gray-700 focus:ring-2 focus:ring-red-400 focus:outline-none"
             >
               <option value="all">All campaigns</option>
               {campaigns.map((c) => (
@@ -199,7 +206,7 @@ export default function AdSetsTable({ accountId }: AdSetsTableProps) {
       {/* Loading */}
       {loading && (
         <div className="flex items-center justify-center py-16">
-          <Loader2 className="h-6 w-6 animate-spin text-purple-400" />
+          <Loader2 className="h-6 w-6 animate-spin text-red-500" />
         </div>
       )}
 
@@ -217,7 +224,7 @@ export default function AdSetsTable({ accountId }: AdSetsTableProps) {
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="border-b border-gray-700/50 text-xs uppercase text-gray-500">
+                  <tr className="border-b border-gray-100 text-xs uppercase text-gray-500">
                     <th className="px-6 py-3 font-medium">Ad Set</th>
                     <th className="px-4 py-3 font-medium">Status</th>
                     <th className="px-4 py-3 font-medium">Optimization</th>
@@ -226,17 +233,17 @@ export default function AdSetsTable({ accountId }: AdSetsTableProps) {
                     <th className="px-4 py-3 font-medium">Schedule</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-700/30">
+                <tbody className="divide-y divide-gray-100">
                   {data.map((a) => {
-                    const color = STATUS_COLORS[a.effective_status] || 'bg-gray-500/20 text-gray-400';
+                    const color = STATUS_COLORS[a.effective_status] || 'bg-gray-100 text-gray-500';
                     return (
-                      <tr key={a.id} className="transition-colors hover:bg-gray-700/20">
-                        <td className="max-w-[200px] truncate px-6 py-3 font-medium text-gray-200">{a.name}</td>
+                      <tr key={a.id} className="transition-colors hover:bg-gray-50">
+                        <td className="max-w-[200px] truncate px-6 py-3 font-medium text-gray-900">{a.name}</td>
                         <td className="px-4 py-3">
                           <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${color}`}>{a.effective_status}</span>
                         </td>
                         <td className="px-4 py-3 text-xs text-gray-400">{a.optimization_goal?.replace(/_/g, ' ') || '—'}</td>
-                        <td className="px-4 py-3 text-right text-gray-300">
+                        <td className="px-4 py-3 text-right text-gray-700">
                           {a.daily_budget ? `${fmtBudget(a.daily_budget)}/day` : a.lifetime_budget ? `${fmtBudget(a.lifetime_budget)} life` : '—'}
                         </td>
                         <td className="max-w-[220px] truncate px-4 py-3 text-xs text-gray-400">{summarizeTargeting(a.targeting)}</td>
@@ -253,6 +260,7 @@ export default function AdSetsTable({ accountId }: AdSetsTableProps) {
           )}
 
           {/* Pagination */}
+<<<<<<< HEAD
           {(hasNext || hasPrev) && (
             <div className="flex items-center justify-between border-t border-gray-700/50 px-6 py-3">
               <p className="text-xs text-gray-500">Page {pageNum}</p>
@@ -264,6 +272,37 @@ export default function AdSetsTable({ accountId }: AdSetsTableProps) {
                   {pageNum}
                 </span>
                 <button onClick={goNext} disabled={!hasNext} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-700 disabled:opacity-30">
+=======
+          {pagination.totalPages > 1 && (
+            <div className="flex items-center justify-between border-t border-gray-100 px-6 py-3">
+              <p className="text-xs text-gray-500">
+                Showing {(pagination.page - 1) * pagination.limit + 1}–
+                {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total}
+              </p>
+              <div className="flex items-center gap-1">
+                <button onClick={() => goPage(pagination.page - 1)} disabled={pagination.page <= 1} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 disabled:opacity-30">
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                {Array.from({ length: Math.min(pagination.totalPages, 5) }, (_, i) => {
+                  let pg: number;
+                  if (pagination.totalPages <= 5) pg = i + 1;
+                  else if (pagination.page <= 3) pg = i + 1;
+                  else if (pagination.page >= pagination.totalPages - 2) pg = pagination.totalPages - 4 + i;
+                  else pg = pagination.page - 2 + i;
+                  return (
+                    <button
+                      key={pg}
+                      onClick={() => goPage(pg)}
+                      className={`min-w-[32px] rounded-lg px-2 py-1 text-xs font-medium transition-colors ${
+                        pg === pagination.page ? 'bg-red-600 text-white' : 'text-gray-400 hover:bg-gray-100'
+                      }`}
+                    >
+                      {pg}
+                    </button>
+                  );
+                })}
+                <button onClick={() => goPage(pagination.page + 1)} disabled={pagination.page >= pagination.totalPages} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 disabled:opacity-30">
+>>>>>>> 9e38dd9 (updated dashbopard ui)
                   <ChevronRight className="h-4 w-4" />
                 </button>
               </div>

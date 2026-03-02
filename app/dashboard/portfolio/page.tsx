@@ -174,7 +174,7 @@ export default function PortfolioPage() {
               </div>
 
               {/* Client + Category */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-gray-500 mb-1.5">Client Name *</label>
                   <input
@@ -247,7 +247,7 @@ export default function PortfolioPage() {
               </div>
 
               {/* Cover Color + Image + Featured */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-gray-500 mb-1.5">Cover Color</label>
                   <div className="grid grid-cols-6 gap-1.5">

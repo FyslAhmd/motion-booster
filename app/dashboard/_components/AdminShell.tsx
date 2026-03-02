@@ -7,9 +7,8 @@ import Image from 'next/image';
 import { useAuth } from '@/lib/auth/context';
 import {
   LayoutDashboard,
-  Layers,
   Users,
-  MessageSquare,
+  HelpCircle,
   Star,
   Settings,
   LogOut,
@@ -18,15 +17,18 @@ import {
   ChevronRight,
   BarChart2,
   Globe,
-  Briefcase,
+  FolderOpen,
   LayoutGrid,
   SlidersHorizontal,
   MessageCircle,
-  Share2,
+  Megaphone,
   UserCog,
   Building2,
+  Flame,
+  Quote,
 } from 'lucide-react';
 
+<<<<<<< HEAD
 interface NavItem {
   href: string;
   label: string;
@@ -56,6 +58,22 @@ const USER_ALLOWED_ROUTES = [
   '/dashboard/chat',
   '/dashboard/meta',
   '/dashboard/profile',
+=======
+const navItems = [
+  { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
+  { href: '/dashboard/hero-slider', label: 'Hero Slider', icon: SlidersHorizontal },
+  { href: '/dashboard/categories', label: 'Service Categories', icon: LayoutGrid },
+  { href: '/dashboard/popular-services', label: 'Popular Services', icon: Flame },
+  { href: '/dashboard/team', label: 'Team', icon: Users },
+  { href: '/dashboard/faq', label: 'FAQ', icon: HelpCircle },
+  { href: '/dashboard/testimonials', label: 'Testimonials', icon: Quote },
+  { href: '/dashboard/stats', label: 'Stats & Achievements', icon: BarChart2 },
+  { href: '/dashboard/portfolio', label: 'Portfolio', icon: FolderOpen },
+  { href: '/dashboard/companies', label: 'Companies', icon: Building2 },
+  { href: '/dashboard/chat', label: 'Chat Messages', icon: MessageCircle },
+  { href: '/dashboard/meta', label: 'Ads Manager', icon: Megaphone },
+  { href: '/dashboard/settings', label: 'Site Settings', icon: Settings },
+>>>>>>> 9e38dd9 (updated dashbopard ui)
 ];
 
 export default function AdminShell({ children, noPadding }: { children: React.ReactNode; noPadding?: boolean }) {
@@ -130,6 +148,7 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
         }`}
       >
         {/* Logo */}
+<<<<<<< HEAD
         <div className="px-5 py-4 border-b border-gray-100">
           <Image
             src="/Motion Booster Black Logo-01.svg"
@@ -140,6 +159,26 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
             priority
           />
           <div className="text-gray-400 text-xs mt-1 pl-0.5 font-medium tracking-wide uppercase">{isAdmin ? 'Admin Panel' : 'Dashboard'}</div>
+=======
+        <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+          <div>
+            <Image
+              src="/Motion Booster Black Logo-01.svg"
+              alt="Motion Booster"
+              width={160}
+              height={48}
+              className="h-9 w-auto"
+              priority
+            />
+            <div className="text-gray-400 text-xs mt-1 pl-0.5 font-medium tracking-wide uppercase">Admin Panel</div>
+          </div>
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="lg:hidden p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100"
+          >
+            <X className="w-5 h-5" />
+          </button>
+>>>>>>> 9e38dd9 (updated dashbopard ui)
         </div>
 
         {/* Navigation */}
@@ -219,8 +258,13 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
             >
               <Menu className="w-5 h-5" />
             </button>
+<<<<<<< HEAD
             <div className="hidden sm:flex items-center gap-2 text-sm text-gray-500">
               {visibleNavItems.find(n => n.href === pathname)?.label ?? (isAdmin ? 'Admin Panel' : 'Dashboard')}
+=======
+            <div className="flex items-center gap-2 text-sm text-gray-600 font-medium">
+              {navItems.find(n => n.href === pathname)?.label ?? 'Admin Panel'}
+>>>>>>> 9e38dd9 (updated dashbopard ui)
             </div>
           </div>
           <div className="flex items-center gap-2">

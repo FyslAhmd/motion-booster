@@ -158,7 +158,7 @@ export default function HeroSliderPage() {
               </div>
 
               {/* Badge + CTA */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-gray-500 mb-1.5">Badge / Tag</label>
                   <input
