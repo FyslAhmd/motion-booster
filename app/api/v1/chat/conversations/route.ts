@@ -35,8 +35,6 @@ export async function GET(req: NextRequest) {
           select: {
             id: true,
             content: true,
-            messageType: true,
-            fileName: true,
             createdAt: true,
             sender: {
               select: { id: true, fullName: true },

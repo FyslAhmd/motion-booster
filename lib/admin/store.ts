@@ -112,6 +112,12 @@ export interface HeroSlideItem {
   ctaLink?: string;
 }
 
+export interface CompanyItem {
+  id: string;
+  name: string;
+  logoImage?: string; // base64 uploaded logo
+}
+
 export interface AdminProfile {
   displayName: string;
   email: string;
@@ -406,6 +412,21 @@ export const defaultSettings: SiteSettings = {
   servicesSubtitle: 'We offer a comprehensive platform with all the tools you need to streamline and grow your business efficiently.',
 };
 
+export const defaultCompanies: CompanyItem[] = [
+  { id: '1', name: 'Daraz' },
+  { id: '2', name: 'Chaldal' },
+  { id: '3', name: 'Shajgoj' },
+  { id: '4', name: 'Pathao' },
+  { id: '5', name: 'ShopUp' },
+  { id: '6', name: 'Rokomari' },
+  { id: '7', name: 'AjkerDeal' },
+  { id: '8', name: 'Bikroy' },
+  { id: '9', name: 'Othoba' },
+  { id: '10', name: 'Shopify' },
+  { id: '11', name: 'Alibaba' },
+  { id: '12', name: 'Lazada' },
+];
+
 // ─── Storage Keys ────────────────────────────────────────────────────────────
 
 const KEYS = {
@@ -419,6 +440,7 @@ const KEYS = {
   serviceCategories: 'mb_admin_service_categories',
   popularServices: 'mb_admin_popular_services',
   heroSlides: 'mb_admin_hero_slides',
+  companies: 'mb_admin_companies',
   profile: 'mb_admin_profile',
   metaConfig: 'mb_admin_meta_config',
 };;
@@ -482,6 +504,10 @@ export const AdminStore = {
   // Hero Slides
   getHeroSlides: () => read<HeroSlideItem[]>(KEYS.heroSlides, defaultHeroSlides),
   saveHeroSlides: (data: HeroSlideItem[]) => write(KEYS.heroSlides, data),
+
+  // Companies
+  getCompanies: () => read<CompanyItem[]>(KEYS.companies, defaultCompanies),
+  saveCompanies: (data: CompanyItem[]) => write(KEYS.companies, data),
 
   // Admin Profile
   getProfile: (): AdminProfile => read<AdminProfile>(KEYS.profile, { displayName: 'Admin', email: 'admin@motionbooster.com', password: 'MotionBooster@2025' }),

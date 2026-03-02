@@ -1,78 +1,25 @@
 'use client';
 
-import React, { useState } from 'react';
-import Image from 'next/image';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ExternalLink } from 'lucide-react';
+import { AdminStore, PortfolioItem, defaultPortfolio } from '@/lib/admin/store';
 
-interface PortfolioItem {
-  id: number;
-  title: string;
-  category: string;
-  image: string;
-  link: string;
-  description: string;
-}
-
-const portfolioItems: PortfolioItem[] = [
-  {
-    id: 1,
-    title: 'E-commerce Platform',
-    category: 'Web Development',
-    image: '/portfolio-1.jpg',
-    link: '#',
-    description: 'Modern e-commerce solution with payment integration'
-  },
-  {
-    id: 2,
-    title: 'Brand Identity Design',
-    category: 'Graphics Design',
-    image: '/portfolio-2.jpg',
-    link: '#',
-    description: 'Complete brand identity for tech startup'
-  },
-  {
-    id: 3,
-    title: 'Mobile Banking App',
-    category: 'Mobile App',
-    image: '/portfolio-3.jpg',
-    link: '#',
-    description: 'Secure banking application for iOS and Android'
-  },
-  {
-    id: 4,
-    title: 'Social Media Campaign',
-    category: 'Digital Marketing',
-    image: '/portfolio-4.jpg',
-    link: '#',
-    description: 'Viral marketing campaign reaching 2M+ users'
-  },
-  {
-    id: 5,
-    title: 'Corporate Website',
-    category: 'Web Development',
-    image: '/portfolio-5.jpg',
-    link: '#',
-    description: 'Professional corporate website with CMS'
-  },
-  {
-    id: 6,
-    title: 'Product Photography',
-    category: 'Graphics Design',
-    image: '/portfolio-6.jpg',
-    link: '#',
-    description: 'High-quality product photography and editing'
-  },
-];
-
-const categories = ['All', 'Web Development', 'Graphics Design', 'Mobile App', 'Digital Marketing'];
+const categories = ['All', 'Web Development', 'Graphics Design', 'Mobile App', 'Digital Marketing', 'Software Development', 'Video & Animation', 'UI/UX Design'];
 
 export const Portfolio = () => {
   const [activeCategory, setActiveCategory] = useState('All');
+  const [items, setItems] = useState<PortfolioItem[]>(defaultPortfolio);
 
-  const filteredItems = activeCategory === 'All' 
-    ? portfolioItems 
-    : portfolioItems.filter(item => item.category === activeCategory);
+  useEffect(() => {
+    const load = () => setItems(AdminStore.getPortfolio());
+    load();
+    window.addEventListener('storage', load);
+    return () => window.removeEventListener('storage', load);
+  }, []);
+
+  const availableCategories = ['All', ...Array.from(new Set(items.map(i => i.category)))];
+  const filteredItems = activeCategory === 'All' ? items.slice(0, 6) : items.filter(i => i.category === activeCategory).slice(0, 6);
 
   return (
     <section className="py-8 md:py-12 lg:py-16 bg-gray-50">
@@ -89,7 +36,7 @@ export const Portfolio = () => {
 
         {/* Category Filter */}
         <div className="flex flex-wrap justify-center gap-2 md:gap-3 mb-8 md:mb-10">
-          {categories.map((category) => (
+          {availableCategories.map((category) => (
             <button
               key={category}
               onClick={() => setActiveCategory(category)}
@@ -111,50 +58,38 @@ export const Portfolio = () => {
               key={item.id}
               className="group relative bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300"
             >
-              {/* Image */}
+              {/* Cover Image or Gradient */}
               <div className="relative h-64 overflow-hidden">
-                <Image
-                  src={item.image}
-                  alt={item.title}
-                  fill
-                  className="object-cover group-hover:scale-110 transition-transform duration-300"
-                />
+                {item.coverImage ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={item.coverImage} alt={item.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
+                ) : (
+                  <div className={`w-full h-full bg-gradient-to-br ${item.coverColor}`} />
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                
+
                 {/* Overlay Content */}
                 <div className="absolute inset-0 flex items-end p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                   <div className="w-full">
                     <span className="inline-block px-3 py-1 bg-red-500 text-white text-xs font-semibold rounded-full mb-2">
                       {item.category}
                     </span>
-                    <h3 className="text-white font-bold text-lg mb-1">
-                      {item.title}
-                    </h3>
-                    <p className="text-white/90 text-sm mb-3">
-                      {item.description}
-                    </p>
-                    <Link
-                      href={item.link}
-                      className="inline-flex items-center gap-2 text-white font-semibold text-sm hover:gap-3 transition-all"
-                    >
-                      View Project
-                      <ExternalLink className="w-4 h-4" />
+                    <h3 className="text-white font-bold text-lg mb-1">{item.title}</h3>
+                    <p className="text-white/90 text-sm mb-3 line-clamp-2">{item.description}</p>
+                    <Link href="/portfolio" className="inline-flex items-center gap-2 text-white font-semibold text-sm hover:gap-3 transition-all">
+                      View Project <ExternalLink className="w-4 h-4" />
                     </Link>
                   </div>
                 </div>
               </div>
 
-              {/* Card Info (visible by default) */}
+              {/* Card Info */}
               <div className="p-4 group-hover:opacity-0 transition-opacity duration-300">
                 <span className="inline-block px-3 py-1 bg-gray-100 text-gray-700 text-xs font-semibold rounded-full mb-2">
                   {item.category}
                 </span>
-                <h3 className="font-bold text-gray-900 mb-1">
-                  {item.title}
-                </h3>
-                <p className="text-gray-600 text-sm">
-                  {item.description}
-                </p>
+                <h3 className="font-bold text-gray-900 mb-1">{item.title}</h3>
+                <p className="text-gray-600 text-sm line-clamp-2">{item.description}</p>
               </div>
             </div>
           ))}
