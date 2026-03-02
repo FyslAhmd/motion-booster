@@ -104,6 +104,8 @@ export default function DashboardPage() {
     );
   }
 
+  const userName = user?.fullName || user?.username || 'User';
+
   const statCards = [
     { label: 'Team Members', value: team.length, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
     { label: 'Portfolio Items', value: portfolio.length, icon: Briefcase, color: 'text-red-600', bg: 'bg-red-50' },
