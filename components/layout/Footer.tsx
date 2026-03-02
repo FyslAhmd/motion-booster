@@ -58,7 +58,39 @@ export const Footer = () => {
       {/* Main Footer */}
       <div style={{ background: '#2d1810' }}>
         <div className="max-w-7xl mx-auto px-6 lg:px-8 py-14">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-10">
+            {/* Brand */}
+            <div className="sm:col-span-2 lg:col-span-1">
+              <Link href="/" className="inline-block mb-4">
+                <div className="relative w-44 h-11">
+                  <Image
+                    src="/Motion Booster Red Logo-01.svg"
+                    alt="Motion Booster"
+                    fill
+                    className="object-contain"
+                    priority
+                  />
+                </div>
+              </Link>
+              <p className="text-gray-400 text-sm leading-relaxed mb-5">
+                Empowering individuals and businesses with cutting-edge digital skills and services since 2018.
+              </p>
+              <div className="flex gap-3">
+                <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-white/10 hover:bg-red-500 flex items-center justify-center transition-colors">
+                  <Facebook className="w-4 h-4 text-white" />
+                </a>
+                <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-white/10 hover:bg-red-500 flex items-center justify-center transition-colors">
+                  <Linkedin className="w-4 h-4 text-white" />
+                </a>
+                <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-white/10 hover:bg-red-500 flex items-center justify-center transition-colors">
+                  <Youtube className="w-4 h-4 text-white" />
+                </a>
+                <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-white/10 hover:bg-red-500 flex items-center justify-center transition-colors">
+                  <Instagram className="w-4 h-4 text-white" />
+                </a>
+              </div>
+            </div>
+
             {/* Contact */}
             <div>
               <h3 className="text-white font-bold text-lg mb-6">Contact</h3>
@@ -127,7 +159,7 @@ export const Footer = () => {
 
         {/* Bottom Bar */}
         <div className="border-t border-white/10">
-          <div className="max-w-7xl mx-auto px-6 lg:px-8 py-6 flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="max-w-7xl mx-auto px-6 lg:px-8 py-6 flex flex-col sm:flex-row justify-between items-center gap-4">
             {/* Logo */}
             <Link href="/" className="flex items-center">
               <div className="relative w-40 h-10">

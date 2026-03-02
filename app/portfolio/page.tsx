@@ -3,8 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { AdminStore, PortfolioItem, defaultPortfolio } from '@/lib/admin/store';
-import { ArrowLeft, ExternalLink, Tag, User, TrendingUp } from 'lucide-react';
-import { Header, Footer } from '@/components/layout';
+import { Tag, User, TrendingUp } from 'lucide-react';
 
 export default function PortfolioPage() {
   const [items, setItems] = useState<PortfolioItem[]>(defaultPortfolio);
@@ -22,15 +21,10 @@ export default function PortfolioPage() {
   const filtered = activeCategory === 'All' ? items : items.filter(i => i.category === activeCategory);
 
   return (
-    <>
-      <Header />
-      <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-gray-50">
         {/* Hero banner */}
         <div className="bg-white border-b border-gray-100">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14">
-            <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-red-500 transition-colors mb-4">
-              <ArrowLeft className="w-4 h-4" /> Back to Home
-            </Link>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-10">
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-3">Our Projects</h1>
             <p className="text-gray-500 text-base md:text-lg max-w-2xl">
               Explore our complete portfolio of work — from web development and mobile apps to digital marketing and brand design.
@@ -119,9 +113,6 @@ export default function PortfolioPage() {
             </div>
           )}
         </div>
-      </main>
-      <Footer />
-
       {/* Detail Modal */}
       {selected && (
         <div
@@ -208,6 +199,6 @@ export default function PortfolioPage() {
           </div>
         </div>
       )}
-    </>
+    </main>
   );
 }

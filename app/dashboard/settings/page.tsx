@@ -121,6 +121,59 @@ export default function AdminSettingsPage() {
           </div>
         </div>
 
+        {/* Welcome Modal */}
+        <div className="bg-white rounded-2xl border border-gray-100 p-6">
+          <h2 className="font-semibold text-sm uppercase tracking-wider text-gray-500 mb-4">Welcome Modal (Popup)</h2>
+          <div className="space-y-4">
+            <Field
+              label="Explore Button Link"
+              value={settings.welcomeModalExploreLink || ''}
+              onChange={set('welcomeModalExploreLink')}
+              placeholder="/service"
+              hint="Page user goes to when clicking Explore (e.g. /service, /features, /contact)"
+            />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Modal Banner Image</label>
+              {settings.welcomeModalImage && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={settings.welcomeModalImage} alt="Modal preview" className="w-40 h-24 object-cover rounded-xl mb-2 border border-gray-200" />
+              )}
+              <input
+                type="file"
+                accept="image/*"
+                className="text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100"
+                onChange={e => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  const canvas = document.createElement('canvas');
+                  const ctx = canvas.getContext('2d')!;
+                  const img = new window.Image();
+                  img.onload = () => {
+                    const maxW = 800;
+                    const scale = img.width > maxW ? maxW / img.width : 1;
+                    canvas.width = img.width * scale;
+                    canvas.height = img.height * scale;
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    const b64 = canvas.toDataURL('image/jpeg', 0.85);
+                    setSettings(prev => ({ ...prev, welcomeModalImage: b64 }));
+                    URL.revokeObjectURL(img.src);
+                  };
+                  img.src = URL.createObjectURL(file);
+                }}
+              />
+              {settings.welcomeModalImage && (
+                <button
+                  onClick={() => setSettings(prev => ({ ...prev, welcomeModalImage: '' }))}
+                  className="mt-1 text-xs text-red-500 hover:underline"
+                >
+                  Remove image
+                </button>
+              )}
+              <p className="text-xs text-gray-400 mt-1">Leave empty to show the default red gradient banner</p>
+            </div>
+          </div>
+        </div>
+
         {/* Save button (bottom) */}
         <div className="flex justify-end">
           <button onClick={handleSave} className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-medium px-6 py-3 rounded-xl">

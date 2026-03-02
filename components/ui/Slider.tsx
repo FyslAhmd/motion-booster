@@ -112,6 +112,14 @@ export const Slider: React.FC<SliderProps> = ({
         >
           {/* Slide Background Image */}
           <div className="relative w-full h-full">
+            {slides[currentIndex].ctaLink ? (
+              <a
+                href={slides[currentIndex].ctaLink}
+                className="absolute inset-0 z-[2] cursor-pointer"
+                aria-label={slides[currentIndex].title}
+                tabIndex={-1}
+              />
+            ) : null}
             {slides[currentIndex].image.startsWith('data:') ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={slides[currentIndex].image} alt={slides[currentIndex].title} className="w-full h-full object-cover" />

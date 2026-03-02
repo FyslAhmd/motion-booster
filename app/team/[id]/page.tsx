@@ -2,8 +2,7 @@
 
 import { notFound, useRouter } from 'next/navigation';
 import { use, useEffect, useState } from 'react';
-import Link from 'next/link';
-import { ChevronLeft, CheckCircle2, Building2, MessageSquare } from 'lucide-react';
+import { ChevronLeft, CheckCircle2, Building2 } from 'lucide-react';
 import { AdminStore, TeamMemberItem } from '@/lib/admin/store';
 
 export default function TeamMemberPage({ params }: { params: Promise<{ id: string }> }) {
@@ -56,13 +55,6 @@ export default function TeamMemberPage({ params }: { params: Promise<{ id: strin
           <div>
             <h2 className="text-xl font-bold text-gray-900 leading-tight">{member.name}</h2>
             <p className="text-gray-500 text-sm mt-0.5">{member.role}</p>
-            <Link
-              href={`/chat/${member.id}`}
-              className="inline-flex items-center gap-1.5 mt-2 px-4 py-1.5 bg-red-500 hover:bg-red-600 text-white text-xs font-semibold rounded-full transition-colors shadow-sm"
-            >
-              <MessageSquare className="w-3.5 h-3.5" />
-              Message
-            </Link>
           </div>
         </div>
 

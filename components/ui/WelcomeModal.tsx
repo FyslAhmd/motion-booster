@@ -3,13 +3,20 @@
 import { useState, useEffect } from 'react';
 import { ChevronRight, X } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
+import { AdminStore } from '@/lib/admin/store';
 
 export const WelcomeModal = () => {
   const [visible, setVisible] = useState(false);
-  const [countdown, setCountdown] = useState(10);
+  const [countdown, setCountdown] = useState(8);
+  const [modalImage, setModalImage] = useState('');
+  const [exploreLink, setExploreLink] = useState('/service');
 
   useEffect(() => {
-    // Show after 0.5s on first visit per session
+    const settings = AdminStore.getSettings();
+    setModalImage(settings.welcomeModalImage || '');
+    setExploreLink(settings.welcomeModalExploreLink || '/service');
+
     const alreadyShown = sessionStorage.getItem('welcomeShown');
     if (!alreadyShown) {
       const timer = setTimeout(() => setVisible(true), 500);
@@ -19,12 +26,10 @@ export const WelcomeModal = () => {
 
   useEffect(() => {
     if (!visible) return;
-    if (countdown <= 0) {
-      handleClose();
-      return;
-    }
+    if (countdown <= 0) { handleClose(); return; }
     const t = setInterval(() => setCountdown(p => p - 1), 1000);
     return () => clearInterval(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible, countdown]);
 
   const handleClose = () => {
@@ -35,68 +40,70 @@ export const WelcomeModal = () => {
   if (!visible) return null;
 
   return (
-    <>
-      {/* Backdrop */}
+    <div
+      className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center px-4"
+      onClick={handleClose}
+    >
       <div
-        className="fixed inset-0 bg-black/60 z-100 flex items-center justify-center px-4"
-        onClick={handleClose}
+        className="relative bg-white rounded-2xl overflow-hidden shadow-2xl w-full max-w-xs"
+        onClick={e => e.stopPropagation()}
       >
-        {/* Modal */}
-        <div
-          className="relative bg-white rounded-3xl overflow-hidden shadow-2xl w-full max-w-sm"
-          onClick={e => e.stopPropagation()}
+        {/* Close button */}
+        <button
+          onClick={handleClose}
+          className="absolute top-2.5 right-2.5 z-10 w-7 h-7 bg-white/80 rounded-full flex items-center justify-center text-gray-600 hover:text-red-500 transition-colors shadow"
         >
-          {/* Close button */}
-          <button
-            onClick={handleClose}
-            className="absolute top-3 right-3 z-10 w-8 h-8 bg-white/80 rounded-full flex items-center justify-center text-gray-600 hover:text-red-500 transition-colors shadow"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          <X className="w-3.5 h-3.5" />
+        </button>
 
-          {/* Image area */}
+        {/* Banner image / gradient */}
+        {modalImage ? (
+          <div className="relative w-full h-40">
+            {modalImage.startsWith('data:') || modalImage.startsWith('/') ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={modalImage} alt="Promo" className="w-full h-full object-cover" />
+            ) : (
+              <Image src={modalImage} alt="Promo" fill className="object-cover" />
+            )}
+          </div>
+        ) : (
           <div
-            className="w-full h-52 flex items-center justify-center"
+            className="w-full h-40 flex items-center justify-center"
             style={{ background: 'linear-gradient(214.38deg, #ff8079 -2.24%, #ff1e1e 59.38%)' }}
           >
             <div className="text-center px-6">
-              <div className="text-6xl mb-2">🚀</div>
-              <h2 className="text-white text-2xl font-extrabold leading-tight">Motion Booster</h2>
-              <p className="text-white/80 text-sm mt-1">Your Digital Growth Partner</p>
+              <div className="text-5xl mb-1.5">🚀</div>
+              <h2 className="text-white text-xl font-extrabold leading-tight">Motion Booster</h2>
+              <p className="text-white/80 text-xs mt-1">Your Digital Growth Partner</p>
             </div>
           </div>
+        )}
 
-          {/* Content */}
-          <div className="px-6 pt-5 pb-6">
-            <h3 className="text-gray-900 text-lg font-bold mb-2">
-              Welcome to Motion Booster! 👋
-            </h3>
-            <p className="text-gray-500 text-sm leading-relaxed mb-5">
-              We help businesses grow with creative branding, motion graphics, web development & digital marketing. Let&apos;s build something amazing together.
-            </p>
+        {/* Content */}
+        <div className="px-5 pt-4 pb-5">
+          <h3 className="text-gray-900 text-base font-bold mb-1.5">Welcome to Motion Booster! 👋</h3>
+          <p className="text-gray-500 text-xs leading-relaxed mb-4">
+            We help businesses grow with creative branding, motion graphics, web development &amp; digital marketing.
+          </p>
 
-            <div className="flex items-center justify-between">
-              {/* Countdown */}
-              <div className="flex items-center gap-2">
-                <div className="w-9 h-9 rounded-full border-2 border-red-400 flex items-center justify-center">
-                  <span className="text-red-500 font-bold text-sm">{countdown}</span>
-                </div>
-                <span className="text-xs text-gray-400">Auto close</span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <div className="w-8 h-8 rounded-full border-2 border-red-400 flex items-center justify-center">
+                <span className="text-red-500 font-bold text-xs">{countdown}</span>
               </div>
-
-              {/* CTA Arrow */}
-              <Link
-                href="/service"
-                onClick={handleClose}
-                className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-5 py-2.5 rounded-full font-semibold text-sm transition-colors shadow"
-              >
-                Explore
-                <ChevronRight className="w-4 h-4" />
-              </Link>
+              <span className="text-xs text-gray-400">Auto close</span>
             </div>
+            <Link
+              href={exploreLink}
+              onClick={handleClose}
+              className="flex items-center gap-1.5 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-full font-semibold text-xs transition-colors shadow"
+            >
+              Explore
+              <ChevronRight className="w-3.5 h-3.5" />
+            </Link>
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 };
