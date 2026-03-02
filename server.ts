@@ -189,12 +189,6 @@ app.prepare().then(() => {
             conversationId,
             senderId: user.id,
             content: content?.trim() || '',
-            messageType,
-            fileUrl: fileUrl || null,
-            fileName: fileName || null,
-            fileSize: fileSize ? Number(fileSize) : null,
-            mimeType: mimeType || null,
-            duration: duration ? Number(duration) : null,
             status: 'SENT',
           },
           include: {
