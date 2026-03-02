@@ -12,17 +12,20 @@ export interface AuthenticatedUser {
 }
 
 /**
- * Extract and verify the JWT from the Authorization header.
+ * Extract and verify the JWT from the Authorization header or accessToken cookie.
  * Returns the authenticated user or null.
  */
 export async function validateRequest(
   req: NextRequest
 ): Promise<AuthenticatedUser | null> {
   try {
+    // Try Authorization header first, then fall back to cookie
     const authHeader = req.headers.get('authorization');
-    if (!authHeader?.startsWith('Bearer ')) return null;
+    const token = authHeader?.startsWith('Bearer ')
+      ? authHeader.slice(7)
+      : req.cookies.get('accessToken')?.value;
 
-    const token = authHeader.slice(7);
+    if (!token) return null;
     const payload: AccessTokenPayload = await verifyAccessToken(token);
 
     const user = await prisma.user.findUnique({

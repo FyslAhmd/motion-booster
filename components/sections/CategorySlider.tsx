@@ -2,7 +2,7 @@
 
 import React, { useRef, useState, useEffect } from 'react';
 import Link from 'next/link';
-import { AdminStore, ServiceCategoryItem } from '@/lib/admin/store';
+import { ServiceCategoryItem } from '@/lib/admin/store';
 import { CategoryIcon } from '@/lib/admin/categoryIcons';
 
 export const CategorySlider = () => {
@@ -10,10 +10,10 @@ export const CategorySlider = () => {
   const [categories, setCategories] = useState<ServiceCategoryItem[]>([]);
 
   useEffect(() => {
-    setCategories(AdminStore.getServiceCategories());
-    const onStorage = () => setCategories(AdminStore.getServiceCategories());
-    window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
+    fetch('/api/v1/cms/service-categories')
+      .then(r => r.json())
+      .then((data) => { if (Array.isArray(data)) setCategories(data); })
+      .catch(() => {});
   }, []);
 
   const scroll = (direction: 'left' | 'right') => {

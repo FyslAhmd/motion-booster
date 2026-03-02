@@ -69,7 +69,7 @@ export const MoreDrawer = ({ open, onClose }: MoreDrawerProps) => {
                 Dashboard
               </Link>
               <button
-                onClick={() => { logout(); onClose(); }}
+                onClick={async () => { await logout(); onClose(); }}
                 className="px-4 py-1.5 border border-gray-300 text-gray-600 rounded-full text-xs font-semibold"
               >
                 Logout

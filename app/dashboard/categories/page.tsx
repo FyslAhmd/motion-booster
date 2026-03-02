@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import AdminShell from '../_components/AdminShell';
-import { AdminStore, ServiceCategoryItem, generateId } from '@/lib/admin/store';
+import { ServiceCategoryItem } from '@/lib/admin/store';
 import { CategoryIcon, ICON_OPTIONS } from '@/lib/admin/categoryIcons';
 import { Plus, Pencil, Trash2, X, Save, GripVertical, ChevronUp, ChevronDown } from 'lucide-react';
 
@@ -39,8 +39,13 @@ export default function CategoriesPage() {
   const [toast, setToast] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
+  const [loading, setLoading] = useState(false);
+
   useEffect(() => {
-    setItems(AdminStore.getServiceCategories());
+    fetch('/api/v1/cms/service-categories')
+      .then(r => r.json())
+      .then((data) => { if (Array.isArray(data)) setItems(data); })
+      .catch(() => showToast('Failed to load categories.'));
   }, []);
 
   const showToast = (msg: string) => {
@@ -48,37 +53,46 @@ export default function CategoriesPage() {
     setTimeout(() => setToast(''), 3000);
   };
 
-  const persist = (updated: ServiceCategoryItem[]) => {
-    AdminStore.saveServiceCategories(updated);
-    setItems(updated);
-    window.dispatchEvent(new Event('storage'));
-  };
-
-  const save = () => {
+  const save = async () => {
     if (!editing) return;
     if (!editing.title.trim()) { showToast('Title is required.'); return; }
     const withSlug = { ...editing, slug: editing.slug.trim() || toSlug(editing.title) };
-    const updated = isNew
-      ? [...items, { ...withSlug, id: generateId() }]
-      : items.map(i => (i.id === editing.id ? withSlug : i));
-    persist(updated);
-    setEditing(null);
-    setIsNew(false);
-    showToast(isNew ? 'Category added!' : 'Changes saved!');
+    setLoading(true);
+    try {
+      const url = isNew ? '/api/v1/cms/service-categories' : `/api/v1/cms/service-categories/${editing.id}`;
+      const method = isNew ? 'POST' : 'PUT';
+      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(withSlug) });
+      if (!res.ok) { const e = await res.json(); showToast(e.error || 'Save failed.'); return; }
+      const saved: ServiceCategoryItem = await res.json();
+      setItems(prev => isNew ? [...prev, saved] : prev.map(i => i.id === saved.id ? saved : i));
+      setEditing(null);
+      setIsNew(false);
+      showToast(isNew ? 'Category added!' : 'Changes saved!');
+    } catch { showToast('Save failed.'); } finally { setLoading(false); }
   };
 
-  const remove = (id: string) => {
-    persist(items.filter(i => i.id !== id));
-    setDeleteId(null);
-    showToast('Category deleted.');
+  const remove = async (id: string) => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/v1/cms/service-categories/${id}`, { method: 'DELETE' });
+      if (!res.ok) { showToast('Delete failed.'); return; }
+      setItems(prev => prev.filter(i => i.id !== id));
+      setDeleteId(null);
+      showToast('Category deleted.');
+    } catch { showToast('Delete failed.'); } finally { setLoading(false); }
   };
 
-  const move = (index: number, dir: -1 | 1) => {
+  const move = async (index: number, dir: -1 | 1) => {
     const arr = [...items];
     const target = index + dir;
     if (target < 0 || target >= arr.length) return;
     [arr[index], arr[target]] = [arr[target], arr[index]];
-    persist(arr);
+    setItems(arr);
+    await fetch('/api/v1/cms/service-categories/reorder', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: arr.map(i => i.id) }),
+    }).catch(() => showToast('Reorder failed.'));
   };
 
   const openNew = () => {

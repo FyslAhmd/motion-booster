@@ -187,8 +187,8 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
     return null;
   }
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     router.push('/login');
   };
 

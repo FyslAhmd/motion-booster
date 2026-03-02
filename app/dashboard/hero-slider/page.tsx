@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import AdminShell from '../_components/AdminShell';
-import { AdminStore, HeroSlideItem, defaultHeroSlides, generateId } from '@/lib/admin/store';
+import { HeroSlideItem } from '@/lib/admin/store';
 import { Plus, Pencil, Trash2, X, Save, AlertTriangle, ChevronUp, ChevronDown } from 'lucide-react';
 import Image from 'next/image';
 import ImageUpload from '@/components/ui/ImageUpload';
@@ -30,8 +30,13 @@ export default function HeroSliderPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [toast, setToast] = useState('');
 
+  const [loading, setLoading] = useState(false);
+
   useEffect(() => {
-    setSlides(AdminStore.getHeroSlides());
+    fetch('/api/v1/cms/hero-slides')
+      .then(r => r.json())
+      .then((data) => { if (Array.isArray(data)) setSlides(data); })
+      .catch(() => showToast('Failed to load slides.'));
   }, []);
 
   const showToast = (msg: string) => {
@@ -39,36 +44,56 @@ export default function HeroSliderPage() {
     setTimeout(() => setToast(''), 3000);
   };
 
-  const persist = (data: HeroSlideItem[]) => {
-    AdminStore.saveHeroSlides(data);
-    setSlides(data);
-    window.dispatchEvent(new Event('storage'));
-  };
-
-  const save = () => {
+  const save = async () => {
     if (!editing) return;
     if (!editing.title.trim()) { showToast('Title is required.'); return; }
-    const updated = isNew
-      ? [...slides, { ...editing, id: generateId() }]
-      : slides.map(s => (s.id === editing.id ? editing : s));
-    persist(updated);
-    setEditing(null);
-    setIsNew(false);
-    showToast(isNew ? 'Slide added!' : 'Changes saved!');
+    setLoading(true);
+    try {
+      const url = isNew ? '/api/v1/cms/hero-slides' : `/api/v1/cms/hero-slides/${editing.id}`;
+      const method = isNew ? 'POST' : 'PUT';
+      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(editing) });
+      if (!res.ok) { showToast('Save failed.'); return; }
+      const saved: HeroSlideItem = await res.json();
+      setSlides(prev => isNew ? [...prev, saved] : prev.map(s => s.id === saved.id ? saved : s));
+      setEditing(null);
+      setIsNew(false);
+      showToast(isNew ? 'Slide added!' : 'Changes saved!');
+    } catch { showToast('Save failed.'); } finally { setLoading(false); }
   };
 
-  const remove = (id: string) => {
-    persist(slides.filter(s => s.id !== id));
-    setDeleteId(null);
-    showToast('Slide deleted.');
+  const remove = async (id: string) => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/v1/cms/hero-slides/${id}`, { method: 'DELETE' });
+      if (!res.ok) { showToast('Delete failed.'); return; }
+      setSlides(prev => prev.filter(s => s.id !== id));
+      setDeleteId(null);
+      showToast('Slide deleted.');
+    } catch { showToast('Delete failed.'); } finally { setLoading(false); }
   };
 
-  const move = (index: number, dir: -1 | 1) => {
+  const move = async (index: number, dir: -1 | 1) => {
     const arr = [...slides];
     const t = index + dir;
     if (t < 0 || t >= arr.length) return;
     [arr[index], arr[t]] = [arr[t], arr[index]];
-    persist(arr);
+    setSlides(arr);
+    await fetch('/api/v1/cms/hero-slides/reorder', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: arr.map(s => s.id) }),
+    }).catch(() => showToast('Reorder failed.'));
+  };
+
+  const resetDefault = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/v1/cms/hero-slides/reset', { method: 'POST' });
+      if (!res.ok) { showToast('Reset failed.'); return; }
+      const data: HeroSlideItem[] = await res.json();
+      setSlides(data);
+      showToast('Reset to defaults!');
+    } catch { showToast('Reset failed.'); } finally { setLoading(false); }
   };
 
   const coverSrc = (slide: HeroSlideItem) => slide.customImage || slide.image;
@@ -207,7 +232,7 @@ export default function HeroSliderPage() {
           <p className="text-sm text-gray-500 mt-0.5">{slides.length} slide{slides.length !== 1 ? 's' : ''} · shown on homepage</p>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => persist(defaultHeroSlides)} className="text-xs text-gray-500 border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50">Reset Default</button>
+          <button onClick={resetDefault} disabled={loading} className="text-xs text-gray-500 border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50 disabled:opacity-50">Reset Default</button>
           <button
             onClick={() => { setEditing({ id: '', ...emptySlide }); setIsNew(true); }}
             className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-xl"

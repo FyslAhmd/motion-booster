@@ -6,6 +6,7 @@ import {
   useState,
   useEffect,
   useCallback,
+  useRef,
   type ReactNode,
 } from 'react';
 
@@ -28,47 +29,128 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// ─── Read the accessToken cookie from document.cookie ────────────────────────
+function getAccessTokenFromCookie(): string | null {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie.match(/(?:^|;\s*)accessToken=([^;]*)/);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+// ─── Refresh interval: refresh 2 min before the 15-min access token expires ──
+const REFRESH_INTERVAL_MS = 13 * 60 * 1000; // 13 minutes
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const refreshTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Check for existing session on mount
+  // ─── Try to refresh tokens via the server refresh endpoint ─────────
+  const refreshSession = useCallback(async (): Promise<boolean> => {
+    try {
+      const res = await fetch('/api/v1/auth/refresh', { method: 'POST' });
+      if (!res.ok) return false;
+
+      const data = await res.json();
+      if (data.success && data.data?.user && data.data?.accessToken) {
+        setAccessToken(data.data.accessToken);
+        setUser(data.data.user);
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  }, []);
+
+  // ─── Start periodic silent refresh ─────────────────────────────────
+  const startRefreshTimer = useCallback(() => {
+    if (refreshTimerRef.current) clearInterval(refreshTimerRef.current);
+    refreshTimerRef.current = setInterval(() => {
+      refreshSession();
+    }, REFRESH_INTERVAL_MS);
+  }, [refreshSession]);
+
+  const stopRefreshTimer = useCallback(() => {
+    if (refreshTimerRef.current) {
+      clearInterval(refreshTimerRef.current);
+      refreshTimerRef.current = null;
+    }
+  }, []);
+
+  // ─── Rehydrate session on mount ────────────────────────────────────
   useEffect(() => {
-    const token = sessionStorage.getItem('accessToken');
-    const storedUser = sessionStorage.getItem('user');
+    let cancelled = false;
 
-    if (token && storedUser) {
+    async function init() {
       try {
-        setUser(JSON.parse(storedUser));
-        setAccessToken(token);
-        // Sync cookie for middleware
-        document.cookie = `accessToken=${token}; path=/; max-age=${15 * 60}; SameSite=Strict${location.protocol === 'https:' ? '; Secure' : ''}`;
+        // 1. Try /me with existing accessToken cookie
+        const meRes = await fetch('/api/v1/auth/me');
+        if (meRes.ok) {
+          const meData = await meRes.json();
+          if (!cancelled && meData.success && meData.data?.user) {
+            setUser(meData.data.user);
+            // Read the access token from the cookie for socket auth etc.
+            setAccessToken(getAccessTokenFromCookie());
+            startRefreshTimer();
+            return;
+          }
+        }
+
+        // 2. Access token expired — try refreshing
+        const refreshed = await refreshSession();
+        if (!cancelled && refreshed) {
+          startRefreshTimer();
+          return;
+        }
+
+        // 3. No valid session — user needs to log in
+        if (!cancelled) {
+          setUser(null);
+          setAccessToken(null);
+        }
       } catch {
-        sessionStorage.removeItem('accessToken');
-        sessionStorage.removeItem('user');
+        if (!cancelled) {
+          setUser(null);
+          setAccessToken(null);
+        }
+      } finally {
+        if (!cancelled) setIsLoading(false);
       }
     }
-    setIsLoading(false);
-  }, []);
 
-  const login = useCallback((newToken: string, userData: User) => {
-    sessionStorage.setItem('accessToken', newToken);
-    sessionStorage.setItem('user', JSON.stringify(userData));
-    // Also set cookie so Next.js middleware can read it
-    document.cookie = `accessToken=${newToken}; path=/; max-age=${15 * 60}; SameSite=Strict${location.protocol === 'https:' ? '; Secure' : ''}`;
-    setAccessToken(newToken);
-    setUser(userData);
-  }, []);
+    init();
 
-  const logout = useCallback(() => {
-    sessionStorage.removeItem('accessToken');
-    sessionStorage.removeItem('user');
-    // Clear the cookie
-    document.cookie = 'accessToken=; path=/; max-age=0';
+    return () => {
+      cancelled = true;
+      stopRefreshTimer();
+    };
+  }, [refreshSession, startRefreshTimer, stopRefreshTimer]);
+
+  // ─── Called after a successful login API response ──────────────────
+  const login = useCallback(
+    (newToken: string, userData: User) => {
+      // Access token cookie is already set by the login API's Set-Cookie header.
+      // We just update React state.
+      setAccessToken(newToken);
+      setUser(userData);
+      startRefreshTimer();
+    },
+    [startRefreshTimer]
+  );
+
+  // ─── Logout: clear server-side cookies & revoke tokens ─────────────
+  const logout = useCallback(async () => {
+    stopRefreshTimer();
     setAccessToken(null);
     setUser(null);
-  }, []);
+
+    try {
+      await fetch('/api/v1/auth/logout', { method: 'POST' });
+    } catch {
+      // Best effort — cookies are cleared by the server response
+    }
+  }, [stopRefreshTimer]);
 
   return (
     <AuthContext.Provider

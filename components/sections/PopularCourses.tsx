@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ChevronLeft, ChevronRight, Check, ArrowRight } from 'lucide-react';
-import { AdminStore, PopularServiceItem } from '@/lib/admin/store';
+import { PopularServiceItem } from '@/lib/admin/store';
 
 export const PopularCourses = () => {
   const [allServices, setAllServices] = useState<PopularServiceItem[]>([]);
@@ -13,10 +13,10 @@ export const PopularCourses = () => {
   const tabsScrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setAllServices(AdminStore.getPopularServices());
-    const onStorage = () => setAllServices(AdminStore.getPopularServices());
-    window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
+    fetch('/api/v1/cms/popular-services')
+      .then(r => r.json())
+      .then((data) => { if (Array.isArray(data)) setAllServices(data); })
+      .catch(() => {});
   }, []);
 
   const tabs = ['All Services', ...Array.from(new Set(allServices.map(s => s.category)))];

@@ -25,19 +25,21 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // Get token from cookie or Authorization header
+  // Get access token from cookie or Authorization header
   const token =
     req.cookies.get('accessToken')?.value ||
-    req.headers.get('authorization')?.replace('Bearer ', '') ||
-    // Also check session storage relay via custom header (for SPA navigation)
-    req.headers.get('x-access-token');
+    req.headers.get('authorization')?.replace('Bearer ', '');
 
-  // No token → redirect to login
+  // No access token
   if (!token) {
-    // Don't redirect API calls
-    if (pathname.startsWith('/dashboard/api')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    // If a refresh token cookie exists, let the page load so the client-side
+    // AuthProvider can silently refresh the session.
+    const hasRefreshToken = req.cookies.has('refreshToken');
+    if (hasRefreshToken) {
+      return NextResponse.next();
     }
+
+    // No tokens at all → redirect to login
     return NextResponse.redirect(new URL('/login', req.url));
   }
 
@@ -62,7 +64,12 @@ export async function middleware(req: NextRequest) {
     // Non-admin trying to access admin route → redirect to their default page
     return NextResponse.redirect(new URL('/dashboard/chat', req.url));
   } catch {
-    // Invalid/expired token → redirect to login
+    // Invalid/expired access token — if refresh token exists, let page load
+    // so the client-side AuthProvider can refresh the session silently.
+    const hasRefreshToken = req.cookies.has('refreshToken');
+    if (hasRefreshToken) {
+      return NextResponse.next();
+    }
     return NextResponse.redirect(new URL('/login', req.url));
   }
 }

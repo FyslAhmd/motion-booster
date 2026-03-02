@@ -118,3 +118,56 @@ model Message {
   @@index([senderId])
   @@map("messages")
 }
+
+// ─── CMS: HERO SLIDES ────────────────────────────────
+
+model HeroSlide {
+  id          String   @id @default(cuid())
+  image       String
+  customImage String?  @map("custom_image") @db.Text
+  title       String
+  description String
+  badge       String?
+  ctaText     String?  @map("cta_text")
+  ctaLink     String?  @map("cta_link")
+  order       Int      @default(0)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("hero_slides")
+}
+
+// ─── CMS: SERVICE CATEGORIES ─────────────────────────
+
+model ServiceCategory {
+  id        String   @id @default(cuid())
+  title     String
+  slug      String   @unique
+  iconType  String   @map("icon_type")
+  iconColor String   @map("icon_color")
+  iconBg    String   @map("icon_bg")
+  order     Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("service_categories")
+}
+
+// ─── CMS: POPULAR SERVICES ───────────────────────────
+
+model PopularService {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  gradient    String
+  category    String
+  slug        String   @unique
+  image       String
+  customImage String?  @map("custom_image") @db.Text
+  services    String[]
+  order       Int      @default(0)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("popular_services")
+}
