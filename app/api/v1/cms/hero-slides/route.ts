@@ -52,16 +52,12 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { image, customImage, title, description, badge, ctaText, ctaLink } = body;
 
-    if (!title?.trim()) {
-      return NextResponse.json({ error: 'Title is required' }, { status: 400 });
-    }
-
     const count = await prisma.heroSlide.count();
     const slide = await prisma.heroSlide.create({
       data: {
         image: image || '/header1.jpeg',
         customImage: customImage || null,
-        title: title.trim(),
+        title: (title || '').trim() || 'Slide',
         description: description || '',
         badge: badge || null,
         ctaText: ctaText || null,

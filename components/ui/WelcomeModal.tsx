@@ -45,11 +45,11 @@ export const WelcomeModal = () => {
 
   return (
     <div
-      className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center px-4"
+      className="fixed inset-0 bg-black/60 z-100 flex items-center justify-center px-4"
       onClick={handleClose}
     >
       <div
-        className="relative bg-white rounded-2xl overflow-hidden shadow-2xl w-full max-w-[260px]"
+        className="relative bg-white rounded-2xl overflow-hidden shadow-2xl w-full max-w-sm"
         onClick={e => e.stopPropagation()}
       >
         {/* Close button */}
@@ -62,7 +62,7 @@ export const WelcomeModal = () => {
 
         {/* Banner image / gradient */}
         {modalImage ? (
-          <div className="relative w-full h-32">
+          <div className="relative w-full h-56">
             {modalImage.startsWith('data:') || modalImage.startsWith('/') ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={modalImage} alt="Promo" className="w-full h-full object-cover" />
@@ -72,21 +72,21 @@ export const WelcomeModal = () => {
           </div>
         ) : (
           <div
-            className="w-full h-32 flex items-center justify-center"
+            className="w-full h-56 flex items-center justify-center"
             style={{ background: 'linear-gradient(214.38deg, #ff8079 -2.24%, #ff1e1e 59.38%)' }}
           >
             <div className="text-center px-4">
-              <div className="text-4xl mb-1">🚀</div>
-              <h2 className="text-white text-base font-extrabold leading-tight">Motion Booster</h2>
-              <p className="text-white/80 text-[10px] mt-0.5">Your Digital Growth Partner</p>
+              <div className="text-5xl mb-2">🚀</div>
+              <h2 className="text-white text-xl font-extrabold leading-tight">Motion Booster</h2>
+              <p className="text-white/80 text-xs mt-1">Your Digital Growth Partner</p>
             </div>
           </div>
         )}
 
         {/* Content */}
-        <div className="px-4 pt-3 pb-4">
-          <h3 className="text-gray-900 text-sm font-bold mb-1">{modalTitle}</h3>
-          <p className="text-gray-500 text-[11px] leading-relaxed mb-3">
+        <div className="px-5 pt-4 pb-5">
+          <h3 className="text-gray-900 text-base font-bold mb-1.5">{modalTitle}</h3>
+          <p className="text-gray-500 text-xs leading-relaxed mb-4">
             {modalBody}
           </p>
 

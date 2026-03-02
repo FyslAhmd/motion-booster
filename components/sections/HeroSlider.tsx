@@ -14,10 +14,8 @@ export const HeroSlider = () => {
         setSlides(data.map((s, i) => ({
           id: i + 1,
           image: s.customImage || s.image,
-          title: s.title,
-          description: s.description,
-          badge: s.badge,
-          ctaText: s.ctaText,
+          title: '',
+          description: '',
           ctaLink: s.ctaLink,
         })));
       })

@@ -95,6 +95,7 @@ export default function DashboardPage() {
   const { team, services, faqs, testimonials } = useSiteData();
   const portfolio = useMemo(() => AdminStore.getPortfolio(), []);
   const isAdmin = user?.role === 'ADMIN';
+  const userName = user?.fullName || user?.username || 'User';
 
   if (!isAdmin) {
     return (
@@ -103,8 +104,6 @@ export default function DashboardPage() {
       </AdminShell>
     );
   }
-
-  const userName = user?.fullName || user?.username || 'User';
 
   const statCards = [
     { label: 'Team Members', value: team.length, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },

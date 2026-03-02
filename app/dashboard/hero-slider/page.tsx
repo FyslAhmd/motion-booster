@@ -19,8 +19,8 @@ const emptySlide: Omit<HeroSlideItem, 'id'> = {
   title: '',
   description: '',
   badge: '',
-  ctaText: 'Get Started',
-  ctaLink: '/features',
+  ctaText: '',
+  ctaLink: '',
 };
 
 export default function HeroSliderPage() {
@@ -46,12 +46,14 @@ export default function HeroSliderPage() {
 
   const save = async () => {
     if (!editing) return;
-    if (!editing.title.trim()) { showToast('Title is required.'); return; }
+    const hasImage = editing.customImage || editing.image;
+    if (!hasImage) { showToast('Please add an image.'); return; }
     setLoading(true);
     try {
+      const payload = { ...editing, title: editing.title || 'Slide' };
       const url = isNew ? '/api/v1/cms/hero-slides' : `/api/v1/cms/hero-slides/${editing.id}`;
       const method = isNew ? 'POST' : 'PUT';
-      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(editing) });
+      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       if (!res.ok) { showToast('Save failed.'); return; }
       const saved: HeroSlideItem = await res.json();
       setSlides(prev => isNew ? [...prev, saved] : prev.map(s => s.id === saved.id ? saved : s));
@@ -139,7 +141,7 @@ export default function HeroSliderPage() {
               <ImageUpload
                 value={editing.customImage || ''}
                 onChange={v => setEditing({ ...editing, customImage: v })}
-                label="Slide Background Image (upload custom)"
+                label="Slide Image"
                 aspectRatio="wide"
               />
 
@@ -159,58 +161,15 @@ export default function HeroSliderPage() {
                 </div>
               </div>
 
-              {/* Title */}
+              {/* Link */}
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1.5">Title *</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Link <span className="text-gray-400 font-normal">(clicking image goes here)</span></label>
                 <input
-                  value={editing.title}
-                  onChange={e => setEditing({ ...editing, title: e.target.value })}
+                  value={editing.ctaLink || ''}
+                  onChange={e => setEditing({ ...editing, ctaLink: e.target.value })}
                   className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400"
-                  placeholder="e.g. Become an IT Pro & Rule the Digital World"
+                  placeholder="e.g. /service or https://example.com"
                 />
-              </div>
-
-              {/* Description */}
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1.5">Description</label>
-                <textarea
-                  value={editing.description}
-                  onChange={e => setEditing({ ...editing, description: e.target.value })}
-                  rows={3}
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400 resize-none"
-                  placeholder="Supporting text shown below the title..."
-                />
-              </div>
-
-              {/* Badge + CTA */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1.5">Badge / Tag</label>
-                  <input
-                    value={editing.badge || ''}
-                    onChange={e => setEditing({ ...editing, badge: e.target.value })}
-                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400"
-                    placeholder="e.g. Unleash Your Potential"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1.5">Button Text</label>
-                  <input
-                    value={editing.ctaText || ''}
-                    onChange={e => setEditing({ ...editing, ctaText: e.target.value })}
-                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400"
-                    placeholder="e.g. Browse Course"
-                  />
-                </div>
-                <div className="col-span-2">
-                  <label className="block text-xs font-medium text-gray-500 mb-1.5">Button Link</label>
-                  <input
-                    value={editing.ctaLink || ''}
-                    onChange={e => setEditing({ ...editing, ctaLink: e.target.value })}
-                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400"
-                    placeholder="e.g. /features"
-                  />
-                </div>
               </div>
             </div>
 
@@ -258,9 +217,19 @@ export default function HeroSliderPage() {
             {/* Content */}
             <div className="flex-1 p-4 flex flex-col justify-between min-w-0">
               <div>
-                {slide.badge && <span className="inline-block text-xs font-semibold text-red-500 bg-red-50 px-2 py-0.5 rounded-full mb-1">{slide.badge}</span>}
-                <h3 className="font-semibold text-gray-900 text-sm leading-snug mb-1 line-clamp-2">{slide.title}</h3>
-                {slide.description && <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">{slide.description}</p>}
+                <p className="text-xs text-gray-400 mb-1">Slide {index + 1}</p>
+                {slide.ctaLink ? (
+                  <a
+                    href={slide.ctaLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm font-medium text-blue-600 hover:underline truncate block"
+                  >
+                    {slide.ctaLink}
+                  </a>
+                ) : (
+                  <p className="text-sm text-gray-400 italic">No link set</p>
+                )}
               </div>
               <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-50">
                 <div className="flex items-center gap-1">

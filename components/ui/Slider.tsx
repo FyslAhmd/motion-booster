@@ -115,7 +115,7 @@ export const Slider: React.FC<SliderProps> = ({
             {slides[currentIndex].ctaLink ? (
               <a
                 href={slides[currentIndex].ctaLink}
-                className="absolute inset-0 z-[2] cursor-pointer"
+                className="absolute inset-0 z-2 cursor-pointer"
                 aria-label={slides[currentIndex].title}
                 tabIndex={-1}
               />
@@ -132,8 +132,10 @@ export const Slider: React.FC<SliderProps> = ({
                 priority={currentIndex === 0}
               />
             )}
-            {/* Overlay */}
-            <div className="absolute inset-0 bg-linear-to-r from-black/70 via-black/50 to-transparent" />
+            {/* Overlay — only shown when there's text content */}
+            {slides[currentIndex].title && (
+              <div className="absolute inset-0 bg-linear-to-r from-black/70 via-black/50 to-transparent" />
+            )}
           </div>
 
           {/* Slide Content */}
