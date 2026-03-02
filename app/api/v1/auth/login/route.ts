@@ -135,6 +135,15 @@ export async function POST(request: NextRequest) {
       maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
     });
 
+    // 11. Set access token cookie for middleware auth
+    response.cookies.set('accessToken', accessToken, {
+      httpOnly: false, // readable by middleware & JS
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/',
+      maxAge: 15 * 60, // 15 minutes (matches JWT expiry)
+    });
+
     return response;
   } catch (error) {
     const { status, body } = formatErrorResponse(error, requestId);

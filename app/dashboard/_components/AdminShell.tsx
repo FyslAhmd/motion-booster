@@ -27,21 +27,35 @@ import {
   Building2,
 } from 'lucide-react';
 
-const navItems = [
-  { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
-  { href: '/dashboard/hero-slider', label: 'Hero Slider', icon: SlidersHorizontal },
-  { href: '/dashboard/services', label: 'Services', icon: Layers },
-  { href: '/dashboard/categories', label: 'Service Categories', icon: LayoutGrid },
-  { href: '/dashboard/popular-services', label: 'Popular Services', icon: Briefcase },
-  { href: '/dashboard/team', label: 'Team', icon: Users },
-  { href: '/dashboard/faq', label: 'FAQ', icon: MessageSquare },
-  { href: '/dashboard/testimonials', label: 'Testimonials', icon: Star },
-  { href: '/dashboard/stats', label: 'Stats & Achievements', icon: BarChart2 },
-  { href: '/dashboard/portfolio', label: 'Portfolio', icon: Briefcase },
-  { href: '/dashboard/companies', label: 'Companies', icon: Building2 },
+interface NavItem {
+  href: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  adminOnly?: boolean;
+}
+
+const navItems: NavItem[] = [
+  { href: '/dashboard', label: 'Overview', icon: LayoutDashboard, adminOnly: true },
+  { href: '/dashboard/hero-slider', label: 'Hero Slider', icon: SlidersHorizontal, adminOnly: true },
+  { href: '/dashboard/services', label: 'Services', icon: Layers, adminOnly: true },
+  { href: '/dashboard/categories', label: 'Service Categories', icon: LayoutGrid, adminOnly: true },
+  { href: '/dashboard/popular-services', label: 'Popular Services', icon: Briefcase, adminOnly: true },
+  { href: '/dashboard/team', label: 'Team', icon: Users, adminOnly: true },
+  { href: '/dashboard/faq', label: 'FAQ', icon: MessageSquare, adminOnly: true },
+  { href: '/dashboard/testimonials', label: 'Testimonials', icon: Star, adminOnly: true },
+  { href: '/dashboard/stats', label: 'Stats & Achievements', icon: BarChart2, adminOnly: true },
+  { href: '/dashboard/portfolio', label: 'Portfolio', icon: Briefcase, adminOnly: true },
+  { href: '/dashboard/companies', label: 'Companies', icon: Building2, adminOnly: true },
   { href: '/dashboard/chat', label: 'Chat Messages', icon: MessageCircle },
   { href: '/dashboard/meta', label: 'Meta Connect', icon: Share2 },
-  { href: '/dashboard/settings', label: 'Site Settings', icon: Settings },
+  { href: '/dashboard/settings', label: 'Site Settings', icon: Settings, adminOnly: true },
+];
+
+// Routes accessible by normal users (no admin required)
+const USER_ALLOWED_ROUTES = [
+  '/dashboard/chat',
+  '/dashboard/meta',
+  '/dashboard/profile',
 ];
 
 export default function AdminShell({ children, noPadding }: { children: React.ReactNode; noPadding?: boolean }) {
@@ -49,14 +63,32 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
   const router = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const adminName = user?.username || user?.email || 'Admin';
+  const adminName = user?.username || user?.email || 'User';
   const adminAvatar = '';
+  const isAdmin = user?.role === 'ADMIN';
+
+  // Filter nav items based on role
+  const visibleNavItems = isAdmin
+    ? navItems
+    : navItems.filter((item) => !item.adminOnly);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       router.push('/login');
     }
   }, [isLoading, isAuthenticated, router]);
+
+  // Route guard: redirect non-admin users away from admin-only pages
+  useEffect(() => {
+    if (!isLoading && isAuthenticated && !isAdmin) {
+      const isAllowed = USER_ALLOWED_ROUTES.some(
+        (route) => pathname === route || pathname.startsWith(route + '/')
+      );
+      if (!isAllowed) {
+        router.replace('/dashboard/chat');
+      }
+    }
+  }, [isLoading, isAuthenticated, isAdmin, pathname, router]);
 
   if (isLoading) {
     return (
@@ -107,12 +139,12 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
             className="h-9 w-auto"
             priority
           />
-          <div className="text-gray-400 text-xs mt-1 pl-0.5 font-medium tracking-wide uppercase">Admin Panel</div>
+          <div className="text-gray-400 text-xs mt-1 pl-0.5 font-medium tracking-wide uppercase">{isAdmin ? 'Admin Panel' : 'Dashboard'}</div>
         </div>
 
         {/* Navigation */}
         <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
-          {navItems.map(item => {
+          {visibleNavItems.map(item => {
             const Icon = item.icon;
             const active = pathname === item.href;
             return (
@@ -154,7 +186,7 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
             )}
             <div className="flex-1 min-w-0">
               <p className="truncate text-xs font-semibold">{adminName}</p>
-              <p className="text-[10px] text-gray-400 font-normal">Admin Profile</p>
+              <p className="text-[10px] text-gray-400 font-normal">{isAdmin ? 'Admin Profile' : 'My Profile'}</p>
             </div>
             <UserCog className={`w-3.5 h-3.5 shrink-0 ${pathname === '/admin/profile' ? 'text-white/70' : 'text-gray-400'}`} />
           </Link>
@@ -188,7 +220,7 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
               <Menu className="w-5 h-5" />
             </button>
             <div className="hidden sm:flex items-center gap-2 text-sm text-gray-500">
-              {navItems.find(n => n.href === pathname)?.label ?? 'Admin Panel'}
+              {visibleNavItems.find(n => n.href === pathname)?.label ?? (isAdmin ? 'Admin Panel' : 'Dashboard')}
             </div>
           </div>
           <div className="flex items-center gap-2">

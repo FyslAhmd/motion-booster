@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { RefreshCw, AlertTriangle } from 'lucide-react';
 import AccountOverview from '../meta/_components/AccountOverview';
+import AccountSwitcher from '../meta/_components/AccountSwitcher';
 import InsightsCards from '../meta/_components/InsightsCards';
 import SpendChart from '../meta/_components/SpendChart';
 import DatePresetSelector from '../meta/_components/DatePresetSelector';
@@ -27,23 +28,26 @@ async function apiFetch<T>(url: string): Promise<T> {
 
 export default function MetaOverviewSection() {
   const [datePreset, setDatePreset] = useState<DatePreset>('last_30d');
+  const [accountId, setAccountId] = useState('');
   const [account, setAccount] = useState<MetaAccount | null>(null);
   const [insights, setInsights] = useState<InsightRow[]>([]);
   const [dailySpend, setDailySpend] = useState<InsightRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const load = useCallback(async (preset: DatePreset) => {
+  const load = useCallback(async (preset: DatePreset, accId: string) => {
+    if (!accId) return;
     setLoading(true);
     setError('');
     try {
+      const q = `account_id=${encodeURIComponent(accId)}`;
       const [accRes, insRes, dailyRes] = await Promise.allSettled([
-        apiFetch<MetaAccount>('/api/v1/meta/account'),
+        apiFetch<MetaAccount>(`/api/v1/meta/account?${q}`),
         apiFetch<InsightRow[]>(
-          `/api/v1/meta/insights?type=account&date_preset=${preset}`,
+          `/api/v1/meta/insights?type=account&date_preset=${preset}&${q}`,
         ),
         apiFetch<InsightRow[]>(
-          `/api/v1/meta/insights?type=daily&date_preset=${preset}`,
+          `/api/v1/meta/insights?type=daily&date_preset=${preset}&${q}`,
         ),
       ]);
 
@@ -63,18 +67,19 @@ export default function MetaOverviewSection() {
   }, []);
 
   useEffect(() => {
-    load(datePreset);
-  }, [datePreset, load]);
+    load(datePreset, accountId);
+  }, [datePreset, accountId, load]);
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-gray-900 p-5 sm:p-6 space-y-5">
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-lg font-bold text-white">Meta Ads Performance</h2>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <AccountSwitcher value={accountId} onChange={setAccountId} />
           <DatePresetSelector value={datePreset} onChange={setDatePreset} />
           <button
-            onClick={() => load(datePreset)}
+            onClick={() => load(datePreset, accountId)}
             disabled={loading}
             className="rounded-lg border border-gray-700 bg-gray-800 p-2 text-gray-300 transition-colors hover:bg-gray-700 disabled:opacity-50"
           >

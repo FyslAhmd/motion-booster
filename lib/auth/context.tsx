@@ -42,6 +42,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         setUser(JSON.parse(storedUser));
         setAccessToken(token);
+        // Sync cookie for middleware
+        document.cookie = `accessToken=${token}; path=/; max-age=${15 * 60}; SameSite=Strict${location.protocol === 'https:' ? '; Secure' : ''}`;
       } catch {
         sessionStorage.removeItem('accessToken');
         sessionStorage.removeItem('user');
@@ -53,6 +55,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback((newToken: string, userData: User) => {
     sessionStorage.setItem('accessToken', newToken);
     sessionStorage.setItem('user', JSON.stringify(userData));
+    // Also set cookie so Next.js middleware can read it
+    document.cookie = `accessToken=${newToken}; path=/; max-age=${15 * 60}; SameSite=Strict${location.protocol === 'https:' ? '; Secure' : ''}`;
     setAccessToken(newToken);
     setUser(userData);
   }, []);
@@ -60,6 +64,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(() => {
     sessionStorage.removeItem('accessToken');
     sessionStorage.removeItem('user');
+    // Clear the cookie
+    document.cookie = 'accessToken=; path=/; max-age=0';
     setAccessToken(null);
     setUser(null);
   }, []);

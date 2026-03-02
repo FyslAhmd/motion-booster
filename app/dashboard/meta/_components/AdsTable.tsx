@@ -1,8 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Search, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
-import DateRangeFilter from './DateRangeFilter';
 
 interface Ad {
   id: string;
@@ -22,11 +21,10 @@ interface Ad {
   };
 }
 
-interface PaginationMeta {
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
+interface CursorPaging {
+  cursors?: { before?: string; after?: string };
+  next?: string;
+  previous?: string;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -36,32 +34,40 @@ const STATUS_COLORS: Record<string, string> = {
   ARCHIVED: 'bg-gray-500/20 text-gray-400',
 };
 
-export default function AdsTable() {
+interface AdsTableProps {
+  accountId?: string;
+}
+
+export default function AdsTable({ accountId }: AdsTableProps) {
   const [data, setData] = useState<Ad[]>([]);
-  const [pagination, setPagination] = useState<PaginationMeta>({ page: 1, limit: 10, total: 0, totalPages: 0 });
+  const [paging, setPaging] = useState<CursorPaging | null>(null);
+  const [cursorStack, setCursorStack] = useState<string[]>([]);
+  const [currentAfter, setCurrentAfter] = useState<string | undefined>();
   const [search, setSearch] = useState('');
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [pageNum, setPageNum] = useState(1);
 
-  // Fetch
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  // Fetch ads with cursor pagination
   useEffect(() => {
     const controller = new AbortController();
-    const timer = setTimeout(async () => {
+
+    const doFetch = async () => {
       setLoading(true);
       setError('');
       try {
-        const p = new URLSearchParams({ page: String(pagination.page), limit: '10' });
+        const p = new URLSearchParams({ limit: '10' });
+        if (accountId) p.set('account_id', accountId);
         if (search) p.set('search', search);
-        if (dateFrom) p.set('date_from', dateFrom);
-        if (dateTo) p.set('date_to', dateTo);
+        if (currentAfter) p.set('after', currentAfter);
 
         const res = await fetch(`/api/v1/meta/ads?${p}`, { signal: controller.signal });
         const json = await res.json();
         if (json.success) {
           setData(json.data);
-          setPagination(json.pagination);
+          setPaging(json.paging || null);
         } else {
           setError(json.error || 'Failed to load');
         }
@@ -70,42 +76,69 @@ export default function AdsTable() {
       } finally {
         setLoading(false);
       }
-    }, 300);
-    return () => { clearTimeout(timer); controller.abort(); };
-  }, [pagination.page, search, dateFrom, dateTo]);
+    };
 
-  const goPage = (pg: number) => setPagination((prev) => ({ ...prev, page: pg }));
+    doFetch();
+    return () => controller.abort();
+  }, [currentAfter, search, accountId]);
+
+  const goNext = () => {
+    if (paging?.cursors?.after && paging.next) {
+      setCursorStack((prev) => [...prev, currentAfter || '__first__']);
+      setCurrentAfter(paging.cursors.after);
+      setPageNum((p) => p + 1);
+    }
+  };
+
+  const goPrev = () => {
+    if (cursorStack.length > 0) {
+      const stack = [...cursorStack];
+      const prev = stack.pop()!;
+      setCursorStack(stack);
+      setCurrentAfter(prev === '__first__' ? undefined : prev);
+      setPageNum((p) => Math.max(1, p - 1));
+    }
+  };
 
   const handleSearch = (val: string) => {
     setSearch(val);
-    setPagination((prev) => ({ ...prev, page: 1 }));
+    setCurrentAfter(undefined);
+    setCursorStack([]);
+    setPageNum(1);
   };
 
-  const handleDateChange = (from: string, to: string) => {
-    setDateFrom(from);
-    setDateTo(to);
-    setPagination((prev) => ({ ...prev, page: 1 }));
-  };
+  // Reset pagination when account changes
+  useEffect(() => {
+    setCurrentAfter(undefined);
+    setCursorStack([]);
+    setPageNum(1);
+    setSearch('');
+  }, [accountId]);
+
+  const hasNext = !!paging?.next;
+  const hasPrev = cursorStack.length > 0;
 
   return (
     <div className="rounded-xl border border-gray-700/50 bg-gray-800/50">
       {/* Controls */}
       <div className="flex flex-col gap-3 border-b border-gray-700/50 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
-        <h3 className="text-sm font-semibold text-gray-300">
-          Ads <span className="ml-1 text-xs text-gray-500">({pagination.total})</span>
-        </h3>
+        <h3 className="text-sm font-semibold text-gray-300">Ads</h3>
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
             <input
               type="text"
               value={search}
-              onChange={(e) => handleSearch(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                setSearch(val);
+                clearTimeout(searchTimerRef.current);
+                searchTimerRef.current = setTimeout(() => handleSearch(val), 400);
+              }}
               placeholder="Search ads..."
               className="w-48 rounded-lg border border-gray-700 bg-gray-900 py-2 pl-9 pr-3 text-sm text-gray-200 placeholder-gray-500 focus:border-purple-500 focus:outline-none"
             />
           </div>
-          <DateRangeFilter onDateChange={handleDateChange} />
         </div>
       </div>
 
@@ -175,35 +208,17 @@ export default function AdsTable() {
           )}
 
           {/* Pagination */}
-          {pagination.totalPages > 1 && (
+          {(hasNext || hasPrev) && (
             <div className="flex items-center justify-between border-t border-gray-700/50 px-6 py-3">
-              <p className="text-xs text-gray-500">
-                Showing {(pagination.page - 1) * pagination.limit + 1}–
-                {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total}
-              </p>
+              <p className="text-xs text-gray-500">Page {pageNum}</p>
               <div className="flex items-center gap-1">
-                <button onClick={() => goPage(pagination.page - 1)} disabled={pagination.page <= 1} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-700 disabled:opacity-30">
+                <button onClick={goPrev} disabled={!hasPrev} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-700 disabled:opacity-30">
                   <ChevronLeft className="h-4 w-4" />
                 </button>
-                {Array.from({ length: Math.min(pagination.totalPages, 5) }, (_, i) => {
-                  let pg: number;
-                  if (pagination.totalPages <= 5) pg = i + 1;
-                  else if (pagination.page <= 3) pg = i + 1;
-                  else if (pagination.page >= pagination.totalPages - 2) pg = pagination.totalPages - 4 + i;
-                  else pg = pagination.page - 2 + i;
-                  return (
-                    <button
-                      key={pg}
-                      onClick={() => goPage(pg)}
-                      className={`min-w-[32px] rounded-lg px-2 py-1 text-xs font-medium transition-colors ${
-                        pg === pagination.page ? 'bg-purple-600 text-white' : 'text-gray-400 hover:bg-gray-700'
-                      }`}
-                    >
-                      {pg}
-                    </button>
-                  );
-                })}
-                <button onClick={() => goPage(pagination.page + 1)} disabled={pagination.page >= pagination.totalPages} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-700 disabled:opacity-30">
+                <span className="min-w-[32px] rounded-lg bg-purple-600 px-2 py-1 text-center text-xs font-medium text-white">
+                  {pageNum}
+                </span>
+                <button onClick={goNext} disabled={!hasNext} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-700 disabled:opacity-30">
                   <ChevronRight className="h-4 w-4" />
                 </button>
               </div>

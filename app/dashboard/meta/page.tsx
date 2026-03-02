@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import AdminShell from '../_components/AdminShell';
 import { CampaignsTable, AdSetsTable, AdsTable } from './_components';
+import AccountSwitcher from './_components/AccountSwitcher';
 
 type Tab = 'campaigns' | 'adsets' | 'ads';
 
@@ -14,16 +15,20 @@ const TABS: { id: Tab; label: string }[] = [
 
 export default function MetaDashboardPage() {
   const [tab, setTab] = useState<Tab>('campaigns');
+  const [accountId, setAccountId] = useState('');
 
   return (
     <AdminShell>
       <div className="space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-2xl font-bold text-white">Meta Ads Manager</h1>
-          <p className="mt-0.5 text-sm text-gray-400">
-            Manage and monitor your Meta campaigns, ad sets, and ads
-          </p>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-white">Meta Ads Manager</h1>
+            <p className="mt-0.5 text-sm text-gray-400">
+              Manage and monitor your Meta campaigns, ad sets, and ads
+            </p>
+          </div>
+          <AccountSwitcher value={accountId} onChange={setAccountId} />
         </div>
 
         {/* Tabs */}
@@ -45,9 +50,14 @@ export default function MetaDashboardPage() {
         </div>
 
         {/* Tab Content */}
-        {tab === 'campaigns' && <CampaignsTable />}
-        {tab === 'adsets' && <AdSetsTable />}
-        {tab === 'ads' && <AdsTable />}
+        {accountId && tab === 'campaigns' && <CampaignsTable accountId={accountId} />}
+        {accountId && tab === 'adsets' && <AdSetsTable accountId={accountId} />}
+        {accountId && tab === 'ads' && <AdsTable accountId={accountId} />}
+        {!accountId && (
+          <div className="flex items-center justify-center py-16 text-sm text-gray-500">
+            Loading account...
+          </div>
+        )}
       </div>
     </AdminShell>
   );
