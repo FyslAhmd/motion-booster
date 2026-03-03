@@ -64,7 +64,7 @@ export const Footer = () => {
               <Link href="/" className="inline-block mb-4">
                 <div className="relative w-44 h-11">
                   <Image
-                    src="/Motion Booster Red Logo-01.svg"
+                    src="/Motion Booster White Logo-footer.svg"
                     alt="Motion Booster"
                     fill
                     className="object-contain"
@@ -164,10 +164,10 @@ export const Footer = () => {
             <Link href="/" className="flex items-center">
               <div className="relative w-40 h-10">
                 <Image
-                  src="/Motion Booster Black Logo-01.svg"
+                  src="/Motion Booster White Logo-footer.svg"
                   alt="Motion Booster Logo"
                   fill
-                  className="object-contain brightness-0 invert"
+                  className="object-contain"
                   priority
                 />
               </div>

@@ -180,14 +180,14 @@ export default function AdSetsTable({ accountId }: AdSetsTableProps) {
                 searchTimerRef.current = setTimeout(() => handleSearch(val), 400);
               }}
               placeholder="Search ad sets..."
-              className="w-48 rounded-lg border border-gray-200 bg-gray-50 py-2 pl-9 pr-3 text-sm text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-red-400 focus:outline-none"
+              className="w-full rounded-lg border border-gray-200 bg-gray-50 py-2 pl-9 pr-3 text-sm text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-red-400 focus:outline-none sm:w-48"
             />
           </div>
           {campaigns.length > 0 && (
             <select
               value={filterCampaign}
               onChange={(e) => handleCampaignFilter(e.target.value)}
-              className="rounded-lg border border-gray-200 bg-white px-2.5 py-2 text-xs text-gray-700 focus:ring-2 focus:ring-red-400 focus:outline-none"
+              className="w-full rounded-lg border border-gray-200 bg-white px-2.5 py-2 text-xs text-gray-700 focus:ring-2 focus:ring-red-400 focus:outline-none sm:w-auto"
             >
               <option value="all">All campaigns</option>
               {campaigns.map((c) => (
@@ -216,42 +216,67 @@ export default function AdSetsTable({ accountId }: AdSetsTableProps) {
           {data.length === 0 ? (
             <div className="px-6 py-10 text-center text-sm text-gray-500">No ad sets found.</div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead>
-                  <tr className="border-b border-gray-100 text-xs uppercase text-gray-500">
-                    <th className="px-6 py-3 font-medium">Ad Set</th>
-                    <th className="px-4 py-3 font-medium">Status</th>
-                    <th className="px-4 py-3 font-medium">Optimization</th>
-                    <th className="px-4 py-3 font-medium text-right">Budget</th>
-                    <th className="px-4 py-3 font-medium">Targeting</th>
-                    <th className="px-4 py-3 font-medium">Schedule</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {data.map((a) => {
-                    const color = STATUS_COLORS[a.effective_status] || 'bg-gray-100 text-gray-500';
-                    return (
-                      <tr key={a.id} className="transition-colors hover:bg-gray-50">
-                        <td className="max-w-[200px] truncate px-6 py-3 font-medium text-gray-900">{a.name}</td>
-                        <td className="px-4 py-3">
-                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${color}`}>{a.effective_status}</span>
-                        </td>
-                        <td className="px-4 py-3 text-xs text-gray-400">{a.optimization_goal?.replace(/_/g, ' ') || '—'}</td>
-                        <td className="px-4 py-3 text-right text-gray-700">
-                          {a.daily_budget ? `${fmtBudget(a.daily_budget)}/day` : a.lifetime_budget ? `${fmtBudget(a.lifetime_budget)} life` : '—'}
-                        </td>
-                        <td className="max-w-[220px] truncate px-4 py-3 text-xs text-gray-400">{summarizeTargeting(a.targeting)}</td>
-                        <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">
-                          {a.start_time ? new Date(a.start_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'}
-                          {a.end_time ? ` → ${new Date(a.end_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : ''}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+            <>
+              {/* Mobile card list */}
+              <div className="divide-y divide-gray-100 sm:hidden">
+                {data.map((a) => {
+                  const color = STATUS_COLORS[a.effective_status] || 'bg-gray-100 text-gray-500';
+                  return (
+                    <div key={a.id} className="px-4 py-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="min-w-0 flex-1 truncate text-sm font-medium text-gray-900">{a.name}</p>
+                        <span className={`flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${color}`}>{a.effective_status}</span>
+                      </div>
+                      <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-gray-500">
+                        <span>{a.daily_budget ? `${fmtBudget(a.daily_budget)}/day` : a.lifetime_budget ? `${fmtBudget(a.lifetime_budget)} lifetime` : '—'}</span>
+                        <span className="text-gray-400">{a.optimization_goal?.replace(/_/g, ' ') || '—'}</span>
+                      </div>
+                      {summarizeTargeting(a.targeting) !== '—' && (
+                        <p className="mt-0.5 truncate text-xs text-gray-400">{summarizeTargeting(a.targeting)}</p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Desktop table */}
+              <div className="hidden overflow-x-auto sm:block">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-100 text-xs uppercase text-gray-500">
+                      <th className="px-6 py-3 font-medium">Ad Set</th>
+                      <th className="px-4 py-3 font-medium">Status</th>
+                      <th className="px-4 py-3 font-medium">Optimization</th>
+                      <th className="px-4 py-3 font-medium text-right">Budget</th>
+                      <th className="px-4 py-3 font-medium">Targeting</th>
+                      <th className="px-4 py-3 font-medium">Schedule</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {data.map((a) => {
+                      const color = STATUS_COLORS[a.effective_status] || 'bg-gray-100 text-gray-500';
+                      return (
+                        <tr key={a.id} className="transition-colors hover:bg-gray-50">
+                          <td className="max-w-[200px] truncate px-6 py-3 font-medium text-gray-900">{a.name}</td>
+                          <td className="px-4 py-3">
+                            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${color}`}>{a.effective_status}</span>
+                          </td>
+                          <td className="px-4 py-3 text-xs text-gray-400">{a.optimization_goal?.replace(/_/g, ' ') || '—'}</td>
+                          <td className="px-4 py-3 text-right text-gray-700">
+                            {a.daily_budget ? `${fmtBudget(a.daily_budget)}/day` : a.lifetime_budget ? `${fmtBudget(a.lifetime_budget)} life` : '—'}
+                          </td>
+                          <td className="max-w-[220px] truncate px-4 py-3 text-xs text-gray-400">{summarizeTargeting(a.targeting)}</td>
+                          <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">
+                            {a.start_time ? new Date(a.start_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'}
+                            {a.end_time ? ` → ${new Date(a.end_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : ''}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
 
           {/* Pagination */}

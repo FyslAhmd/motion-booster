@@ -165,20 +165,16 @@ export const Header = () => {
             })}
 
             {/* Auth & Login Button */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               {!isLoading && isAuthenticated ? (
                 <div className="relative" ref={profileMenuRef}>
                   <button
                     onClick={() => setShowProfileMenu(!showProfileMenu)}
-                    className="flex items-center gap-2 px-3 py-2 hover:bg-gray-50 rounded-lg transition-colors"
+                    className="flex items-center gap-2 px-2 py-2 hover:bg-gray-50 rounded-lg transition-colors"
                   >
                     <div className="w-9 h-9 bg-linear-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
                       {user?.email?.charAt(0).toUpperCase() || 'U'}
                     </div>
-                    <span className="text-gray-700 font-medium text-sm">
-                      {user?.email?.split('@')[0] || 'User'}
-                    </span>
-                    <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${showProfileMenu ? 'rotate-180' : ''}`} />
                   </button>
 
                   {/* Dropdown Menu */}
@@ -210,12 +206,20 @@ export const Header = () => {
                   )}
                 </div>
               ) : (
-                <Link
-                  href="/login"
-                  className="flex items-center gap-2 px-6 py-3 bg-linear-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold rounded-lg transition-all shadow-md hover:shadow-lg"
-                >
-                  Login
-                </Link>
+                <div className="flex items-center gap-3">
+                  <Link
+                    href="/login"
+                    className="text-gray-700 hover:text-red-500 font-semibold text-sm transition-colors"
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    href="/register"
+                    className="flex items-center gap-2 px-6 py-3 bg-linear-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold rounded-lg transition-all shadow-md hover:shadow-lg text-sm"
+                  >
+                    Get Started
+                  </Link>
+                </div>
               )}
             </div>
           </div>

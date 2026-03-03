@@ -31,28 +31,44 @@ export default function MetaDashboardPage() {
         {/* Account Switcher */}
         <AccountSwitcher value={accountId} onChange={setAccountId} />
 
-        {/* Tabs */}
-        <div className="flex gap-1 rounded-xl border border-gray-200 bg-gray-50 p-1">
-          {TABS.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
-              className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-all
-                ${
-                  tab === t.id
-                    ? 'bg-red-600 text-white shadow-sm shadow-red-500/20'
-                    : 'text-gray-500 hover:bg-white hover:text-gray-700'
-                }`}
-            >
-              {t.label}
-            </button>
-          ))}
+        {/* Mobile: stacked sections */}
+        <div className="flex flex-col gap-6 sm:hidden">
+          <section>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">Campaigns</p>
+            <CampaignsTable accountId={accountId} />
+          </section>
+          <section>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">Ad Sets</p>
+            <AdSetsTable accountId={accountId} />
+          </section>
+          <section>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">Ads</p>
+            <AdsTable accountId={accountId} />
+          </section>
         </div>
 
-        {/* Tab Content */}
-        {tab === 'campaigns' && <CampaignsTable accountId={accountId} />}
-        {tab === 'adsets' && <AdSetsTable accountId={accountId} />}
-        {tab === 'ads' && <AdsTable accountId={accountId} />}
+        {/* Desktop: tabs */}
+        <div className="hidden sm:block">
+          <div className="mb-6 flex gap-1 rounded-xl border border-gray-200 bg-gray-50 p-1">
+            {TABS.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setTab(t.id)}
+                className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-all
+                  ${
+                    tab === t.id
+                      ? 'bg-red-600 text-white shadow-sm shadow-red-500/20'
+                      : 'text-gray-500 hover:bg-white hover:text-gray-700'
+                  }`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+          {tab === 'campaigns' && <CampaignsTable accountId={accountId} />}
+          {tab === 'adsets' && <AdSetsTable accountId={accountId} />}
+          {tab === 'ads' && <AdsTable accountId={accountId} />}
+        </div>
       </div>
     </AdminShell>
   );

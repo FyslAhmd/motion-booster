@@ -15,6 +15,7 @@ interface Campaign {
   start_time?: string;
   stop_time?: string;
   created_time: string;
+  ads?: { data: Array<{ creative?: { thumbnail_url?: string } }> };
 }
 
 interface CursorPaging {
@@ -143,7 +144,7 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
                 searchTimerRef.current = setTimeout(() => handleSearch(val), 400);
               }}
               placeholder="Search campaigns..."
-              className="w-52 rounded-lg border border-gray-200 bg-gray-50 py-2 pl-9 pr-3 text-sm text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-red-400 focus:outline-none"
+              className="w-full rounded-lg border border-gray-200 bg-gray-50 py-2 pl-9 pr-3 text-sm text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-red-400 focus:outline-none sm:w-52"
             />
           </div>
         </div>
@@ -167,41 +168,85 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
           {data.length === 0 ? (
             <div className="px-6 py-10 text-center text-sm text-gray-500">No campaigns found.</div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead>
-                  <tr className="border-b border-gray-100 text-xs uppercase text-gray-500">
-                    <th className="px-6 py-3 font-medium">Campaign</th>
-                    <th className="px-4 py-3 font-medium">Status</th>
-                    <th className="px-4 py-3 font-medium">Objective</th>
-                    <th className="px-4 py-3 font-medium text-right">Budget</th>
-                    <th className="px-4 py-3 font-medium">Created</th>
-                    <th className="px-4 py-3 font-medium">Date Range</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {data.map((c) => {
-                    const color = STATUS_COLORS[c.effective_status] || 'bg-gray-100 text-gray-500';
-                    return (
-                      <tr key={c.id} className="transition-colors hover:bg-gray-50">
-                        <td className="max-w-[220px] truncate px-6 py-3 font-medium text-gray-900">{c.name}</td>
-                        <td className="px-4 py-3">
+            <>
+              {/* Mobile card list */}
+              <div className="divide-y divide-gray-100 sm:hidden">
+                {data.map((c) => {
+                  const color = STATUS_COLORS[c.effective_status] || 'bg-gray-100 text-gray-500';
+                  const thumb = c.ads?.data?.[0]?.creative?.thumbnail_url;
+                  return (
+                    <div key={c.id} className="flex items-start gap-3 px-4 py-3">
+                      {thumb ? (
+                        <img src={thumb} alt={c.name} className="h-12 w-12 flex-shrink-0 rounded-lg object-cover" />
+                      ) : (
+                        <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-gray-100 text-xs text-gray-400">N/A</div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-gray-900">{c.name}</p>
+                        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
                           <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${color}`}>{c.effective_status}</span>
-                        </td>
-                        <td className="px-4 py-3 text-gray-400">{c.objective?.replace(/_/g, ' ') || '—'}</td>
-                        <td className="px-4 py-3 text-right text-gray-700">
-                          {c.daily_budget ? `${fmtBudget(c.daily_budget)}/day` : c.lifetime_budget ? `${fmtBudget(c.lifetime_budget)} life` : '—'}
-                        </td>
-                        <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">{fmtDate(c.created_time)}</td>
-                        <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">
-                          {fmtDate(c.start_time)}{c.stop_time ? ` → ${fmtDate(c.stop_time)}` : ' → Ongoing'}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                          <span className="text-xs text-gray-500">
+                            {c.daily_budget ? `${fmtBudget(c.daily_budget)}/day` : c.lifetime_budget ? `${fmtBudget(c.lifetime_budget)} lifetime` : '—'}
+                          </span>
+                        </div>
+                        <p className="mt-0.5 text-xs text-gray-400">{c.objective?.replace(/_/g, ' ') || '—'} · {fmtDate(c.created_time)}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Desktop table */}
+              <div className="hidden overflow-x-auto sm:block">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-100 text-xs uppercase text-gray-500">
+                      <th className="px-6 py-3 font-medium">Preview</th>
+                      <th className="px-4 py-3 font-medium">Campaign</th>
+                      <th className="px-4 py-3 font-medium">Status</th>
+                      <th className="px-4 py-3 font-medium">Objective</th>
+                      <th className="px-4 py-3 font-medium text-right">Budget</th>
+                      <th className="px-4 py-3 font-medium">Created</th>
+                      <th className="px-4 py-3 font-medium">Date Range</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {data.map((c) => {
+                      const color = STATUS_COLORS[c.effective_status] || 'bg-gray-100 text-gray-500';
+                      return (
+                        <tr key={c.id} className="transition-colors hover:bg-gray-50">
+                          <td className="px-6 py-3">
+                            {c.ads?.data?.[0]?.creative?.thumbnail_url ? (
+                              <img
+                                src={c.ads.data[0].creative.thumbnail_url}
+                                alt={c.name}
+                                className="h-10 w-10 rounded-lg object-cover"
+                              />
+                            ) : (
+                              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 text-xs text-gray-400">
+                                N/A
+                              </div>
+                            )}
+                          </td>
+                          <td className="max-w-[200px] truncate px-4 py-3 font-medium text-gray-900">{c.name}</td>
+                          <td className="px-4 py-3">
+                            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${color}`}>{c.effective_status}</span>
+                          </td>
+                          <td className="px-4 py-3 text-gray-400">{c.objective?.replace(/_/g, ' ') || '—'}</td>
+                          <td className="px-4 py-3 text-right text-gray-700">
+                            {c.daily_budget ? `${fmtBudget(c.daily_budget)}/day` : c.lifetime_budget ? `${fmtBudget(c.lifetime_budget)} life` : '—'}
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">{fmtDate(c.created_time)}</td>
+                          <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">
+                            {fmtDate(c.start_time)}{c.stop_time ? ` → ${fmtDate(c.stop_time)}` : ' → Ongoing'}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
 
           {/* Pagination */}

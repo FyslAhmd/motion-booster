@@ -138,7 +138,7 @@ export default function AdsTable({ accountId }: AdsTableProps) {
                 searchTimerRef.current = setTimeout(() => handleSearch(val), 400);
               }}
               placeholder="Search ads..."
-              className="w-48 rounded-lg border border-gray-200 bg-gray-50 py-2 pl-9 pr-3 text-sm text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-red-400 focus:outline-none"
+              className="w-full rounded-lg border border-gray-200 bg-gray-50 py-2 pl-9 pr-3 text-sm text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-red-400 focus:outline-none sm:w-48"
             />
           </div>
         </div>
@@ -162,51 +162,79 @@ export default function AdsTable({ accountId }: AdsTableProps) {
           {data.length === 0 ? (
             <div className="px-6 py-10 text-center text-sm text-gray-500">No ads found.</div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead>
-                  <tr className="border-b border-gray-100 text-xs uppercase text-gray-500">
-                    <th className="px-6 py-3 font-medium">Preview</th>
-                    <th className="px-4 py-3 font-medium">Ad Name</th>
-                    <th className="px-4 py-3 font-medium">Status</th>
-                    <th className="px-4 py-3 font-medium">Creative Title</th>
-                    <th className="px-4 py-3 font-medium">Body</th>
-                    <th className="px-4 py-3 font-medium">Created</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {data.map((ad) => {
-                    const color = STATUS_COLORS[ad.effective_status] || 'bg-gray-100 text-gray-500';
-                    return (
-                      <tr key={ad.id} className="transition-colors hover:bg-gray-50">
-                        <td className="px-6 py-3">
-                          {ad.creative?.thumbnail_url ? (
-                            <img
-                              src={ad.creative.thumbnail_url}
-                              alt={ad.name}
-                              className="h-10 w-10 rounded-lg object-cover"
-                            />
-                          ) : (
-                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 text-xs text-gray-400">
-                              N/A
-                            </div>
-                          )}
-                        </td>
-                        <td className="max-w-[180px] truncate px-4 py-3 font-medium text-gray-900">{ad.name}</td>
-                        <td className="px-4 py-3">
+            <>
+              {/* Mobile card list */}
+              <div className="divide-y divide-gray-100 sm:hidden">
+                {data.map((ad) => {
+                  const color = STATUS_COLORS[ad.effective_status] || 'bg-gray-100 text-gray-500';
+                  return (
+                    <div key={ad.id} className="flex items-start gap-3 px-4 py-3">
+                      {ad.creative?.thumbnail_url ? (
+                        <img src={ad.creative.thumbnail_url} alt={ad.name} className="h-12 w-12 flex-shrink-0 rounded-lg object-cover" />
+                      ) : (
+                        <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-gray-100 text-xs text-gray-400">N/A</div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-gray-900">{ad.name}</p>
+                        {ad.creative?.title && <p className="mt-0.5 truncate text-xs font-medium text-gray-600">{ad.creative.title}</p>}
+                        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
                           <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${color}`}>{ad.effective_status}</span>
-                        </td>
-                        <td className="max-w-[160px] truncate px-4 py-3 text-gray-400">{ad.creative?.title || '—'}</td>
-                        <td className="max-w-[200px] truncate px-4 py-3 text-xs text-gray-500">{ad.creative?.body || '—'}</td>
-                        <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">
-                          {new Date(ad.created_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                          <span className="text-xs text-gray-400">{new Date(ad.created_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                        </div>
+                        {ad.creative?.body && <p className="mt-0.5 line-clamp-2 text-xs text-gray-400">{ad.creative.body}</p>}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Desktop table */}
+              <div className="hidden overflow-x-auto sm:block">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-100 text-xs uppercase text-gray-500">
+                      <th className="px-6 py-3 font-medium">Preview</th>
+                      <th className="px-4 py-3 font-medium">Ad Name</th>
+                      <th className="px-4 py-3 font-medium">Status</th>
+                      <th className="px-4 py-3 font-medium">Creative Title</th>
+                      <th className="px-4 py-3 font-medium">Body</th>
+                      <th className="px-4 py-3 font-medium">Created</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {data.map((ad) => {
+                      const color = STATUS_COLORS[ad.effective_status] || 'bg-gray-100 text-gray-500';
+                      return (
+                        <tr key={ad.id} className="transition-colors hover:bg-gray-50">
+                          <td className="px-6 py-3">
+                            {ad.creative?.thumbnail_url ? (
+                              <img
+                                src={ad.creative.thumbnail_url}
+                                alt={ad.name}
+                                className="h-10 w-10 rounded-lg object-cover"
+                              />
+                            ) : (
+                              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 text-xs text-gray-400">
+                                N/A
+                              </div>
+                            )}
+                          </td>
+                          <td className="max-w-[180px] truncate px-4 py-3 font-medium text-gray-900">{ad.name}</td>
+                          <td className="px-4 py-3">
+                            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${color}`}>{ad.effective_status}</span>
+                          </td>
+                          <td className="max-w-[160px] truncate px-4 py-3 text-gray-400">{ad.creative?.title || '—'}</td>
+                          <td className="max-w-[200px] truncate px-4 py-3 text-xs text-gray-500">{ad.creative?.body || '—'}</td>
+                          <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">
+                            {new Date(ad.created_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
 
           {/* Pagination */}
