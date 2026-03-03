@@ -23,8 +23,8 @@ interface Ad {
 
 interface CursorPaging {
   cursors?: { before?: string; after?: string };
-  next?: string;
-  previous?: string;
+  hasNext?: boolean;
+  hasPrevious?: boolean;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -41,6 +41,7 @@ interface AdsTableProps {
 export default function AdsTable({ accountId }: AdsTableProps) {
   const [data, setData] = useState<Ad[]>([]);
   const [paging, setPaging] = useState<CursorPaging | null>(null);
+  const [totalCount, setTotalCount] = useState<number | null>(null);
   const [cursorStack, setCursorStack] = useState<string[]>([]);
   const [currentAfter, setCurrentAfter] = useState<string | undefined>();
   const [search, setSearch] = useState('');
@@ -68,6 +69,7 @@ export default function AdsTable({ accountId }: AdsTableProps) {
         if (json.success) {
           setData(json.data);
           setPaging(json.paging || null);
+          if (json.totalCount != null) setTotalCount(json.totalCount);
         } else {
           setError(json.error || 'Failed to load');
         }
@@ -83,7 +85,7 @@ export default function AdsTable({ accountId }: AdsTableProps) {
   }, [currentAfter, search, accountId]);
 
   const goNext = () => {
-    if (paging?.cursors?.after && paging.next) {
+    if (paging?.cursors?.after && paging.hasNext) {
       setCursorStack((prev) => [...prev, currentAfter || '__first__']);
       setCurrentAfter(paging.cursors.after);
       setPageNum((p) => p + 1);
@@ -115,15 +117,16 @@ export default function AdsTable({ accountId }: AdsTableProps) {
     setSearch('');
   }, [accountId]);
 
-  const hasNext = !!paging?.next;
+  const hasNext = !!paging?.hasNext;
   const hasPrev = cursorStack.length > 0;
+  const totalPages = totalCount != null ? Math.ceil(totalCount / 10) : null;
 
   return (
     <div className="rounded-xl border border-gray-100 bg-white">
       {/* Controls */}
       <div className="flex flex-col gap-3 border-b border-gray-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
         <h3 className="text-sm font-semibold text-gray-700">
-          Ads {pageNum > 1 && <span className="ml-1 text-xs text-gray-500">Page {pageNum}</span>}
+          Ads {pageNum > 1 && <span className="ml-1 text-xs text-gray-500">Page {pageNum}{totalPages ? `/${totalPages}` : ''}</span>}
         </h3>
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative">
@@ -212,12 +215,12 @@ export default function AdsTable({ accountId }: AdsTableProps) {
           {/* Pagination */}
           {(hasNext || hasPrev) && (
             <div className="flex items-center justify-between border-t border-gray-100 px-6 py-3">
-              <p className="text-xs text-gray-500">Page {pageNum}</p>
+              <p className="text-xs text-gray-500">Page {pageNum}{totalPages ? ` / ${totalPages}` : ''}</p>
               <div className="flex items-center gap-1">
                 <button onClick={goPrev} disabled={!hasPrev} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 disabled:opacity-30">
                   <ChevronLeft className="h-4 w-4" />
                 </button>
-                <span className="min-w-[32px] rounded-lg bg-red-600 px-2 py-1 text-center text-xs font-medium text-white">{pageNum}</span>
+                <span className="min-w-[32px] rounded-lg bg-red-600 px-2 py-1 text-center text-xs font-medium text-white">{pageNum}{totalPages ? `/${totalPages}` : ''}</span>
                 <button onClick={goNext} disabled={!hasNext} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 disabled:opacity-30">
                   <ChevronRight className="h-4 w-4" />
                 </button>

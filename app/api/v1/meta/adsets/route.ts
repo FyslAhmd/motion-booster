@@ -18,10 +18,20 @@ export async function GET(req: Request) {
       campaignId,
     });
 
+    // Sanitize paging — strip raw next/previous URLs that contain access tokens
+    const paging = result.paging
+      ? {
+          cursors: result.paging.cursors || null,
+          hasNext: !!result.paging.next,
+          hasPrevious: !!result.paging.previous,
+        }
+      : null;
+
     return NextResponse.json({
       success: true,
       data: result.data || [],
-      paging: result.paging || null,
+      paging,
+      totalCount: result.summary?.total_count ?? null,
     });
   } catch (err: any) {
     return NextResponse.json(

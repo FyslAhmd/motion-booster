@@ -198,6 +198,7 @@ export function fetchCampaignsPage(opts: DirectPageOptions = {}) {
   const id = opts.accountId || getDefaultAccountId();
   const params: Record<string, string> = {
     fields: CAMPAIGN_FIELDS,
+    summary: 'true',
     limit: String(opts.limit || 10),
   };
   if (opts.after) params.after = opts.after;
@@ -221,6 +222,7 @@ export function fetchAdSetsPage(opts: DirectPageOptions = {}) {
   const id = opts.accountId || getDefaultAccountId();
   const params: Record<string, string> = {
     fields: ADSET_FIELDS,
+    summary: 'true',
     limit: String(opts.limit || 10),
   };
   if (opts.after) params.after = opts.after;
@@ -244,6 +246,7 @@ export function fetchAdsPage(opts: DirectPageOptions = {}) {
   const id = opts.accountId || getDefaultAccountId();
   const params: Record<string, string> = {
     fields: AD_FIELDS,
+    summary: 'true',
     limit: String(opts.limit || 10),
   };
   if (opts.after) params.after = opts.after;
