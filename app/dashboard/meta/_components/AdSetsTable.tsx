@@ -30,11 +30,18 @@ interface CursorPaging {
   hasPrevious?: boolean;
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  ACTIVE: 'bg-green-50 text-green-700 border border-green-200',
-  PAUSED: 'bg-amber-50 text-amber-700 border border-amber-200',
-  DELETED: 'bg-red-50 text-red-600 border border-red-200',
-  ARCHIVED: 'bg-gray-100 text-gray-500',
+const STATUS_STYLES: Record<string, { color: string; label: string }> = {
+  ACTIVE:              { color: 'bg-green-50 text-green-700 border border-green-200',   label: 'Active' },
+  PAUSED:              { color: 'bg-amber-50 text-amber-700 border border-amber-200',   label: 'Paused' },
+  CAMPAIGN_PAUSED:     { color: 'bg-amber-50 text-amber-600 border border-amber-200',   label: 'Campaign Off' },
+  IN_PROCESS:          { color: 'bg-yellow-50 text-yellow-700 border border-yellow-200', label: 'In Review' },
+  WITH_ISSUES:         { color: 'bg-orange-50 text-orange-600 border border-orange-200', label: 'Issues' },
+  PENDING_REVIEW:      { color: 'bg-yellow-50 text-yellow-700 border border-yellow-200', label: 'Pending Review' },
+  DISAPPROVED:         { color: 'bg-red-50 text-red-600 border border-red-200',          label: 'Not Approved' },
+  PENDING_BILLING_INFO:{ color: 'bg-orange-50 text-orange-600 border border-orange-200', label: 'Billing Issue' },
+  PREAPPROVED:         { color: 'bg-blue-50 text-blue-600 border border-blue-200',       label: 'Preapproved' },
+  DELETED:             { color: 'bg-red-50 text-red-600 border border-red-200',          label: 'Deleted' },
+  ARCHIVED:            { color: 'bg-gray-100 text-gray-500 border border-gray-200',      label: 'Archived' },
 };
 
 function fmtBudget(val?: string) {
@@ -233,12 +240,12 @@ export default function AdSetsTable({ accountId }: AdSetsTableProps) {
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {data.map((a) => {
-                    const color = STATUS_COLORS[a.effective_status] || 'bg-gray-100 text-gray-500';
+                    const st = STATUS_STYLES[a.effective_status] || { color: 'bg-gray-100 text-gray-500', label: a.effective_status?.replace(/_/g, ' ') || 'Unknown' };
                     return (
                       <tr key={a.id} className="transition-colors hover:bg-gray-50">
                         <td className="max-w-[200px] truncate px-6 py-3 font-medium text-gray-900">{a.name}</td>
                         <td className="px-4 py-3">
-                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${color}`}>{a.effective_status}</span>
+                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${st.color}`}>{st.label}</span>
                         </td>
                         <td className="px-4 py-3 text-xs text-gray-400">{a.optimization_goal?.replace(/_/g, ' ') || '—'}</td>
                         <td className="px-4 py-3 text-right text-gray-700">

@@ -151,7 +151,8 @@ export function fetchAdAccount(accountId?: string) {
 
 const CAMPAIGN_FIELDS = [
   'id', 'name', 'objective', 'status', 'effective_status',
-  'daily_budget', 'lifetime_budget', 'budget_remaining',
+  'configured_status', 'daily_budget', 'lifetime_budget',
+  'budget_remaining', 'spend_cap',
   'start_time', 'stop_time', 'created_time', 'updated_time',
 ].join(',');
 

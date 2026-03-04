@@ -9,12 +9,15 @@ interface Campaign {
   objective: string;
   status: string;
   effective_status: string;
+  configured_status?: string;
   daily_budget?: string;
   lifetime_budget?: string;
   budget_remaining?: string;
+  spend_cap?: string;
   start_time?: string;
   stop_time?: string;
   created_time: string;
+  updated_time?: string;
 }
 
 interface CursorPaging {
@@ -23,12 +26,97 @@ interface CursorPaging {
   hasPrevious?: boolean;
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  ACTIVE: 'bg-green-50 text-green-700 border border-green-200',
-  PAUSED: 'bg-amber-50 text-amber-700 border border-amber-200',
-  DELETED: 'bg-red-50 text-red-600 border border-red-200',
-  ARCHIVED: 'bg-gray-100 text-gray-500',
+const STATUS_STYLES: Record<string, string> = {
+  ACTIVE:               'bg-green-50 text-green-700 border border-green-200',
+  SCHEDULED:            'bg-blue-50 text-blue-700 border border-blue-200',
+  IN_REVIEW:            'bg-yellow-50 text-yellow-700 border border-yellow-200',
+  COMPLETED:            'bg-indigo-50 text-indigo-600 border border-indigo-200',
+  RECENTLY_COMPLETED:   'bg-indigo-50 text-indigo-600 border border-indigo-200',
+  OFF:                  'bg-gray-200 text-gray-600 border border-gray-300',
+  PAUSED:               'bg-amber-50 text-amber-700 border border-amber-200',
+  NOT_DELIVERING:       'bg-orange-50 text-orange-600 border border-orange-200',
+  WITH_ISSUES:          'bg-orange-50 text-orange-600 border border-orange-200',
+  NOT_APPROVED:         'bg-red-50 text-red-600 border border-red-200',
+  DELETED:              'bg-red-50 text-red-600 border border-red-200',
+  ARCHIVED:             'bg-gray-100 text-gray-500 border border-gray-200',
+  ERROR:                'bg-red-50 text-red-500 border border-red-200',
+  UNKNOWN:              'bg-gray-100 text-gray-500',
 };
+
+/**
+ * Derive a human-friendly delivery status matching Facebook Ads Manager.
+ * Meta's API only returns basic effective_status (ACTIVE/PAUSED/DELETED/ARCHIVED/
+ * IN_PROCESS/WITH_ISSUES), but Ads Manager derives richer statuses from
+ * multiple fields: stop_time, start_time, budget_remaining, etc.
+ */
+function deriveDeliveryStatus(c: Campaign): { label: string; key: string } {
+  const now = new Date();
+
+  // ── Hard statuses from API ──
+  if (c.effective_status === 'DELETED')
+    return { label: 'Deleted', key: 'DELETED' };
+  if (c.effective_status === 'ARCHIVED')
+    return { label: 'Archived', key: 'ARCHIVED' };
+  if (c.effective_status === 'IN_PROCESS')
+    return { label: 'In Review', key: 'IN_REVIEW' };
+  if (c.effective_status === 'WITH_ISSUES')
+    return { label: 'Not Approved', key: 'NOT_APPROVED' };
+
+  // ── Paused ──
+  if (c.effective_status === 'PAUSED' || c.status === 'PAUSED' || c.configured_status === 'PAUSED')
+    return { label: 'Paused', key: 'PAUSED' };
+
+  // ── ACTIVE campaigns: derive richer status ──
+  if (c.effective_status === 'ACTIVE') {
+    // Completed: stop_time is in the past
+    if (c.stop_time && new Date(c.stop_time) <= now) {
+      const daysSinceEnd =
+        (now.getTime() - new Date(c.stop_time).getTime()) /
+        (1000 * 60 * 60 * 24);
+      if (daysSinceEnd <= 3)
+        return { label: 'Recently Completed', key: 'RECENTLY_COMPLETED' };
+      return { label: 'Completed', key: 'COMPLETED' };
+    }
+
+    // Completed: lifetime budget fully spent (budget_remaining = 0)
+    if (
+      c.lifetime_budget &&
+      c.budget_remaining !== undefined &&
+      parseInt(c.budget_remaining, 10) <= 0
+    )
+      return { label: 'Completed', key: 'COMPLETED' };
+
+    // Completed: spend cap reached
+    if (
+      c.spend_cap &&
+      parseInt(c.spend_cap, 10) > 0 &&
+      c.budget_remaining !== undefined &&
+      parseInt(c.budget_remaining, 10) <= 0
+    )
+      return { label: 'Completed', key: 'COMPLETED' };
+
+    // Scheduled: start_time is in the future
+    if (c.start_time && new Date(c.start_time) > now)
+      return { label: 'Scheduled', key: 'SCHEDULED' };
+
+    // Not Delivering: daily budget is 0 or missing any budget
+    if (
+      !c.daily_budget &&
+      !c.lifetime_budget &&
+      !c.spend_cap
+    )
+      return { label: 'Not Delivering', key: 'NOT_DELIVERING' };
+
+    // Active and delivering
+    return { label: 'Active', key: 'ACTIVE' };
+  }
+
+  // ── Fallback for any unexpected status ──
+  return {
+    label: c.effective_status?.replace(/_/g, ' ') || 'Unknown',
+    key: c.effective_status || 'UNKNOWN',
+  };
+}
 
 function fmtBudget(val?: string) {
   if (!val) return '—';
@@ -184,12 +272,13 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {data.map((c) => {
-                    const color = STATUS_COLORS[c.effective_status] || 'bg-gray-100 text-gray-500';
+                    const derived = deriveDeliveryStatus(c);
+                    const color = STATUS_STYLES[derived.key] || STATUS_STYLES.UNKNOWN;
                     return (
                       <tr key={c.id} className="transition-colors hover:bg-gray-50">
                         <td className="max-w-[220px] truncate px-6 py-3 font-medium text-gray-900">{c.name}</td>
                         <td className="px-4 py-3">
-                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${color}`}>{c.effective_status}</span>
+                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${color}`}>{derived.label}</span>
                         </td>
                         <td className="px-4 py-3 text-gray-400">{c.objective?.replace(/_/g, ' ') || '—'}</td>
                         <td className="px-4 py-3 text-right text-gray-700">
