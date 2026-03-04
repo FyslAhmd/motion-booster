@@ -5,8 +5,15 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth/context';
-import { ChevronDown, LayoutDashboard, User, Phone, Mail, Search, Bell, Home, Briefcase, Users, Menu } from 'lucide-react';
+import { ChevronDown, LayoutDashboard, User, Phone, Mail, Search, Bell, Home, Briefcase, Users, Menu, X, ArrowRight } from 'lucide-react';
 import { MoreDrawer } from '@/components/ui/MoreDrawer';
+
+const DUMMY_NOTIFICATIONS = [
+  { id: 1, title: 'New message received', desc: 'Rafiq Ahmed sent you a message', time: '2m ago', unread: true },
+  { id: 2, title: 'Project update', desc: 'Your web dev project is 80% complete', time: '1h ago', unread: true },
+  { id: 3, title: 'Invoice paid', desc: 'Invoice #1042 has been paid', time: '3h ago', unread: false },
+  { id: 4, title: 'New review', desc: 'Fatima Khatun left a 5-star review', time: 'Yesterday', unread: false },
+];
 
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -14,8 +21,12 @@ export const Header = () => {
   const [language, setLanguage] = useState('EN');
   const [scrolled, setScrolled] = useState(false);
   const [showMoreDrawer, setShowMoreDrawer] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+  const [showNotif, setShowNotif] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const { isAuthenticated, isLoading, user } = useAuth();
   const profileMenuRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const pathname = usePathname();
 
   useEffect(() => {
@@ -25,6 +36,20 @@ export const Header = () => {
     window.addEventListener('scroll', handleScroll);
     handleScroll();
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    if (showSearch) {
+      setTimeout(() => searchInputRef.current?.focus(), 100);
+    }
+  }, [showSearch]);
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { setShowSearch(false); setShowNotif(false); }
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
   }, []);
 
   useEffect(() => {
@@ -74,10 +99,16 @@ export const Header = () => {
 
           {/* Icons: Search, Notification, Profile */}
           <div className="flex items-center gap-3">
-            <button className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
+            <button
+              onClick={() => { setShowSearch(true); setShowNotif(false); }}
+              className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+            >
               <Search className="w-5 h-5 text-gray-600" />
             </button>
-            <button className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors relative">
+            <button
+              onClick={() => { setShowNotif(true); setShowSearch(false); }}
+              className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors relative"
+            >
               <Bell className="w-5 h-5 text-gray-600" />
               <span className="absolute top-1 right-1 w-2 h-2 bg-yellow-400 rounded-full"></span>
             </button>
@@ -266,6 +297,88 @@ export const Header = () => {
       </nav>
 
       <MoreDrawer open={showMoreDrawer} onClose={() => setShowMoreDrawer(false)} />
+
+      {/* ── Search Panel (right → left slide) ── */}
+      {/* Backdrop */}
+      {showSearch && (
+        <div
+          className="fixed inset-0 z-[90] bg-black/30 lg:hidden"
+          onClick={() => setShowSearch(false)}
+        />
+      )}
+      <div
+        className={`fixed top-0 right-0 z-[91] h-full w-4/5 max-w-sm bg-white shadow-2xl flex flex-col lg:hidden
+          transition-transform duration-300 ease-in-out
+          ${showSearch ? 'translate-x-0' : 'translate-x-full'}`}
+      >
+        <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100">
+          <span className="font-semibold text-gray-800 text-base">Search</span>
+          <button onClick={() => setShowSearch(false)} className="p-1.5 rounded-full hover:bg-gray-100">
+            <X className="w-5 h-5 text-gray-500" />
+          </button>
+        </div>
+        <div className="px-4 pt-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              ref={searchInputRef}
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search services, blogs..."
+              className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-400"
+            />
+          </div>
+        </div>
+        {searchQuery.trim() && (
+          <div className="px-4 mt-3 flex-1 overflow-y-auto">
+            <p className="text-xs text-gray-400 mb-2">Press Enter to search for <span className="font-semibold text-gray-600">&ldquo;{searchQuery}&rdquo;</span></p>
+            {['/service', '/blog', '/about', '/contact'].map((href) => (
+              <Link
+                key={href}
+                href={`${href}?q=${encodeURIComponent(searchQuery)}`}
+                onClick={() => setShowSearch(false)}
+                className="flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <span className="text-sm text-gray-700 capitalize">{href.replace('/', '')}</span>
+                <ArrowRight className="w-4 h-4 text-gray-400" />
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ── Notification Panel (right → left slide) ── */}
+      {showNotif && (
+        <div
+          className="fixed inset-0 z-[90] bg-black/30 lg:hidden"
+          onClick={() => setShowNotif(false)}
+        />
+      )}
+      <div
+        className={`fixed top-0 right-0 z-[91] h-full w-4/5 max-w-sm bg-white shadow-2xl flex flex-col lg:hidden
+          transition-transform duration-300 ease-in-out
+          ${showNotif ? 'translate-x-0' : 'translate-x-full'}`}
+      >
+        <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100">
+          <span className="font-semibold text-gray-800 text-base">Notifications</span>
+          <button onClick={() => setShowNotif(false)} className="p-1.5 rounded-full hover:bg-gray-100">
+            <X className="w-5 h-5 text-gray-500" />
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto divide-y divide-gray-50">
+          {DUMMY_NOTIFICATIONS.map((n) => (
+            <div key={n.id} className={`px-4 py-3.5 flex gap-3 ${n.unread ? 'bg-red-50/50' : ''}`}>
+              <div className={`mt-0.5 w-2 h-2 rounded-full shrink-0 ${n.unread ? 'bg-red-500' : 'bg-gray-300'}`} />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900">{n.title}</p>
+                <p className="text-xs text-gray-500 mt-0.5 truncate">{n.desc}</p>
+                <p className="text-[10px] text-gray-400 mt-1">{n.time}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </header>
   );
 };

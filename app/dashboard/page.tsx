@@ -114,19 +114,25 @@ function UserOverview({ userName, statCards, userEmail }: UserOverviewProps) {
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {statCards.map((card) => {
             const Icon = card.icon;
-            return (
-              <div
-                key={card.label}
-                className="rounded-xl border border-gray-100 bg-white p-4 flex flex-col gap-3 shadow-sm"
-              >
+            const inner = (
+              <>
                 <div className={`w-8 h-8 rounded-lg ${card.bg} flex items-center justify-center`}>
                   <Icon className={`h-4 w-4 ${card.color}`} />
                 </div>
                 <div>
                   <p className="text-xl font-bold text-gray-900">{card.value}</p>
                   <p className="text-[11px] text-gray-500 mt-0.5">{card.label}</p>
+                  {(card.label === 'Unseen Messages' || card.label === 'Unread Messages') && (card.value as number) > 0 && (
+                    <span className="inline-block mt-1 text-[10px] bg-orange-100 text-orange-600 font-semibold px-1.5 py-0.5 rounded-full">New</span>
+                  )}
                 </div>
-              </div>
+              </>
+            );
+            const cls = `rounded-xl border border-gray-100 bg-white p-4 flex flex-col gap-3 shadow-sm active:scale-95 transition-transform${card.href ? ' cursor-pointer hover:shadow-md' : ''}`;
+            return card.href ? (
+              <Link key={card.label} href={card.href} className={cls}>{inner}</Link>
+            ) : (
+              <div key={card.label} className={cls}>{inner}</div>
             );
           })}
         </div>
@@ -175,17 +181,41 @@ export default function DashboardPage() {
   const [unseenMessages, setUnseenMessages] = useState<number | null>(null);
   const [acct, setAcct] = useState<any>(null);
 
+  // Client-specific: unread messages + active chat count
+  const [clientUnread, setClientUnread] = useState<number | null>(null);
+  const [clientChats, setClientChats] = useState<number | null>(null);
+
   useEffect(() => {
-    fetch('/api/v1/admin/stats')
-      .then(r => r.json())
-      .then(d => {
-        if (d.success) {
-          setTotalClients(d.data.totalClients);
-          setUnseenMessages(d.data.unseenMessages ?? 0);
-        }
-      })
-      .catch(() => {});
-  }, []);
+    if (isAdmin) {
+      fetch('/api/v1/admin/stats')
+        .then(r => r.json())
+        .then(d => {
+          if (d.success) {
+            setTotalClients(d.data.totalClients);
+            setUnseenMessages(d.data.unseenMessages ?? 0);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [isAdmin]);
+
+  useEffect(() => {
+    if (!isAdmin) {
+      fetch('/api/v1/chat/conversations')
+        .then(r => r.json())
+        .then(d => {
+          if (Array.isArray(d.conversations)) {
+            setClientChats(d.conversations.length);
+            const unread = (d.conversations as any[]).reduce(
+              (sum, c) => sum + (c.unreadCount || 0),
+              0,
+            );
+            setClientUnread(unread);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [isAdmin]);
 
   useEffect(() => {
     if (isAdmin) {
@@ -204,12 +234,29 @@ export default function DashboardPage() {
     { label: 'Unseen Messages', value: unseenMessages ?? '—', icon: BellDot, color: unseenMessages ? 'text-orange-600' : 'text-gray-400', bg: unseenMessages ? 'bg-orange-50' : 'bg-gray-50', href: '/dashboard/messages' },
   ];
 
+  const clientStatCards: StatCard[] = [
+    {
+      label: 'Active Chats',
+      value: clientChats ?? '—',
+      icon: MessageCircle,
+      color: 'text-blue-600',
+      bg: 'bg-blue-50',
+    },
+    {
+      label: 'Unread Messages',
+      value: clientUnread ?? '—',
+      icon: BellDot,
+      color: clientUnread ? 'text-orange-600' : 'text-gray-400',
+      bg: clientUnread ? 'bg-orange-50' : 'bg-gray-50',
+    },
+  ];
+
   if (!isAdmin) {
     return (
       <AdminShell>
         <UserOverview
           userName={userName}
-          statCards={statCards}
+          statCards={clientStatCards}
           userEmail={user?.email}
         />
       </AdminShell>

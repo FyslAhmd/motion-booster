@@ -262,7 +262,6 @@ export default function CategoriesPage() {
       <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
         {items.length === 0 ? (
           <div className="text-center py-16 text-gray-400">
-            <p className="text-3xl mb-2">📂</p>
             <p className="font-medium text-gray-500">No categories yet</p>
           </div>
         ) : (

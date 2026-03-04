@@ -343,7 +343,6 @@ export default function PortfolioPage() {
       {/* Grid */}
       {displayed.length === 0 ? (
         <div className="text-center py-20 text-gray-400">
-          <p className="text-4xl mb-3">📁</p>
           <p className="font-medium text-gray-500">No portfolio items yet</p>
           <p className="text-sm mt-1">Click "Add Project" to get started.</p>
         </div>

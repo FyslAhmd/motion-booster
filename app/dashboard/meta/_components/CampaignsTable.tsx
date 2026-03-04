@@ -20,8 +20,8 @@ interface Campaign {
 
 interface CursorPaging {
   cursors?: { before?: string; after?: string };
-  hasNext?: boolean;
-  hasPrevious?: boolean;
+  next?: string;
+  previous?: string;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -48,7 +48,6 @@ interface CampaignsTableProps {
 export default function CampaignsTable({ accountId }: CampaignsTableProps) {
   const [data, setData] = useState<Campaign[]>([]);
   const [paging, setPaging] = useState<CursorPaging | null>(null);
-  const [totalCount, setTotalCount] = useState<number | null>(null);
   const [cursorStack, setCursorStack] = useState<string[]>([]);  // stack of "after" cursors for prev navigation
   const [currentAfter, setCurrentAfter] = useState<string | undefined>();
   const [search, setSearch] = useState('');
@@ -75,7 +74,6 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
         if (json.success) {
           setData(json.data);
           setPaging(json.paging || null);
-          if (json.totalCount != null) setTotalCount(json.totalCount);
         } else {
           setError(json.error || 'Failed to load');
         }
@@ -91,7 +89,7 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
   }, [currentAfter, search, accountId]);
 
   const goNext = () => {
-    if (paging?.cursors?.after && paging.hasNext) {
+    if (paging?.cursors?.after && paging.next) {
       setCursorStack((prev) => [...prev, currentAfter || '__first__']);
       setCurrentAfter(paging.cursors.after);
       setPageNum((p) => p + 1);
@@ -123,16 +121,15 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
     setSearch('');
   }, [accountId]);
 
-  const hasNext = !!paging?.hasNext;
+  const hasNext = !!paging?.next;
   const hasPrev = cursorStack.length > 0;
-  const totalPages = totalCount != null ? Math.ceil(totalCount / 10) : null;
 
   return (
     <div className="rounded-xl border border-gray-100 bg-white">
       {/* Controls */}
       <div className="flex flex-col gap-3 border-b border-gray-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
         <h3 className="text-sm font-semibold text-gray-700">
-          Campaigns {pageNum > 1 && <span className="ml-1 text-xs text-gray-500">Page {pageNum}{totalPages ? `/${totalPages}` : ''}</span>}
+          Campaigns {pageNum > 1 && <span className="ml-1 text-xs text-gray-500">Page {pageNum}</span>}
         </h3>
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative">
@@ -147,7 +144,7 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
                 searchTimerRef.current = setTimeout(() => handleSearch(val), 400);
               }}
               placeholder="Search campaigns..."
-              className="w-full rounded-lg border border-gray-200 bg-gray-50 py-2 pl-9 pr-3 text-sm text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-red-400 focus:outline-none sm:w-52"
+              className="w-52 rounded-lg border border-gray-200 bg-gray-50 py-2 pl-9 pr-3 text-sm text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-red-400 focus:outline-none"
             />
           </div>
         </div>
@@ -220,15 +217,9 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
                         <tr key={c.id} className="transition-colors hover:bg-gray-50">
                           <td className="px-6 py-3">
                             {c.ads?.data?.[0]?.creative?.thumbnail_url ? (
-                              <img
-                                src={c.ads.data[0].creative.thumbnail_url}
-                                alt={c.name}
-                                className="h-10 w-10 rounded-lg object-cover"
-                              />
+                              <img src={c.ads.data[0].creative.thumbnail_url} alt={c.name} className="h-10 w-10 rounded-lg object-cover" />
                             ) : (
-                              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 text-xs text-gray-400">
-                                N/A
-                              </div>
+                              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 text-xs text-gray-400">N/A</div>
                             )}
                           </td>
                           <td className="max-w-[200px] truncate px-4 py-3 font-medium text-gray-900">{c.name}</td>
@@ -255,12 +246,12 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
           {/* Pagination */}
           {(hasNext || hasPrev) && (
             <div className="flex items-center justify-between border-t border-gray-100 px-6 py-3">
-              <p className="text-xs text-gray-500">Page {pageNum}{totalPages ? ` / ${totalPages}` : ''}</p>
+              <p className="text-xs text-gray-500">Page {pageNum}</p>
               <div className="flex items-center gap-1">
                 <button onClick={goPrev} disabled={!hasPrev} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 disabled:opacity-30">
                   <ChevronLeft className="h-4 w-4" />
                 </button>
-                <span className="min-w-[32px] rounded-lg bg-red-600 px-2 py-1 text-center text-xs font-medium text-white">{pageNum}{totalPages ? `/${totalPages}` : ''}</span>
+                <span className="min-w-[32px] rounded-lg bg-red-600 px-2 py-1 text-center text-xs font-medium text-white">{pageNum}</span>
                 <button onClick={goNext} disabled={!hasNext} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 disabled:opacity-30">
                   <ChevronRight className="h-4 w-4" />
                 </button>
