@@ -4,11 +4,13 @@ import { jwtVerify } from 'jose';
 /**
  * Routes under /dashboard that normal users (non-admin) can access.
  * Everything else under /dashboard requires ADMIN role.
+ * Use exact:true for paths that should not match sub-routes.
  */
-const USER_ALLOWED_PATHS = [
-  '/dashboard/chat',
-  '/dashboard/meta',
-  '/dashboard/profile',
+const USER_ALLOWED_PATHS: { path: string; exact?: boolean }[] = [
+  { path: '/dashboard', exact: true },
+  { path: '/dashboard/chat' },
+  { path: '/dashboard/meta' },
+  { path: '/dashboard/profile' },
 ];
 
 function getAccessSecret(): Uint8Array {
@@ -53,8 +55,8 @@ export async function middleware(req: NextRequest) {
     }
 
     // Non-admin: check if route is allowed
-    const isAllowed = USER_ALLOWED_PATHS.some(
-      (route) => pathname === route || pathname.startsWith(route + '/')
+    const isAllowed = USER_ALLOWED_PATHS.some(({ path, exact }) =>
+      exact ? pathname === path : pathname === path || pathname.startsWith(path + '/')
     );
 
     if (isAllowed) {
