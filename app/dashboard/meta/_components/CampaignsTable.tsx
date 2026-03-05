@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import AssignUserDropdown from './AssignUserDropdown';
 
 interface Campaign {
   id: string;
@@ -144,6 +145,9 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
   const [pageNum, setPageNum] = useState(1);
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
+  // Assignment tracking: metaObjectId → { id, fullName, phone, username }
+  const [assignments, setAssignments] = useState<Record<string, { id: string; fullName: string; phone: string; username: string } | null>>({});
+
   const searchTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => {
@@ -177,6 +181,24 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
     doFetch();
     return () => controller.abort();
   }, [currentAfter, search, accountId]);
+
+  // Fetch assignments for current page of campaigns
+  useEffect(() => {
+    if (data.length === 0 || !accountId) return;
+    const ids = data.map((c) => c.id).join(',');
+    fetch(`/api/v1/admin/meta-assignments?account_id=${accountId}&type=CAMPAIGN&object_ids=${ids}`)
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.success) {
+          const map: Record<string, { id: string; fullName: string; phone: string; username: string }> = {};
+          for (const a of json.data) {
+            map[a.metaObjectId] = a.user;
+          }
+          setAssignments(map);
+        }
+      })
+      .catch(() => {});
+  }, [data, accountId]);
 
   const goNext = () => {
     if (paging?.cursors?.after && paging.hasNext) {
@@ -334,6 +356,18 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
                             </button>
                           </div>
                         )}
+                        {/* Mobile assign button */}
+                        {accountId && (
+                          <div className="mt-1.5">
+                            <AssignUserDropdown
+                              metaObjectId={c.id}
+                              metaObjectType="CAMPAIGN"
+                              metaAccountId={accountId}
+                              assignedUser={assignments[c.id] || null}
+                              onAssigned={(user) => setAssignments((prev) => ({ ...prev, [c.id]: user }))}
+                            />
+                          </div>
+                        )}
                         <p className="mt-0.5 text-xs text-gray-400">{c.objective?.replace(/_/g, ' ') || '—'} · {fmtDate(c.created_time)}</p>
                       </div>
                     </div>
@@ -353,6 +387,7 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
                       <th className="px-4 py-3 font-medium text-right">Budget</th>
                       <th className="px-4 py-3 font-medium">Created</th>
                       <th className="px-4 py-3 font-medium">Date Range</th>
+                      <th className="px-4 py-3 font-medium">Assigned To</th>
                       <th className="px-4 py-3 font-medium text-center">Action</th>
                     </tr>
                   </thead>
@@ -380,6 +415,17 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
                           <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">{fmtDate(c.created_time)}</td>
                           <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">
                             {fmtDate(c.start_time)}{c.stop_time ? ` → ${fmtDate(c.stop_time)}` : ' → Ongoing'}
+                          </td>
+                          <td className="px-4 py-3">
+                            {accountId && (
+                              <AssignUserDropdown
+                                metaObjectId={c.id}
+                                metaObjectType="CAMPAIGN"
+                                metaAccountId={accountId}
+                                assignedUser={assignments[c.id] || null}
+                                onAssigned={(user) => setAssignments((prev) => ({ ...prev, [c.id]: user }))}
+                              />
+                            )}
                           </td>
                           <td className="px-4 py-3 text-center">
                             {canToggle(c) ? (

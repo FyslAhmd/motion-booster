@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import AssignUserDropdown from './AssignUserDropdown';
 
 interface AdSet {
   id: string;
@@ -77,6 +78,9 @@ export default function AdSetsTable({ accountId }: AdSetsTableProps) {
   const [pageNum, setPageNum] = useState(1);
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
+  // Assignment tracking: metaObjectId → user
+  const [assignments, setAssignments] = useState<Record<string, { id: string; fullName: string; phone: string; username: string } | null>>({});
+
   const searchTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   // Fetch campaign names for dropdown (lightweight endpoint, cached 5 min)
@@ -125,6 +129,24 @@ export default function AdSetsTable({ accountId }: AdSetsTableProps) {
     doFetch();
     return () => controller.abort();
   }, [currentAfter, search, filterCampaign, accountId]);
+
+  // Fetch assignments for current page of ad sets
+  useEffect(() => {
+    if (data.length === 0 || !accountId) return;
+    const ids = data.map((a) => a.id).join(',');
+    fetch(`/api/v1/admin/meta-assignments?account_id=${accountId}&type=ADSET&object_ids=${ids}`)
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.success) {
+          const map: Record<string, { id: string; fullName: string; phone: string; username: string }> = {};
+          for (const a of json.data) {
+            map[a.metaObjectId] = a.user;
+          }
+          setAssignments(map);
+        }
+      })
+      .catch(() => {});
+  }, [data, accountId]);
 
   const goNext = () => {
     if (paging?.cursors?.after && paging.hasNext) {
@@ -293,6 +315,15 @@ export default function AdSetsTable({ accountId }: AdSetsTableProps) {
                       {summarizeTargeting(a.targeting) !== '—' && (
                         <p className="mt-0.5 truncate text-xs text-gray-400">{summarizeTargeting(a.targeting)}</p>
                       )}
+                      <div className="mt-1.5">
+                        <AssignUserDropdown
+                          metaObjectId={a.id}
+                          metaObjectType="ADSET"
+                          metaAccountId={accountId}
+                          assignedUser={assignments[a.id] ?? null}
+                          onAssigned={(user) => setAssignments((prev) => ({ ...prev, [a.id]: user }))}
+                        />
+                      </div>
                     </div>
                   );
                 })}
@@ -309,6 +340,7 @@ export default function AdSetsTable({ accountId }: AdSetsTableProps) {
                       <th className="px-4 py-3 font-medium text-right">Budget</th>
                       <th className="px-4 py-3 font-medium">Targeting</th>
                       <th className="px-4 py-3 font-medium">Schedule</th>
+                      <th className="px-4 py-3 font-medium">Assigned To</th>
                       <th className="px-4 py-3 font-medium text-center">Action</th>
                     </tr>
                   </thead>
@@ -329,6 +361,15 @@ export default function AdSetsTable({ accountId }: AdSetsTableProps) {
                           <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">
                             {a.start_time ? new Date(a.start_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'}
                             {a.end_time ? ` → ${new Date(a.end_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : ''}
+                          </td>
+                          <td className="px-4 py-3">
+                            <AssignUserDropdown
+                              metaObjectId={a.id}
+                              metaObjectType="ADSET"
+                              metaAccountId={accountId}
+                              assignedUser={assignments[a.id] ?? null}
+                              onAssigned={(user) => setAssignments((prev) => ({ ...prev, [a.id]: user }))}
+                            />
                           </td>
                           <td className="px-4 py-3 text-center">
                             {canToggle(a) ? (

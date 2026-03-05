@@ -30,6 +30,7 @@ import {
   User,
   MoreHorizontal,
   Home,
+  UserCheck,
 } from 'lucide-react';
 interface NavItem {
   href: string;
@@ -51,6 +52,7 @@ type NavEntry = NavItem | NavGroup;
 const navItems: NavEntry[] = [
   { href: '/dashboard', label: 'Overview', icon: LayoutDashboard, adminOnly: true },
   { href: '/dashboard/meta', label: 'Ads Manager', icon: Megaphone, adminOnly: true },
+  { href: '/dashboard/user-campaigns', label: 'User Campaign', icon: UserCheck, adminOnly: true },
   { href: '/dashboard/chat', label: 'Chat Messages', icon: MessageCircle },
   { href: '/dashboard/clients', label: 'Clients', icon: Users, adminOnly: true },
   {

@@ -42,6 +42,7 @@ model User {
   refreshTokens RefreshToken[]
   sentMessages     Message[]      @relation("sender")
   conversations    Conversation[] @relation("ConversationParticipants")
+  metaAdAssignments MetaAdAssignment[]
 
   @@index([email])
   @@index([username])
@@ -171,4 +172,31 @@ model PopularService {
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   @@map("popular_services")
+}
+
+// ─── META AD ASSIGNMENTS ──────────────────────────────
+// Tracks which Meta campaign / ad set / ad is assigned to which user.
+// One Meta entity can be assigned to at most one user (unique on metaObjectId).
+
+enum MetaObjectType {
+  CAMPAIGN
+  ADSET
+  AD
+}
+
+model MetaAdAssignment {
+  id             String         @id @default(cuid())
+  metaObjectId   String         @unique @map("meta_object_id")   // Facebook API id (campaign, adset, or ad)
+  metaObjectType MetaObjectType @map("meta_object_type")
+  metaAccountId  String         @map("meta_account_id")          // e.g. act_xxxxx
+  userId         String         @map("user_id")
+  assignedAt     DateTime       @default(now()) @map("assigned_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([metaAccountId])
+  @@index([metaObjectType, metaAccountId])
+  @@map("meta_ad_assignments")
 }

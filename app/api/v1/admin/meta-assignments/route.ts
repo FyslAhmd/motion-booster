@@ -1,0 +1,134 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/db/prisma';
+import { validateRequest } from '@/lib/auth/validate-request';
+
+/**
+ * GET /api/v1/admin/meta-assignments?account_id=act_xxx&type=CAMPAIGN
+ * Returns all assignments for the given Meta account, optionally filtered by type.
+ * Also accepts ?object_ids=id1,id2,id3 to get assignments for specific Meta entities.
+ */
+export async function GET(req: NextRequest) {
+  try {
+    const auth = await validateRequest(req);
+    if (!auth || auth.role !== 'ADMIN') {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const accountId = searchParams.get('account_id');
+    const type = searchParams.get('type') as 'CAMPAIGN' | 'ADSET' | 'AD' | null;
+    const objectIds = searchParams.get('object_ids')?.split(',').filter(Boolean);
+
+    const where: Record<string, unknown> = {};
+    if (accountId) where.metaAccountId = accountId;
+    if (type) where.metaObjectType = type;
+    if (objectIds?.length) where.metaObjectId = { in: objectIds };
+
+    const assignments = await prisma.metaAdAssignment.findMany({
+      where,
+      include: {
+        user: {
+          select: { id: true, fullName: true, phone: true, username: true },
+        },
+      },
+      orderBy: { assignedAt: 'desc' },
+    });
+
+    return NextResponse.json({ success: true, data: assignments });
+  } catch (err) {
+    console.error('[meta-assignments GET]', err);
+    return NextResponse.json({ success: false, error: 'Failed to fetch assignments' }, { status: 500 });
+  }
+}
+
+/**
+ * POST /api/v1/admin/meta-assignments
+ * Body: { metaObjectId, metaObjectType, metaAccountId, userId }
+ * Creates or updates (upserts) an assignment. Each Meta object can only be assigned to one user.
+ */
+export async function POST(req: NextRequest) {
+  try {
+    const auth = await validateRequest(req);
+    if (!auth || auth.role !== 'ADMIN') {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await req.json();
+    const { metaObjectId, metaObjectType, metaAccountId, userId } = body as {
+      metaObjectId: string;
+      metaObjectType: 'CAMPAIGN' | 'ADSET' | 'AD';
+      metaAccountId: string;
+      userId: string;
+    };
+
+    if (!metaObjectId || !metaObjectType || !metaAccountId || !userId) {
+      return NextResponse.json({ success: false, error: 'Missing required fields' }, { status: 400 });
+    }
+
+    // Validate type
+    if (!['CAMPAIGN', 'ADSET', 'AD'].includes(metaObjectType)) {
+      return NextResponse.json({ success: false, error: 'Invalid metaObjectType' }, { status: 400 });
+    }
+
+    // Verify user exists and is not admin
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { role: true } });
+    if (!user) {
+      return NextResponse.json({ success: false, error: 'User not found' }, { status: 404 });
+    }
+    if (user.role === 'ADMIN') {
+      return NextResponse.json({ success: false, error: 'Cannot assign to admin users' }, { status: 400 });
+    }
+
+    // Upsert: create if not exists, update userId if already assigned
+    const assignment = await prisma.metaAdAssignment.upsert({
+      where: { metaObjectId },
+      create: {
+        metaObjectId,
+        metaObjectType,
+        metaAccountId,
+        userId,
+      },
+      update: {
+        userId,
+      },
+      include: {
+        user: {
+          select: { id: true, fullName: true, phone: true, username: true },
+        },
+      },
+    });
+
+    return NextResponse.json({ success: true, data: assignment });
+  } catch (err) {
+    console.error('[meta-assignments POST]', err);
+    return NextResponse.json({ success: false, error: 'Failed to save assignment' }, { status: 500 });
+  }
+}
+
+/**
+ * DELETE /api/v1/admin/meta-assignments
+ * Body: { metaObjectId }
+ * Removes an assignment (unassigns a Meta object from its user).
+ */
+export async function DELETE(req: NextRequest) {
+  try {
+    const auth = await validateRequest(req);
+    if (!auth || auth.role !== 'ADMIN') {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await req.json();
+    const { metaObjectId } = body as { metaObjectId: string };
+
+    if (!metaObjectId) {
+      return NextResponse.json({ success: false, error: 'Missing metaObjectId' }, { status: 400 });
+    }
+
+    await prisma.metaAdAssignment.deleteMany({ where: { metaObjectId } });
+
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error('[meta-assignments DELETE]', err);
+    return NextResponse.json({ success: false, error: 'Failed to remove assignment' }, { status: 500 });
+  }
+}

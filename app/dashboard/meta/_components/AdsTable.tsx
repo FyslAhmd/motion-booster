@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import AssignUserDropdown from './AssignUserDropdown';
 
 interface Ad {
   id: string;
@@ -58,6 +59,9 @@ export default function AdsTable({ accountId }: AdsTableProps) {
   const [pageNum, setPageNum] = useState(1);
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
+  // Assignment tracking: metaObjectId → user
+  const [assignments, setAssignments] = useState<Record<string, { id: string; fullName: string; phone: string; username: string } | null>>({});
+
   const searchTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   // Fetch ads with cursor pagination
@@ -92,6 +96,24 @@ export default function AdsTable({ accountId }: AdsTableProps) {
     doFetch();
     return () => controller.abort();
   }, [currentAfter, search, accountId]);
+
+  // Fetch assignments for current page of ads
+  useEffect(() => {
+    if (data.length === 0 || !accountId) return;
+    const ids = data.map((a) => a.id).join(',');
+    fetch(`/api/v1/admin/meta-assignments?account_id=${accountId}&type=AD&object_ids=${ids}`)
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.success) {
+          const map: Record<string, { id: string; fullName: string; phone: string; username: string }> = {};
+          for (const a of json.data) {
+            map[a.metaObjectId] = a.user;
+          }
+          setAssignments(map);
+        }
+      })
+      .catch(() => {});
+  }, [data, accountId]);
 
   const goNext = () => {
     if (paging?.cursors?.after && paging.hasNext) {
@@ -242,6 +264,15 @@ export default function AdsTable({ accountId }: AdsTableProps) {
                             </button>
                           </div>
                         )}
+                        <div className="mt-1.5">
+                          <AssignUserDropdown
+                            metaObjectId={ad.id}
+                            metaObjectType="AD"
+                            metaAccountId={accountId}
+                            assignedUser={assignments[ad.id] ?? null}
+                            onAssigned={(user) => setAssignments((prev) => ({ ...prev, [ad.id]: user }))}
+                          />
+                        </div>
                       </div>
                     </div>
                   );
@@ -259,6 +290,7 @@ export default function AdsTable({ accountId }: AdsTableProps) {
                       <th className="px-4 py-3 font-medium">Creative Title</th>
                       <th className="px-4 py-3 font-medium">Body</th>
                       <th className="px-4 py-3 font-medium">Created</th>
+                      <th className="px-4 py-3 font-medium">Assigned To</th>
                       <th className="px-4 py-3 font-medium text-center">Action</th>
                     </tr>
                   </thead>
@@ -282,6 +314,15 @@ export default function AdsTable({ accountId }: AdsTableProps) {
                           <td className="max-w-50 truncate px-4 py-3 text-xs text-gray-500">{ad.creative?.body || '—'}</td>
                           <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">
                             {new Date(ad.created_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          </td>
+                          <td className="px-4 py-3">
+                            <AssignUserDropdown
+                              metaObjectId={ad.id}
+                              metaObjectType="AD"
+                              metaAccountId={accountId}
+                              assignedUser={assignments[ad.id] ?? null}
+                              onAssigned={(user) => setAssignments((prev) => ({ ...prev, [ad.id]: user }))}
+                            />
                           </td>
                           <td className="px-4 py-3 text-center">
                             {canToggle(ad) ? (
