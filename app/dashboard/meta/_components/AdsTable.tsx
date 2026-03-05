@@ -23,23 +23,15 @@ interface Ad {
 
 interface CursorPaging {
   cursors?: { before?: string; after?: string };
-  hasNext?: boolean;
-  hasPrevious?: boolean;
+  next?: string;
+  previous?: string;
 }
 
-const STATUS_STYLES: Record<string, { color: string; label: string }> = {
-  ACTIVE:              { color: 'bg-green-50 text-green-700 border border-green-200',   label: 'Active' },
-  PAUSED:              { color: 'bg-amber-50 text-amber-700 border border-amber-200',   label: 'Paused' },
-  CAMPAIGN_PAUSED:     { color: 'bg-amber-50 text-amber-600 border border-amber-200',   label: 'Campaign Off' },
-  ADSET_PAUSED:        { color: 'bg-amber-50 text-amber-600 border border-amber-200',   label: 'Ad Set Off' },
-  IN_PROCESS:          { color: 'bg-yellow-50 text-yellow-700 border border-yellow-200', label: 'In Review' },
-  WITH_ISSUES:         { color: 'bg-orange-50 text-orange-600 border border-orange-200', label: 'Issues' },
-  PENDING_REVIEW:      { color: 'bg-yellow-50 text-yellow-700 border border-yellow-200', label: 'Pending Review' },
-  DISAPPROVED:         { color: 'bg-red-50 text-red-600 border border-red-200',          label: 'Not Approved' },
-  PENDING_BILLING_INFO:{ color: 'bg-orange-50 text-orange-600 border border-orange-200', label: 'Billing Issue' },
-  PREAPPROVED:         { color: 'bg-blue-50 text-blue-600 border border-blue-200',       label: 'Preapproved' },
-  DELETED:             { color: 'bg-red-50 text-red-600 border border-red-200',          label: 'Deleted' },
-  ARCHIVED:            { color: 'bg-gray-100 text-gray-500 border border-gray-200',      label: 'Archived' },
+const STATUS_COLORS: Record<string, string> = {
+  ACTIVE: 'bg-green-50 text-green-700 border border-green-200',
+  PAUSED: 'bg-amber-50 text-amber-700 border border-amber-200',
+  DELETED: 'bg-red-50 text-red-600 border border-red-200',
+  ARCHIVED: 'bg-gray-100 text-gray-500',
 };
 
 interface AdsTableProps {
@@ -49,7 +41,6 @@ interface AdsTableProps {
 export default function AdsTable({ accountId }: AdsTableProps) {
   const [data, setData] = useState<Ad[]>([]);
   const [paging, setPaging] = useState<CursorPaging | null>(null);
-  const [totalCount, setTotalCount] = useState<number | null>(null);
   const [cursorStack, setCursorStack] = useState<string[]>([]);
   const [currentAfter, setCurrentAfter] = useState<string | undefined>();
   const [search, setSearch] = useState('');
@@ -77,7 +68,6 @@ export default function AdsTable({ accountId }: AdsTableProps) {
         if (json.success) {
           setData(json.data);
           setPaging(json.paging || null);
-          if (json.totalCount != null) setTotalCount(json.totalCount);
         } else {
           setError(json.error || 'Failed to load');
         }
@@ -93,7 +83,7 @@ export default function AdsTable({ accountId }: AdsTableProps) {
   }, [currentAfter, search, accountId]);
 
   const goNext = () => {
-    if (paging?.cursors?.after && paging.hasNext) {
+    if (paging?.cursors?.after && paging.next) {
       setCursorStack((prev) => [...prev, currentAfter || '__first__']);
       setCurrentAfter(paging.cursors.after);
       setPageNum((p) => p + 1);
@@ -125,16 +115,15 @@ export default function AdsTable({ accountId }: AdsTableProps) {
     setSearch('');
   }, [accountId]);
 
-  const hasNext = !!paging?.hasNext;
+  const hasNext = !!paging?.next;
   const hasPrev = cursorStack.length > 0;
-  const totalPages = totalCount != null ? Math.ceil(totalCount / 10) : null;
 
   return (
     <div className="rounded-xl border border-gray-100 bg-white">
       {/* Controls */}
       <div className="flex flex-col gap-3 border-b border-gray-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
         <h3 className="text-sm font-semibold text-gray-700">
-          Ads {pageNum > 1 && <span className="ml-1 text-xs text-gray-500">Page {pageNum}{totalPages ? `/${totalPages}` : ''}</span>}
+          Ads {pageNum > 1 && <span className="ml-1 text-xs text-gray-500">Page {pageNum}</span>}
         </h3>
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative">
@@ -173,62 +162,84 @@ export default function AdsTable({ accountId }: AdsTableProps) {
           {data.length === 0 ? (
             <div className="px-6 py-10 text-center text-sm text-gray-500">No ads found.</div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead>
-                  <tr className="border-b border-gray-100 text-xs uppercase text-gray-500">
-                    <th className="px-6 py-3 font-medium">Preview</th>
-                    <th className="px-4 py-3 font-medium">Ad Name</th>
-                    <th className="px-4 py-3 font-medium">Status</th>
-                    <th className="px-4 py-3 font-medium">Creative Title</th>
-                    <th className="px-4 py-3 font-medium">Body</th>
-                    <th className="px-4 py-3 font-medium">Created</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {data.map((ad) => {
-                    const st = STATUS_STYLES[ad.effective_status] || { color: 'bg-gray-100 text-gray-500', label: ad.effective_status?.replace(/_/g, ' ') || 'Unknown' };
-                    return (
-                      <tr key={ad.id} className="transition-colors hover:bg-gray-50">
-                        <td className="px-6 py-3">
-                          {ad.creative?.thumbnail_url ? (
-                            <img
-                              src={ad.creative.thumbnail_url}
-                              alt={ad.name}
-                              className="h-10 w-10 rounded-lg object-cover"
-                            />
-                          ) : (
-                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 text-xs text-gray-400">
-                              N/A
-                            </div>
-                          )}
-                        </td>
-                        <td className="max-w-[180px] truncate px-4 py-3 font-medium text-gray-900">{ad.name}</td>
-                        <td className="px-4 py-3">
-                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${st.color}`}>{st.label}</span>
-                        </td>
-                        <td className="max-w-[160px] truncate px-4 py-3 text-gray-400">{ad.creative?.title || '—'}</td>
-                        <td className="max-w-[200px] truncate px-4 py-3 text-xs text-gray-500">{ad.creative?.body || '—'}</td>
-                        <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">
-                          {new Date(ad.created_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+            <>
+              {/* Mobile card list */}
+              <div className="divide-y divide-gray-100 sm:hidden">
+                {data.map((ad) => {
+                  const color = STATUS_COLORS[ad.effective_status] || 'bg-gray-100 text-gray-500';
+                  return (
+                    <div key={ad.id} className="flex items-start gap-3 px-4 py-3">
+                      {ad.creative?.thumbnail_url ? (
+                        <img src={ad.creative.thumbnail_url} alt={ad.name} className="h-12 w-12 flex-shrink-0 rounded-lg object-cover" />
+                      ) : (
+                        <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-gray-100 text-xs text-gray-400">N/A</div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-gray-900">{ad.name}</p>
+                        {ad.creative?.title && <p className="mt-0.5 truncate text-xs font-medium text-gray-600">{ad.creative.title}</p>}
+                        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${color}`}>{ad.effective_status}</span>
+                          <span className="text-xs text-gray-400">{new Date(ad.created_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                        </div>
+                        {ad.creative?.body && <p className="mt-0.5 line-clamp-2 text-xs text-gray-400">{ad.creative.body}</p>}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Desktop table */}
+              <div className="hidden overflow-x-auto sm:block">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-100 text-xs uppercase text-gray-500">
+                      <th className="px-6 py-3 font-medium">Preview</th>
+                      <th className="px-4 py-3 font-medium">Ad Name</th>
+                      <th className="px-4 py-3 font-medium">Status</th>
+                      <th className="px-4 py-3 font-medium">Creative Title</th>
+                      <th className="px-4 py-3 font-medium">Body</th>
+                      <th className="px-4 py-3 font-medium">Created</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {data.map((ad) => {
+                      const color = STATUS_COLORS[ad.effective_status] || 'bg-gray-100 text-gray-500';
+                      return (
+                        <tr key={ad.id} className="transition-colors hover:bg-gray-50">
+                          <td className="px-6 py-3">
+                            {ad.creative?.thumbnail_url ? (
+                              <img src={ad.creative.thumbnail_url} alt={ad.name} className="h-10 w-10 rounded-lg object-cover" />
+                            ) : (
+                              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 text-xs text-gray-400">N/A</div>
+                            )}
+                          </td>
+                          <td className="max-w-[180px] truncate px-4 py-3 font-medium text-gray-900">{ad.name}</td>
+                          <td className="px-4 py-3">
+                            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${color}`}>{ad.effective_status}</span>
+                          </td>
+                          <td className="max-w-[160px] truncate px-4 py-3 text-gray-400">{ad.creative?.title || '—'}</td>
+                          <td className="max-w-[200px] truncate px-4 py-3 text-xs text-gray-500">{ad.creative?.body || '—'}</td>
+                          <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">
+                            {new Date(ad.created_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
 
           {/* Pagination */}
           {(hasNext || hasPrev) && (
             <div className="flex items-center justify-between border-t border-gray-100 px-6 py-3">
-              <p className="text-xs text-gray-500">Page {pageNum}{totalPages ? ` / ${totalPages}` : ''}</p>
+              <p className="text-xs text-gray-500">Page {pageNum}</p>
               <div className="flex items-center gap-1">
                 <button onClick={goPrev} disabled={!hasPrev} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 disabled:opacity-30">
                   <ChevronLeft className="h-4 w-4" />
                 </button>
-                <span className="min-w-[32px] rounded-lg bg-red-600 px-2 py-1 text-center text-xs font-medium text-white">{pageNum}{totalPages ? `/${totalPages}` : ''}</span>
+                <span className="min-w-[32px] rounded-lg bg-red-600 px-2 py-1 text-center text-xs font-medium text-white">{pageNum}</span>
                 <button onClick={goNext} disabled={!hasNext} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 disabled:opacity-30">
                   <ChevronRight className="h-4 w-4" />
                 </button>

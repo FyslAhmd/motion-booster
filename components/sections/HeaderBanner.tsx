@@ -110,16 +110,16 @@ export const HeaderBanner = () => {
             </p>
             <div className="flex gap-3 mb-3">
               <a
-                href="/features"
+                href="/service"
                 className="inline-flex items-center gap-2 px-7 py-3 bg-linear-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold rounded-lg transition-all shadow-lg hover:shadow-xl"
               >
-                Browse Course
+                Browse Service
               </a>
               <a
-                href="/contact"
+                href="/register"
                 className="inline-flex items-center gap-2 px-7 py-3 bg-white border border-red-500 text-red-600 font-semibold rounded-lg transition-all shadow hover:bg-red-50"
               >
-                Join Free Seminar
+                Get Started
               </a>
             </div>
           </div>

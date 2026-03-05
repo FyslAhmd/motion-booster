@@ -154,6 +154,7 @@ const CAMPAIGN_FIELDS = [
   'configured_status', 'daily_budget', 'lifetime_budget',
   'budget_remaining', 'spend_cap',
   'start_time', 'stop_time', 'created_time', 'updated_time',
+  'ads.limit(1){creative{thumbnail_url}}',
 ].join(',');
 
 const ADSET_FIELDS = [
@@ -270,14 +271,19 @@ export function fetchAdsPage(opts: DirectPageOptions = {}) {
 // Insights fetchers (cached per preset + account)
 // ───────────────────────────────────────────────
 
+export interface TimeRange { since: string; until: string; }
+
 /** Account-level insights */
 export function fetchAccountInsights(
   datePreset = 'last_30d',
   timeIncrement?: string,
   accountId?: string,
+  timeRange?: TimeRange,
 ) {
   const id = accountId || getDefaultAccountId();
-  const cacheKey = `meta:insights:${id}:${datePreset}:${timeIncrement || 'none'}`;
+  const cacheKey = timeRange
+    ? `meta:insights:${id}:${timeRange.since}:${timeRange.until}:${timeIncrement || 'none'}`
+    : `meta:insights:${id}:${datePreset}:${timeIncrement || 'none'}`;
   return cachedFetch(cacheKey, async () => {
     const params: Record<string, string> = {
       fields: [
@@ -285,8 +291,9 @@ export function fetchAccountInsights(
         'reach', 'frequency', 'actions', 'cost_per_action_type',
         'date_start', 'date_stop',
       ].join(','),
-      date_preset: datePreset,
     };
+    if (timeRange) params.time_range = JSON.stringify(timeRange);
+    else params.date_preset = datePreset;
     if (timeIncrement) params.time_increment = timeIncrement;
     return metaFetchAll(`/${id}/insights`, params);
   }, CACHE_TTL);
@@ -297,9 +304,12 @@ export function fetchCampaignInsights(
   datePreset = 'last_30d',
   timeIncrement?: string,
   accountId?: string,
+  timeRange?: TimeRange,
 ) {
   const id = accountId || getDefaultAccountId();
-  const cacheKey = `meta:c-insights:${id}:${datePreset}:${timeIncrement || 'none'}`;
+  const cacheKey = timeRange
+    ? `meta:c-insights:${id}:${timeRange.since}:${timeRange.until}:${timeIncrement || 'none'}`
+    : `meta:c-insights:${id}:${datePreset}:${timeIncrement || 'none'}`;
   return cachedFetch(cacheKey, async () => {
     const params: Record<string, string> = {
       fields: [
@@ -309,41 +319,44 @@ export function fetchCampaignInsights(
         'date_start', 'date_stop',
       ].join(','),
       level: 'campaign',
-      date_preset: datePreset,
     };
+    if (timeRange) params.time_range = JSON.stringify(timeRange);
+    else params.date_preset = datePreset;
     if (timeIncrement) params.time_increment = timeIncrement;
     return metaFetchAll(`/${id}/insights`, params);
   }, CACHE_TTL);
 }
 
 /** Daily spend breakdown for charts */
-export function fetchDailySpend(datePreset = 'last_30d', accountId?: string) {
+export function fetchDailySpend(datePreset = 'last_30d', accountId?: string, timeRange?: TimeRange) {
   const id = accountId || getDefaultAccountId();
-  return cachedFetch(`meta:daily-spend:${id}:${datePreset}`, () =>
-    metaFetchAll(`/${id}/insights`, {
+  const cacheKey = timeRange
+    ? `meta:daily-spend:${id}:${timeRange.since}:${timeRange.until}`
+    : `meta:daily-spend:${id}:${datePreset}`;
+  return cachedFetch(cacheKey, () => {
+    const params: Record<string, string> = {
       fields: 'spend,impressions,clicks,reach,date_start,date_stop',
-      date_preset: datePreset,
       time_increment: '1',
-    }),
-    CACHE_TTL,
-  );
+    };
+    if (timeRange) params.time_range = JSON.stringify(timeRange);
+    else params.date_preset = datePreset;
+    return metaFetchAll(`/${id}/insights`, params);
+  }, CACHE_TTL);
 }
 
 /** Demographic breakdowns */
-export function fetchDemographics(datePreset = 'last_30d', accountId?: string) {
+export function fetchDemographics(datePreset = 'last_30d', accountId?: string, timeRange?: TimeRange) {
   const id = accountId || getDefaultAccountId();
-  return cachedFetch(`meta:demographics:${id}:${datePreset}`, async () => {
+  const cacheKey = timeRange
+    ? `meta:demographics:${id}:${timeRange.since}:${timeRange.until}`
+    : `meta:demographics:${id}:${datePreset}`;
+  return cachedFetch(cacheKey, async () => {
+    const dateParams: Record<string, string> = timeRange
+      ? { time_range: JSON.stringify(timeRange) }
+      : { date_preset: datePreset };
     const [ageGender, country] = await Promise.all([
-      metaFetchAll(`/${id}/insights`, {
-        fields: 'spend,impressions,clicks,reach',
-        date_preset: datePreset,
-        breakdowns: 'age,gender',
-      }),
-      metaFetchAll(`/${id}/insights`, {
-        fields: 'spend,impressions,clicks,reach',
-        date_preset: datePreset,
-        breakdowns: 'country',
-      }),
+      metaFetchAll(`/${id}/insights`, { fields: 'spend,impressions,clicks,reach', ...dateParams, breakdowns: 'age,gender' }),
+      metaFetchAll(`/${id}/insights`, { fields: 'spend,impressions,clicks,reach', ...dateParams, breakdowns: 'country' }),
     ]);
     return { ageGender, country };
   }, CACHE_TTL);

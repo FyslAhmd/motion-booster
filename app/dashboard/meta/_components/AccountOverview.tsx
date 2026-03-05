@@ -75,8 +75,8 @@ export default function AccountOverview({ account }: Props) {
   ];
 
   return (
-    <div className="rounded-xl border border-gray-100 bg-gray-50 p-5">
-      <div className="mb-4 flex items-center justify-between">
+    <div className="w-full min-w-0 overflow-hidden rounded-xl border border-gray-100 bg-gray-50 p-5">
+      <div className="mb-4 flex items-center justify-between min-w-0">
         <div>
           <h3 className="text-sm font-semibold text-gray-900">{account.name}</h3>
           <p className="text-xs text-gray-400 mt-0.5">Ad Account Overview</p>
@@ -86,11 +86,11 @@ export default function AccountOverview({ account }: Props) {
         </span>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {infoItems.map((item) => (
-          <div key={item.label}>
-            <p className="text-xs text-gray-400">{item.label}</p>
-            <p className={`mt-0.5 text-sm font-semibold ${
+          <div key={item.label} className="min-w-0">
+            <p className="text-xs text-gray-400 truncate">{item.label}</p>
+            <p className={`mt-0.5 text-sm font-semibold truncate ${
               item.highlight ? 'text-red-600' : 'text-gray-800'
             }`}>
               {item.value}

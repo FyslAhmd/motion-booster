@@ -97,8 +97,10 @@ export const Slider: React.FC<SliderProps> = ({
             opacity: { duration: 0.2 },
           }}
           drag="x"
+          dragDirectionLock
           dragConstraints={{ left: 0, right: 0 }}
           dragElastic={1}
+          style={{ touchAction: 'pan-y' }}
           onDragEnd={(e, { offset, velocity }) => {
             const swipe = swipePower(offset.x, velocity.x);
 
@@ -108,7 +110,11 @@ export const Slider: React.FC<SliderProps> = ({
               paginate(-1);
             }
           }}
-          className="absolute w-full h-full"
+          onTap={() => {
+            const link = slides[currentIndex].ctaLink;
+            if (link) window.location.href = link;
+          }}
+          className={`absolute w-full h-full ${slides[currentIndex].ctaLink ? 'cursor-pointer' : ''}`}
         >
           {/* Slide Background Image */}
           <div className="relative w-full h-full">

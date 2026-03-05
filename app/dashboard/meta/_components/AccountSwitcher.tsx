@@ -72,14 +72,14 @@ export default function AccountSwitcher({ value, onChange }: AccountSwitcherProp
   if (accounts.length <= 1) return null; // No switcher needed for single account
 
   return (
-    <div className="relative" ref={ref}>
+    <div className="relative w-full min-w-0" ref={ref}>
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 transition-colors hover:border-red-300 hover:bg-gray-50"
+        className="flex w-full min-w-0 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-700 transition-colors hover:border-red-300 hover:bg-gray-50"
       >
-        <Building2 className="h-4 w-4 text-red-500" />
-        <span className="max-w-[200px] truncate">{selected?.name || 'Select account'}</span>
-        <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`} />
+        <Building2 className="h-4 w-4 shrink-0 text-red-500" />
+        <span className="min-w-0 flex-1 truncate text-left">{selected?.name || 'Select account'}</span>
+        <ChevronDown className={`h-4 w-4 shrink-0 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
 
       {open && (

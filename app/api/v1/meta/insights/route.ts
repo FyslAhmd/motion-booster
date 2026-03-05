@@ -4,6 +4,7 @@ import {
   fetchCampaignInsights,
   fetchDailySpend,
   fetchDemographics,
+  type TimeRange,
 } from '@/lib/meta/client';
 
 export async function GET(req: Request) {
@@ -13,21 +14,27 @@ export async function GET(req: Request) {
     const datePreset = searchParams.get('date_preset') || 'last_30d';
     const accountId = searchParams.get('account_id') || undefined;
 
+    // Custom date range: since + until override date_preset
+    const since = searchParams.get('since');
+    const until = searchParams.get('until');
+    const timeRange: TimeRange | undefined =
+      since && until ? { since, until } : undefined;
+
     switch (type) {
       case 'account': {
-        const data = await fetchAccountInsights(datePreset, undefined, accountId);
+        const data = await fetchAccountInsights(datePreset, undefined, accountId, timeRange);
         return NextResponse.json({ success: true, data });
       }
       case 'campaigns': {
-        const data = await fetchCampaignInsights(datePreset, undefined, accountId);
+        const data = await fetchCampaignInsights(datePreset, undefined, accountId, timeRange);
         return NextResponse.json({ success: true, data });
       }
       case 'daily': {
-        const data = await fetchDailySpend(datePreset, accountId);
+        const data = await fetchDailySpend(datePreset, accountId, timeRange);
         return NextResponse.json({ success: true, data });
       }
       case 'demographics': {
-        const data = await fetchDemographics(datePreset, accountId);
+        const data = await fetchDemographics(datePreset, accountId, timeRange);
         return NextResponse.json({ success: true, data });
       }
       default:

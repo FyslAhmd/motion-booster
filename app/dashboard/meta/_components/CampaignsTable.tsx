@@ -9,114 +9,27 @@ interface Campaign {
   objective: string;
   status: string;
   effective_status: string;
-  configured_status?: string;
   daily_budget?: string;
   lifetime_budget?: string;
   budget_remaining?: string;
-  spend_cap?: string;
   start_time?: string;
   stop_time?: string;
   created_time: string;
-  updated_time?: string;
+  ads?: { data: Array<{ creative?: { thumbnail_url?: string } }> };
 }
 
 interface CursorPaging {
   cursors?: { before?: string; after?: string };
-  hasNext?: boolean;
-  hasPrevious?: boolean;
+  next?: string;
+  previous?: string;
 }
 
-const STATUS_STYLES: Record<string, string> = {
-  ACTIVE:               'bg-green-50 text-green-700 border border-green-200',
-  SCHEDULED:            'bg-blue-50 text-blue-700 border border-blue-200',
-  IN_REVIEW:            'bg-yellow-50 text-yellow-700 border border-yellow-200',
-  COMPLETED:            'bg-indigo-50 text-indigo-600 border border-indigo-200',
-  RECENTLY_COMPLETED:   'bg-indigo-50 text-indigo-600 border border-indigo-200',
-  OFF:                  'bg-gray-200 text-gray-600 border border-gray-300',
-  PAUSED:               'bg-amber-50 text-amber-700 border border-amber-200',
-  NOT_DELIVERING:       'bg-orange-50 text-orange-600 border border-orange-200',
-  WITH_ISSUES:          'bg-orange-50 text-orange-600 border border-orange-200',
-  NOT_APPROVED:         'bg-red-50 text-red-600 border border-red-200',
-  DELETED:              'bg-red-50 text-red-600 border border-red-200',
-  ARCHIVED:             'bg-gray-100 text-gray-500 border border-gray-200',
-  ERROR:                'bg-red-50 text-red-500 border border-red-200',
-  UNKNOWN:              'bg-gray-100 text-gray-500',
+const STATUS_COLORS: Record<string, string> = {
+  ACTIVE: 'bg-green-50 text-green-700 border border-green-200',
+  PAUSED: 'bg-amber-50 text-amber-700 border border-amber-200',
+  DELETED: 'bg-red-50 text-red-600 border border-red-200',
+  ARCHIVED: 'bg-gray-100 text-gray-500',
 };
-
-/**
- * Derive a human-friendly delivery status matching Facebook Ads Manager.
- * Meta's API only returns basic effective_status (ACTIVE/PAUSED/DELETED/ARCHIVED/
- * IN_PROCESS/WITH_ISSUES), but Ads Manager derives richer statuses from
- * multiple fields: stop_time, start_time, budget_remaining, etc.
- */
-function deriveDeliveryStatus(c: Campaign): { label: string; key: string } {
-  const now = new Date();
-
-  // ── Hard statuses from API ──
-  if (c.effective_status === 'DELETED')
-    return { label: 'Deleted', key: 'DELETED' };
-  if (c.effective_status === 'ARCHIVED')
-    return { label: 'Archived', key: 'ARCHIVED' };
-  if (c.effective_status === 'IN_PROCESS')
-    return { label: 'In Review', key: 'IN_REVIEW' };
-  if (c.effective_status === 'WITH_ISSUES')
-    return { label: 'Not Approved', key: 'NOT_APPROVED' };
-
-  // ── Paused ──
-  if (c.effective_status === 'PAUSED' || c.status === 'PAUSED' || c.configured_status === 'PAUSED')
-    return { label: 'Paused', key: 'PAUSED' };
-
-  // ── ACTIVE campaigns: derive richer status ──
-  if (c.effective_status === 'ACTIVE') {
-    // Completed: stop_time is in the past
-    if (c.stop_time && new Date(c.stop_time) <= now) {
-      const daysSinceEnd =
-        (now.getTime() - new Date(c.stop_time).getTime()) /
-        (1000 * 60 * 60 * 24);
-      if (daysSinceEnd <= 3)
-        return { label: 'Recently Completed', key: 'RECENTLY_COMPLETED' };
-      return { label: 'Completed', key: 'COMPLETED' };
-    }
-
-    // Completed: lifetime budget fully spent (budget_remaining = 0)
-    if (
-      c.lifetime_budget &&
-      c.budget_remaining !== undefined &&
-      parseInt(c.budget_remaining, 10) <= 0
-    )
-      return { label: 'Completed', key: 'COMPLETED' };
-
-    // Completed: spend cap reached
-    if (
-      c.spend_cap &&
-      parseInt(c.spend_cap, 10) > 0 &&
-      c.budget_remaining !== undefined &&
-      parseInt(c.budget_remaining, 10) <= 0
-    )
-      return { label: 'Completed', key: 'COMPLETED' };
-
-    // Scheduled: start_time is in the future
-    if (c.start_time && new Date(c.start_time) > now)
-      return { label: 'Scheduled', key: 'SCHEDULED' };
-
-    // Not Delivering: daily budget is 0 or missing any budget
-    if (
-      !c.daily_budget &&
-      !c.lifetime_budget &&
-      !c.spend_cap
-    )
-      return { label: 'Not Delivering', key: 'NOT_DELIVERING' };
-
-    // Active and delivering
-    return { label: 'Active', key: 'ACTIVE' };
-  }
-
-  // ── Fallback for any unexpected status ──
-  return {
-    label: c.effective_status?.replace(/_/g, ' ') || 'Unknown',
-    key: c.effective_status || 'UNKNOWN',
-  };
-}
 
 function fmtBudget(val?: string) {
   if (!val) return '—';
@@ -135,7 +48,6 @@ interface CampaignsTableProps {
 export default function CampaignsTable({ accountId }: CampaignsTableProps) {
   const [data, setData] = useState<Campaign[]>([]);
   const [paging, setPaging] = useState<CursorPaging | null>(null);
-  const [totalCount, setTotalCount] = useState<number | null>(null);
   const [cursorStack, setCursorStack] = useState<string[]>([]);  // stack of "after" cursors for prev navigation
   const [currentAfter, setCurrentAfter] = useState<string | undefined>();
   const [search, setSearch] = useState('');
@@ -162,7 +74,6 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
         if (json.success) {
           setData(json.data);
           setPaging(json.paging || null);
-          if (json.totalCount != null) setTotalCount(json.totalCount);
         } else {
           setError(json.error || 'Failed to load');
         }
@@ -178,7 +89,7 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
   }, [currentAfter, search, accountId]);
 
   const goNext = () => {
-    if (paging?.cursors?.after && paging.hasNext) {
+    if (paging?.cursors?.after && paging.next) {
       setCursorStack((prev) => [...prev, currentAfter || '__first__']);
       setCurrentAfter(paging.cursors.after);
       setPageNum((p) => p + 1);
@@ -210,16 +121,15 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
     setSearch('');
   }, [accountId]);
 
-  const hasNext = !!paging?.hasNext;
+  const hasNext = !!paging?.next;
   const hasPrev = cursorStack.length > 0;
-  const totalPages = totalCount != null ? Math.ceil(totalCount / 10) : null;
 
   return (
     <div className="rounded-xl border border-gray-100 bg-white">
       {/* Controls */}
       <div className="flex flex-col gap-3 border-b border-gray-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
         <h3 className="text-sm font-semibold text-gray-700">
-          Campaigns {pageNum > 1 && <span className="ml-1 text-xs text-gray-500">Page {pageNum}{totalPages ? `/${totalPages}` : ''}</span>}
+          Campaigns {pageNum > 1 && <span className="ml-1 text-xs text-gray-500">Page {pageNum}</span>}
         </h3>
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative">
@@ -258,53 +168,90 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
           {data.length === 0 ? (
             <div className="px-6 py-10 text-center text-sm text-gray-500">No campaigns found.</div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead>
-                  <tr className="border-b border-gray-100 text-xs uppercase text-gray-500">
-                    <th className="px-6 py-3 font-medium">Campaign</th>
-                    <th className="px-4 py-3 font-medium">Status</th>
-                    <th className="px-4 py-3 font-medium">Objective</th>
-                    <th className="px-4 py-3 font-medium text-right">Budget</th>
-                    <th className="px-4 py-3 font-medium">Created</th>
-                    <th className="px-4 py-3 font-medium">Date Range</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {data.map((c) => {
-                    const derived = deriveDeliveryStatus(c);
-                    const color = STATUS_STYLES[derived.key] || STATUS_STYLES.UNKNOWN;
-                    return (
-                      <tr key={c.id} className="transition-colors hover:bg-gray-50">
-                        <td className="max-w-[220px] truncate px-6 py-3 font-medium text-gray-900">{c.name}</td>
-                        <td className="px-4 py-3">
-                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${color}`}>{derived.label}</span>
-                        </td>
-                        <td className="px-4 py-3 text-gray-400">{c.objective?.replace(/_/g, ' ') || '—'}</td>
-                        <td className="px-4 py-3 text-right text-gray-700">
-                          {c.daily_budget ? `${fmtBudget(c.daily_budget)}/day` : c.lifetime_budget ? `${fmtBudget(c.lifetime_budget)} life` : '—'}
-                        </td>
-                        <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">{fmtDate(c.created_time)}</td>
-                        <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">
-                          {fmtDate(c.start_time)}{c.stop_time ? ` → ${fmtDate(c.stop_time)}` : ' → Ongoing'}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+            <>
+              {/* Mobile card list */}
+              <div className="divide-y divide-gray-100 sm:hidden">
+                {data.map((c) => {
+                  const color = STATUS_COLORS[c.effective_status] || 'bg-gray-100 text-gray-500';
+                  const thumb = c.ads?.data?.[0]?.creative?.thumbnail_url;
+                  return (
+                    <div key={c.id} className="flex items-start gap-3 px-4 py-3">
+                      {thumb ? (
+                        <img src={thumb} alt={c.name} className="h-12 w-12 flex-shrink-0 rounded-lg object-cover" />
+                      ) : (
+                        <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-gray-100 text-xs text-gray-400">N/A</div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-gray-900">{c.name}</p>
+                        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${color}`}>{c.effective_status}</span>
+                          <span className="text-xs text-gray-500">
+                            {c.daily_budget ? `${fmtBudget(c.daily_budget)}/day` : c.lifetime_budget ? `${fmtBudget(c.lifetime_budget)} lifetime` : '—'}
+                          </span>
+                        </div>
+                        <p className="mt-0.5 text-xs text-gray-400">{c.objective?.replace(/_/g, ' ') || '—'} · {fmtDate(c.created_time)}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Desktop table */}
+              <div className="hidden overflow-x-auto sm:block">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-100 text-xs uppercase text-gray-500">
+                      <th className="px-6 py-3 font-medium">Preview</th>
+                      <th className="px-4 py-3 font-medium">Campaign</th>
+                      <th className="px-4 py-3 font-medium">Status</th>
+                      <th className="px-4 py-3 font-medium">Objective</th>
+                      <th className="px-4 py-3 font-medium text-right">Budget</th>
+                      <th className="px-4 py-3 font-medium">Created</th>
+                      <th className="px-4 py-3 font-medium">Date Range</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {data.map((c) => {
+                      const color = STATUS_COLORS[c.effective_status] || 'bg-gray-100 text-gray-500';
+                      return (
+                        <tr key={c.id} className="transition-colors hover:bg-gray-50">
+                          <td className="px-6 py-3">
+                            {c.ads?.data?.[0]?.creative?.thumbnail_url ? (
+                              <img src={c.ads.data[0].creative.thumbnail_url} alt={c.name} className="h-10 w-10 rounded-lg object-cover" />
+                            ) : (
+                              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 text-xs text-gray-400">N/A</div>
+                            )}
+                          </td>
+                          <td className="max-w-[200px] truncate px-4 py-3 font-medium text-gray-900">{c.name}</td>
+                          <td className="px-4 py-3">
+                            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${color}`}>{c.effective_status}</span>
+                          </td>
+                          <td className="px-4 py-3 text-gray-400">{c.objective?.replace(/_/g, ' ') || '—'}</td>
+                          <td className="px-4 py-3 text-right text-gray-700">
+                            {c.daily_budget ? `${fmtBudget(c.daily_budget)}/day` : c.lifetime_budget ? `${fmtBudget(c.lifetime_budget)} life` : '—'}
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">{fmtDate(c.created_time)}</td>
+                          <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">
+                            {fmtDate(c.start_time)}{c.stop_time ? ` → ${fmtDate(c.stop_time)}` : ' → Ongoing'}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
 
           {/* Pagination */}
           {(hasNext || hasPrev) && (
             <div className="flex items-center justify-between border-t border-gray-100 px-6 py-3">
-              <p className="text-xs text-gray-500">Page {pageNum}{totalPages ? ` / ${totalPages}` : ''}</p>
+              <p className="text-xs text-gray-500">Page {pageNum}</p>
               <div className="flex items-center gap-1">
                 <button onClick={goPrev} disabled={!hasPrev} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 disabled:opacity-30">
                   <ChevronLeft className="h-4 w-4" />
                 </button>
-                <span className="min-w-[32px] rounded-lg bg-red-600 px-2 py-1 text-center text-xs font-medium text-white">{pageNum}{totalPages ? `/${totalPages}` : ''}</span>
+                <span className="min-w-[32px] rounded-lg bg-red-600 px-2 py-1 text-center text-xs font-medium text-white">{pageNum}</span>
                 <button onClick={goNext} disabled={!hasNext} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 disabled:opacity-30">
                   <ChevronRight className="h-4 w-4" />
                 </button>
