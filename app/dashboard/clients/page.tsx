@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, Fragment } from 'react';
 import AdminShell from '../_components/AdminShell';
 import {
   Users,
@@ -16,6 +16,11 @@ import {
   RefreshCw,
   Mail,
   Phone,
+  Pencil,
+  Trash2,
+  X,
+  Save,
+  AlertTriangle,
 } from 'lucide-react';
 
 interface Client {
@@ -24,11 +29,14 @@ interface Client {
   email: string;
   fullName: string;
   phone: string;
+  role: string;
   status: 'ACTIVE' | 'SUSPENDED' | 'BANNED';
   adsAccess: boolean;
   emailVerified: boolean;
   lastLoginAt: string | null;
+  lastLoginIp: string | null;
   createdAt: string;
+  updatedAt: string;
 }
 
 const STATUS_STYLES: Record<Client['status'], { label: string; cls: string; icon: typeof ShieldCheck }> = {
@@ -50,11 +58,277 @@ function fmtTime(iso: string | null) {
     + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 }
 
+/* ─── Edit Modal ──────────────────────────────────────── */
+
+interface EditModalProps {
+  client: Client;
+  onClose: () => void;
+  onSave: (updated: Client) => void;
+}
+
+function EditModal({ client, onClose, onSave }: EditModalProps) {
+  const [form, setForm] = useState({
+    fullName: client.fullName,
+    username: client.username,
+    email: client.email,
+    phone: client.phone,
+    status: client.status,
+    adsAccess: client.adsAccess,
+    emailVerified: client.emailVerified,
+  });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const set = (key: string, val: string | boolean) =>
+    setForm((f) => ({ ...f, [key]: val }));
+
+  const handleSave = async () => {
+    if (!form.fullName.trim() || !form.username.trim() || !form.email.trim()) {
+      setError('Full name, username, and email are required.');
+      return;
+    }
+    setSaving(true);
+    setError('');
+    try {
+      const res = await fetch('/api/v1/admin/clients', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: client.id, ...form }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        onSave(json.data);
+      } else {
+        setError(json.error || 'Failed to save');
+      }
+    } catch {
+      setError('Network error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+      <div
+        className="relative w-full max-w-lg rounded-2xl bg-white shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+          <div>
+            <h2 className="text-base font-bold text-gray-900">Edit Client</h2>
+            <p className="mt-0.5 text-xs text-gray-400">ID: {client.id}</p>
+          </div>
+          <button onClick={onClose} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="space-y-4 px-6 py-5">
+          {error && (
+            <div className="flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600">
+              <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+              {error}
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {/* Full Name */}
+            <div>
+              <label className="mb-1 block text-xs font-medium text-gray-500">Full Name</label>
+              <input
+                value={form.fullName}
+                onChange={(e) => set('fullName', e.target.value)}
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-400"
+              />
+            </div>
+
+            {/* Username */}
+            <div>
+              <label className="mb-1 block text-xs font-medium text-gray-500">Username</label>
+              <input
+                value={form.username}
+                onChange={(e) => set('username', e.target.value)}
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-400"
+              />
+            </div>
+
+            {/* Email */}
+            <div>
+              <label className="mb-1 block text-xs font-medium text-gray-500">Email</label>
+              <input
+                type="email"
+                value={form.email}
+                onChange={(e) => set('email', e.target.value)}
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-400"
+              />
+            </div>
+
+            {/* Phone */}
+            <div>
+              <label className="mb-1 block text-xs font-medium text-gray-500">Phone</label>
+              <input
+                value={form.phone}
+                onChange={(e) => set('phone', e.target.value)}
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-400"
+              />
+            </div>
+
+            {/* Status */}
+            <div>
+              <label className="mb-1 block text-xs font-medium text-gray-500">Status</label>
+              <select
+                value={form.status}
+                onChange={(e) => set('status', e.target.value)}
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-400"
+              >
+                <option value="ACTIVE">Active</option>
+                <option value="SUSPENDED">Suspended</option>
+                <option value="BANNED">Banned</option>
+              </select>
+            </div>
+
+            {/* Toggles */}
+            <div className="flex flex-col gap-3 pt-1">
+              <label className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer">
+                <button
+                  type="button"
+                  onClick={() => set('adsAccess', !form.adsAccess)}
+                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                    form.adsAccess ? 'bg-red-500' : 'bg-gray-300'
+                  }`}
+                >
+                  <span className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform ${
+                    form.adsAccess ? 'translate-x-4' : 'translate-x-1'
+                  }`} />
+                </button>
+                Ads Access
+              </label>
+
+              <label className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer">
+                <button
+                  type="button"
+                  onClick={() => set('emailVerified', !form.emailVerified)}
+                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                    form.emailVerified ? 'bg-green-500' : 'bg-gray-300'
+                  }`}
+                >
+                  <span className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform ${
+                    form.emailVerified ? 'translate-x-4' : 'translate-x-1'
+                  }`} />
+                </button>
+                Email Verified
+              </label>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-end gap-2 border-t border-gray-100 px-6 py-4">
+          <button
+            onClick={onClose}
+            className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+          >
+            {saving ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+            Save Changes
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Delete Confirm Modal ────────────────────────────── */
+
+interface DeleteModalProps {
+  client: Client;
+  onClose: () => void;
+  onDeleted: (id: string) => void;
+}
+
+function DeleteModal({ client, onClose, onDeleted }: DeleteModalProps) {
+  const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    setError('');
+    try {
+      const res = await fetch('/api/v1/admin/clients', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: client.id }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        onDeleted(client.id);
+      } else {
+        setError(json.error || 'Failed to delete');
+      }
+    } catch {
+      setError('Network error');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+      <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex flex-col items-center text-center">
+          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-red-50">
+            <Trash2 className="h-5 w-5 text-red-500" />
+          </div>
+          <h3 className="text-base font-bold text-gray-900">Delete Client</h3>
+          <p className="mt-1.5 text-sm text-gray-500">
+            Are you sure you want to delete <span className="font-semibold text-gray-700">{client.fullName}</span>?
+            This will permanently remove their account, messages, and all related data.
+          </p>
+          {error && (
+            <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600">{error}</p>
+          )}
+        </div>
+        <div className="mt-5 flex items-center gap-2">
+          <button
+            onClick={onClose}
+            className="flex-1 rounded-lg border border-gray-200 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleDelete}
+            disabled={deleting}
+            className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-red-600 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+          >
+            {deleting ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Main Page ───────────────────────────────────────── */
+
 export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [updating, setUpdating] = useState<string | null>(null);
+
+  // Edit / Delete modals
+  const [editClient, setEditClient] = useState<Client | null>(null);
+  const [deleteClient, setDeleteClient] = useState<Client | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -119,7 +393,6 @@ export default function ClientsPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            {/* Search */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
               <input
@@ -171,15 +444,17 @@ export default function ClientsPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[640px] text-sm">
+              <table className="w-full min-w-[900px] text-sm">
                 <thead>
                   <tr className="border-b border-gray-100 bg-gray-50">
                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Client</th>
                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Contact</th>
                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Ads Access</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Email Verified</th>
                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Last Login</th>
                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Joined</th>
+                    <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
@@ -199,11 +474,6 @@ export default function ClientsPage() {
                               <p className="font-semibold text-gray-900 truncate">{client.fullName}</p>
                               <p className="text-[11px] text-gray-400 truncate">@{client.username}</p>
                             </div>
-                            {client.emailVerified ? (
-                              <span title="Email verified"><CheckCircle2 className="w-3.5 h-3.5 text-green-500 shrink-0" /></span>
-                            ) : (
-                              <span title="Email not verified"><XCircle className="w-3.5 h-3.5 text-gray-300 shrink-0" /></span>
-                            )}
                           </div>
                         </td>
 
@@ -255,17 +525,58 @@ export default function ClientsPage() {
                           </button>
                         </td>
 
+                        {/* Email Verified */}
+                        <td className="px-4 py-3">
+                          {client.emailVerified ? (
+                            <span className="inline-flex items-center gap-1 text-xs font-medium text-green-600">
+                              <CheckCircle2 className="w-3.5 h-3.5" /> Verified
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-xs font-medium text-gray-400">
+                              <XCircle className="w-3.5 h-3.5" /> Not Verified
+                            </span>
+                          )}
+                        </td>
+
                         {/* Last Login */}
                         <td className="px-4 py-3">
-                          <div className="flex items-center gap-1.5 text-xs text-gray-400">
-                            <Clock className="w-3 h-3 shrink-0" />
-                            <span className="truncate">{fmtTime(client.lastLoginAt)}</span>
+                          <div className="space-y-0.5">
+                            <div className="flex items-center gap-1.5 text-xs text-gray-400">
+                              <Clock className="w-3 h-3 shrink-0" />
+                              <span className="truncate">{fmtTime(client.lastLoginAt)}</span>
+                            </div>
+                            {client.lastLoginIp && (
+                              <p className="text-[10px] text-gray-300 pl-[18px]">IP: {client.lastLoginIp}</p>
+                            )}
                           </div>
                         </td>
 
                         {/* Joined */}
-                        <td className="px-4 py-3 text-xs text-gray-400">
-                          {fmtDate(client.createdAt)}
+                        <td className="px-4 py-3">
+                          <p className="text-xs text-gray-400">{fmtDate(client.createdAt)}</p>
+                          {client.updatedAt !== client.createdAt && (
+                            <p className="text-[10px] text-gray-300 mt-0.5">Updated {fmtDate(client.updatedAt)}</p>
+                          )}
+                        </td>
+
+                        {/* Actions */}
+                        <td className="px-4 py-3">
+                          <div className="flex items-center justify-center gap-1.5">
+                            <button
+                              onClick={() => setEditClient(client)}
+                              title="Edit client"
+                              className="rounded-lg p-1.5 text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => setDeleteClient(client)}
+                              title="Delete client"
+                              className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -276,6 +587,30 @@ export default function ClientsPage() {
           )}
         </div>
       </div>
+
+      {/* Edit Modal */}
+      {editClient && (
+        <EditModal
+          client={editClient}
+          onClose={() => setEditClient(null)}
+          onSave={(updated) => {
+            setClients((prev) => prev.map((c) => (c.id === updated.id ? { ...c, ...updated } : c)));
+            setEditClient(null);
+          }}
+        />
+      )}
+
+      {/* Delete Confirm Modal */}
+      {deleteClient && (
+        <DeleteModal
+          client={deleteClient}
+          onClose={() => setDeleteClient(null)}
+          onDeleted={(id) => {
+            setClients((prev) => prev.filter((c) => c.id !== id));
+            setDeleteClient(null);
+          }}
+        />
+      )}
     </AdminShell>
   );
 }
