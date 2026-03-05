@@ -77,12 +77,14 @@ export type RegisterInput = z.infer<typeof registerSchema>;
 // ─── Login Schema ─────────────────────────────────────
 
 export const loginSchema = z.object({
-  email: z
+  phone: z
     .string()
     .trim()
-    .min(1, 'Email is required')
-    .email('Please enter a valid email address')
-    .transform((v) => v.toLowerCase()),
+    .min(1, 'Phone number is required')
+    .regex(
+      /^\+?[0-9\s\-()]+$/,
+      'Please enter a valid phone number'
+    ),
   password: z.string().min(1, 'Password is required'),
 });
 

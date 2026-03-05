@@ -10,7 +10,7 @@ export const ERROR_CODES = {
   AUTH_001: {
     code: 'AUTH_001',
     status: 401,
-    message: 'Invalid email or password',
+    message: 'Invalid phone number or password',
   },
   AUTH_002: {
     code: 'AUTH_002',
@@ -46,6 +46,11 @@ export const ERROR_CODES = {
     code: 'AUTH_008',
     status: 409,
     message: 'This username is already taken',
+  },
+  AUTH_009: {
+    code: 'AUTH_009',
+    status: 409,
+    message: 'An account with this phone number already exists',
   },
 
   // ─── Validation ─────────────────────────────────────

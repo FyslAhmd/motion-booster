@@ -37,11 +37,11 @@ export async function POST(request: NextRequest) {
       throw error;
     }
 
-    const { email, password } = validatedData;
+    const { phone, password } = validatedData;
 
-    // 3. Find user by email
+    // 3. Find user by phone
     const user = await prisma.user.findUnique({
-      where: { email },
+      where: { phone },
       select: {
         id: true,
         username: true,
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
     });
 
     // 4. Timing-safe comparison — always run bcrypt even if user doesn't exist
-    //    This prevents attackers from determining if an email is registered
+    //    This prevents attackers from determining if a phone number is registered
     //    by measuring response time differences.
     const hashToCompare = user?.passwordHash || DUMMY_HASH;
     const isPasswordValid = await comparePassword(password, hashToCompare);

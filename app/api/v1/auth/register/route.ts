@@ -54,6 +54,16 @@ export async function POST(request: NextRequest) {
       throw new AppError('AUTH_008');
     }
 
+    // 4b. Check if phone already exists
+    const existingPhone = await prisma.user.findUnique({
+      where: { phone },
+      select: { id: true },
+    });
+
+    if (existingPhone) {
+      throw new AppError('AUTH_009');
+    }
+
     // 5. Hash password (bcrypt, 12 salt rounds)
     const passwordHash = await hashPassword(password);
 

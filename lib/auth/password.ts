@@ -23,7 +23,7 @@ export async function comparePassword(
 
 /**
  * A dummy hash used for timing-safe comparison when user doesn't exist.
- * This prevents timing attacks that reveal whether an email is registered.
+ * This prevents timing attacks that reveal whether a phone number is registered.
  */
 export const DUMMY_HASH =
   '$2a$12$LJ3m4ys3ez8Bn5A5sYy0/u0gHlP2nFAKnMOyVZ3J8bQdHlqWYqxC';

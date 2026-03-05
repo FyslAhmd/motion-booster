@@ -28,7 +28,7 @@ model User {
   username      String     @unique
   email         String     @unique
   fullName      String     @map("full_name")
-  phone         String
+  phone         String     @unique
   passwordHash  String     @map("password_hash")
   role          UserRole   @default(USER)
   status        UserStatus @default(ACTIVE)
@@ -45,6 +45,7 @@ model User {
 
   @@index([email])
   @@index([username])
+  @@index([phone])
   @@map("users")
 }
 
