@@ -304,9 +304,9 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
                   return (
                     <div key={c.id} className="flex items-start gap-3 px-4 py-3">
                       {thumb ? (
-                        <img src={thumb} alt={c.name} className="h-12 w-12 flex-shrink-0 rounded-lg object-cover" />
+                        <img src={thumb} alt={c.name} className="h-12 w-12 shrink-0 rounded-lg object-cover" />
                       ) : (
-                        <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-gray-100 text-xs text-gray-400">N/A</div>
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-xs text-gray-400">N/A</div>
                       )}
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium text-gray-900">{c.name}</p>
@@ -369,7 +369,7 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
                               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 text-xs text-gray-400">N/A</div>
                             )}
                           </td>
-                          <td className="max-w-[200px] truncate px-4 py-3 font-medium text-gray-900">{c.name}</td>
+                          <td className="max-w-50 truncate px-4 py-3 font-medium text-gray-900">{c.name}</td>
                           <td className="px-4 py-3">
                             <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${color}`}>{derived.label}</span>
                           </td>
@@ -417,7 +417,7 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
                 <button onClick={goPrev} disabled={!hasPrev} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 disabled:opacity-30">
                   <ChevronLeft className="h-4 w-4" />
                 </button>
-                <span className="min-w-[32px] rounded-lg bg-red-600 px-2 py-1 text-center text-xs font-medium text-white">{pageNum}{totalPages ? `/${totalPages}` : ''}</span>
+                <span className="min-w-8 rounded-lg bg-red-600 px-2 py-1 text-center text-xs font-medium text-white">{pageNum}{totalPages ? `/${totalPages}` : ''}</span>
                 <button onClick={goNext} disabled={!hasNext} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 disabled:opacity-30">
                   <ChevronRight className="h-4 w-4" />
                 </button>

@@ -33,7 +33,7 @@ export const CompanyMarquee = () => {
           <div className="flex animate-marquee">
             {/* First set */}
             {list.map((company) => (
-              <div key={`first-${company.id}`} className="flex-shrink-0 mx-6 md:mx-10">
+              <div key={`first-${company.id}`} className="shrink-0 mx-6 md:mx-10">
                 <div className="flex items-center justify-center h-14 md:h-16">
                   {company.logoImage ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -52,7 +52,7 @@ export const CompanyMarquee = () => {
             ))}
             {/* Duplicate for seamless loop */}
             {list.map((company) => (
-              <div key={`second-${company.id}`} className="flex-shrink-0 mx-6 md:mx-10">
+              <div key={`second-${company.id}`} className="shrink-0 mx-6 md:mx-10">
                 <div className="flex items-center justify-center h-14 md:h-16">
                   {company.logoImage ? (
                     // eslint-disable-next-line @next/next/no-img-element
