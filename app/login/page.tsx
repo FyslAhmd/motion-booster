@@ -1,14 +1,16 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { loginSchema, formatZodErrors } from '@/lib/validators/auth';
 import { useAuth } from '@/lib/auth/context';
 import { ZodError } from 'zod';
+import { COUNTRY_CODES, type CountryCode } from '@/lib/data/country-codes';
 
 interface FieldErrors {
-  email?: string;
+  phone?: string;
   password?: string;
 }
 
@@ -22,10 +24,38 @@ export default function LoginPage() {
     }
   }, [isLoading, isAuthenticated, router]);
 
-  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+
+  // ─── Country code state ─────────────────────────────
+  const [selectedCountry, setSelectedCountry] = useState<CountryCode>(
+    COUNTRY_CODES.find((c) => c.code === 'BD') || COUNTRY_CODES[0]
+  );
+  const [countrySearch, setCountrySearch] = useState('');
+  const [showCountryDropdown, setShowCountryDropdown] = useState(false);
+  const countryDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (countryDropdownRef.current && !countryDropdownRef.current.contains(e.target as Node)) {
+        setShowCountryDropdown(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const filteredCountries = COUNTRY_CODES.filter((c) => {
+    const q = countrySearch.toLowerCase();
+    return (
+      c.name.toLowerCase().includes(q) ||
+      c.dialCode.includes(q) ||
+      c.code.toLowerCase().includes(q)
+    );
+  });
 
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [serverError, setServerError] = useState('');
@@ -39,11 +69,11 @@ export default function LoginPage() {
       return next;
     });
 
-    if (field === 'email') {
-      if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))
+    if (field === 'phone') {
+      if (value && !/^\+?[0-9\s\-()]+$/.test(value))
         setFieldErrors((p) => ({
           ...p,
-          email: 'Please enter a valid email address',
+          phone: 'Please enter a valid phone number',
         }));
     }
 
@@ -62,7 +92,11 @@ export default function LoginPage() {
     setFieldErrors({});
     setServerError('');
 
-    const formData = { email, password };
+    const fullPhone = selectedCountry
+      ? `+${selectedCountry.dialCode}${phone.replace(/^0+/, '')}`
+      : phone;
+
+    const formData = { phone: fullPhone, password };
 
     try {
       loginSchema.parse(formData);
@@ -121,7 +155,7 @@ export default function LoginPage() {
               Login into account
             </h1>
             <p className="text-gray-500 text-sm">
-              Use your credentials to access your account
+              Use your phone number and password to sign in
             </p>
           </div>
 
@@ -147,41 +181,104 @@ export default function LoginPage() {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-            {/* Email Input */}
+            {/* Phone with Country Code Dropdown */}
             <div>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <svg
-                    className="w-5 h-5 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                    />
+              <div className="relative flex" ref={countryDropdownRef}>
+                {/* Country Code Selector */}
+                <button
+                  type="button"
+                  onClick={() => setShowCountryDropdown(!showCountryDropdown)}
+                  className={`flex items-center gap-1.5 pl-3 pr-2 py-3.5 border ${
+                    fieldErrors.phone
+                      ? 'border-red-400'
+                      : 'border-gray-300'
+                  } rounded-l-full bg-gray-50 hover:bg-gray-100 transition-colors shrink-0`}
+                >
+                  <Image
+                    src={selectedCountry.flag}
+                    alt={selectedCountry.code}
+                    width={20}
+                    height={14}
+                    className="rounded-sm object-cover"
+                    unoptimized
+                  />
+                  <span className="text-sm text-gray-700 font-medium">
+                    +{selectedCountry.dialCode}
+                  </span>
+                  <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
+                </button>
+
+                {/* Country Dropdown */}
+                {showCountryDropdown && (
+                  <div className="absolute top-full left-0 mt-1 w-72 bg-white border border-gray-200 rounded-2xl shadow-lg z-50 overflow-hidden">
+                    {/* Search Input */}
+                    <div className="p-2 border-b border-gray-100">
+                      <input
+                        type="text"
+                        value={countrySearch}
+                        onChange={(e) => setCountrySearch(e.target.value)}
+                        placeholder="Search country..."
+                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-red-400"
+                        autoFocus
+                      />
+                    </div>
+                    {/* Country List */}
+                    <div className="max-h-48 overflow-y-auto">
+                      {filteredCountries.length === 0 ? (
+                        <div className="px-4 py-3 text-sm text-gray-400 text-center">No countries found</div>
+                      ) : (
+                        filteredCountries.map((country) => (
+                          <button
+                            key={country.code}
+                            type="button"
+                            onClick={() => {
+                              setSelectedCountry(country);
+                              setShowCountryDropdown(false);
+                              setCountrySearch('');
+                            }}
+                            className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-red-50 transition-colors ${
+                              selectedCountry.code === country.code ? 'bg-red-50 text-red-600' : 'text-gray-700'
+                            }`}
+                          >
+                            <Image
+                              src={country.flag}
+                              alt={country.code}
+                              width={22}
+                              height={15}
+                              className="rounded-sm object-cover shrink-0"
+                              unoptimized
+                            />
+                            <span className="truncate flex-1 text-left">{country.name}</span>
+                            <span className="text-gray-400 shrink-0">+{country.dialCode}</span>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Phone Number Input */}
+                <div className="relative flex-1">
+                  <input
+                    id="phone"
+                    name="phone"
+                    type="tel"
+                    autoComplete="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    onBlur={() => validateField('phone', phone)}
+                    placeholder="Phone Number"
+                    className={`w-full pl-4 pr-4 py-3.5 border-y border-r ${
+                      fieldErrors.phone
+                        ? 'border-red-400 focus:border-red-500 focus:ring-red-200'
+                        : 'border-gray-300 focus:border-red-500 focus:ring-red-200'
+                    } rounded-r-full focus:outline-none focus:ring-2 transition-all text-sm`}
+                  />
                 </div>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  onBlur={() => validateField('email', email)}
-                  placeholder="Email Address"
-                  className={`w-full pl-12 pr-4 py-3.5 border ${
-                    fieldErrors.email
-                      ? 'border-red-400 focus:border-red-500 focus:ring-red-200'
-                      : 'border-gray-300 focus:border-red-500 focus:ring-red-200'
-                  } rounded-full focus:outline-none focus:ring-2 transition-all text-sm`}
-                />
               </div>
-              {fieldErrors.email && (
+              {fieldErrors.phone && (
                 <p className="mt-1 ml-4 text-xs text-red-500 flex items-center gap-1">
                   <svg
                     className="w-3.5 h-3.5 shrink-0"
@@ -196,7 +293,7 @@ export default function LoginPage() {
                       d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                     />
                   </svg>
-                  {fieldErrors.email}
+                  {fieldErrors.phone}
                 </p>
               )}
             </div>
