@@ -52,6 +52,11 @@ export const ERROR_CODES = {
     status: 409,
     message: 'An account with this phone number already exists',
   },
+  AUTH_010: {
+    code: 'AUTH_010',
+    status: 403,
+    message: 'Your email address has not been verified. Please contact an admin to activate your account.',
+  },
 
   // ─── Validation ─────────────────────────────────────
   VAL_001: {

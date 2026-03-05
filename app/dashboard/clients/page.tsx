@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, Fragment } from 'react';
+import { useState, useEffect, useCallback, Fragment } from 'react';
 import AdminShell from '../_components/AdminShell';
 import {
   Users,
@@ -321,42 +321,51 @@ function DeleteModal({ client, onClose, onDeleted }: DeleteModalProps) {
 /* ─── Main Page ───────────────────────────────────────── */
 
 export default function ClientsPage() {
-  const [clients, setClients] = useState<Client[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [updating, setUpdating] = useState<string | null>(null);
+  const [clients, setClients]       = useState<Client[]>([]);
+  const [loading, setLoading]       = useState(true);
+  const [search, setSearch]         = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [page, setPage]             = useState(1);
+  const [total, setTotal]           = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [counts, setCounts]         = useState({ total: 0, active: 0, suspended: 0, adsAccess: 0 });
+  const [updating, setUpdating]     = useState<string | null>(null);
 
   // Edit / Delete modals
-  const [editClient, setEditClient] = useState<Client | null>(null);
+  const [editClient, setEditClient]     = useState<Client | null>(null);
   const [deleteClient, setDeleteClient] = useState<Client | null>(null);
 
-  const load = async () => {
+  // Debounce search — reset to page 1 when query changes
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1);
+    }, 400);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  const load = useCallback(async (pg: number, q: string) => {
     setLoading(true);
     try {
-      const res = await fetch('/api/v1/admin/clients');
+      const params = new URLSearchParams({ page: String(pg), search: q });
+      const res  = await fetch(`/api/v1/admin/clients?${params}`);
       const json = await res.json();
-      if (json.success) setClients(json.data);
+      if (json.success) {
+        setClients(json.data);
+        setTotal(json.total);
+        setTotalPages(json.totalPages);
+        setCounts(json.counts);
+      }
     } catch {}
     finally { setLoading(false); }
-  };
+  }, []);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(page, debouncedSearch); }, [page, debouncedSearch, load]);
 
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return clients;
-    return clients.filter(c =>
-      c.fullName.toLowerCase().includes(q) ||
-      c.email.toLowerCase().includes(q) ||
-      c.username.toLowerCase().includes(q) ||
-      c.phone.includes(q)
-    );
-  }, [clients, search]);
-
-  async function patch(id: string, payload: Partial<Pick<Client, 'status' | 'adsAccess'>>) {
+  async function patch(id: string, payload: Partial<Pick<Client, 'status' | 'adsAccess' | 'emailVerified'>>) {
     setUpdating(id);
     try {
-      const res = await fetch('/api/v1/admin/clients', {
+      const res  = await fetch('/api/v1/admin/clients', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, ...payload }),
@@ -364,6 +373,8 @@ export default function ClientsPage() {
       const json = await res.json();
       if (json.success) {
         setClients(prev => prev.map(c => c.id === id ? { ...c, ...json.data } : c));
+        // refresh global counts
+        load(page, debouncedSearch);
       }
     } catch {}
     finally { setUpdating(null); }
@@ -404,7 +415,7 @@ export default function ClientsPage() {
               />
             </div>
             <button
-              onClick={load}
+              onClick={() => load(page, debouncedSearch)}
               disabled={loading}
               className="p-2 rounded-xl border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 disabled:opacity-50 transition-colors"
             >
@@ -416,10 +427,10 @@ export default function ClientsPage() {
         {/* Stats row */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { label: 'Total',     value: clients.length,                                          cls: 'text-indigo-600', bg: 'bg-indigo-50' },
-            { label: 'Active',    value: clients.filter(c => c.status === 'ACTIVE').length,       cls: 'text-green-600',  bg: 'bg-green-50' },
-            { label: 'Suspended', value: clients.filter(c => c.status === 'SUSPENDED').length,    cls: 'text-amber-600',  bg: 'bg-amber-50' },
-            { label: 'Ads Access',value: clients.filter(c => c.adsAccess).length,                 cls: 'text-red-600',    bg: 'bg-red-50' },
+            { label: 'Total',     value: counts.total,      cls: 'text-indigo-600', bg: 'bg-indigo-50' },
+            { label: 'Active',    value: counts.active,     cls: 'text-green-600',  bg: 'bg-green-50' },
+            { label: 'Suspended', value: counts.suspended,  cls: 'text-amber-600',  bg: 'bg-amber-50' },
+            { label: 'Ads Access',value: counts.adsAccess,  cls: 'text-red-600',    bg: 'bg-red-50' },
           ].map(s => (
             <div key={s.label} className="rounded-xl border border-gray-100 bg-white p-4 flex items-center gap-3 shadow-sm">
               <div className={`w-8 h-8 rounded-lg ${s.bg} flex items-center justify-center shrink-0`}>
@@ -437,10 +448,10 @@ export default function ClientsPage() {
               <div className="h-5 w-5 animate-spin rounded-full border-2 border-red-500 border-t-transparent" />
               <span className="text-sm">Loading clients…</span>
             </div>
-          ) : filtered.length === 0 ? (
+          ) : clients.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-gray-400">
               <Users className="w-10 h-10 mb-3 opacity-30" />
-              <p className="text-sm">{search ? 'No clients match your search.' : 'No clients yet.'}</p>
+              <p className="text-sm">{debouncedSearch ? 'No clients match your search.' : 'No clients yet.'}</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -458,7 +469,7 @@ export default function ClientsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {filtered.map(client => {
+                  {clients.map(client => {
                     const st = STATUS_STYLES[client.status];
                     const StIcon = st.icon;
                     const busy = updating === client.id;
@@ -532,9 +543,15 @@ export default function ClientsPage() {
                               <CheckCircle2 className="w-3.5 h-3.5" /> Verified
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 text-xs font-medium text-gray-400">
-                              <XCircle className="w-3.5 h-3.5" /> Not Verified
-                            </span>
+                            <button
+                              onClick={() => patch(client.id, { emailVerified: true })}
+                              disabled={busy}
+                              title="Click to verify this email"
+                              className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700 transition-opacity hover:opacity-70 disabled:opacity-50"
+                            >
+                              {busy ? <RefreshCw className="w-3 h-3 animate-spin" /> : <XCircle className="w-3 h-3" />}
+                              Verify
+                            </button>
                           )}
                         </td>
 
@@ -583,6 +600,57 @@ export default function ClientsPage() {
                   })}
                 </tbody>
               </table>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-gray-100 px-4 py-3">
+                  <p className="text-xs text-gray-400">
+                    Showing {(page - 1) * 20 + 1}–{Math.min(page * 20, total)} of {total} clients
+                  </p>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => setPage(p => Math.max(1, p - 1))}
+                      disabled={page === 1 || loading}
+                      className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      ← Prev
+                    </button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                      .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
+                      .reduce<(number | '...')[]>((acc, p, idx, arr) => {
+                        if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push('...');
+                        acc.push(p);
+                        return acc;
+                      }, [])
+                      .map((p, i) =>
+                        p === '...' ? (
+                          <span key={`ellipsis-${i}`} className="px-2 text-xs text-gray-400">…</span>
+                        ) : (
+                          <button
+                            key={p}
+                            onClick={() => setPage(p as number)}
+                            disabled={loading}
+                            className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-40 ${
+                              page === p
+                                ? 'border-red-400 bg-red-500 text-white'
+                                : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                            }`}
+                          >
+                            {p}
+                          </button>
+                        )
+                      )
+                    }
+                    <button
+                      onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                      disabled={page === totalPages || loading}
+                      className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      Next →
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

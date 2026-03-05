@@ -65,19 +65,24 @@ export async function POST(request: NextRequest) {
       throw new AppError('AUTH_001');
     }
 
-    // 5. Check account status
+    // 5. Check email verification
+    if (!user.emailVerified) {
+      throw new AppError('AUTH_010');
+    }
+
+    // 6. Check account status
     if (user.status === 'SUSPENDED' || user.status === 'BANNED') {
       throw new AppError('AUTH_003');
     }
 
-    // 6. Generate token pair
+    // 7. Generate token pair
     const familyId = crypto.randomUUID();
     const [accessToken, refreshToken] = await Promise.all([
       generateAccessToken(user.id, user.role),
       generateRefreshToken(user.id, familyId),
     ]);
 
-    // 7. Store refresh token hash in DB (never store raw tokens)
+    // 8. Store refresh token hash in DB (never store raw tokens)
     const refreshTokenHash = await hashToken(refreshToken);
     const ip =
       request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
@@ -96,7 +101,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // 8. Update last login timestamp
+    // 9. Update last login timestamp
     await prisma.user.update({
       where: { id: user.id },
       data: {
@@ -105,7 +110,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // 9. Build response with HttpOnly cookie for refresh token
+    // 10. Build response with HttpOnly cookie for refresh token
     const response = NextResponse.json(
       {
         success: true,
@@ -126,7 +131,7 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     );
 
-    // 10. Set refresh token as HttpOnly Secure cookie
+    // 11. Set refresh token as HttpOnly Secure cookie
     response.cookies.set('refreshToken', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -135,7 +140,7 @@ export async function POST(request: NextRequest) {
       maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
     });
 
-    // 11. Set access token cookie for middleware auth
+    // 12. Set access token cookie for middleware auth
     response.cookies.set('accessToken', accessToken, {
       httpOnly: false, // readable by middleware & JS
       secure: process.env.NODE_ENV === 'production',

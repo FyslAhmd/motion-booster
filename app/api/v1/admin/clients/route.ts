@@ -18,7 +18,9 @@ const CLIENT_SELECT = {
   updatedAt: true,
 } as const;
 
-// GET /api/v1/admin/clients — list all clients (USER role)
+const PAGE_SIZE = 20;
+
+// GET /api/v1/admin/clients?page=1&search= — paginated client list
 export async function GET(req: NextRequest) {
   try {
     const auth = await validateRequest(req);
@@ -26,13 +28,40 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
-    const clients = await prisma.user.findMany({
-      where: { role: 'USER' },
-      select: CLIENT_SELECT,
-      orderBy: { createdAt: 'desc' },
-    });
+    const { searchParams } = new URL(req.url);
+    const search = searchParams.get('search')?.trim() || '';
+    const page   = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
+    const skip   = (page - 1) * PAGE_SIZE;
 
-    return NextResponse.json({ success: true, data: clients });
+    const where = {
+      role: 'USER' as const,
+      ...(search ? {
+        OR: [
+          { fullName: { contains: search, mode: 'insensitive' as const } },
+          { username:  { contains: search, mode: 'insensitive' as const } },
+          { email:     { contains: search, mode: 'insensitive' as const } },
+          { phone:     { contains: search } },
+        ],
+      } : {}),
+    };
+
+    const [clients, total, activeCount, suspendedCount, adsCount, totalAll] = await Promise.all([
+      prisma.user.findMany({ where, select: CLIENT_SELECT, orderBy: { createdAt: 'desc' }, skip, take: PAGE_SIZE }),
+      prisma.user.count({ where }),
+      prisma.user.count({ where: { role: 'USER', status: 'ACTIVE' } }),
+      prisma.user.count({ where: { role: 'USER', status: 'SUSPENDED' } }),
+      prisma.user.count({ where: { role: 'USER', adsAccess: true } }),
+      prisma.user.count({ where: { role: 'USER' } }),
+    ]);
+
+    return NextResponse.json({
+      success: true,
+      data: clients,
+      total,
+      page,
+      totalPages: Math.ceil(total / PAGE_SIZE),
+      counts: { total: totalAll, active: activeCount, suspended: suspendedCount, adsAccess: adsCount },
+    });
   } catch (err) {
     console.error('[admin clients GET]', err);
     return NextResponse.json({ success: false, error: 'Failed to fetch clients' }, { status: 500 });
