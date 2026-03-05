@@ -200,9 +200,9 @@ export default function ClientsPage() {
                               <p className="text-[11px] text-gray-400 truncate">@{client.username}</p>
                             </div>
                             {client.emailVerified ? (
-                              <CheckCircle2 className="w-3.5 h-3.5 text-green-500 shrink-0" title="Email verified" />
+                              <span title="Email verified"><CheckCircle2 className="w-3.5 h-3.5 text-green-500 shrink-0" /></span>
                             ) : (
-                              <XCircle className="w-3.5 h-3.5 text-gray-300 shrink-0" title="Email not verified" />
+                              <span title="Email not verified"><XCircle className="w-3.5 h-3.5 text-gray-300 shrink-0" /></span>
                             )}
                           </div>
                         </td>

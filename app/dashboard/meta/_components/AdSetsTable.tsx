@@ -26,15 +26,22 @@ interface CampaignOption {
 
 interface CursorPaging {
   cursors?: { before?: string; after?: string };
-  next?: string;
-  previous?: string;
+  hasNext?: boolean;
+  hasPrevious?: boolean;
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  ACTIVE: 'bg-green-50 text-green-700 border border-green-200',
-  PAUSED: 'bg-amber-50 text-amber-700 border border-amber-200',
-  DELETED: 'bg-red-50 text-red-600 border border-red-200',
-  ARCHIVED: 'bg-gray-100 text-gray-500',
+const STATUS_STYLES: Record<string, { color: string; label: string }> = {
+  ACTIVE:              { color: 'bg-green-50 text-green-700 border border-green-200',   label: 'Active' },
+  PAUSED:              { color: 'bg-amber-50 text-amber-700 border border-amber-200',   label: 'Paused' },
+  CAMPAIGN_PAUSED:     { color: 'bg-amber-50 text-amber-600 border border-amber-200',   label: 'Campaign Off' },
+  IN_PROCESS:          { color: 'bg-yellow-50 text-yellow-700 border border-yellow-200', label: 'In Review' },
+  WITH_ISSUES:         { color: 'bg-orange-50 text-orange-600 border border-orange-200', label: 'Issues' },
+  PENDING_REVIEW:      { color: 'bg-yellow-50 text-yellow-700 border border-yellow-200', label: 'Pending Review' },
+  DISAPPROVED:         { color: 'bg-red-50 text-red-600 border border-red-200',          label: 'Not Approved' },
+  PENDING_BILLING_INFO:{ color: 'bg-orange-50 text-orange-600 border border-orange-200', label: 'Billing Issue' },
+  PREAPPROVED:         { color: 'bg-blue-50 text-blue-600 border border-blue-200',       label: 'Preapproved' },
+  DELETED:             { color: 'bg-red-50 text-red-600 border border-red-200',          label: 'Deleted' },
+  ARCHIVED:            { color: 'bg-gray-100 text-gray-500 border border-gray-200',      label: 'Archived' },
 };
 
 function fmtBudget(val?: string) {
@@ -61,12 +68,14 @@ export default function AdSetsTable({ accountId }: AdSetsTableProps) {
   const [campaigns, setCampaigns] = useState<CampaignOption[]>([]);
   const [filterCampaign, setFilterCampaign] = useState('all');
   const [paging, setPaging] = useState<CursorPaging | null>(null);
+  const [totalCount, setTotalCount] = useState<number | null>(null);
   const [cursorStack, setCursorStack] = useState<string[]>([]);
   const [currentAfter, setCurrentAfter] = useState<string | undefined>();
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [pageNum, setPageNum] = useState(1);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
 
   const searchTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
@@ -102,6 +111,7 @@ export default function AdSetsTable({ accountId }: AdSetsTableProps) {
         if (json.success) {
           setData(json.data);
           setPaging(json.paging || null);
+          if (json.totalCount != null) setTotalCount(json.totalCount);
         } else {
           setError(json.error || 'Failed to load');
         }
@@ -117,7 +127,7 @@ export default function AdSetsTable({ accountId }: AdSetsTableProps) {
   }, [currentAfter, search, filterCampaign, accountId]);
 
   const goNext = () => {
-    if (paging?.cursors?.after && paging.next) {
+    if (paging?.cursors?.after && paging.hasNext) {
       setCursorStack((prev) => [...prev, currentAfter || '__first__']);
       setCurrentAfter(paging.cursors.after);
       setPageNum((p) => p + 1);
@@ -157,15 +167,47 @@ export default function AdSetsTable({ accountId }: AdSetsTableProps) {
     setFilterCampaign('all');
   }, [accountId]);
 
-  const hasNext = !!paging?.next;
+  const hasNext = !!paging?.hasNext;
   const hasPrev = cursorStack.length > 0;
+  const totalPages = totalCount != null ? Math.ceil(totalCount / 10) : null;
+
+  /** Toggle ad set status between ACTIVE and PAUSED */
+  const toggleStatus = async (adSet: AdSet) => {
+    const newStatus = adSet.status === 'ACTIVE' ? 'PAUSED' : 'ACTIVE';
+    setTogglingId(adSet.id);
+    try {
+      const res = await fetch('/api/v1/meta/status', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: adSet.id, status: newStatus }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setData((prev) =>
+          prev.map((a) =>
+            a.id === adSet.id ? { ...a, status: newStatus, effective_status: newStatus } : a,
+          ),
+        );
+      } else {
+        alert(`Failed: ${json.error}`);
+      }
+    } catch (e: any) {
+      alert(`Error: ${e.message}`);
+    } finally {
+      setTogglingId(null);
+    }
+  };
+
+  const canToggle = (a: AdSet) =>
+    ['ACTIVE', 'PAUSED'].includes(a.status) &&
+    !['DELETED', 'ARCHIVED'].includes(a.effective_status);
 
   return (
     <div className="rounded-xl border border-gray-100 bg-white">
       {/* Controls */}
       <div className="flex flex-col gap-3 border-b border-gray-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
         <h3 className="text-sm font-semibold text-gray-700">
-          Ad Sets {pageNum > 1 && <span className="ml-1 text-xs text-gray-500">Page {pageNum}</span>}
+          Ad Sets {pageNum > 1 && <span className="ml-1 text-xs text-gray-500">Page {pageNum}{totalPages ? `/${totalPages}` : ''}</span>}
         </h3>
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative">
@@ -220,17 +262,34 @@ export default function AdSetsTable({ accountId }: AdSetsTableProps) {
               {/* Mobile card list */}
               <div className="divide-y divide-gray-100 sm:hidden">
                 {data.map((a) => {
-                  const color = STATUS_COLORS[a.effective_status] || 'bg-gray-100 text-gray-500';
+                  const st = STATUS_STYLES[a.effective_status] || { color: 'bg-gray-100 text-gray-500', label: a.effective_status?.replace(/_/g, ' ') || 'Unknown' };
                   return (
                     <div key={a.id} className="px-4 py-3">
                       <div className="flex items-start justify-between gap-2">
                         <p className="min-w-0 flex-1 truncate text-sm font-medium text-gray-900">{a.name}</p>
-                        <span className={`flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${color}`}>{a.effective_status}</span>
+                        <span className={`flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${st.color}`}>{st.label}</span>
                       </div>
                       <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-gray-500">
                         <span>{a.daily_budget ? `${fmtBudget(a.daily_budget)}/day` : a.lifetime_budget ? `${fmtBudget(a.lifetime_budget)} lifetime` : '—'}</span>
                         <span className="text-gray-400">{a.optimization_goal?.replace(/_/g, ' ') || '—'}</span>
                       </div>
+                      {canToggle(a) && (
+                        <div className="mt-1.5">
+                          <button
+                            onClick={() => toggleStatus(a)}
+                            disabled={togglingId === a.id}
+                            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-1 ${
+                              a.status === 'ACTIVE' ? 'bg-green-500' : 'bg-gray-300'
+                            } ${togglingId === a.id ? 'opacity-50' : ''}`}
+                          >
+                            <span
+                              className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
+                                a.status === 'ACTIVE' ? 'translate-x-4' : 'translate-x-1'
+                              }`}
+                            />
+                          </button>
+                        </div>
+                      )}
                       {summarizeTargeting(a.targeting) !== '—' && (
                         <p className="mt-0.5 truncate text-xs text-gray-400">{summarizeTargeting(a.targeting)}</p>
                       )}
@@ -250,16 +309,17 @@ export default function AdSetsTable({ accountId }: AdSetsTableProps) {
                       <th className="px-4 py-3 font-medium text-right">Budget</th>
                       <th className="px-4 py-3 font-medium">Targeting</th>
                       <th className="px-4 py-3 font-medium">Schedule</th>
+                      <th className="px-4 py-3 font-medium text-center">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {data.map((a) => {
-                      const color = STATUS_COLORS[a.effective_status] || 'bg-gray-100 text-gray-500';
+                      const st = STATUS_STYLES[a.effective_status] || { color: 'bg-gray-100 text-gray-500', label: a.effective_status?.replace(/_/g, ' ') || 'Unknown' };
                       return (
                         <tr key={a.id} className="transition-colors hover:bg-gray-50">
                           <td className="max-w-[200px] truncate px-6 py-3 font-medium text-gray-900">{a.name}</td>
                           <td className="px-4 py-3">
-                            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${color}`}>{a.effective_status}</span>
+                            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${st.color}`}>{st.label}</span>
                           </td>
                           <td className="px-4 py-3 text-xs text-gray-400">{a.optimization_goal?.replace(/_/g, ' ') || '—'}</td>
                           <td className="px-4 py-3 text-right text-gray-700">
@@ -269,6 +329,25 @@ export default function AdSetsTable({ accountId }: AdSetsTableProps) {
                           <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">
                             {a.start_time ? new Date(a.start_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'}
                             {a.end_time ? ` → ${new Date(a.end_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : ''}
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            {canToggle(a) ? (
+                              <button
+                                onClick={() => toggleStatus(a)}
+                                disabled={togglingId === a.id}
+                                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-1 ${
+                                  a.status === 'ACTIVE' ? 'bg-green-500' : 'bg-gray-300'
+                                } ${togglingId === a.id ? 'opacity-50' : ''}`}
+                              >
+                                <span
+                                  className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
+                                    a.status === 'ACTIVE' ? 'translate-x-4' : 'translate-x-1'
+                                  }`}
+                                />
+                              </button>
+                            ) : (
+                              <span className="text-xs text-gray-300">—</span>
+                            )}
                           </td>
                         </tr>
                       );
@@ -282,12 +361,12 @@ export default function AdSetsTable({ accountId }: AdSetsTableProps) {
           {/* Pagination */}
           {(hasNext || hasPrev) && (
             <div className="flex items-center justify-between border-t border-gray-100 px-6 py-3">
-              <p className="text-xs text-gray-500">Page {pageNum}</p>
+              <p className="text-xs text-gray-500">Page {pageNum}{totalPages ? ` / ${totalPages}` : ''}</p>
               <div className="flex items-center gap-1">
                 <button onClick={goPrev} disabled={!hasPrev} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 disabled:opacity-30">
                   <ChevronLeft className="h-4 w-4" />
                 </button>
-                <span className="min-w-[32px] rounded-lg bg-red-600 px-2 py-1 text-center text-xs font-medium text-white">{pageNum}</span>
+                <span className="min-w-[32px] rounded-lg bg-red-600 px-2 py-1 text-center text-xs font-medium text-white">{pageNum}{totalPages ? `/${totalPages}` : ''}</span>
                 <button onClick={goNext} disabled={!hasNext} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 disabled:opacity-30">
                   <ChevronRight className="h-4 w-4" />
                 </button>

@@ -58,6 +58,32 @@ export async function metaFetch<T = any>(
   return json as T;
 }
 
+/**
+ * POST to Meta Graph API (for updating objects — status, budget, etc.).
+ * Access token is injected server-side; never exposed to client.
+ */
+export async function metaPost<T = any>(
+  path: string,
+  body: Record<string, string> = {},
+): Promise<T> {
+  const url = new URL(`${GRAPH_BASE}${path}`);
+  const formBody = new URLSearchParams({ access_token: getToken(), ...body });
+
+  const res = await fetch(url.toString(), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: formBody.toString(),
+  });
+  const json = await res.json();
+
+  if ((json as MetaError).error) {
+    const e = (json as MetaError).error;
+    throw new Error(`Meta API ${e.code}: ${e.message}`);
+  }
+
+  return json as T;
+}
+
 // ───────────────────────────────────────────────
 // Paginated response types
 // ───────────────────────────────────────────────
