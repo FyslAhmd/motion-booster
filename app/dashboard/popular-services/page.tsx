@@ -54,6 +54,7 @@ export default function PopularServicesPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(false);
+  const [modalError, setModalError] = useState('');
 
   useEffect(() => {
     fetch('/api/v1/cms/popular-services')
@@ -66,7 +67,8 @@ export default function PopularServicesPage() {
 
   const save = async () => {
     if (!editing) return;
-    if (!editing.title.trim()) { showToast('Title is required.'); return; }
+    if (!editing.title.trim()) { setModalError('Title is required.'); return; }
+    setModalError('');
     const item = {
       ...editing,
       slug: editing.slug.trim() || toSlug(editing.title),
@@ -77,13 +79,20 @@ export default function PopularServicesPage() {
       const url = isNew ? '/api/v1/cms/popular-services' : `/api/v1/cms/popular-services/${editing.id}`;
       const method = isNew ? 'POST' : 'PUT';
       const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(item) });
-      if (!res.ok) { const e = await res.json(); showToast(e.error || 'Save failed.'); return; }
+      if (!res.ok) {
+        let errMsg = 'Save failed.';
+        try { const e = await res.json(); errMsg = e.error || errMsg; } catch {}
+        setModalError(errMsg);
+        return;
+      }
       const saved: PopularServiceItem = await res.json();
       setItems(prev => isNew ? [...prev, saved] : prev.map(i => i.id === saved.id ? saved : i));
       setEditing(null);
       setIsNew(false);
       showToast(isNew ? 'Service card added!' : 'Changes saved!');
-    } catch { showToast('Save failed.'); } finally { setLoading(false); }
+    } catch (err) {
+      setModalError(err instanceof Error ? err.message : 'Save failed.');
+    } finally { setLoading(false); }
   };
 
   const remove = async (id: string) => {
@@ -127,7 +136,7 @@ export default function PopularServicesPage() {
   return (
     <AdminShell>
       {toast && (
-        <div className="fixed top-6 right-6 z-50 bg-gray-900 text-white text-sm px-4 py-3 rounded-xl shadow-2xl">{toast}</div>
+        <div className="fixed top-6 right-6 z-[200] bg-gray-900 text-white text-sm px-4 py-3 rounded-xl shadow-2xl">{toast}</div>
       )}
 
       {deleteId && (
@@ -149,7 +158,7 @@ export default function PopularServicesPage() {
           <div className="bg-white rounded-2xl w-full max-w-2xl shadow-2xl">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
               <h2 className="font-semibold text-gray-900">{isNew ? 'Add Service Card' : 'Edit Service Card'}</h2>
-              <button onClick={() => { setEditing(null); setIsNew(false); }} className="p-2 rounded-lg hover:bg-gray-100 text-gray-400">
+              <button onClick={() => { setEditing(null); setIsNew(false); setModalError(''); }} className="p-2 rounded-lg hover:bg-gray-100 text-gray-400">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -268,10 +277,19 @@ export default function PopularServicesPage() {
               </div>
             </div>
 
+            {modalError && (
+              <div className="mx-6 mb-1 rounded-xl bg-red-50 border border-red-200 px-4 py-2.5 text-sm text-red-700">
+                {modalError}
+              </div>
+            )}
             <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
-              <button onClick={() => { setEditing(null); setIsNew(false); }} className="px-4 py-2 text-sm rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-600">Cancel</button>
-              <button onClick={save} className="flex items-center gap-2 px-4 py-2 text-sm rounded-xl bg-red-600 hover:bg-red-700 text-white font-medium">
-                <Save className="w-4 h-4" />
+              <button onClick={() => { setEditing(null); setIsNew(false); setModalError(''); }} className="px-4 py-2 text-sm rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-600">Cancel</button>
+              <button onClick={save} disabled={loading} className="flex items-center gap-2 px-4 py-2 text-sm rounded-xl bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white font-medium">
+                {loading ? (
+                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
+                ) : (
+                  <Save className="w-4 h-4" />
+                )}
                 {isNew ? 'Add Card' : 'Save Changes'}
               </button>
             </div>
@@ -286,7 +304,7 @@ export default function PopularServicesPage() {
           <p className="text-sm text-gray-500 mt-0.5">Manage the "Our Popular Services" cards on the homepage slider.</p>
         </div>
         <button
-          onClick={() => { setEditing({ ...emptyItem, id: '' }); setIsNew(true); }}
+          onClick={() => { setEditing({ ...emptyItem, id: '' }); setIsNew(true); setModalError(''); }}
           className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-xl transition-colors"
         >
           <Plus className="w-4 h-4" /> Add Card
@@ -297,7 +315,6 @@ export default function PopularServicesPage() {
       <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
         {items.length === 0 ? (
           <div className="text-center py-16 text-gray-400">
-            <p className="text-3xl mb-2">🃏</p>
             <p className="font-medium text-gray-500">No service cards yet</p>
           </div>
         ) : (

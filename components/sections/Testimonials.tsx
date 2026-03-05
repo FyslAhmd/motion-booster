@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useRef, useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Star } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Star } from 'lucide-react';
 import { AdminStore, TestimonialItem } from '@/lib/admin/store';
 
 const stats = [
@@ -154,7 +154,6 @@ const staticReviews: TestimonialItem[] = [
 
 export const Testimonials = () => {
   const [reviews, setReviews] = useState<TestimonialItem[]>(staticReviews);
-  const statsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const load = () => setReviews(AdminStore.getTestimonials());
@@ -162,15 +161,6 @@ export const Testimonials = () => {
     window.addEventListener('storage', load);
     return () => window.removeEventListener('storage', load);
   }, []);
-
-  const scrollStats = (direction: 'left' | 'right') => {
-    if (statsRef.current) {
-      statsRef.current.scrollBy({
-        left: direction === 'left' ? -350 : 350,
-        behavior: 'smooth',
-      });
-    }
-  };
 
   const ReviewCard = ({ review }: { review: TestimonialItem }) => (
     <div className="shrink-0 w-80 sm:w-90 md:w-100 bg-white border border-gray-100 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm hover:shadow-lg transition-shadow cursor-default">
@@ -209,25 +199,34 @@ export const Testimonials = () => {
 
   return (
     <section className="py-12 md:py-16 lg:py-24 bg-white overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Stats Section */}
-        <div className="relative flex items-center mb-12 sm:mb-16 md:mb-20">
-          <button
-            onClick={() => scrollStats('left')}
-            className="hidden sm:flex shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-green-200 text-green-400 hover:bg-green-50 hover:border-green-400 hover:text-green-500 items-center justify-center transition-all mr-2 sm:mr-4"
-          >
-            <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-          </button>
+      <style>{`
+        @keyframes marquee-right {
+          from { transform: translateX(-50%); }
+          to   { transform: translateX(0%); }
+        }
+        @keyframes marquee-left {
+          from { transform: translateX(0%); }
+          to   { transform: translateX(-50%); }
+        }
+        .marquee-right {
+          animation: marquee-right 35s linear infinite;
+        }
+        .marquee-left {
+          animation: marquee-left 35s linear infinite;
+        }
+        .marquee-right:hover,
+        .marquee-left:hover {
+          animation-play-state: paused;
+        }
+      `}</style>
 
-          <div
-            ref={statsRef}
-            className="flex gap-3 sm:gap-4 md:gap-6 overflow-x-auto scroll-smooth"
-            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-          >
-            {stats.map((stat, index) => (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Stats Section — auto-scroll left → right */}
+        <div className="mb-12 sm:mb-16 md:mb-20 overflow-hidden">
+          <div className="flex w-max marquee-right gap-3 sm:gap-4 md:gap-6">
+            {[...stats, ...stats].map((stat, index) => (
               <div
                 key={index}
-
                 className={`shrink-0 w-64 sm:w-72 md:w-75 lg:w-85 ${stat.bgColor} rounded-xl sm:rounded-2xl p-5 sm:p-6 md:p-8 transition-all hover:shadow-lg`}
               >
                 <div className={`text-3xl sm:text-4xl md:text-5xl font-bold ${stat.valueColor} mb-2 sm:mb-3`}>
@@ -238,13 +237,6 @@ export const Testimonials = () => {
               </div>
             ))}
           </div>
-
-          <button
-            onClick={() => scrollStats('right')}
-            className="hidden sm:flex shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-green-200 text-green-400 hover:bg-green-50 hover:border-green-400 hover:text-green-500 items-center justify-center transition-all ml-2 sm:ml-4"
-          >
-            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
-          </button>
         </div>
 
         {/* Client Reviews Header */}
@@ -258,19 +250,19 @@ export const Testimonials = () => {
         </div>
       </div>
 
-      {/* Row 1 - Reviews */}
+      {/* Row 1 — left → right */}
       <div className="mb-4 sm:mb-6 overflow-hidden">
-        <div className="flex gap-3 sm:gap-4 md:gap-6 overflow-x-auto scroll-smooth pb-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-          {reviews.map((review, index) => (
+        <div className="flex w-max marquee-right gap-3 sm:gap-4 md:gap-6 pb-4">
+          {[...reviews, ...reviews].map((review, index) => (
             <ReviewCard key={`r1-${index}`} review={review} />
           ))}
         </div>
       </div>
 
-      {/* Row 2 - Reviews */}
+      {/* Row 2 — right → left */}
       <div className="overflow-hidden">
-        <div className="flex gap-3 sm:gap-4 md:gap-6 overflow-x-auto scroll-smooth pb-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-          {reviews.map((review, index) => (
+        <div className="flex w-max marquee-left gap-3 sm:gap-4 md:gap-6 pb-4">
+          {[...reviews, ...reviews].map((review, index) => (
             <ReviewCard key={`r2-${index}`} review={review} />
           ))}
         </div>
