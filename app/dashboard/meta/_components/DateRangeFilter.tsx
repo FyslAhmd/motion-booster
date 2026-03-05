@@ -83,7 +83,7 @@ export default function DateRangeFilter({ onDateChange }: Props) {
         className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100"
       >
         <Calendar className="h-4 w-4" />
-        <span className="max-w-[180px] truncate">{label}</span>
+        <span className="max-w-45 truncate">{label}</span>
         <ChevronDown
           className={`h-3.5 w-3.5 transition-transform ${open ? 'rotate-180' : ''}`}
         />

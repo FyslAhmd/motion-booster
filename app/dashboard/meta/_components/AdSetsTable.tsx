@@ -267,7 +267,7 @@ export default function AdSetsTable({ accountId }: AdSetsTableProps) {
                     <div key={a.id} className="px-4 py-3">
                       <div className="flex items-start justify-between gap-2">
                         <p className="min-w-0 flex-1 truncate text-sm font-medium text-gray-900">{a.name}</p>
-                        <span className={`flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${st.color}`}>{st.label}</span>
+                        <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${st.color}`}>{st.label}</span>
                       </div>
                       <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-gray-500">
                         <span>{a.daily_budget ? `${fmtBudget(a.daily_budget)}/day` : a.lifetime_budget ? `${fmtBudget(a.lifetime_budget)} lifetime` : '—'}</span>

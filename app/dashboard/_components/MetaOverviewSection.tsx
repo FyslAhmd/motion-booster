@@ -86,7 +86,7 @@ export default function MetaOverviewSection() {
         </div>
         {/* Mobile: stacked | Desktop: single row */}
         <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center">
-          <div className="w-full sm:w-auto sm:flex-shrink-0">
+          <div className="w-full sm:w-auto sm:shrink-0">
             <AccountSwitcher value={accountId} onChange={setAccountId} />
           </div>
           <div className="flex min-w-0 flex-1 items-start gap-2">
@@ -105,7 +105,7 @@ export default function MetaOverviewSection() {
             <button
               onClick={() => load(datePreset, accountId, customSince, customUntil)}
               disabled={loading}
-              className="mt-0.5 flex-shrink-0 rounded-lg border border-gray-200 bg-white p-2 text-gray-500 transition-colors hover:bg-gray-50 disabled:opacity-50"
+              className="mt-0.5 shrink-0 rounded-lg border border-gray-200 bg-white p-2 text-gray-500 transition-colors hover:bg-gray-50 disabled:opacity-50"
             >
               <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             </button>
