@@ -77,6 +77,7 @@ export default function AdminTeamPage() {
   const [isNew, setIsNew] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   useEffect(() => {
     setTeam(AdminStore.getTeam());
@@ -122,6 +123,19 @@ export default function AdminTeamPage() {
 
   return (
     <AdminShell>
+      {showResetConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+            <h3 className="font-semibold text-gray-900 mb-2">Reset to Default?</h3>
+            <p className="text-sm text-gray-500 mb-6">All team members will be replaced with the default data. This cannot be undone.</p>
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => setShowResetConfirm(false)} className="px-4 py-2 text-sm rounded-xl border border-gray-200 hover:bg-gray-50">Cancel</button>
+              <button onClick={() => { persist(defaultTeam); setShowResetConfirm(false); }} className="px-4 py-2 text-sm rounded-xl bg-red-600 text-white hover:bg-red-700">Reset</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
@@ -130,7 +144,7 @@ export default function AdminTeamPage() {
         </div>
         <div className="flex items-center gap-2">
           {saved && <span className="flex items-center gap-1.5 text-green-600 text-sm"><Check className="w-4 h-4" /> Saved!</span>}
-          <button onClick={() => persist(defaultTeam)} className="text-xs text-gray-500 border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50">Reset Default</button>
+          <button onClick={() => setShowResetConfirm(true)} className="text-xs text-gray-500 border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50">Reset Default</button>
           <button onClick={openNew} className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-4 py-2 rounded-xl">
             <Plus className="w-4 h-4" /> Add Member
           </button>
@@ -188,90 +202,100 @@ export default function AdminTeamPage() {
 
       {/* Edit Modal */}
       {editing && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl my-4">
-            <div className="flex items-center justify-between p-6 border-b border-gray-100 sticky top-0 bg-white rounded-t-2xl">
-              <h2 className="font-bold text-gray-900">{isNew ? 'Add Team Member' : 'Edit Team Member'}</h2>
-              <button onClick={() => { setEditing(null); setIsNew(false); }} className="p-2 hover:bg-gray-100 rounded-lg">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center overflow-y-auto px-4 py-8">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl my-auto">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+              <h2 className="font-semibold text-gray-900">{isNew ? 'Add Team Member' : 'Edit Team Member'}</h2>
+              <button onClick={() => { setEditing(null); setIsNew(false); }} className="p-2 hover:bg-gray-100 rounded-lg text-gray-400">
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="p-6 space-y-4">
-              {/* Avatar Photo Upload */}
+
+            <div className="p-6 space-y-5">
+              {/* Photo upload — full width at top */}
               <ImageUpload
                 value={editing.avatarImage || ''}
                 onChange={v => setEditing({ ...editing, avatarImage: v })}
                 label="Profile Photo (optional)"
                 aspectRatio="square"
                 maxPx={400}
+                sizeHint="400×400px recommended"
               />
 
+              {/* Name + Role */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
-                  <input type="text" value={editing.name} onChange={e => setEditing({ ...editing, name: e.target.value })} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">Full Name *</label>
+                  <input type="text" value={editing.name} onChange={e => setEditing({ ...editing, name: e.target.value })} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400" placeholder="e.g. Rahul Hossain" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Role / Position</label>
-                  <input type="text" value={editing.role} onChange={e => setEditing({ ...editing, role: e.target.value })} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">Role / Position</label>
+                  <input type="text" value={editing.role} onChange={e => setEditing({ ...editing, role: e.target.value })} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400" placeholder="e.g. Lead Designer" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Experience</label>
-                  <input type="text" value={editing.experience} onChange={e => setEditing({ ...editing, experience: e.target.value })} placeholder="e.g. 5 years+" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">Experience</label>
+                  <input type="text" value={editing.experience} onChange={e => setEditing({ ...editing, experience: e.target.value })} placeholder="e.g. 5 years+" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Projects Completed</label>
-                  <input type="text" value={editing.projects} onChange={e => setEditing({ ...editing, projects: e.target.value })} placeholder="e.g. 200+" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">Projects Completed</label>
+                  <input type="text" value={editing.projects} onChange={e => setEditing({ ...editing, projects: e.target.value })} placeholder="e.g. 200+" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
-                  <select value={editing.department} onChange={e => setEditing({ ...editing, department: e.target.value })} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400">
-                    {DEPARTMENTS.map(d => <option key={d}>{d}</option>)}
-                  </select>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">Avatar Initials <span className="text-gray-400 font-normal">(fallback if no photo)</span></label>
+                  <input type="text" value={editing.avatar} onChange={e => setEditing({ ...editing, avatar: e.target.value.slice(0, 3).toUpperCase() })} placeholder="e.g. RH" maxLength={3} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400" />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Avatar Initials</label>
-                  <input type="text" value={editing.avatar} onChange={e => setEditing({ ...editing, avatar: e.target.value.slice(0, 3).toUpperCase() })} placeholder="e.g. RH" maxLength={3} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
+              </div>
+
+              {/* Department pills */}
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Department</label>
+                <div className="flex flex-wrap gap-2">
+                  {DEPARTMENTS.map(d => (
+                    <button key={d} type="button" onClick={() => setEditing({ ...editing, department: d })}
+                      className={`px-3 py-1.5 text-xs rounded-full border transition-all ${editing.department === d ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'}`}>
+                      {d}
+                    </button>
+                  ))}
                 </div>
               </div>
 
               {/* Avatar Color */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Avatar Color</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Avatar Color</label>
                 <div className="flex flex-wrap gap-2">
                   {AVATAR_COLORS.map(c => (
-                    <button
-                      key={c}
-                      type="button"
-                      onClick={() => setEditing({ ...editing, avatarColor: c })}
-                      className={`w-8 h-8 rounded-lg bg-gradient-to-br ${c} ${editing.avatarColor === c ? 'ring-2 ring-offset-1 ring-gray-600' : ''}`}
-                    />
+                    <button key={c} type="button" onClick={() => setEditing({ ...editing, avatarColor: c })}
+                      className={`w-7 h-7 rounded-lg bg-gradient-to-br ${c} ${editing.avatarColor === c ? 'ring-2 ring-offset-1 ring-gray-600 scale-110' : 'hover:scale-105'} transition-transform`} />
                   ))}
                 </div>
               </div>
 
               {/* Featured toggle */}
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => setEditing({ ...editing, featured: !editing.featured })}
-                  className={`w-10 h-5 rounded-full transition-colors ${editing.featured ? 'bg-amber-400' : 'bg-gray-200'}`}
-                >
-                  <div className={`w-4 h-4 bg-white rounded-full shadow transition-transform ${editing.featured ? 'translate-x-5' : 'translate-x-0.5'}`} />
+              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                <button type="button" onClick={() => setEditing({ ...editing, featured: !editing.featured })}
+                  className={`w-10 h-5 rounded-full transition-colors shrink-0 ${editing.featured ? 'bg-amber-400' : 'bg-gray-200'}`}>
+                  <div className={`w-4 h-4 bg-white rounded-full shadow transition-transform mx-0.5 ${editing.featured ? 'translate-x-5' : 'translate-x-0'}`} />
                 </button>
-                <span className="text-sm text-gray-700">Featured member <span className="text-xs text-gray-400">(shows star badge)</span></span>
+                <div>
+                  <span className="text-sm font-medium text-gray-700">Featured member</span>
+                  <span className="text-xs text-gray-400 ml-1.5">Shows a star badge on the team card</span>
+                </div>
               </div>
 
-              <hr />
+              <hr className="border-gray-100" />
 
+              {/* Editable lists */}
               <EditableList label="Work Experience" items={editing.workExperience} onChange={v => setEditing({ ...editing, workExperience: v })} />
               <EditableList label="Specialized Area" items={editing.specializedArea} onChange={v => setEditing({ ...editing, specializedArea: v })} />
               <EditableList label="Education" items={editing.education} onChange={v => setEditing({ ...editing, education: v })} />
               <EditableList label="Work Places" items={editing.workPlaces} onChange={v => setEditing({ ...editing, workPlaces: v })} />
             </div>
-            <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-100 sticky bottom-0 bg-white rounded-b-2xl">
-              <button onClick={() => { setEditing(null); setIsNew(false); }} className="px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50">Cancel</button>
-              <button onClick={handleSave} disabled={!editing.name.trim()} className="px-5 py-2 text-sm bg-red-600 text-white rounded-xl hover:bg-red-700 disabled:opacity-50 font-medium">
+
+            {/* Footer */}
+            <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+              <button onClick={() => { setEditing(null); setIsNew(false); }} className="px-4 py-2 text-sm rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-600">Cancel</button>
+              <button onClick={handleSave} disabled={!editing.name.trim()} className="flex items-center gap-2 px-4 py-2 text-sm rounded-xl bg-red-600 hover:bg-red-700 text-white font-medium disabled:opacity-50">
                 {isNew ? 'Add Member' : 'Save Changes'}
               </button>
             </div>

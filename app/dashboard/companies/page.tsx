@@ -4,13 +4,14 @@ import { useState, useEffect } from 'react';
 import AdminShell from '../_components/AdminShell';
 import { AdminStore, CompanyItem, defaultCompanies, generateId } from '@/lib/admin/store';
 import ImageUpload from '@/components/ui/ImageUpload';
-import { Plus, Trash2, GripVertical, Check, RotateCcw, Building2, Image as ImageIcon, Type } from 'lucide-react';
+import { Plus, Trash2, GripVertical, Check, RotateCcw, Building2, Image as ImageIcon, Type, NotebookPen } from 'lucide-react';
 
 export default function AdminCompaniesPage() {
   const [companies, setCompanies] = useState<CompanyItem[]>([]);
   const [toast, setToast] = useState('');
   const [toastType, setToastType] = useState<'success' | 'error'>('success');
   const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   useEffect(() => {
     setCompanies(AdminStore.getCompanies());
@@ -68,6 +69,19 @@ export default function AdminCompaniesPage() {
         </div>
       )}
 
+      {showResetConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+            <h3 className="font-semibold text-gray-900 mb-2">Reset to Default?</h3>
+            <p className="text-sm text-gray-500 mb-6">All company logos will be replaced with the default data. This cannot be undone.</p>
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => setShowResetConfirm(false)} className="px-4 py-2 text-sm rounded-xl border border-gray-200 hover:bg-gray-50">Cancel</button>
+              <button onClick={() => { reset(); setShowResetConfirm(false); }} className="px-4 py-2 text-sm rounded-xl bg-red-600 text-white hover:bg-red-700">Reset</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="space-y-5">
         {/* Header */}
         <div className="flex items-center justify-between flex-wrap gap-3">
@@ -77,7 +91,7 @@ export default function AdminCompaniesPage() {
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={reset}
+              onClick={() => setShowResetConfirm(true)}
               className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
             >
               <RotateCcw className="w-3.5 h-3.5" /> Reset
@@ -93,7 +107,7 @@ export default function AdminCompaniesPage() {
 
         {/* Info banner */}
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 flex items-start gap-2.5">
-          <Building2 className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+          <NotebookPen className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
           <p className="text-xs text-blue-700">
             Upload a logo image <span className="font-semibold">(recommended: PNG with transparent background)</span> or just enter a company name — it will display as stylised text if no logo is uploaded. Drag rows to reorder.
           </p>
@@ -151,6 +165,7 @@ export default function AdminCompaniesPage() {
                         label={company.logoImage ? 'Replace Logo' : 'Upload Logo'}
                         aspectRatio="wide"
                         maxPx={400}
+                        sizeHint="400×200px, PNG transparent bg"
                       />
                     </div>
                     {company.logoImage && (

@@ -53,8 +53,8 @@ export default function InsightsCards({ insights }: Props) {
             className="rounded-xl border border-gray-100 bg-white p-4 
                        transition-all hover:border-red-400/40"
           >
-            <p className="text-xs font-bold text-gray-700 mb-1">{m.label}</p>
-            <p className="text-xl font-bold text-gray-900">{fmt(value, m.type)}</p>
+            <p className="text-xs font-medium text-gray-400 mb-1">{m.label}</p>
+            <p className="text-xs font-bold text-gray-900">{fmt(value, m.type)}</p>
           </div>
         );
       })}

@@ -31,6 +31,7 @@ export default function HeroSliderPage() {
   const [toast, setToast] = useState('');
 
   const [loading, setLoading] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   useEffect(() => {
     fetch('/api/v1/cms/hero-slides')
@@ -143,6 +144,7 @@ export default function HeroSliderPage() {
                 onChange={v => setEditing({ ...editing, customImage: v })}
                 label="Slide Image"
                 aspectRatio="wide"
+                sizeHint="1280×720px recommended"
               />
 
               {/* Preset images */}
@@ -184,6 +186,19 @@ export default function HeroSliderPage() {
         </div>
       )}
 
+      {showResetConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+            <h3 className="font-semibold text-gray-900 mb-2">Reset to Default?</h3>
+            <p className="text-sm text-gray-500 mb-6">All slides will be replaced with the default data. This cannot be undone.</p>
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => setShowResetConfirm(false)} className="px-4 py-2 text-sm rounded-xl border border-gray-200 hover:bg-gray-50">Cancel</button>
+              <button onClick={() => { resetDefault(); setShowResetConfirm(false); }} className="px-4 py-2 text-sm rounded-xl bg-red-600 text-white hover:bg-red-700">Reset</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Page Header */}
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
@@ -191,7 +206,7 @@ export default function HeroSliderPage() {
           <p className="text-sm text-gray-500 mt-0.5">{slides.length} slide{slides.length !== 1 ? 's' : ''} · shown on homepage</p>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={resetDefault} disabled={loading} className="text-xs text-gray-500 border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50 disabled:opacity-50">Reset Default</button>
+          <button onClick={() => setShowResetConfirm(true)} disabled={loading} className="text-xs text-gray-500 border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50 disabled:opacity-50">Reset Default</button>
           <button
             onClick={() => { setEditing({ id: '', ...emptySlide }); setIsNew(true); }}
             className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-xl"

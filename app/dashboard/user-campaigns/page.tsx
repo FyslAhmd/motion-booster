@@ -53,7 +53,7 @@ export default function UserCampaignsPage() {
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-xl font-bold text-gray-900">User Campaign</h1>
+          <h1 className="text-xl font-bold text-gray-900">Assign User To Campaign</h1>
           <p className="mt-0.5 text-sm text-gray-500">
             View users who have campaigns, ad sets, or ads assigned to them
           </p>

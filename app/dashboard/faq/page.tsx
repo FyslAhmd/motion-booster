@@ -14,6 +14,7 @@ export default function AdminFAQPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   useEffect(() => {
     setFAQs(AdminStore.getFAQs());
@@ -60,6 +61,18 @@ export default function AdminFAQPage() {
 
   return (
     <AdminShell>
+      {showResetConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+            <h3 className="font-semibold text-gray-900 mb-2">Reset to Default?</h3>
+            <p className="text-sm text-gray-500 mb-6">All current FAQs will be replaced with the default data. This cannot be undone.</p>
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => setShowResetConfirm(false)} className="px-4 py-2 text-sm rounded-xl border border-gray-200 hover:bg-gray-50">Cancel</button>
+              <button onClick={() => { persist(defaultFAQs); setShowResetConfirm(false); }} className="px-4 py-2 text-sm rounded-xl bg-red-600 text-white hover:bg-red-700">Reset</button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
           <h1 className="text-xl font-bold text-gray-900">FAQ Management</h1>
@@ -67,7 +80,7 @@ export default function AdminFAQPage() {
         </div>
         <div className="flex items-center gap-2">
           {saved && <span className="flex items-center gap-1.5 text-green-600 text-sm"><Check className="w-4 h-4" /> Saved!</span>}
-          <button onClick={() => persist(defaultFAQs)} className="text-xs text-gray-500 border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50">Reset Default</button>
+          <button onClick={() => setShowResetConfirm(true)} className="text-xs text-gray-500 border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50">Reset Default</button>
           <button
             onClick={() => { setEditing({ id: '', ...BLANK }); setIsNew(true); }}
             className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-4 py-2 rounded-xl"

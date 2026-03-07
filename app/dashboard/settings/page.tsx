@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import AdminShell from '../_components/AdminShell';
 import { AdminStore, SiteSettings, defaultSettings } from '@/lib/admin/store';
-import { Check, RotateCcw, Save, Sparkles } from 'lucide-react';
+import { Check, RotateCcw, Save, Sparkles, NotebookPen } from 'lucide-react';
 
 function Field({ label, value, onChange, placeholder, hint }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string; hint?: string }) {
   return (
@@ -38,6 +38,7 @@ function TextArea({ label, value, onChange, rows = 3 }: { label: string; value: 
 export default function AdminSettingsPage() {
   const [settings, setSettings] = useState<SiteSettings>(defaultSettings);
   const [saved, setSaved] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   useEffect(() => {
     setSettings(AdminStore.getSettings());
@@ -62,6 +63,19 @@ export default function AdminSettingsPage() {
 
   return (
     <AdminShell>
+      {showResetConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+            <h3 className="font-semibold text-gray-900 mb-2">Reset to Default?</h3>
+            <p className="text-sm text-gray-500 mb-6">All settings will be reset to defaults. This cannot be undone.</p>
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => setShowResetConfirm(false)} className="px-4 py-2 text-sm rounded-xl border border-gray-200 hover:bg-gray-50">Cancel</button>
+              <button onClick={() => { handleReset(); setShowResetConfirm(false); }} className="px-4 py-2 text-sm rounded-xl bg-red-600 text-white hover:bg-red-700">Reset</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Site Settings</h1>
@@ -69,7 +83,7 @@ export default function AdminSettingsPage() {
         </div>
         <div className="flex items-center gap-2">
           {saved && <span className="flex items-center gap-1.5 text-green-600 text-sm font-medium"><Check className="w-4 h-4" /> Settings Saved!</span>}
-          <button onClick={handleReset} className="flex items-center gap-2 text-xs text-gray-500 border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50">
+          <button onClick={() => setShowResetConfirm(true)} className="flex items-center gap-2 text-xs text-gray-500 border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50">
             <RotateCcw className="w-3 h-3" /> Reset Default
           </button>
           <button onClick={handleSave} className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-4 py-2 rounded-xl">
@@ -123,7 +137,7 @@ export default function AdminSettingsPage() {
 
         {/* Welcome Modal note */}
         <div className="bg-blue-50 border border-blue-100 rounded-2xl p-5 flex items-start gap-3">
-          <Sparkles className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+          <NotebookPen className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
           <div>
             <p className="text-sm font-semibold text-blue-800">Welcome Popup settings have moved</p>
             <p className="text-xs text-blue-600 mt-0.5">

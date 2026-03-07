@@ -184,15 +184,24 @@ export default function PortfolioPage() {
                     placeholder="e.g. TechVenture BD"
                   />
                 </div>
-                <div>
+                <div className="sm:col-span-2">
                   <label className="block text-xs font-medium text-gray-500 mb-1.5">Category</label>
-                  <select
-                    value={editing.category}
-                    onChange={e => setEditing({ ...editing, category: e.target.value })}
-                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400 bg-white"
-                  >
-                    {CATEGORIES.map(c => <option key={c}>{c}</option>)}
-                  </select>
+                  <div className="flex flex-wrap gap-2">
+                    {CATEGORIES.map(c => (
+                      <button
+                        key={c}
+                        type="button"
+                        onClick={() => setEditing({ ...editing, category: c })}
+                        className={`px-3 py-1.5 text-xs rounded-full border transition-all ${
+                          editing.category === c
+                            ? 'bg-gray-900 text-white border-gray-900'
+                            : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
+                        }`}
+                      >
+                        {c}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
@@ -284,8 +293,9 @@ export default function PortfolioPage() {
               <ImageUpload
                 value={editing.coverImage || ''}
                 onChange={v => setEditing({ ...editing, coverImage: v })}
-                label="Cover Image (optional — overrides gradient)"
+                label="Cover Image"
                 aspectRatio="wide"
+                sizeHint="800×533px recommended"
               />
             </div>
 

@@ -143,12 +143,12 @@ export default function SpendChart({ data }: Props) {
           </div>
 
           {/* Metric tabs */}
-          <div className="flex items-center gap-1 rounded-lg bg-gray-50 p-1 border border-gray-100">
+          <div className="flex w-full items-center rounded-lg bg-gray-50 p-1 border border-gray-100 sm:w-auto">
             {(['spend', 'impressions', 'clicks'] as const).map((m) => (
               <button
                 key={m}
                 onClick={() => setActiveMetric(m)}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all capitalize ${
+                className={`flex-1 px-3 py-1.5 rounded-md text-xs font-medium transition-all capitalize sm:flex-initial ${
                   activeMetric === m
                     ? 'bg-white text-gray-900 shadow-sm border border-gray-100'
                     : 'text-gray-400 hover:text-gray-600'

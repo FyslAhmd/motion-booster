@@ -55,6 +55,7 @@ export default function PopularServicesPage() {
 
   const [loading, setLoading] = useState(false);
   const [modalError, setModalError] = useState('');
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
 
   useEffect(() => {
     fetch('/api/v1/cms/popular-services')
@@ -220,6 +221,7 @@ export default function PopularServicesPage() {
                   onChange={v => setEditing({ ...editing, customImage: v })}
                   label="Upload Custom Image (overrides preset below)"
                   aspectRatio="wide"
+                  sizeHint="800×450px recommended"
                 />
                 <p className="text-xs text-gray-400 mt-2 mb-2">— or choose a preset —</p>
                 <div className="grid grid-cols-5 gap-2">
@@ -320,8 +322,30 @@ export default function PopularServicesPage() {
         ) : (
           <ul className="divide-y divide-gray-50">
             {items.map((item, index) => (
-              <li key={item.id} className="flex items-center gap-4 px-5 py-3 hover:bg-gray-50 transition-colors group">
-                <GripVertical className="w-4 h-4 text-gray-300 shrink-0" />
+              <li
+                key={item.id}
+                draggable
+                onDragStart={() => setDragIdx(index)}
+                onDragOver={e => e.preventDefault()}
+                onDrop={async () => {
+                  if (dragIdx === null || dragIdx === index) { setDragIdx(null); return; }
+                  const arr = [...items];
+                  const [moved] = arr.splice(dragIdx, 1);
+                  arr.splice(index, 0, moved);
+                  setItems(arr);
+                  setDragIdx(null);
+                  await fetch('/api/v1/cms/popular-services/reorder', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ids: arr.map(i => i.id) }),
+                  }).catch(() => showToast('Reorder failed.'));
+                }}
+                onDragEnd={() => setDragIdx(null)}
+                className={`flex items-center gap-4 px-5 py-3 transition-colors group ${
+                  dragIdx === index ? 'opacity-40 bg-gray-50' : 'hover:bg-gray-50'
+                }`}
+              >
+                <GripVertical className="w-4 h-4 text-gray-300 shrink-0 cursor-grab active:cursor-grabbing" />
 
                 {/* Image thumb */}
                 <div className="relative w-14 h-10 rounded-lg overflow-hidden shrink-0">

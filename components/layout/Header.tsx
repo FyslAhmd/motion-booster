@@ -240,15 +240,9 @@ export const Header = () => {
                 <div className="flex items-center gap-3">
                   <Link
                     href="/login"
-                    className="text-gray-700 hover:text-red-500 font-semibold text-sm transition-colors"
-                  >
-                    Login
-                  </Link>
-                  <Link
-                    href="/register"
                     className="flex items-center gap-2 px-6 py-3 bg-linear-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold rounded-lg transition-all shadow-md hover:shadow-lg text-sm"
                   >
-                    Get Started
+                    Login
                   </Link>
                 </div>
               )}

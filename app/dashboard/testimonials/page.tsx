@@ -36,6 +36,7 @@ export default function AdminTestimonialsPage() {
   const [isNew, setIsNew] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   useEffect(() => {
     setItems(AdminStore.getTestimonials());
@@ -72,6 +73,18 @@ export default function AdminTestimonialsPage() {
 
   return (
     <AdminShell>
+      {showResetConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+            <h3 className="font-semibold text-gray-900 mb-2">Reset to Default?</h3>
+            <p className="text-sm text-gray-500 mb-6">All current testimonials will be replaced with the default data. This cannot be undone.</p>
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => setShowResetConfirm(false)} className="px-4 py-2 text-sm rounded-xl border border-gray-200 hover:bg-gray-50">Cancel</button>
+              <button onClick={() => { persist(defaultTestimonials); setShowResetConfirm(false); }} className="px-4 py-2 text-sm rounded-xl bg-red-600 text-white hover:bg-red-700">Reset</button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Testimonials</h1>
@@ -79,7 +92,7 @@ export default function AdminTestimonialsPage() {
         </div>
         <div className="flex items-center gap-2">
           {saved && <span className="flex items-center gap-1.5 text-green-600 text-sm"><Check className="w-4 h-4" /> Saved!</span>}
-          <button onClick={() => persist(defaultTestimonials)} className="text-xs text-gray-500 border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50">Reset Default</button>
+          <button onClick={() => setShowResetConfirm(true)} className="text-xs text-gray-500 border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50">Reset Default</button>
           <button onClick={() => { setEditing({ id: '', ...BLANK }); setIsNew(true); }} className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-4 py-2 rounded-xl">
             <Plus className="w-4 h-4" /> Add Review
           </button>
@@ -138,8 +151,8 @@ export default function AdminTestimonialsPage() {
 
       {/* Edit Modal */}
       {editing && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center overflow-y-auto px-4 py-8">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg my-auto">
             <div className="flex items-center justify-between p-6 border-b border-gray-100">
               <h2 className="font-bold text-gray-900">{isNew ? 'Add Testimonial' : 'Edit Testimonial'}</h2>
               <button onClick={() => { setEditing(null); setIsNew(false); }} className="p-2 hover:bg-gray-100 rounded-lg"><X className="w-4 h-4" /></button>
@@ -149,9 +162,10 @@ export default function AdminTestimonialsPage() {
               <ImageUpload
                 value={editing.avatarImage || ''}
                 onChange={v => setEditing({ ...editing, avatarImage: v })}
-                label="Profile Photo (optional)"
+                label="Profile Photo"
                 aspectRatio="square"
                 maxPx={300}
+                sizeHint="300×300px recommended"
               />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>

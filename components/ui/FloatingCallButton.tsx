@@ -60,20 +60,31 @@ export const FloatingCallButton = () => {
           onClick={() => setModalOpen(false)}
         >
           <div
-            className="relative w-full max-w-sm rounded-2xl bg-white px-6 pb-8 pt-6 shadow-2xl"
+            className="relative w-full max-w-sm rounded-2xl bg-white px-6 pb-6 pt-6 shadow-2xl text-center"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close */}
             <button
               onClick={() => setModalOpen(false)}
-              className="absolute right-4 top-4 rounded-full p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+              className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-gray-100 text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-600"
               aria-label="Close"
             >
-              <X className="h-5 w-5" />
+              <X className="h-4 w-4" />
             </button>
 
-            <h3 className="mb-1 text-lg font-bold text-gray-900">Contact Us</h3>
-            <p className="mb-5 text-sm text-gray-500">Choose how you want to reach us</p>
+            <h3 className="mb-2 text-xl font-bold text-gray-900">Contact Us</h3>
+            <p className="mb-4 text-sm text-gray-500 leading-relaxed">
+              You are welcome to visit our office for any information related to Service. You can also reach us through the hotline number or messenger.
+            </p>
+
+            {/* Call icon image */}
+            <div className="mb-5 flex justify-center">
+              <img
+                src="/call-icon.png"
+                alt="Contact support"
+                className="h-32 w-32 object-contain"
+              />
+            </div>
 
             {/* WhatsApp + Messenger row */}
             <div className="mb-3 flex gap-3">
@@ -81,7 +92,7 @@ export const FloatingCallButton = () => {
                 href="https://wa.me/8801790939394"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-green-500 py-3 text-sm font-semibold text-white transition-colors hover:bg-green-600"
+                className="flex flex-1 items-center justify-center gap-2 rounded-full border-2 border-green-500 bg-white py-2.5 text-sm font-semibold text-green-600 transition-colors hover:bg-green-50"
               >
                 {/* WhatsApp icon */}
                 <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
@@ -93,7 +104,7 @@ export const FloatingCallButton = () => {
                 href="https://m.me/motionboosterbd"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-blue-500 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-600"
+                className="flex flex-1 items-center justify-center gap-2 rounded-full border-2 border-blue-500 bg-white py-2.5 text-sm font-semibold text-blue-600 transition-colors hover:bg-blue-50"
               >
                 {/* Messenger icon */}
                 <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
@@ -105,8 +116,8 @@ export const FloatingCallButton = () => {
 
             {/* Phone button */}
             <a
-              href="tel:+8801790939394"
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-red-500 py-3 text-sm font-semibold text-white transition-colors hover:bg-red-600"
+              href="tel:+880 1790-939394"
+               className="flex w-full items-center justify-center gap-2 rounded-full bg-red-500 py-3 text-base font-bold text-white transition-colors hover:bg-red-600"
             >
               <Phone className="h-5 w-5" />
               +880 1790-939394

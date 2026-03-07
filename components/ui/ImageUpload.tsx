@@ -11,6 +11,7 @@ interface ImageUploadProps {
   maxPx?: number;          // max width/height before resize (default 800)
   quality?: number;        // jpeg quality 0-1 (default 0.82)
   className?: string;
+  sizeHint?: string;       // e.g. '1280×720px recommended'
 }
 
 function resizeToBase64(file: File, maxPx: number, quality: number): Promise<string> {
@@ -55,6 +56,7 @@ export default function ImageUpload({
   maxPx = 800,
   quality = 0.82,
   className = '',
+  sizeHint,
 }: ImageUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -124,7 +126,8 @@ export default function ImageUpload({
           </div>
           <div className="text-center">
             <p className="text-xs font-medium text-gray-500 group-hover:text-red-600 transition-colors">Upload Image</p>
-            <p className="text-xs text-gray-400 mt-0.5">PNG, JPG, WEBP</p>
+            <p className="text-xs text-gray-400 mt-0.5">JPG, PNG, WebP</p>
+            {sizeHint && <p className="text-[10px] text-gray-300 mt-0.5">{sizeHint}</p>}
           </div>
         </button>
       )}

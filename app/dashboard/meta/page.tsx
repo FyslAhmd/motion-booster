@@ -24,31 +24,15 @@ export default function MetaDashboardPage() {
         <div>
           <h1 className="text-xl font-bold text-gray-900">Meta Ads Manager</h1>
           <p className="mt-0.5 text-sm text-gray-500">
-            Manage and monitor your Meta campaigns, ad sets, and ads
+            Manage and monitor your Meta campaigns and ads
           </p>
         </div>
 
         {/* Account Switcher */}
         <AccountSwitcher value={accountId} onChange={setAccountId} />
 
-        {/* Mobile: stacked sections */}
-        <div className="flex flex-col gap-6 sm:hidden">
-          <section>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">Campaigns</p>
-            <CampaignsTable accountId={accountId} />
-          </section>
-          <section>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">Ad Sets</p>
-            <AdSetsTable accountId={accountId} />
-          </section>
-          <section>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">Ads</p>
-            <AdsTable accountId={accountId} />
-          </section>
-        </div>
-
-        {/* Desktop: tabs */}
-        <div className="hidden sm:block">
+        {/* Tabs — same on mobile and desktop */}
+        <div>
           <div className="mb-6 flex gap-1 rounded-xl border border-gray-200 bg-gray-50 p-1">
             {TABS.map((t) => (
               <button

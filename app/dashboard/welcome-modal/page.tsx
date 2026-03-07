@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import AdminShell from '../_components/AdminShell';
 import { AdminStore, SiteSettings, defaultSettings } from '@/lib/admin/store';
-import { Check, ImagePlus, Save, Trash2, Eye } from 'lucide-react';
+import { Check, ImagePlus, Save, Trash2, Eye, NotebookPen } from 'lucide-react';
 
 export default function WelcomeModalPage() {
   const [settings, setSettings] = useState<SiteSettings>(defaultSettings);
@@ -49,11 +49,67 @@ export default function WelcomeModalPage() {
 
   return (
     <AdminShell>
+      {/* Fullscreen Preview Overlay */}
+      {preview && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 px-4"
+          onClick={() => setPreview(false)}
+        >
+          <div className="relative" onClick={e => e.stopPropagation()}>
+            {/* Close hint */}
+            <p className="text-white/60 text-xs text-center mb-3">Click anywhere outside to close preview</p>
+
+            {/* Simulated modal */}
+            <div className="relative bg-white rounded-2xl overflow-hidden shadow-2xl w-80">
+              <button
+                onClick={() => setPreview(false)}
+                className="absolute top-2 right-2 z-10 w-6 h-6 bg-white/80 rounded-full flex items-center justify-center text-gray-500 shadow hover:bg-white"
+              >
+                <span className="text-[10px] font-bold">✕</span>
+              </button>
+
+              {/* Banner */}
+              {currentImage ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={currentImage} alt="banner" className="w-full h-48 object-cover" />
+              ) : (
+                <div
+                  className="w-full h-48 flex items-center justify-center"
+                  style={{ background: 'linear-gradient(214.38deg, #ff8079 -2.24%, #ff1e1e 59.38%)' }}
+                >
+                  <div className="text-center px-4">
+                    <div className="text-5xl mb-2">🚀</div>
+                    <p className="text-white text-xl font-extrabold">Motion Booster</p>
+                    <p className="text-white/80 text-sm">Your Digital Growth Partner</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Content */}
+              <div className="px-5 pt-4 pb-5">
+                <h3 className="text-gray-900 text-base font-bold mb-1.5">{currentTitle}</h3>
+                <p className="text-gray-500 text-sm leading-relaxed mb-4">{currentBody}</p>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-8 h-8 rounded-full border-2 border-red-400 flex items-center justify-center">
+                      <span className="text-red-500 font-bold text-xs">8</span>
+                    </div>
+                    <span className="text-xs text-gray-400">Auto close</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 bg-red-500 text-white px-4 py-2 rounded-full text-sm font-semibold">
+                    Explore →
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Welcome Popup</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Customize the modal shown when visitors first arrive on the site</p>
+          <p className="text-sm text-gray-500 mt-0.5">Customize the modal shown when visitors first arrive on the site.</p>
         </div>
         <div className="flex items-center gap-2">
           {saved && (
@@ -101,7 +157,7 @@ export default function WelcomeModalPage() {
               >
                 <ImagePlus className="w-6 h-6 text-gray-300" />
                 <p className="text-xs text-gray-400">Click to upload banner image</p>
-                <p className="text-[10px] text-gray-300">JPG, PNG — max 800px wide</p>
+                <p className="text-[10px] text-gray-300">JPG, PNG, WebP — 800×400px recommended</p>
               </div>
             )}
 
@@ -173,9 +229,9 @@ export default function WelcomeModalPage() {
         <div className="flex flex-col gap-4">
           <div className="bg-white rounded-2xl border border-gray-100 p-5">
             <h2 className="text-sm font-semibold text-gray-700 mb-4">Live Preview</h2>
-            <div className="flex items-center justify-center bg-gray-800/80 rounded-xl p-6 min-h-[320px]">
+            <div className="flex items-center justify-center bg-gray-800/80 rounded-xl p-6 min-h-80">
               {/* Mock modal */}
-              <div className="relative bg-white rounded-2xl overflow-hidden shadow-2xl w-full max-w-[260px]">
+              <div className="relative bg-white rounded-2xl overflow-hidden shadow-2xl w-full max-w-65">
                 {/* close btn */}
                 <div className="absolute top-2 right-2 z-10 w-6 h-6 bg-white/80 rounded-full flex items-center justify-center text-gray-500 shadow">
                   <span className="text-[10px] font-bold">✕</span>
@@ -219,9 +275,12 @@ export default function WelcomeModalPage() {
           </div>
 
           {/* Note */}
-          <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 text-xs text-amber-700">
-            <p className="font-medium mb-1">How it works</p>
-            <p>The popup shows automatically 0.5 seconds after a visitor lands on the site. It only appears once per browser session.</p>
+          <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 flex items-start gap-2.5 text-xs text-amber-700">
+            <NotebookPen className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-medium mb-1">How it works</p>
+              <p>The popup shows automatically 0.5 seconds after a visitor lands on the site. It only appears once per browser session.</p>
+            </div>
           </div>
         </div>
       </div>
