@@ -23,8 +23,8 @@ export default function PortfolioPage() {
   return (
     <main className="min-h-screen bg-gray-50">
         {/* Hero banner */}
-        <div className="bg-white border-b border-gray-100">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-10">
+        <div className="bg-linear-to-br from-red-50 via-white to-rose-50">
+          <div className="max-w-7xl mx-auto px-6 lg:px-8 py-20 lg:py-32">
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-3">Our Projects</h1>
             <p className="text-gray-500 text-base md:text-lg max-w-2xl">
               Explore our complete portfolio of work — from web development and mobile apps to digital marketing and brand design.
@@ -70,7 +70,7 @@ export default function PortfolioPage() {
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={item.coverImage} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                   ) : (
-                    <div className={`w-full h-full bg-gradient-to-br ${item.coverColor}`} />
+                    <div className={`w-full h-full bg-linear-to-br ${item.coverColor}`} />
                   )}
                   {item.featured && (
                     <span className="absolute top-3 left-3 bg-white/90 text-red-600 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide">
@@ -129,7 +129,7 @@ export default function PortfolioPage() {
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={selected.coverImage} alt={selected.title} className="w-full h-full object-cover" />
               ) : (
-                <div className={`w-full h-full bg-gradient-to-br ${selected.coverColor}`} />
+                <div className={`w-full h-full bg-linear-to-br ${selected.coverColor}`} />
               )}
               <button
                 onClick={() => setSelected(null)}

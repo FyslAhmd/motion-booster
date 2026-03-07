@@ -104,7 +104,7 @@ function UserShell({ children, userName, noPadding }: { children: React.ReactNod
   const activeLabel = userNavItems.find(n => n.href === pathname)?.label ?? 'Dashboard';
 
   return (
-    <div className={`${noPadding ? 'h-screen overflow-hidden' : 'min-h-screen'} bg-gray-50 flex flex-col`}>
+    <div className="h-dvh bg-gray-50 flex flex-col overflow-hidden">
       {/* Top bar */}
       <header className="shrink-0 z-20 bg-white border-b border-gray-100 h-14 flex items-center px-4 justify-between shadow-sm">
         <Link href="/dashboard">
@@ -281,6 +281,16 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
     }
   }, [isLoading, isAuthenticated, isAdmin, pathname, router]);
 
+  // Lock body scroll when sidebar is open on mobile
+  useEffect(() => {
+    if (sidebarOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [sidebarOpen]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -310,18 +320,18 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
   }
 
   return (
-    <div className={`${noPadding ? 'h-screen overflow-hidden' : 'min-h-screen'} bg-gray-50 flex`}>
+    <div className={`${noPadding ? 'h-screen overflow-hidden' : 'min-h-screen'} bg-gray-50 flex overflow-x-hidden`}>
       {/* Sidebar Overlay (mobile) */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-20 lg:hidden"
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar */}
       <aside
-        className={`fixed lg:sticky top-0 left-0 h-screen w-64 bg-white border-r border-gray-100 flex flex-col z-30 transition-transform duration-300 shadow-sm ${
+        className={`fixed lg:sticky top-0 left-0 h-dvh w-72 bg-white border-r border-gray-100 flex flex-col z-50 transition-transform duration-300 ease-in-out shadow-xl lg:shadow-sm lg:w-64 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >

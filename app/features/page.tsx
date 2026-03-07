@@ -250,8 +250,8 @@ export default function FeaturesPage() {
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
-      <section className="pt-20 pb-12 px-4">
-        <div className="max-w-7xl mx-auto text-center">
+      <section className="py-20 lg:py-32 bg-linear-to-br from-red-50 via-white to-rose-50">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 text-center">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 rounded-full text-sm font-medium mb-6">
             <Rocket className="w-4 h-4" />
             Powerful Features for Growth

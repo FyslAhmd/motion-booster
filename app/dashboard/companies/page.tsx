@@ -151,7 +151,7 @@ export default function AdminCompaniesPage() {
                 {/* Logo Upload */}
                 <div>
                   <label className="flex items-center gap-1 text-xs font-medium text-gray-500 mb-1.5">
-                    <ImageIcon className="w-3 h-3" /> Logo Image <span className="font-normal text-gray-400">(optional)</span>
+                    <ImageIcon className="w-3 h-3" /> Logo Image 
                   </label>
                   <div className="flex items-center gap-3">
                     {company.logoImage && (

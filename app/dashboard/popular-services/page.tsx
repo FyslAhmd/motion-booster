@@ -137,7 +137,7 @@ export default function PopularServicesPage() {
   return (
     <AdminShell>
       {toast && (
-        <div className="fixed top-6 right-6 z-[200] bg-gray-900 text-white text-sm px-4 py-3 rounded-xl shadow-2xl">{toast}</div>
+        <div className="fixed top-6 right-6 z-200 bg-gray-900 text-white text-sm px-4 py-3 rounded-xl shadow-2xl">{toast}</div>
       )}
 
       {deleteId && (
@@ -246,7 +246,7 @@ export default function PopularServicesPage() {
                       key={g.value}
                       onClick={() => setEditing({ ...editing, gradient: g.value })}
                       title={g.label}
-                      className={`h-8 rounded-xl bg-gradient-to-r ${g.value} transition-all ${editing.gradient === g.value ? 'ring-2 ring-offset-1 ring-gray-800 scale-110' : 'hover:scale-105'}`}
+                      className={`h-8 rounded-xl bg-linear-to-r ${g.value} transition-all ${editing.gradient === g.value ? 'ring-2 ring-offset-1 ring-gray-800 scale-110' : 'hover:scale-105'}`}
                     />
                   ))}
                 </div>
@@ -341,29 +341,29 @@ export default function PopularServicesPage() {
                   }).catch(() => showToast('Reorder failed.'));
                 }}
                 onDragEnd={() => setDragIdx(null)}
-                className={`flex items-center gap-4 px-5 py-3 transition-colors group ${
+                className={`flex items-center gap-2 sm:gap-4 px-3 sm:px-5 py-3 transition-colors group ${
                   dragIdx === index ? 'opacity-40 bg-gray-50' : 'hover:bg-gray-50'
                 }`}
               >
                 <GripVertical className="w-4 h-4 text-gray-300 shrink-0 cursor-grab active:cursor-grabbing" />
 
                 {/* Image thumb */}
-                <div className="relative w-14 h-10 rounded-lg overflow-hidden shrink-0">
+                <div className="relative w-12 h-9 sm:w-14 sm:h-10 rounded-lg overflow-hidden shrink-0">
                   <Image src={item.image} alt={item.title} fill className="object-cover" />
-                  <div className={`absolute inset-0 bg-gradient-to-br ${item.gradient} opacity-40`} />
+                  <div className={`absolute inset-0 bg-linear-to-br ${item.gradient} opacity-40`} />
                 </div>
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
                   <div className="font-medium text-gray-900 text-sm truncate">{item.title}</div>
-                  <div className="text-xs text-gray-400 flex items-center gap-2 mt-0.5">
-                    <span className="bg-gray-100 px-2 py-0.5 rounded-full">{item.category || 'No category'}</span>
-                    <span>{item.services.length} features</span>
+                  <div className="text-xs text-gray-400 flex flex-wrap items-center gap-1.5 mt-0.5">
+                    <span className="bg-gray-100 px-2 py-0.5 rounded-full truncate max-w-30 sm:max-w-none">{item.category || 'No category'}</span>
+                    <span className="shrink-0">{item.services.length} features</span>
                   </div>
                 </div>
 
                 {/* Reorder */}
-                <div className="flex flex-col gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex flex-col gap-0.5 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0">
                   <button onClick={() => move(index, -1)} disabled={index === 0} className="p-0.5 rounded hover:bg-gray-200 disabled:opacity-20">
                     <ChevronUp className="w-3.5 h-3.5 text-gray-500" />
                   </button>
@@ -373,11 +373,11 @@ export default function PopularServicesPage() {
                 </div>
 
                 {/* Actions */}
-                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={() => { setEditing({ ...item }); setIsNew(false); }} className="p-2 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors">
+                <div className="flex gap-0.5 sm:gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0">
+                  <button onClick={() => { setEditing({ ...item }); setIsNew(false); }} className="p-1.5 sm:p-2 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors">
                     <Pencil className="w-3.5 h-3.5" />
                   </button>
-                  <button onClick={() => setDeleteId(item.id)} className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors">
+                  <button onClick={() => setDeleteId(item.id)} className="p-1.5 sm:p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors">
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>

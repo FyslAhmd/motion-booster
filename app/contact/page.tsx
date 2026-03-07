@@ -22,11 +22,11 @@ export default function ContactPage() {
   };
 
   return (
-    <main className="min-h-screen bg-white pt-20 pb-16 lg:pb-0">
+    <main className="min-h-screen bg-white pb-16 lg:pb-0">
 
       {/* Hero */}
-      <section className="py-16 px-4 bg-linear-to-br from-red-50 via-white to-rose-50">
-        <div className="max-w-7xl mx-auto text-center">
+      <section className="py-20 lg:py-32 bg-linear-to-br from-red-50 via-white to-rose-50">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 text-center">
           <span className="inline-block px-4 py-1.5 bg-red-100 text-red-600 rounded-full text-sm font-semibold mb-4">Contact Us</span>
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
             Get in Touch with Us

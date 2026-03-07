@@ -1,38 +1,10 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import AdminShell from '../_components/AdminShell';
 import { ServiceCategoryItem } from '@/lib/admin/store';
 import { CategoryIcon, ICON_OPTIONS } from '@/lib/admin/categoryIcons';
-import { Plus, Pencil, Trash2, X, Save, GripVertical, ChevronUp, ChevronDown, Upload, ImagePlus } from 'lucide-react';
-
-// Resize uploaded image to base64 (max 128px)
-function resizeIcon(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = reject;
-    reader.onload = e => {
-      const img = new window.Image();
-      img.onerror = reject;
-      img.onload = () => {
-        const maxPx = 128;
-        let w = img.width, h = img.height;
-        if (w > maxPx || h > maxPx) {
-          if (w > h) { h = Math.round((h / w) * maxPx); w = maxPx; }
-          else { w = Math.round((w / h) * maxPx); h = maxPx; }
-        }
-        const canvas = document.createElement('canvas');
-        canvas.width = w; canvas.height = h;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) { reject(new Error('canvas error')); return; }
-        ctx.drawImage(img, 0, 0, w, h);
-        resolve(canvas.toDataURL('image/png'));
-      };
-      img.src = e.target?.result as string;
-    };
-    reader.readAsDataURL(file);
-  });
-}
+import { Plus, Pencil, Trash2, X, Save, GripVertical, ChevronUp, ChevronDown } from 'lucide-react';
 
 const COLOR_OPTIONS = [
   { label: 'Green',   text: 'text-green-600',  bg: 'bg-green-50'  },
@@ -66,18 +38,8 @@ export default function CategoriesPage() {
   const [isNew, setIsNew] = useState(false);
   const [toast, setToast] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [dragIdx, setDragIdx] = useState<number | null>(null);
-  const customIconRef = useRef<HTMLInputElement>(null);
 
-  const handleCustomIcon = async (file: File | undefined) => {
-    if (!file || !editing) return;
-    if (!file.type.startsWith('image/')) return;
-    try {
-      const b64 = await resizeIcon(file);
-      setEditing({ ...editing, iconType: b64 });
-    } catch { /* ignore */ }
-  };
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     fetch('/api/v1/cms/service-categories')
@@ -210,41 +172,6 @@ export default function CategoriesPage() {
                 </div>
               </div>
 
-              {/* Custom Icon Upload */}
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-2">Custom Icon <span className="text-gray-400 font-normal">(optional — overrides preset below)</span></label>
-                <input
-                  ref={customIconRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={e => handleCustomIcon(e.target.files?.[0])}
-                />
-                {editing.iconType.startsWith('data:') ? (
-                  <div className="flex items-center gap-3 p-3 border border-gray-200 rounded-xl bg-gray-50">
-                    <img src={editing.iconType} alt="custom icon" className="w-10 h-10 object-contain rounded-lg border border-gray-100 bg-white p-1" />
-                    <span className="text-xs text-gray-500 flex-1">Custom icon uploaded</span>
-                    <button
-                      type="button"
-                      onClick={() => setEditing({ ...editing, iconType: 'layers' })}
-                      className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1"
-                    >
-                      <X className="w-3.5 h-3.5" /> Remove
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => customIconRef.current?.click()}
-                    className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-gray-200 rounded-xl hover:border-red-300 hover:bg-red-50/30 transition-colors text-gray-400 hover:text-red-500"
-                  >
-                    <ImagePlus className="w-4 h-4" />
-                    <span className="text-xs font-medium">Upload custom icon / logo</span>
-                    <span className="text-[10px] text-gray-300">PNG, WebP, SVG — 128×128px</span>
-                  </button>
-                )}
-              </div>
-
               {/* Icon picker */}
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-2">Icon</label>
@@ -293,8 +220,8 @@ export default function CategoriesPage() {
               <div className="border border-gray-100 rounded-xl p-4 bg-gray-50">
                 <p className="text-xs text-gray-400 mb-3">Preview</p>
                 <div className="flex flex-col items-center justify-center w-36 h-28 bg-white border border-gray-100 rounded-2xl shadow-sm mx-auto">
-                  <div className={`mb-2 w-11 h-11 rounded-xl flex items-center justify-center ${editing.iconType.startsWith('data:') ? 'bg-gray-50' : editing.iconBg}`}>
-                    <CategoryIcon iconType={editing.iconType} className={`w-6 h-6 ${editing.iconType.startsWith('data:') ? '' : editing.iconColor}`} />
+                  <div className={`mb-2 w-11 h-11 rounded-xl flex items-center justify-center ${editing.iconBg}`}>
+                    <CategoryIcon iconType={editing.iconType} className={`w-6 h-6 ${editing.iconColor}`} />
                   </div>
                   <span className="text-xs font-bold text-gray-800 text-center leading-tight px-3">
                     {editing.title || 'Category Name'}
@@ -340,35 +267,13 @@ export default function CategoriesPage() {
         ) : (
           <ul className="divide-y divide-gray-50">
             {items.map((item, index) => (
-              <li
-                key={item.id}
-                draggable
-                onDragStart={() => setDragIdx(index)}
-                onDragOver={e => e.preventDefault()}
-                onDrop={async () => {
-                  if (dragIdx === null || dragIdx === index) { setDragIdx(null); return; }
-                  const arr = [...items];
-                  const [moved] = arr.splice(dragIdx, 1);
-                  arr.splice(index, 0, moved);
-                  setItems(arr);
-                  setDragIdx(null);
-                  await fetch('/api/v1/cms/service-categories/reorder', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ ids: arr.map(i => i.id) }),
-                  }).catch(() => showToast('Reorder failed.'));
-                }}
-                onDragEnd={() => setDragIdx(null)}
-                className={`flex items-center gap-4 px-5 py-3.5 transition-colors group ${
-                  dragIdx === index ? 'opacity-40 bg-gray-50' : 'hover:bg-gray-50'
-                }`}
-              >
+              <li key={item.id} className="flex items-center gap-4 px-5 py-3.5 hover:bg-gray-50 transition-colors group">
                 {/* Grip */}
-                <GripVertical className="w-4 h-4 text-gray-300 shrink-0 cursor-grab active:cursor-grabbing" />
+                <GripVertical className="w-4 h-4 text-gray-300 shrink-0" />
 
                 {/* Icon preview */}
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${item.iconType.startsWith('data:') ? 'bg-gray-50' : item.iconBg}`}>
-                  <CategoryIcon iconType={item.iconType} className={`w-5 h-5 ${item.iconType.startsWith('data:') ? '' : item.iconColor}`} />
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${item.iconBg}`}>
+                  <CategoryIcon iconType={item.iconType} className={`w-5 h-5 ${item.iconColor}`} />
                 </div>
 
                 {/* Title + slug */}

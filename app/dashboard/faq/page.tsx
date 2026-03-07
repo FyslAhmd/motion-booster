@@ -158,8 +158,8 @@ export default function AdminFAQPage() {
 
       {/* Edit Modal */}
       {editing && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center overflow-y-auto px-4 py-8">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg my-auto">
             <div className="flex items-center justify-between p-6 border-b border-gray-100">
               <h2 className="font-bold text-gray-900">{isNew ? 'Add FAQ' : 'Edit FAQ'}</h2>
               <button onClick={() => { setEditing(null); setIsNew(false); }} className="p-2 hover:bg-gray-100 rounded-lg">

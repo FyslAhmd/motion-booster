@@ -4,7 +4,7 @@ import Image from 'next/image';
 
 export const Hero = () => {
   return (
-    <section className="relative pt-24 pb-16 sm:pt-28 sm:pb-20 lg:pt-40 lg:pb-32 bg-linear-to-br from-green-50 via-white to-purple-50">
+    <section className="relative pt-24 pb-16 sm:pt-28 sm:pb-20 lg:pt-48 lg:pb-40 lg:min-h-screen lg:flex lg:items-center bg-linear-to-br from-green-50 via-white to-purple-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-2 gap-8 sm:gap-10 lg:gap-16 items-center">
           {/* Left Content */}

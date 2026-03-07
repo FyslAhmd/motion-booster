@@ -265,11 +265,11 @@ export default function PortfolioPage() {
                         key={g.value}
                         onClick={() => setEditing({ ...editing, coverColor: g.value })}
                         title={g.label}
-                        className={`h-7 rounded-lg bg-gradient-to-r ${g.value} transition-all ${editing.coverColor === g.value ? 'ring-2 ring-offset-1 ring-gray-800 scale-110' : 'hover:scale-105'}`}
+                        className={`h-7 rounded-lg bg-linear-to-r ${g.value} transition-all ${editing.coverColor === g.value ? 'ring-2 ring-offset-1 ring-gray-800 scale-110' : 'hover:scale-105'}`}
                       />
                     ))}
                   </div>
-                  <div className={`mt-2 h-8 rounded-lg bg-gradient-to-r ${editing.coverColor} flex items-center justify-center`}>
+                  <div className={`mt-2 h-8 rounded-lg bg-linear-to-r ${editing.coverColor} flex items-center justify-center`}>
                     <span className="text-white text-xs font-medium opacity-75">Preview</span>
                   </div>
                 </div>
@@ -357,11 +357,11 @@ export default function PortfolioPage() {
           <p className="text-sm mt-1">Click "Add Project" to get started.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
           {displayed.map(item => (
             <div key={item.id} className="bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-md transition-shadow group">
               {/* Cover */}
-              <div className={`h-28 bg-gradient-to-br ${item.coverColor} relative flex items-end p-4 overflow-hidden`}>
+              <div className={`h-28 bg-linear-to-br ${item.coverColor} relative flex items-end p-4 overflow-hidden`}>
                 {item.coverImage && (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={item.coverImage} alt={item.title} className="absolute inset-0 w-full h-full object-cover" />

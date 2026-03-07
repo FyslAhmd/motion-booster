@@ -103,10 +103,10 @@ export default function BlogPage() {
   };
 
   return (
-    <main className="min-h-screen bg-white pt-20">
+    <main className="min-h-screen bg-white">
       {/* Header Section */}
-      <section className="py-16 px-4 bg-linear-to-br from-green-50 via-white to-purple-50">
-        <div className="max-w-7xl mx-auto text-center">
+      <section className="py-20 lg:py-32 bg-linear-to-br from-red-50 via-white to-rose-50">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 text-center">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
             Latest Insights & Updates
           </h1>
