@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Phone, X } from 'lucide-react';
+import { Phone, X, ArrowUp } from 'lucide-react';
 
 export const FloatingCallButton = () => {
   const [scrolled, setScrolled] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+
+  const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 200);
@@ -17,6 +19,16 @@ export const FloatingCallButton = () => {
     <>
       {/* Floating buttons — hidden on desktop (FloatingSocialButtons handles desktop) */}
       <div className="fixed bottom-20 right-4 z-50 flex items-center gap-2 lg:hidden">
+        {/* Scroll to top arrow — shown when scrolled */}
+        {scrolled && (
+          <button
+            onClick={scrollToTop}
+            className="flex h-12 w-12 items-center justify-center rounded-full bg-red-500 shadow-lg transition-colors hover:bg-red-600"
+            aria-label="Scroll to top"
+          >
+            <ArrowUp className="h-5 w-5 text-white" />
+          </button>
+        )}
         {/* Contact Us button */}
         {scrolled ? (
           <button
