@@ -9,6 +9,7 @@ export async function GET(req: Request) {
     const after = searchParams.get('after') || undefined;
     const limit = Math.max(1, Math.min(50, parseInt(searchParams.get('limit') || '10', 10)));
     const campaignId = searchParams.get('campaign_id') || undefined;
+    const status = searchParams.get('status') || undefined;
 
     const result = await fetchAdSetsPage({
       accountId,
@@ -16,6 +17,7 @@ export async function GET(req: Request) {
       after,
       search,
       campaignId,
+      status,
     });
 
     // Sanitize paging — strip raw next/previous URLs that contain access tokens

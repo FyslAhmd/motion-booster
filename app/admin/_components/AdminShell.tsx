@@ -151,7 +151,7 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
               // eslint-disable-next-line @next/next/no-img-element
               <img src={adminAvatar} alt="avatar" className="w-7 h-7 rounded-full object-cover shrink-0" />
             ) : (
-              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center text-white text-xs font-bold shrink-0">
+              <div className="w-7 h-7 rounded-full bg-linear-to-br from-red-500 to-red-700 flex items-center justify-center text-white text-xs font-bold shrink-0">
                 {adminName.slice(0, 2).toUpperCase()}
               </div>
             )}
@@ -201,7 +201,7 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={adminAvatar} alt="avatar" className="w-7 h-7 rounded-full object-cover" />
               ) : (
-                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center text-white text-xs font-bold">
+                <div className="w-7 h-7 rounded-full bg-linear-to-br from-red-500 to-red-700 flex items-center justify-center text-white text-xs font-bold">
                   {adminName.slice(0, 2).toUpperCase()}
                 </div>
               )}

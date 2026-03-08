@@ -8,9 +8,9 @@ export const metadata = {
 
 export default function PrivacyPolicy() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+    <div className="min-h-screen bg-linear-to-b from-gray-50 to-white">
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-red-500 to-red-600 text-white py-12 md:py-16 lg:py-20">
+      <div className="bg-linear-to-r from-red-500 to-red-600 text-white py-12 md:py-16 lg:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-center mb-4">
             <Shield className="w-12 h-12 md:w-16 md:h-16" />
@@ -328,7 +328,7 @@ export default function PrivacyPolicy() {
 
         {/* Contact Us */}
         <section className="mb-10 md:mb-12">
-          <div className="bg-gradient-to-r from-red-500 to-red-600 text-white rounded-2xl shadow-lg p-6 md:p-8">
+          <div className="bg-linear-to-r from-red-500 to-red-600 text-white rounded-2xl shadow-lg p-6 md:p-8">
             <h2 className="text-2xl md:text-3xl font-bold mb-4">
               13. Contact Us
             </h2>

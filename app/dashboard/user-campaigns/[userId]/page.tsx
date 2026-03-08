@@ -467,7 +467,7 @@ function CampaignsSection({
                       </div>
                     )}
                   </td>
-                  <td className="max-w-[200px] truncate px-4 py-3 font-medium text-gray-900">
+                  <td className="max-w-50 truncate px-4 py-3 font-medium text-gray-900">
                     {c.name}
                   </td>
                   <td className="px-4 py-3">
@@ -562,7 +562,7 @@ function AdSetsSection({
                 : 'Ongoing';
               return (
                 <tr key={a.id} className="transition-colors hover:bg-gray-50">
-                  <td className="max-w-[220px] truncate px-6 py-3 font-medium text-gray-900">
+                  <td className="max-w-55 truncate px-6 py-3 font-medium text-gray-900">
                     {a.name}
                   </td>
                   <td className="px-4 py-3">
@@ -674,7 +674,7 @@ function AdsSection({
                       </div>
                     )}
                   </td>
-                  <td className="max-w-[180px] truncate px-4 py-3 font-medium text-gray-900">
+                  <td className="max-w-45 truncate px-4 py-3 font-medium text-gray-900">
                     {ad.name}
                   </td>
                   <td className="px-4 py-3">
@@ -682,7 +682,7 @@ function AdsSection({
                       {st.label}
                     </span>
                   </td>
-                  <td className="max-w-[160px] truncate px-4 py-3 text-gray-400">
+                  <td className="max-w-40 truncate px-4 py-3 text-gray-400">
                     {ad.creative?.title || '—'}
                   </td>
                   <td className="max-w-50 truncate px-4 py-3 text-xs text-gray-500">

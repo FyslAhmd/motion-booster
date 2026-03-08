@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import AdminShell from '../_components/AdminShell';
 import { CampaignsTable, AdSetsTable, AdsTable } from './_components';
 import AccountSwitcher from './_components/AccountSwitcher';
@@ -16,6 +16,28 @@ const TABS: { id: Tab; label: string }[] = [
 export default function MetaDashboardPage() {
   const [tab, setTab] = useState<Tab>('campaigns');
   const [accountId, setAccountId] = useState('act_586481100654531');
+  const [activeCounts, setActiveCounts] = useState<Record<Tab, number | null>>({
+    campaigns: null,
+    adsets: null,
+    ads: null,
+  });
+
+  // Fetch total active counts whenever account changes
+  useEffect(() => {
+    setActiveCounts({ campaigns: null, adsets: null, ads: null });
+    fetch(`/api/v1/meta/active-counts?account_id=${accountId}`)
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.success) {
+          setActiveCounts({
+            campaigns: json.data.campaigns,
+            adsets: json.data.adSets,
+            ads: json.data.ads,
+          });
+        }
+      })
+      .catch(() => {});
+  }, [accountId]);
 
   return (
     <AdminShell>
@@ -38,7 +60,7 @@ export default function MetaDashboardPage() {
               <button
                 key={t.id}
                 onClick={() => setTab(t.id)}
-                className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-all
+                className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-all
                   ${
                     tab === t.id
                       ? 'bg-red-600 text-white shadow-sm shadow-red-500/20'
@@ -46,6 +68,17 @@ export default function MetaDashboardPage() {
                   }`}
               >
                 {t.label}
+                {activeCounts[t.id] != null && (
+                  <span
+                    className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none ${
+                      tab === t.id
+                        ? 'bg-white/20 text-white'
+                        : 'bg-green-100 text-green-700'
+                    }`}
+                  >
+                    {activeCounts[t.id]} active
+                  </span>
+                )}
               </button>
             ))}
           </div>

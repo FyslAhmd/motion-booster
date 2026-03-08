@@ -12,6 +12,7 @@ const PRESETS = [
   { value: 'last_90d',    label: 'Last 90 days' },
   { value: 'this_month',  label: 'This month' },
   { value: 'last_month',  label: 'Last month' },
+  { value: 'maximum',     label: 'Maximum (All time)' },
   { value: 'custom',      label: 'Custom range' },
 ] as const;
 

@@ -18,6 +18,7 @@ type DatePreset =
   | 'last_90d'
   | 'this_month'
   | 'last_month'
+  | 'maximum'
   | 'custom';
 
 async function apiFetch<T>(url: string): Promise<T> {

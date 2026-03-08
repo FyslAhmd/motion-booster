@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { Search, Filter, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import AssignUserDropdown from './AssignUserDropdown';
 
 interface Ad {
@@ -54,6 +54,7 @@ export default function AdsTable({ accountId }: AdsTableProps) {
   const [cursorStack, setCursorStack] = useState<string[]>([]);
   const [currentAfter, setCurrentAfter] = useState<string | undefined>();
   const [search, setSearch] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [pageNum, setPageNum] = useState(1);
@@ -76,6 +77,7 @@ export default function AdsTable({ accountId }: AdsTableProps) {
         if (accountId) p.set('account_id', accountId);
         if (search) p.set('search', search);
         if (currentAfter) p.set('after', currentAfter);
+        if (filterStatus !== 'all') p.set('status', filterStatus);
 
         const res = await fetch(`/api/v1/meta/ads?${p}`, { signal: controller.signal });
         const json = await res.json();
@@ -95,7 +97,7 @@ export default function AdsTable({ accountId }: AdsTableProps) {
 
     doFetch();
     return () => controller.abort();
-  }, [currentAfter, search, accountId]);
+  }, [currentAfter, search, filterStatus, accountId]);
 
   // Fetch assignments for current page of ads
   useEffect(() => {
@@ -140,12 +142,20 @@ export default function AdsTable({ accountId }: AdsTableProps) {
     setPageNum(1);
   };
 
+  const handleStatusFilter = (val: string) => {
+    setFilterStatus(val);
+    setCurrentAfter(undefined);
+    setCursorStack([]);
+    setPageNum(1);
+  };
+
   // Reset pagination when account changes
   useEffect(() => {
     setCurrentAfter(undefined);
     setCursorStack([]);
     setPageNum(1);
     setSearch('');
+    setFilterStatus('all');
   }, [accountId]);
 
   const hasNext = !!paging?.hasNext;
@@ -205,6 +215,26 @@ export default function AdsTable({ accountId }: AdsTableProps) {
               placeholder="Search ads..."
               className="w-48 rounded-lg border border-gray-200 bg-gray-50 py-2 pl-9 pr-3 text-sm text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-red-400 focus:outline-none"
             />
+          </div>
+          <div className="relative">
+            <Filter className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
+            <select
+              value={filterStatus}
+              onChange={(e) => handleStatusFilter(e.target.value)}
+              className="w-full appearance-none rounded-lg border border-gray-200 bg-white py-2 pl-8 pr-7 text-xs text-gray-700 focus:ring-2 focus:ring-red-400 focus:outline-none sm:w-auto"
+            >
+              <option value="all">All statuses</option>
+              <option value="ACTIVE">Active</option>
+              <option value="PAUSED">Paused</option>
+              <option value="CAMPAIGN_PAUSED">Campaign Off</option>
+              <option value="ADSET_PAUSED">Ad Set Off</option>
+              <option value="DELETED">Deleted</option>
+              <option value="ARCHIVED">Archived</option>
+              <option value="IN_PROCESS">In Review</option>
+              <option value="WITH_ISSUES">With Issues</option>
+              <option value="DISAPPROVED">Not Approved</option>
+              <option value="PENDING_REVIEW">Pending Review</option>
+            </select>
           </div>
         </div>
       </div>
@@ -306,11 +336,11 @@ export default function AdsTable({ accountId }: AdsTableProps) {
                               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 text-xs text-gray-400">N/A</div>
                             )}
                           </td>
-                          <td className="max-w-[180px] truncate px-4 py-3 font-medium text-gray-900">{ad.name}</td>
+                          <td className="max-w-45 truncate px-4 py-3 font-medium text-gray-900">{ad.name}</td>
                           <td className="px-4 py-3">
                             <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${st.color}`}>{st.label}</span>
                           </td>
-                          <td className="max-w-[160px] truncate px-4 py-3 text-gray-400">{ad.creative?.title || '—'}</td>
+                          <td className="max-w-40 truncate px-4 py-3 text-gray-400">{ad.creative?.title || '—'}</td>
                           <td className="max-w-50 truncate px-4 py-3 text-xs text-gray-500">{ad.creative?.body || '—'}</td>
                           <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">
                             {new Date(ad.created_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
@@ -360,7 +390,7 @@ export default function AdsTable({ accountId }: AdsTableProps) {
                 <button onClick={goPrev} disabled={!hasPrev} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 disabled:opacity-30">
                   <ChevronLeft className="h-4 w-4" />
                 </button>
-                <span className="min-w-[32px] rounded-lg bg-red-600 px-2 py-1 text-center text-xs font-medium text-white">{pageNum}{totalPages ? `/${totalPages}` : ''}</span>
+                <span className="min-w-8 rounded-lg bg-red-600 px-2 py-1 text-center text-xs font-medium text-white">{pageNum}{totalPages ? `/${totalPages}` : ''}</span>
                 <button onClick={goNext} disabled={!hasNext} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 disabled:opacity-30">
                   <ChevronRight className="h-4 w-4" />
                 </button>

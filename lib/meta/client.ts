@@ -201,9 +201,9 @@ const AD_FIELDS = [
  */
 function buildFiltering(
   search?: string,
-  extraFilters?: { field: string; operator: string; value: string }[],
+  extraFilters?: { field: string; operator: string; value: string | string[] }[],
 ): string | undefined {
-  const filters: { field: string; operator: string; value: string }[] = [];
+  const filters: { field: string; operator: string; value: string | string[] }[] = [];
   if (search) {
     filters.push({ field: 'name', operator: 'CONTAIN', value: search });
   }
@@ -231,9 +231,9 @@ export function fetchCampaignsPage(opts: DirectPageOptions = {}) {
   };
   if (opts.after) params.after = opts.after;
 
-  const extraFilters: { field: string; operator: string; value: string }[] = [];
+  const extraFilters: { field: string; operator: string; value: string | string[] }[] = [];
   if (opts.status) {
-    extraFilters.push({ field: 'effective_status', operator: 'IN', value: `["${opts.status}"]` });
+    extraFilters.push({ field: 'effective_status', operator: 'IN', value: [opts.status] });
   }
   const filtering = buildFiltering(opts.search, extraFilters);
   if (filtering) params.filtering = filtering;
@@ -255,7 +255,10 @@ export function fetchAdSetsPage(opts: DirectPageOptions = {}) {
   };
   if (opts.after) params.after = opts.after;
 
-  const extraFilters: { field: string; operator: string; value: string }[] = [];
+  const extraFilters: { field: string; operator: string; value: string | string[] }[] = [];
+  if (opts.status) {
+    extraFilters.push({ field: 'effective_status', operator: 'IN', value: [opts.status] });
+  }
   if (opts.campaignId) {
     extraFilters.push({ field: 'campaign.id', operator: 'EQUAL', value: opts.campaignId });
   }
@@ -279,7 +282,10 @@ export function fetchAdsPage(opts: DirectPageOptions = {}) {
   };
   if (opts.after) params.after = opts.after;
 
-  const extraFilters: { field: string; operator: string; value: string }[] = [];
+  const extraFilters: { field: string; operator: string; value: string | string[] }[] = [];
+  if (opts.status) {
+    extraFilters.push({ field: 'effective_status', operator: 'IN', value: [opts.status] });
+  }
   if (opts.adsetId) {
     extraFilters.push({ field: 'adset.id', operator: 'EQUAL', value: opts.adsetId });
   }

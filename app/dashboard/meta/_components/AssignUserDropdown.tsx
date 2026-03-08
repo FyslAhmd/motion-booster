@@ -145,7 +145,7 @@ export default function AssignUserDropdown({
           <button
             onClick={() => setOpen(!open)}
             disabled={saving}
-            className="inline-flex max-w-[140px] items-center gap-1.5 rounded-full border border-green-200 bg-green-50 px-2.5 py-1 text-[11px] font-semibold text-green-700 transition-opacity hover:opacity-80 disabled:opacity-50"
+            className="inline-flex max-w-35 items-center gap-1.5 rounded-full border border-green-200 bg-green-50 px-2.5 py-1 text-[11px] font-semibold text-green-700 transition-opacity hover:opacity-80 disabled:opacity-50"
           >
             <Check className="h-3 w-3 shrink-0" />
             <span className="truncate">{assignedUser.fullName}</span>
@@ -214,7 +214,7 @@ export default function AssignUserDropdown({
                     } disabled:opacity-60`}
                   >
                     {/* Avatar */}
-                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-red-500 to-red-700 text-[10px] font-bold text-white">
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-red-500 to-red-700 text-[10px] font-bold text-white">
                       {user.fullName.slice(0, 2).toUpperCase()}
                     </div>
                     <div className="min-w-0 flex-1">

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { Search, Filter, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import AssignUserDropdown from './AssignUserDropdown';
 
 interface Campaign {
@@ -119,6 +119,28 @@ function deriveDeliveryStatus(c: Campaign): { label: string; key: string } {
   };
 }
 
+/**
+ * Maps a frontend filter key to the Meta API effective_status to send.
+ * Derived statuses (COMPLETED, RECENTLY_COMPLETED, SCHEDULED, NOT_DELIVERING)
+ * are all subsets of Meta's ACTIVE, so we fetch ACTIVE from the API and
+ * then filter client-side by the derived key.
+ */
+const FILTER_TO_API_STATUS: Record<string, string> = {
+  ACTIVE:               'ACTIVE',
+  COMPLETED:            'ACTIVE',
+  RECENTLY_COMPLETED:   'ACTIVE',
+  SCHEDULED:            'ACTIVE',
+  NOT_DELIVERING:       'ACTIVE',
+  PAUSED:               'PAUSED',
+  DELETED:              'DELETED',
+  ARCHIVED:             'ARCHIVED',
+  IN_PROCESS:           'IN_PROCESS',
+  WITH_ISSUES:          'WITH_ISSUES',
+};
+
+/** Derived statuses that require client-side post-filtering */
+const DERIVED_STATUSES = new Set(['ACTIVE', 'COMPLETED', 'RECENTLY_COMPLETED', 'SCHEDULED', 'NOT_DELIVERING']);
+
 function fmtBudget(val?: string) {
   if (!val) return '—';
   return `$${(parseInt(val, 10) / 100).toFixed(2)}`;
@@ -140,6 +162,7 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
   const [cursorStack, setCursorStack] = useState<string[]>([]);  // stack of "after" cursors for prev navigation
   const [currentAfter, setCurrentAfter] = useState<string | undefined>();
   const [search, setSearch] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [pageNum, setPageNum] = useState(1);
@@ -161,6 +184,9 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
         if (accountId) p.set('account_id', accountId);
         if (search) p.set('search', search);
         if (currentAfter) p.set('after', currentAfter);
+        // Map the frontend filter to the correct Meta API status
+        const apiStatus = filterStatus !== 'all' ? FILTER_TO_API_STATUS[filterStatus] : undefined;
+        if (apiStatus) p.set('status', apiStatus);
 
         const res = await fetch(`/api/v1/meta/campaigns?${p}`, { signal: controller.signal });
         const json = await res.json();
@@ -180,7 +206,7 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
 
     doFetch();
     return () => controller.abort();
-  }, [currentAfter, search, accountId]);
+  }, [currentAfter, search, filterStatus, accountId]);
 
   // Fetch assignments for current page of campaigns
   useEffect(() => {
@@ -225,13 +251,26 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
     setPageNum(1);
   };
 
+  const handleStatusFilter = (val: string) => {
+    setFilterStatus(val);
+    setCurrentAfter(undefined);
+    setCursorStack([]);
+    setPageNum(1);
+  };
+
   // Reset pagination when account changes
   useEffect(() => {
     setCurrentAfter(undefined);
     setCursorStack([]);
     setPageNum(1);
     setSearch('');
+    setFilterStatus('all');
   }, [accountId]);
+
+  // Client-side post-filtering for derived sub-statuses of ACTIVE
+  const filteredData = (filterStatus !== 'all' && DERIVED_STATUSES.has(filterStatus))
+    ? data.filter((c) => deriveDeliveryStatus(c).key === filterStatus)
+    : data;
 
   const hasNext = !!paging?.hasNext;
   const hasPrev = cursorStack.length > 0;
@@ -295,6 +334,26 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
               className="w-52 rounded-lg border border-gray-200 bg-gray-50 py-2 pl-9 pr-3 text-sm text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-red-400 focus:outline-none"
             />
           </div>
+          <div className="relative">
+            <Filter className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
+            <select
+              value={filterStatus}
+              onChange={(e) => handleStatusFilter(e.target.value)}
+              className="w-full appearance-none rounded-lg border border-gray-200 bg-white py-2 pl-8 pr-7 text-xs text-gray-700 focus:ring-2 focus:ring-red-400 focus:outline-none sm:w-auto"
+            >
+              <option value="all">All statuses</option>
+              <option value="ACTIVE">Active</option>
+              <option value="PAUSED">Paused</option>
+              <option value="COMPLETED">Completed</option>
+              <option value="RECENTLY_COMPLETED">Recently Completed</option>
+              <option value="SCHEDULED">Scheduled</option>
+              <option value="NOT_DELIVERING">Not Delivering</option>
+              <option value="DELETED">Deleted</option>
+              <option value="ARCHIVED">Archived</option>
+              <option value="IN_PROCESS">In Review</option>
+              <option value="WITH_ISSUES">With Issues</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -313,13 +372,13 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
       {/* Table */}
       {!loading && !error && (
         <>
-          {data.length === 0 ? (
+          {filteredData.length === 0 ? (
             <div className="px-6 py-10 text-center text-sm text-gray-500">No campaigns found.</div>
           ) : (
             <>
               {/* Mobile card list */}
               <div className="divide-y divide-gray-100 sm:hidden">
-                {data.map((c) => {
+                {filteredData.map((c) => {
                   const derived = deriveDeliveryStatus(c);
                   const color = STATUS_STYLES[derived.key] || STATUS_STYLES.UNKNOWN;
                   const thumb = c.ads?.data?.[0]?.creative?.thumbnail_url;
@@ -392,7 +451,7 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
-                    {data.map((c) => {
+                    {filteredData.map((c) => {
                       const derived = deriveDeliveryStatus(c);
                       const color = STATUS_STYLES[derived.key] || STATUS_STYLES.UNKNOWN;
                       return (

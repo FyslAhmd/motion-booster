@@ -296,12 +296,12 @@ export const Header = () => {
       {/* Backdrop */}
       {showSearch && (
         <div
-          className="fixed inset-0 z-[90] bg-black/30 lg:hidden"
+          className="fixed inset-0 z-90 bg-black/30 lg:hidden"
           onClick={() => setShowSearch(false)}
         />
       )}
       <div
-        className={`fixed top-0 right-0 z-[91] h-full w-4/5 max-w-sm bg-white shadow-2xl flex flex-col lg:hidden
+        className={`fixed top-0 right-0 z-91 h-full w-4/5 max-w-sm bg-white shadow-2xl flex flex-col lg:hidden
           transition-transform duration-300 ease-in-out
           ${showSearch ? 'translate-x-0' : 'translate-x-full'}`}
       >
@@ -345,12 +345,12 @@ export const Header = () => {
       {/* ── Notification Panel (right → left slide) ── */}
       {showNotif && (
         <div
-          className="fixed inset-0 z-[90] bg-black/30 lg:hidden"
+          className="fixed inset-0 z-90 bg-black/30 lg:hidden"
           onClick={() => setShowNotif(false)}
         />
       )}
       <div
-        className={`fixed top-0 right-0 z-[91] h-full w-4/5 max-w-sm bg-white shadow-2xl flex flex-col lg:hidden
+        className={`fixed top-0 right-0 z-91 h-full w-4/5 max-w-sm bg-white shadow-2xl flex flex-col lg:hidden
           transition-transform duration-300 ease-in-out
           ${showNotif ? 'translate-x-0' : 'translate-x-full'}`}
       >
