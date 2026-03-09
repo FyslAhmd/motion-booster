@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import AdminShell from '../_components/AdminShell';
 import {
   Loader2,
@@ -21,6 +22,7 @@ interface AssignedUser {
   username: string;
   email: string;
   createdAt: string;
+  avatarUrl?: string | null;
   counts: {
     campaigns: number;
     adSets: number;
@@ -94,14 +96,18 @@ export default function UserCampaignsPage() {
               >
                 {/* User info */}
                 <div className="flex items-start gap-3">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-red-50 text-sm font-bold text-red-600">
-                    {user.fullName
-                      ?.split(' ')
-                      .map((w) => w[0])
-                      .join('')
-                      .slice(0, 2)
-                      .toUpperCase() || '?'}
-                  </div>
+                  {user.avatarUrl ? (
+                    <Image src={user.avatarUrl} alt="avatar" width={44} height={44} className="h-11 w-11 shrink-0 rounded-full object-cover" />
+                  ) : (
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-red-50 text-sm font-bold text-red-600">
+                      {user.fullName
+                        ?.split(' ')
+                        .map((w) => w[0])
+                        .join('')
+                        .slice(0, 2)
+                        .toUpperCase() || '?'}
+                    </div>
+                  )}
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold text-gray-900">
                       {user.fullName}

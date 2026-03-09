@@ -28,6 +28,7 @@ export async function GET(
         phone: true,
         username: true,
         email: true,
+        avatarUrl: true,
       },
     });
 

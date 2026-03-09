@@ -27,6 +27,7 @@ export async function GET(req: NextRequest) {
             username: true,
             fullName: true,
             role: true,
+            avatarUrl: true,
           },
         },
         messages: {
@@ -116,7 +117,7 @@ export async function POST(req: NextRequest) {
     // Look up the target participant
     const targetUser = await prisma.user.findUnique({
       where: { id: participantId },
-      select: { id: true, username: true, fullName: true, role: true, status: true },
+      select: { id: true, username: true, fullName: true, role: true, status: true, avatarUrl: true },
     });
 
     if (!targetUser || targetUser.status !== 'ACTIVE') {
@@ -151,7 +152,7 @@ export async function POST(req: NextRequest) {
       },
       include: {
         participants: {
-          select: { id: true, username: true, fullName: true, role: true },
+          select: { id: true, username: true, fullName: true, role: true, avatarUrl: true },
         },
       },
     });
@@ -169,7 +170,7 @@ export async function POST(req: NextRequest) {
       },
       include: {
         participants: {
-          select: { id: true, username: true, fullName: true, role: true },
+          select: { id: true, username: true, fullName: true, role: true, avatarUrl: true },
         },
       },
     });

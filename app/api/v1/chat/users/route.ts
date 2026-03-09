@@ -28,6 +28,7 @@ export async function GET(req: NextRequest) {
         username: true,
         fullName: true,
         role: true,
+        avatarUrl: true,
       },
       orderBy: { fullName: 'asc' },
     });

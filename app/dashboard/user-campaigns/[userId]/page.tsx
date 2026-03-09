@@ -2,6 +2,7 @@
 
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import AdminShell from '../../_components/AdminShell';
 import {
   Loader2,
@@ -21,6 +22,7 @@ interface UserInfo {
   phone: string;
   username: string;
   email: string;
+  avatarUrl?: string | null;
 }
 
 interface AssignmentRef {
@@ -239,14 +241,18 @@ export default function UserCampaignDetailPage({
           </button>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-red-50 text-sm font-bold text-red-600">
-                {user?.fullName
-                  ?.split(' ')
-                  .map((w) => w[0])
-                  .join('')
-                  .slice(0, 2)
-                  .toUpperCase() || '?'}
-              </div>
+              {user?.avatarUrl ? (
+                <Image src={user.avatarUrl} alt="avatar" width={44} height={44} className="h-11 w-11 shrink-0 rounded-full object-cover" />
+              ) : (
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-red-50 text-sm font-bold text-red-600">
+                  {user?.fullName
+                    ?.split(' ')
+                    .map((w) => w[0])
+                    .join('')
+                    .slice(0, 2)
+                    .toUpperCase() || '?'}
+                </div>
+              )}
               <div>
                 <h1 className="text-xl font-bold text-gray-900">{user?.fullName}</h1>
                 <div className="mt-0.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500">

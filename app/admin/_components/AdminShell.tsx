@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAdminAuth } from '@/lib/admin/context';
+import { useAuth } from '@/lib/auth/context';
 import { AdminStore } from '@/lib/admin/store';
 import {
   LayoutDashboard,
@@ -47,16 +48,15 @@ const navItems = [
 
 export default function AdminShell({ children, noPadding }: { children: React.ReactNode; noPadding?: boolean }) {
   const { isLoggedIn, logout } = useAdminAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [adminName, setAdminName] = useState('Admin');
-  const [adminAvatar, setAdminAvatar] = useState('');
 
   useEffect(() => {
     const p = AdminStore.getProfile();
     setAdminName(p.displayName || 'Admin');
-    setAdminAvatar(p.avatarImage || '');
   }, []);
 
   useEffect(() => {
@@ -147,9 +147,8 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
               pathname === '/dashboard/profile' ? 'bg-red-600 text-white shadow-md shadow-red-500/20' : 'text-gray-500 hover:text-gray-900 hover:bg-red-50'
             }`}
           >
-            {adminAvatar ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={adminAvatar} alt="avatar" className="w-7 h-7 rounded-full object-cover shrink-0" />
+            {user?.avatarUrl ? (
+              <Image src={user.avatarUrl} alt="avatar" width={28} height={28} className="w-7 h-7 rounded-full object-cover shrink-0" />
             ) : (
               <div className="w-7 h-7 rounded-full bg-linear-to-br from-red-500 to-red-700 flex items-center justify-center text-white text-xs font-bold shrink-0">
                 {adminName.slice(0, 2).toUpperCase()}
@@ -197,9 +196,8 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
           <div className="flex items-center gap-2">
             <div className="text-xs text-gray-400 hidden sm:block">{adminName}</div>
             <Link href="/dashboard/profile">
-              {adminAvatar ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={adminAvatar} alt="avatar" className="w-7 h-7 rounded-full object-cover" />
+              {user?.avatarUrl ? (
+                <Image src={user.avatarUrl} alt="avatar" width={28} height={28} className="w-7 h-7 rounded-full object-cover" />
               ) : (
                 <div className="w-7 h-7 rounded-full bg-linear-to-br from-red-500 to-red-700 flex items-center justify-center text-white text-xs font-bold">
                   {adminName.slice(0, 2).toUpperCase()}

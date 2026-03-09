@@ -16,6 +16,7 @@ const CLIENT_SELECT = {
   lastLoginIp: true,
   createdAt: true,
   updatedAt: true,
+  avatarUrl: true,
 } as const;
 
 const PAGE_SIZE = 20;

@@ -52,7 +52,7 @@ type NavEntry = NavItem | NavGroup;
 const navItems: NavEntry[] = [
   { href: '/dashboard', label: 'Overview', icon: LayoutDashboard, adminOnly: true },
   { href: '/dashboard/meta', label: 'Ads Manager', icon: Megaphone, adminOnly: true },
-  { href: '/dashboard/user-campaigns', label: 'Assign User To Campaign', icon: UserCheck, adminOnly: true },
+  { href: '/dashboard/user-campaigns', label: 'Assign User', icon: UserCheck, adminOnly: true },
   { href: '/dashboard/chat', label: 'Chat Messages', icon: MessageCircle },
   { href: '/dashboard/clients', label: 'Clients', icon: Users, adminOnly: true },
   {
@@ -85,7 +85,7 @@ const USER_ALLOWED_ROUTES = [
 ];
 
 // ── User Shell (non-admin layout) ─────────────────────────────────────────
-function UserShell({ children, userName, noPadding }: { children: React.ReactNode; userName: string; noPadding?: boolean }) {
+function UserShell({ children, userName, avatarUrl, noPadding }: { children: React.ReactNode; userName: string; avatarUrl?: string | null; noPadding?: boolean }) {
   const pathname = usePathname();
   const router = useRouter();
   const { logout } = useAuth();
@@ -120,9 +120,13 @@ function UserShell({ children, userName, noPadding }: { children: React.ReactNod
         <div className="flex items-center gap-2 text-sm text-gray-500 font-medium">
           <span className="hidden sm:block">{activeLabel}</span>
           <Link href="/dashboard/profile">
-            <div className="w-8 h-8 rounded-full bg-linear-to-br from-red-500 to-red-700 flex items-center justify-center text-white text-xs font-bold">
-              {userName.slice(0, 2).toUpperCase()}
-            </div>
+            {avatarUrl ? (
+              <Image src={avatarUrl} alt="avatar" width={32} height={32} className="w-8 h-8 rounded-full object-cover" />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-linear-to-br from-red-500 to-red-700 flex items-center justify-center text-white text-xs font-bold">
+                {userName.slice(0, 2).toUpperCase()}
+              </div>
+            )}
           </Link>
         </div>
       </header>
@@ -216,9 +220,13 @@ function UserShell({ children, userName, noPadding }: { children: React.ReactNod
                   pathname === '/dashboard/profile' ? 'bg-red-600 text-white shadow-md shadow-red-500/20' : 'text-gray-500 hover:text-gray-900 hover:bg-red-50'
                 }`}
               >
-                <div className="w-7 h-7 rounded-full bg-linear-to-br from-red-500 to-red-700 flex items-center justify-center text-white text-xs font-bold shrink-0">
-                  {userName.slice(0, 2).toUpperCase()}
-                </div>
+                {avatarUrl ? (
+                  <Image src={avatarUrl} alt="avatar" width={28} height={28} className="w-7 h-7 rounded-full object-cover shrink-0" />
+                ) : (
+                  <div className="w-7 h-7 rounded-full bg-linear-to-br from-red-500 to-red-700 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                    {userName.slice(0, 2).toUpperCase()}
+                  </div>
+                )}
                 <div className="flex-1 min-w-0">
                   <p className="truncate text-xs font-semibold">{userName}</p>
                   <p className="text-[10px] text-gray-400 font-normal">My Profile</p>
@@ -255,7 +263,7 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [openGroup, setOpenGroup] = useState<string | null>('Home Page'); // open by default
   const adminName = user?.username || user?.email || 'User';
-  const adminAvatar = '';
+  const adminAvatar = user?.avatarUrl || '';
   const isAdmin = user?.role === 'ADMIN';
 
   // Filter nav items based on role
@@ -316,7 +324,7 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
 
   // ── Non-admin users: custom user shell ───────────────────────────────────
   if (!isAdmin) {
-    return <UserShell userName={adminName} noPadding={noPadding}>{children}</UserShell>;
+    return <UserShell userName={adminName} avatarUrl={user?.avatarUrl} noPadding={noPadding}>{children}</UserShell>;
   }
 
   return (
@@ -438,8 +446,7 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
             }`}
           >
             {adminAvatar ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={adminAvatar} alt="avatar" className="w-7 h-7 rounded-full object-cover shrink-0" />
+              <Image src={adminAvatar} alt="avatar" width={28} height={28} className="w-7 h-7 rounded-full object-cover shrink-0" />
             ) : (
               <div className="w-7 h-7 rounded-full bg-linear-to-br from-red-500 to-red-700 flex items-center justify-center text-white text-xs font-bold shrink-0">
                 {adminName.slice(0, 2).toUpperCase()}
@@ -491,8 +498,7 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
             <div className="text-xs text-gray-400 hidden sm:block">{adminName}</div>
             <Link href="/dashboard/profile">
               {adminAvatar ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={adminAvatar} alt="avatar" className="w-7 h-7 rounded-full object-cover" />
+                <Image src={adminAvatar} alt="avatar" width={28} height={28} className="w-7 h-7 rounded-full object-cover" />
               ) : (
                 <div className="w-7 h-7 rounded-full bg-linear-to-br from-red-500 to-red-700 flex items-center justify-center text-white text-xs font-bold">
                   {adminName.slice(0, 2).toUpperCase()}

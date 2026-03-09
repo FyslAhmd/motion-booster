@@ -15,7 +15,9 @@ interface User {
   username: string;
   email: string;
   fullName: string;
+  phone: string;
   role: string;
+  avatarUrl?: string | null;
 }
 
 interface AuthContextType {
@@ -25,6 +27,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (accessToken: string, user: User) => void;
   logout: () => void;
+  updateUser: (updates: Partial<User>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -139,6 +142,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [startRefreshTimer]
   );
 
+  // ─── Patch user state from profile updates ──────────────────────
+  const updateUser = useCallback((updates: Partial<User>) => {
+    setUser((prev) => (prev ? { ...prev, ...updates } : prev));
+  }, []);
+
   // ─── Logout: clear server-side cookies & revoke tokens ─────────────
   const logout = useCallback(async () => {
     stopRefreshTimer();
@@ -161,6 +169,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAuthenticated: !!user,
         login,
         logout,
+        updateUser,
       }}
     >
       {children}

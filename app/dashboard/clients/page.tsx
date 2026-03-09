@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState, useEffect, useCallback, Fragment } from 'react';
 import AdminShell from '../_components/AdminShell';
 import {
@@ -37,6 +38,7 @@ interface Client {
   lastLoginIp: string | null;
   createdAt: string;
   updatedAt: string;
+  avatarUrl?: string | null;
 }
 
 const STATUS_STYLES: Record<Client['status'], { label: string; cls: string; icon: typeof ShieldCheck }> = {
@@ -465,9 +467,13 @@ export default function ClientsPage() {
                     <div key={client.id} className="px-4 py-3.5 space-y-2.5">
                       {/* Row 1: avatar + name + actions */}
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-linear-to-br from-red-500 to-red-700 flex items-center justify-center text-white text-xs font-bold shrink-0">
-                          {client.fullName.slice(0, 2).toUpperCase()}
-                        </div>
+                        {client.avatarUrl ? (
+                          <Image src={client.avatarUrl} alt="avatar" width={36} height={36} className="w-9 h-9 rounded-full object-cover shrink-0" />
+                        ) : (
+                          <div className="w-9 h-9 rounded-full bg-linear-to-br from-red-500 to-red-700 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                            {client.fullName.slice(0, 2).toUpperCase()}
+                          </div>
+                        )}
                         <div className="flex-1 min-w-0">
                           <p className="font-semibold text-gray-900 text-sm truncate">{client.fullName}</p>
                           <p className="text-[11px] text-gray-400 truncate">@{client.username}</p>
@@ -546,7 +552,7 @@ export default function ClientsPage() {
                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Client</th>
                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Contact</th>
                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Ads Access</th>
+                    {/* <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Ads Access</th> */}
                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Email Verified</th>
                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Last Login</th>
                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Joined</th>
@@ -563,9 +569,13 @@ export default function ClientsPage() {
                         {/* Client */}
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-full bg-linear-to-br from-red-500 to-red-700 flex items-center justify-center text-white text-xs font-bold shrink-0">
-                              {client.fullName.slice(0, 2).toUpperCase()}
-                            </div>
+                            {client.avatarUrl ? (
+                              <Image src={client.avatarUrl} alt="avatar" width={36} height={36} className="w-9 h-9 rounded-full object-cover shrink-0" />
+                            ) : (
+                              <div className="w-9 h-9 rounded-full bg-linear-to-br from-red-500 to-red-700 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                                {client.fullName.slice(0, 2).toUpperCase()}
+                              </div>
+                            )}
                             <div className="min-w-0">
                               <p className="font-semibold text-gray-900 truncate">{client.fullName}</p>
                               <p className="text-[11px] text-gray-400 truncate">@{client.username}</p>
@@ -605,7 +615,7 @@ export default function ClientsPage() {
                         </td>
 
                         {/* Ads Access */}
-                        <td className="px-4 py-3">
+                        {/* <td className="px-4 py-3">
                           <button
                             onClick={() => patch(client.id, { adsAccess: !client.adsAccess })}
                             disabled={busy}
@@ -619,7 +629,7 @@ export default function ClientsPage() {
                             {client.adsAccess ? <Megaphone className="w-3 h-3" /> : <MegaphoneOff className="w-3 h-3" />}
                             {client.adsAccess ? 'Enabled' : 'Disabled'}
                           </button>
-                        </td>
+                        </td> */}
 
                         {/* Email Verified */}
                         <td className="px-4 py-3">

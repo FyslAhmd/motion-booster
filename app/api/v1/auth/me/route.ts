@@ -42,6 +42,7 @@ export async function GET(request: NextRequest) {
         phone: true,
         role: true,
         status: true,
+        avatarUrl: true,
       },
     });
 
@@ -62,6 +63,7 @@ export async function GET(request: NextRequest) {
           email: user.email,
           phone: user.phone,
           role: user.role,
+          avatarUrl: user.avatarUrl,
         },
       },
     });

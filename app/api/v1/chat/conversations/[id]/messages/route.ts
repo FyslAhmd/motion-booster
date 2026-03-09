@@ -31,7 +31,7 @@ export async function GET(
       },
       include: {
         participants: {
-          select: { id: true, username: true, fullName: true, role: true },
+          select: { id: true, username: true, fullName: true, role: true, avatarUrl: true },
         },
       },
     });
