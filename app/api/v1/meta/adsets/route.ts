@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { fetchAdSetsPage } from '@/lib/meta/client';
+import { deriveAdSetStatus } from '@/lib/meta/derive-status';
 
 export async function GET(req: Request) {
   try {
@@ -29,9 +30,14 @@ export async function GET(req: Request) {
         }
       : null;
 
+    const data = (result.data || []).map((a: any) => ({
+      ...a,
+      derived_status: deriveAdSetStatus(a),
+    }));
+
     return NextResponse.json({
       success: true,
-      data: result.data || [],
+      data,
       paging,
       totalCount: result.summary?.total_count ?? null,
     });

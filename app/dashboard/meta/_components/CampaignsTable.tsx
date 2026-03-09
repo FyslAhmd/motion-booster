@@ -20,6 +20,8 @@ interface Campaign {
   created_time: string;
   updated_time?: string;
   ads?: { data: Array<{ creative?: { thumbnail_url?: string } }> };
+  /** Computed by backend via deriveDeliveryStatus — always present in API response */
+  derived_status?: { label: string; key: string };
 }
 
 interface CursorPaging {
@@ -44,103 +46,6 @@ const STATUS_STYLES: Record<string, string> = {
   UNKNOWN:              'bg-gray-100 text-gray-500',
 };
 
-/**
- * Derive a human-friendly delivery status matching Facebook Ads Manager.
- * Meta's API only returns basic effective_status (ACTIVE/PAUSED/DELETED/ARCHIVED/
- * IN_PROCESS/WITH_ISSUES), but Ads Manager derives richer statuses from
- * multiple fields: stop_time, start_time, budget_remaining, etc.
- */
-function deriveDeliveryStatus(c: Campaign): { label: string; key: string } {
-  const now = new Date();
-
-  // ── Hard statuses from API ──
-  if (c.effective_status === 'DELETED')
-    return { label: 'Deleted', key: 'DELETED' };
-  if (c.effective_status === 'ARCHIVED')
-    return { label: 'Archived', key: 'ARCHIVED' };
-  if (c.effective_status === 'IN_PROCESS')
-    return { label: 'In Review', key: 'IN_REVIEW' };
-  if (c.effective_status === 'WITH_ISSUES')
-    return { label: 'Not Approved', key: 'NOT_APPROVED' };
-
-  // ── Paused ──
-  if (c.effective_status === 'PAUSED' || c.status === 'PAUSED' || c.configured_status === 'PAUSED')
-    return { label: 'Paused', key: 'PAUSED' };
-
-  // ── ACTIVE campaigns: derive richer status ──
-  if (c.effective_status === 'ACTIVE') {
-    // Completed: stop_time is in the past
-    if (c.stop_time && new Date(c.stop_time) <= now) {
-      const daysSinceEnd =
-        (now.getTime() - new Date(c.stop_time).getTime()) /
-        (1000 * 60 * 60 * 24);
-      if (daysSinceEnd <= 3)
-        return { label: 'Recently Completed', key: 'RECENTLY_COMPLETED' };
-      return { label: 'Completed', key: 'COMPLETED' };
-    }
-
-    // Completed: lifetime budget fully spent (budget_remaining = 0)
-    if (
-      c.lifetime_budget &&
-      c.budget_remaining !== undefined &&
-      parseInt(c.budget_remaining, 10) <= 0
-    )
-      return { label: 'Completed', key: 'COMPLETED' };
-
-    // Completed: spend cap reached
-    if (
-      c.spend_cap &&
-      parseInt(c.spend_cap, 10) > 0 &&
-      c.budget_remaining !== undefined &&
-      parseInt(c.budget_remaining, 10) <= 0
-    )
-      return { label: 'Completed', key: 'COMPLETED' };
-
-    // Scheduled: start_time is in the future
-    if (c.start_time && new Date(c.start_time) > now)
-      return { label: 'Scheduled', key: 'SCHEDULED' };
-
-    // Not Delivering: daily budget is 0 or missing any budget
-    if (
-      !c.daily_budget &&
-      !c.lifetime_budget &&
-      !c.spend_cap
-    )
-      return { label: 'Not Delivering', key: 'NOT_DELIVERING' };
-
-    // Active and delivering
-    return { label: 'Active', key: 'ACTIVE' };
-  }
-
-  // ── Fallback for any unexpected status ──
-  return {
-    label: c.effective_status?.replace(/_/g, ' ') || 'Unknown',
-    key: c.effective_status || 'UNKNOWN',
-  };
-}
-
-/**
- * Maps a frontend filter key to the Meta API effective_status to send.
- * Derived statuses (COMPLETED, RECENTLY_COMPLETED, SCHEDULED, NOT_DELIVERING)
- * are all subsets of Meta's ACTIVE, so we fetch ACTIVE from the API and
- * then filter client-side by the derived key.
- */
-const FILTER_TO_API_STATUS: Record<string, string> = {
-  ACTIVE:               'ACTIVE',
-  COMPLETED:            'ACTIVE',
-  RECENTLY_COMPLETED:   'ACTIVE',
-  SCHEDULED:            'ACTIVE',
-  NOT_DELIVERING:       'ACTIVE',
-  PAUSED:               'PAUSED',
-  DELETED:              'DELETED',
-  ARCHIVED:             'ARCHIVED',
-  IN_PROCESS:           'IN_PROCESS',
-  WITH_ISSUES:          'WITH_ISSUES',
-};
-
-/** Derived statuses that require client-side post-filtering */
-const DERIVED_STATUSES = new Set(['ACTIVE', 'COMPLETED', 'RECENTLY_COMPLETED', 'SCHEDULED', 'NOT_DELIVERING']);
-
 function fmtBudget(val?: string) {
   if (!val) return '—';
   return `$${(parseInt(val, 10) / 100).toFixed(2)}`;
@@ -162,7 +67,7 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
   const [cursorStack, setCursorStack] = useState<string[]>([]);  // stack of "after" cursors for prev navigation
   const [currentAfter, setCurrentAfter] = useState<string | undefined>();
   const [search, setSearch] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('ACTIVE');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [pageNum, setPageNum] = useState(1);
@@ -184,9 +89,7 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
         if (accountId) p.set('account_id', accountId);
         if (search) p.set('search', search);
         if (currentAfter) p.set('after', currentAfter);
-        // Map the frontend filter to the correct Meta API status
-        const apiStatus = filterStatus !== 'all' ? FILTER_TO_API_STATUS[filterStatus] : undefined;
-        if (apiStatus) p.set('status', apiStatus);
+        if (filterStatus !== 'all') p.set('status', filterStatus);
 
         const res = await fetch(`/api/v1/meta/campaigns?${p}`, { signal: controller.signal });
         const json = await res.json();
@@ -264,13 +167,8 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
     setCursorStack([]);
     setPageNum(1);
     setSearch('');
-    setFilterStatus('all');
+    setFilterStatus('ACTIVE');
   }, [accountId]);
-
-  // Client-side post-filtering for derived sub-statuses of ACTIVE
-  const filteredData = (filterStatus !== 'all' && DERIVED_STATUSES.has(filterStatus))
-    ? data.filter((c) => deriveDeliveryStatus(c).key === filterStatus)
-    : data;
 
   const hasNext = !!paging?.hasNext;
   const hasPrev = cursorStack.length > 0;
@@ -372,14 +270,14 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
       {/* Table */}
       {!loading && !error && (
         <>
-          {filteredData.length === 0 ? (
+          {data.length === 0 ? (
             <div className="px-6 py-10 text-center text-sm text-gray-500">No campaigns found.</div>
           ) : (
             <>
               {/* Mobile card list */}
               <div className="divide-y divide-gray-100 sm:hidden">
-                {filteredData.map((c) => {
-                  const derived = deriveDeliveryStatus(c);
+                {data.map((c) => {
+                  const derived = c.derived_status || { label: c.effective_status?.replace(/_/g, ' ') || 'Unknown', key: c.effective_status || 'UNKNOWN' };
                   const color = STATUS_STYLES[derived.key] || STATUS_STYLES.UNKNOWN;
                   const thumb = c.ads?.data?.[0]?.creative?.thumbnail_url;
                   return (
@@ -451,8 +349,8 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
-                    {filteredData.map((c) => {
-                      const derived = deriveDeliveryStatus(c);
+                    {data.map((c) => {
+                      const derived = c.derived_status || { label: c.effective_status?.replace(/_/g, ' ') || 'Unknown', key: c.effective_status || 'UNKNOWN' };
                       const color = STATUS_STYLES[derived.key] || STATUS_STYLES.UNKNOWN;
                       return (
                         <tr key={c.id} className="transition-colors hover:bg-gray-50">

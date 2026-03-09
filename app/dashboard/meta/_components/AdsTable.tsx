@@ -20,6 +20,8 @@ interface Ad {
     title?: string;
     image_url?: string;
   };
+  /** Computed by backend via deriveAdStatus — always present in API response */
+  derived_status?: { label: string; key: string };
 }
 
 interface CursorPaging {
@@ -261,7 +263,8 @@ export default function AdsTable({ accountId }: AdsTableProps) {
               {/* Mobile card list */}
               <div className="divide-y divide-gray-100 sm:hidden">
                 {data.map((ad) => {
-                  const st = STATUS_STYLES[ad.effective_status] || { color: 'bg-gray-100 text-gray-500', label: ad.effective_status?.replace(/_/g, ' ') || 'Unknown' };
+                  const derived = ad.derived_status || { label: ad.effective_status?.replace(/_/g, ' ') || 'Unknown', key: ad.effective_status || 'UNKNOWN' };
+                  const color = STATUS_STYLES[derived.key]?.color || 'bg-gray-100 text-gray-500';
                   return (
                     <div key={ad.id} className="flex items-start gap-3 px-4 py-3">
                       {ad.creative?.thumbnail_url ? (
@@ -273,7 +276,7 @@ export default function AdsTable({ accountId }: AdsTableProps) {
                         <p className="truncate text-sm font-medium text-gray-900">{ad.name}</p>
                         {ad.creative?.title && <p className="mt-0.5 truncate text-xs font-medium text-gray-600">{ad.creative.title}</p>}
                         <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
-                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${st.color}`}>{st.label}</span>
+                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${color}`}>{derived.label}</span>
                           <span className="text-xs text-gray-400">{new Date(ad.created_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                         </div>
                         {ad.creative?.body && <p className="mt-0.5 line-clamp-2 text-xs text-gray-400">{ad.creative.body}</p>}
@@ -326,7 +329,8 @@ export default function AdsTable({ accountId }: AdsTableProps) {
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {data.map((ad) => {
-                      const st = STATUS_STYLES[ad.effective_status] || { color: 'bg-gray-100 text-gray-500', label: ad.effective_status?.replace(/_/g, ' ') || 'Unknown' };
+                      const derived = ad.derived_status || { label: ad.effective_status?.replace(/_/g, ' ') || 'Unknown', key: ad.effective_status || 'UNKNOWN' };
+                      const color = STATUS_STYLES[derived.key]?.color || 'bg-gray-100 text-gray-500';
                       return (
                         <tr key={ad.id} className="transition-colors hover:bg-gray-50">
                           <td className="px-6 py-3">
@@ -338,7 +342,7 @@ export default function AdsTable({ accountId }: AdsTableProps) {
                           </td>
                           <td className="max-w-45 truncate px-4 py-3 font-medium text-gray-900">{ad.name}</td>
                           <td className="px-4 py-3">
-                            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${st.color}`}>{st.label}</span>
+                            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${color}`}>{derived.label}</span>
                           </td>
                           <td className="max-w-40 truncate px-4 py-3 text-gray-400">{ad.creative?.title || '—'}</td>
                           <td className="max-w-50 truncate px-4 py-3 text-xs text-gray-500">{ad.creative?.body || '—'}</td>

@@ -18,6 +18,8 @@ interface AdSet {
   end_time?: string;
   created_time: string;
   targeting?: any;
+  /** Computed by backend via deriveAdSetStatus — always present in API response */
+  derived_status?: { label: string; key: string };
 }
 
 interface CampaignOption {
@@ -313,12 +315,13 @@ export default function AdSetsTable({ accountId }: AdSetsTableProps) {
               {/* Mobile card list */}
               <div className="divide-y divide-gray-100 sm:hidden">
                 {data.map((a) => {
-                  const st = STATUS_STYLES[a.effective_status] || { color: 'bg-gray-100 text-gray-500', label: a.effective_status?.replace(/_/g, ' ') || 'Unknown' };
+                  const derived = a.derived_status || { label: a.effective_status?.replace(/_/g, ' ') || 'Unknown', key: a.effective_status || 'UNKNOWN' };
+                  const color = STATUS_STYLES[derived.key]?.color || 'bg-gray-100 text-gray-500';
                   return (
                     <div key={a.id} className="px-4 py-3">
                       <div className="flex items-start justify-between gap-2">
                         <p className="min-w-0 flex-1 truncate text-sm font-medium text-gray-900">{a.name}</p>
-                        <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${st.color}`}>{st.label}</span>
+                        <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${color}`}>{derived.label}</span>
                       </div>
                       <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-gray-500">
                         <span>{a.daily_budget ? `${fmtBudget(a.daily_budget)}/day` : a.lifetime_budget ? `${fmtBudget(a.lifetime_budget)} lifetime` : '—'}</span>
@@ -375,12 +378,13 @@ export default function AdSetsTable({ accountId }: AdSetsTableProps) {
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {data.map((a) => {
-                      const st = STATUS_STYLES[a.effective_status] || { color: 'bg-gray-100 text-gray-500', label: a.effective_status?.replace(/_/g, ' ') || 'Unknown' };
+                      const derived = a.derived_status || { label: a.effective_status?.replace(/_/g, ' ') || 'Unknown', key: a.effective_status || 'UNKNOWN' };
+                      const color = STATUS_STYLES[derived.key]?.color || 'bg-gray-100 text-gray-500';
                       return (
                         <tr key={a.id} className="transition-colors hover:bg-gray-50">
                           <td className="max-w-50 truncate px-6 py-3 font-medium text-gray-900">{a.name}</td>
                           <td className="px-4 py-3">
-                            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${st.color}`}>{st.label}</span>
+                            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${color}`}>{derived.label}</span>
                           </td>
                           <td className="px-4 py-3 text-xs text-gray-400">{a.optimization_goal?.replace(/_/g, ' ') || '—'}</td>
                           <td className="px-4 py-3 text-right text-gray-700">
