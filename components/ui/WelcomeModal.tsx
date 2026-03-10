@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { ChevronRight, X } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { AdminStore } from '@/lib/admin/store';
 
 export const WelcomeModal = () => {
   const [visible, setVisible] = useState(false);
@@ -15,11 +14,15 @@ export const WelcomeModal = () => {
   const [modalBody, setModalBody] = useState('We help businesses grow with creative branding, motion graphics, web development & digital marketing.');
 
   useEffect(() => {
-    const settings = AdminStore.getSettings();
-    setModalImage(settings.welcomeModalImage || '');
-    setExploreLink(settings.welcomeModalExploreLink || '/service');
-    setModalTitle(settings.welcomeModalTitle || 'Welcome to Motion Booster! 👋');
-    setModalBody(settings.welcomeModalBody || 'We help businesses grow with creative branding, motion graphics, web development & digital marketing.');
+    fetch('/api/v1/cms/site-settings')
+      .then(r => r.json())
+      .then((data) => {
+        setModalImage(data.welcomeModalImage || '');
+        setExploreLink(data.welcomeModalExploreLink || '/service');
+        setModalTitle(data.welcomeModalTitle || 'Welcome to Motion Booster! 👋');
+        setModalBody(data.welcomeModalBody || 'We help businesses grow with creative branding, motion graphics, web development & digital marketing.');
+      })
+      .catch(() => {});
 
     const alreadyShown = sessionStorage.getItem('welcomeShown');
     if (!alreadyShown) {

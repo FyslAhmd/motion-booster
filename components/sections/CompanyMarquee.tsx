@@ -1,19 +1,24 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { AdminStore, CompanyItem, defaultCompanies } from '@/lib/admin/store';
+
+interface CompanyItem {
+  id: string;
+  name: string;
+  logoImage?: string | null;
+}
 
 export const CompanyMarquee = () => {
-  const [companies, setCompanies] = useState<CompanyItem[]>(defaultCompanies);
+  const [companies, setCompanies] = useState<CompanyItem[]>([]);
 
   useEffect(() => {
-    const load = () => setCompanies(AdminStore.getCompanies());
-    load();
-    window.addEventListener('storage', load);
-    return () => window.removeEventListener('storage', load);
+    fetch('/api/v1/cms/companies')
+      .then(r => r.json())
+      .then((data) => { if (Array.isArray(data)) setCompanies(data); })
+      .catch(() => {});
   }, []);
 
-  const list = companies.length > 0 ? companies : defaultCompanies;
+  const list = companies;
 
   return (
     <section className="py-8 md:py-10 bg-white border-y border-gray-100">
