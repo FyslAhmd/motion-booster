@@ -26,11 +26,24 @@ function formatMoney(cents: string | undefined, currency: string) {
   }).format(amount);
 }
 
-interface Props {
-  account: MetaAccount | null;
+// Formats a value already in major currency units (as returned by the Insights API)
+function formatSpend(val: string | undefined, currency: string) {
+  if (!val) return '—';
+  const amount = parseFloat(val);
+  if (isNaN(amount)) return '—';
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: 2,
+  }).format(amount);
 }
 
-export default function AccountOverview({ account }: Props) {
+interface Props {
+  account: MetaAccount | null;
+  lifetimeSpend?: string; // from Insights API maximum preset, already in major currency units
+}
+
+export default function AccountOverview({ account, lifetimeSpend }: Props) {
   if (!account) {
     return (
       <div className="rounded-xl border border-gray-100 bg-gray-50 p-6">
@@ -51,7 +64,9 @@ export default function AccountOverview({ account }: Props) {
     { label: 'Timezone', value: account.timezone_name },
     {
       label: 'Total Spent',
-      value: formatMoney(account.amount_spent, account.currency),
+      value: lifetimeSpend != null
+        ? formatSpend(lifetimeSpend, account.currency)
+        : formatMoney(account.amount_spent, account.currency),
       highlight: true,
     },
     {

@@ -22,6 +22,8 @@ import {
   X,
   Save,
   AlertTriangle,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 
 interface Client {
@@ -77,9 +79,11 @@ function EditModal({ client, onClose, onSave }: EditModalProps) {
     status: client.status,
     adsAccess: client.adsAccess,
     emailVerified: client.emailVerified,
+    newPassword: '',
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const set = (key: string, val: string | boolean) =>
     setForm((f) => ({ ...f, [key]: val }));
@@ -89,13 +93,19 @@ function EditModal({ client, onClose, onSave }: EditModalProps) {
       setError('Full name, username, and email are required.');
       return;
     }
+    if (form.newPassword && form.newPassword.length < 8) {
+      setError('New password must be at least 8 characters.');
+      return;
+    }
     setSaving(true);
     setError('');
     try {
+      const payload: Record<string, unknown> = { id: client.id, ...form };
+      if (!form.newPassword) delete payload.newPassword;
       const res = await fetch('/api/v1/admin/clients', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: client.id, ...form }),
+        body: JSON.stringify(payload),
       });
       const json = await res.json();
       if (json.success) {
@@ -178,6 +188,31 @@ function EditModal({ client, onClose, onSave }: EditModalProps) {
               />
             </div>
 
+            {/* New Password */}
+            <div className="sm:col-span-2">
+              <label className="mb-1 block text-xs font-medium text-gray-500">
+                New Password <span className="text-gray-400 font-normal">(leave blank to keep unchanged)</span>
+              </label>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={form.newPassword}
+                  onChange={(e) => set('newPassword', e.target.value)}
+                  placeholder="Min. 8 characters"
+                  autoComplete="new-password"
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 pr-9 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-400"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+
             {/* Status */}
             <div>
               <label className="mb-1 block text-xs font-medium text-gray-500">Status</label>
@@ -194,7 +229,7 @@ function EditModal({ client, onClose, onSave }: EditModalProps) {
 
             {/* Toggles */}
             <div className="flex flex-col gap-3 pt-1">
-              <label className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer">
+              {/* <label className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer">
                 <button
                   type="button"
                   onClick={() => set('adsAccess', !form.adsAccess)}
@@ -207,7 +242,7 @@ function EditModal({ client, onClose, onSave }: EditModalProps) {
                   }`} />
                 </button>
                 Ads Access
-              </label>
+              </label> */}
 
               <label className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer">
                 <button

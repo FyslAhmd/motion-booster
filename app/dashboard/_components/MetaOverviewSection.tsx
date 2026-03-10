@@ -36,6 +36,7 @@ export default function MetaOverviewSection() {
   const [account, setAccount] = useState<MetaAccount | null>(null);
   const [insights, setInsights] = useState<InsightRow[]>([]);
   const [dailySpend, setDailySpend] = useState<InsightRow[]>([]);
+  const [lifetimeSpend, setLifetimeSpend] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -54,17 +55,21 @@ export default function MetaOverviewSection() {
     try {
       const q = `account_id=${encodeURIComponent(accId)}`;
       const dateQ = buildDateQuery(preset, since, until);
-      const [accRes, insRes, dailyRes] = await Promise.allSettled([
+      const [accRes, insRes, dailyRes, lifetimeRes] = await Promise.allSettled([
         apiFetch<MetaAccount>(`/api/v1/meta/account?${q}`),
         apiFetch<InsightRow[]>(`/api/v1/meta/insights?type=account&${dateQ}&${q}`),
         apiFetch<InsightRow[]>(`/api/v1/meta/insights?type=daily&${dateQ}&${q}`),
+        apiFetch<InsightRow[]>(`/api/v1/meta/insights?type=account&date_preset=maximum&${q}`),
       ]);
 
       if (accRes.status === 'fulfilled') setAccount(accRes.value);
       if (insRes.status === 'fulfilled') setInsights(insRes.value);
       if (dailyRes.status === 'fulfilled') setDailySpend(dailyRes.value);
+      if (lifetimeRes.status === 'fulfilled') {
+        setLifetimeSpend(lifetimeRes.value[0]?.spend);
+      }
 
-      const allFailed = [accRes, insRes, dailyRes].every((r) => r.status === 'rejected');
+      const allFailed = [accRes, insRes, dailyRes, lifetimeRes].every((r) => r.status === 'rejected');
       if (allFailed) setError('Failed to fetch Meta data');
     } catch (e: any) {
       setError(e.message);
@@ -136,7 +141,7 @@ export default function MetaOverviewSection() {
         </div>
       ) : (
         <div className="space-y-5">
-          <AccountOverview account={account} />
+          <AccountOverview account={account} lifetimeSpend={lifetimeSpend} />
           <InsightsCards insights={insights} />
           <SpendChart data={dailySpend} />
         </div>

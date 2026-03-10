@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { validateRequest } from '@/lib/auth/validate-request';
+import bcrypt from 'bcryptjs';
 
 const CLIENT_SELECT = {
   id: true,
@@ -69,7 +70,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// PATCH /api/v1/admin/clients — update any client field (except password)
+// PATCH /api/v1/admin/clients — update any client field
 export async function PATCH(req: NextRequest) {
   try {
     const auth = await validateRequest(req);
@@ -78,7 +79,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { id, username, email, fullName, phone, status, adsAccess, emailVerified } = body as {
+    const { id, username, email, fullName, phone, status, adsAccess, emailVerified, newPassword } = body as {
       id: string;
       username?: string;
       email?: string;
@@ -87,10 +88,15 @@ export async function PATCH(req: NextRequest) {
       status?: 'ACTIVE' | 'SUSPENDED' | 'BANNED';
       adsAccess?: boolean;
       emailVerified?: boolean;
+      newPassword?: string;
     };
 
     if (!id) {
       return NextResponse.json({ success: false, error: 'Missing id' }, { status: 400 });
+    }
+
+    if (newPassword !== undefined && newPassword.trim().length < 8) {
+      return NextResponse.json({ success: false, error: 'Password must be at least 8 characters' }, { status: 400 });
     }
 
     // Build update data — only include fields that were provided
@@ -102,6 +108,9 @@ export async function PATCH(req: NextRequest) {
     if (status !== undefined) data.status = status;
     if (adsAccess !== undefined) data.adsAccess = adsAccess;
     if (emailVerified !== undefined) data.emailVerified = emailVerified;
+    if (newPassword !== undefined && newPassword.trim().length >= 8) {
+      data.passwordHash = await bcrypt.hash(newPassword.trim(), 12);
+    }
 
     if (Object.keys(data).length === 0) {
       return NextResponse.json({ success: false, error: 'No fields to update' }, { status: 400 });

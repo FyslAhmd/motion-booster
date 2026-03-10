@@ -31,6 +31,7 @@ export default function AccountSwitcher({ value, onChange }: AccountSwitcherProp
   const [accounts, setAccounts] = useState<AdAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
+  const [lifetimeSpendMap, setLifetimeSpendMap] = useState<Record<string, string>>({});
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -43,6 +44,23 @@ export default function AccountSwitcher({ value, onChange }: AccountSwitcherProp
           if (!value && json.data.length > 0) {
             onChange(json.data[0].id);
           }
+          // Fetch lifetime spend for each account in parallel
+          const accs: AdAccount[] = json.data;
+          Promise.allSettled(
+            accs.map((acc) =>
+              fetch(`/api/v1/meta/insights?type=account&date_preset=maximum&account_id=${encodeURIComponent(acc.id)}`)
+                .then((r) => r.json())
+                .then((j) => ({ id: acc.id, spend: j.data?.[0]?.spend as string | undefined }))
+            )
+          ).then((results) => {
+            const map: Record<string, string> = {};
+            for (const r of results) {
+              if (r.status === 'fulfilled' && r.value.spend != null) {
+                map[r.value.id] = r.value.spend;
+              }
+            }
+            setLifetimeSpendMap(map);
+          });
         }
       })
       .catch(() => {})
@@ -103,10 +121,14 @@ export default function AccountSwitcher({ value, onChange }: AccountSwitcherProp
                     <div className="mt-0.5 flex items-center gap-2 text-xs text-gray-400">
                       <span className={`inline-block h-1.5 w-1.5 rounded-full ${st.color}`} />
                       <span>{st.label}</span>
-                      {acc.amount_spent && (
+                      {(lifetimeSpendMap[acc.id] != null || acc.amount_spent) && (
                         <>
                           <span>·</span>
-                          <span>${(parseInt(acc.amount_spent, 10) / 100).toLocaleString()}</span>
+                          <span>
+                            {lifetimeSpendMap[acc.id] != null
+                              ? `$${parseFloat(lifetimeSpendMap[acc.id]).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                              : `$${(parseInt(acc.amount_spent!, 10) / 100).toLocaleString()}`}
+                          </span>
                         </>
                       )}
                     </div>
