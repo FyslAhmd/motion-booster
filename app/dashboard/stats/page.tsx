@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import AdminShell from '../_components/AdminShell';
+import { useConfirm } from '@/lib/admin/confirm';
 import { AdminStore, StatItem, defaultStats, generateId } from '@/lib/admin/store';
 import { Plus, Pencil, Trash2, X, Check, AlertTriangle } from 'lucide-react';
 
@@ -35,8 +36,11 @@ export default function AdminStatsPage() {
     setTimeout(() => setSaved(false), 2000);
   };
 
-  const handleSave = () => {
+  const { confirm } = useConfirm();
+
+  const handleSave = async () => {
     if (!editing || !editing.value.trim() || !editing.title.trim()) return;
+    if (!await confirm({ title: 'Save Changes', message: 'Are you sure you want to save these changes?' })) return;
     let updated: StatItem[];
     if (isNew) {
       updated = [...stats, { ...editing, id: generateId() }];

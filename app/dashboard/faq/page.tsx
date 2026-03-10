@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import AdminShell from '../_components/AdminShell';
+import { useConfirm } from '@/lib/admin/confirm';
 import { AdminStore, FAQItem, defaultFAQs, generateId } from '@/lib/admin/store';
 import { Plus, Pencil, Trash2, X, Check, AlertTriangle, ChevronDown } from 'lucide-react';
 
@@ -27,8 +28,11 @@ export default function AdminFAQPage() {
     setTimeout(() => setSaved(false), 2000);
   };
 
-  const handleSave = () => {
+  const { confirm } = useConfirm();
+
+  const handleSave = async () => {
     if (!editing || !editing.question.trim() || !editing.answer.trim()) return;
+    if (!await confirm({ title: 'Save Changes', message: 'Are you sure you want to save these changes?' })) return;
     let updated: FAQItem[];
     if (isNew) {
       updated = [...faqs, { ...editing, id: generateId() }];

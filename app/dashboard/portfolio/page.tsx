@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import AdminShell from '../_components/AdminShell';
+import { useConfirm } from '@/lib/admin/confirm';
 import { AdminStore, PortfolioItem, generateId } from '@/lib/admin/store';
 import { Plus, Pencil, Trash2, Star, X, Save, GripVertical } from 'lucide-react';
 import ImageUpload from '@/components/ui/ImageUpload';
@@ -62,12 +63,15 @@ export default function PortfolioPage() {
     setTimeout(() => setToast(''), 3000);
   };
 
-  const save = () => {
+  const { confirm } = useConfirm();
+
+  const save = async () => {
     if (!editing) return;
     if (!editing.title.trim() || !editing.client.trim()) {
       showToast('Title and Client are required.');
       return;
     }
+    if (!await confirm({ title: 'Save Changes', message: 'Are you sure you want to save these changes?' })) return;
     let updated: PortfolioItem[];
     if (isNew) {
       updated = [...items, { ...editing, id: generateId() }];

@@ -28,8 +28,8 @@ export const CompanyMarquee = () => {
         {/* Marquee Container */}
         <div className="relative overflow-hidden">
           {/* fade edges */}
-          <div className="absolute left-0 top-0 h-full w-12 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
-          <div className="absolute right-0 top-0 h-full w-12 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
+          <div className="absolute left-0 top-0 h-full w-12 bg-linear-to-r from-white to-transparent z-10 pointer-events-none" />
+          <div className="absolute right-0 top-0 h-full w-12 bg-linear-to-l from-white to-transparent z-10 pointer-events-none" />
           <div className="flex animate-marquee">
             {/* First set */}
             {list.map((company) => (

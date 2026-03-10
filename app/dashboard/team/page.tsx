@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import AdminShell from '../_components/AdminShell';
+import { useConfirm } from '@/lib/admin/confirm';
 import { AdminStore, TeamMemberItem, defaultTeam, generateId } from '@/lib/admin/store';
 import { Plus, Pencil, Trash2, X, Check, AlertTriangle, Star } from 'lucide-react';
 import ImageUpload from '@/components/ui/ImageUpload';
@@ -90,8 +91,11 @@ export default function AdminTeamPage() {
     setTimeout(() => setSaved(false), 2000);
   };
 
-  const handleSave = () => {
+  const { confirm } = useConfirm();
+
+  const handleSave = async () => {
     if (!editing || !editing.name.trim()) return;
+    if (!await confirm({ title: 'Save Changes', message: 'Are you sure you want to save these changes?' })) return;
     const clean = {
       ...editing,
       avatar: editing.avatar.trim() || editing.name.slice(0, 2).toUpperCase(),
@@ -160,7 +164,7 @@ export default function AdminTeamPage() {
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={member.avatarImage} alt={member.name} className="w-11 h-11 rounded-xl object-cover shrink-0" />
               ) : (
-                <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${member.avatarColor} flex items-center justify-center text-white font-bold text-sm shrink-0`}>
+                <div className={`w-11 h-11 rounded-xl bg-linear-to-br ${member.avatarColor} flex items-center justify-center text-white font-bold text-sm shrink-0`}>
                   {member.avatar || member.name.slice(0, 2).toUpperCase()}
                 </div>
               )}
@@ -193,7 +197,7 @@ export default function AdminTeamPage() {
         {/* Add placeholder */}
         <button
           onClick={openNew}
-          className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl p-5 hover:border-red-300 hover:bg-red-50/30 transition-colors flex flex-col items-center justify-center gap-2 min-h-[180px]"
+          className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl p-5 hover:border-red-300 hover:bg-red-50/30 transition-colors flex flex-col items-center justify-center gap-2 min-h-45"
         >
           <Plus className="w-6 h-6 text-gray-300" />
           <span className="text-sm text-gray-400">Add Team Member</span>
@@ -266,7 +270,7 @@ export default function AdminTeamPage() {
                 <div className="flex flex-wrap gap-2">
                   {AVATAR_COLORS.map(c => (
                     <button key={c} type="button" onClick={() => setEditing({ ...editing, avatarColor: c })}
-                      className={`w-7 h-7 rounded-lg bg-gradient-to-br ${c} ${editing.avatarColor === c ? 'ring-2 ring-offset-1 ring-gray-600 scale-110' : 'hover:scale-105'} transition-transform`} />
+                      className={`w-7 h-7 rounded-lg bg-linear-to-br ${c} ${editing.avatarColor === c ? 'ring-2 ring-offset-1 ring-gray-600 scale-110' : 'hover:scale-105'} transition-transform`} />
                   ))}
                 </div>
               </div>

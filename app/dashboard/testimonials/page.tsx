@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import AdminShell from '../_components/AdminShell';
+import { useConfirm } from '@/lib/admin/confirm';
 import { AdminStore, TestimonialItem, defaultTestimonials, generateId } from '@/lib/admin/store';
 import { Plus, Pencil, Trash2, X, Check, AlertTriangle, Star } from 'lucide-react';
 import ImageUpload from '@/components/ui/ImageUpload';
@@ -49,8 +50,11 @@ export default function AdminTestimonialsPage() {
     setTimeout(() => setSaved(false), 2000);
   };
 
-  const handleSave = () => {
+  const { confirm } = useConfirm();
+
+  const handleSave = async () => {
     if (!editing || !editing.name.trim() || !editing.review.trim()) return;
+    if (!await confirm({ title: 'Save Changes', message: 'Are you sure you want to save these changes?' })) return;
     const clean = {
       ...editing,
       avatar: editing.avatar.trim() || editing.name.slice(0, 2).toUpperCase(),
@@ -116,7 +120,7 @@ export default function AdminTestimonialsPage() {
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={item.avatarImage} alt={item.name} className="w-9 h-9 rounded-xl object-cover shrink-0" />
               ) : (
-                <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${item.avatarBg} flex items-center justify-center text-white text-xs font-bold shrink-0`}>
+                <div className={`w-9 h-9 rounded-xl bg-linear-to-br ${item.avatarBg} flex items-center justify-center text-white text-xs font-bold shrink-0`}>
                   {item.avatar || item.name.slice(0, 2).toUpperCase()}
                 </div>
               )}
@@ -142,7 +146,7 @@ export default function AdminTestimonialsPage() {
 
         <button
           onClick={() => { setEditing({ id: '', ...BLANK }); setIsNew(true); }}
-          className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl p-5 hover:border-red-300 hover:bg-red-50/30 transition-colors flex flex-col items-center justify-center gap-2 min-h-[180px]"
+          className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl p-5 hover:border-red-300 hover:bg-red-50/30 transition-colors flex flex-col items-center justify-center gap-2 min-h-45"
         >
           <Plus className="w-6 h-6 text-gray-300" />
           <span className="text-sm text-gray-400">Add Testimonial</span>
@@ -206,7 +210,7 @@ export default function AdminTestimonialsPage() {
                 <div className="flex flex-wrap gap-2">
                   {AVATAR_BG_OPTIONS.map(c => (
                     <button key={c.value} type="button" onClick={() => setEditing({ ...editing, avatarBg: c.value })}
-                      className={`w-8 h-8 rounded-lg bg-gradient-to-br ${c.value} ${editing.avatarBg === c.value ? 'ring-2 ring-offset-1 ring-gray-600' : ''}`}
+                      className={`w-8 h-8 rounded-lg bg-linear-to-br ${c.value} ${editing.avatarBg === c.value ? 'ring-2 ring-offset-1 ring-gray-600' : ''}`}
                       title={c.label}
                     />
                   ))}

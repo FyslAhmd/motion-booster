@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import AdminShell from '../_components/AdminShell';
+import { useConfirm } from '@/lib/admin/confirm';
 import { AdminStore, SiteSettings, defaultSettings } from '@/lib/admin/store';
 import { Check, ImagePlus, Save, Trash2, Eye, NotebookPen } from 'lucide-react';
 
@@ -19,7 +20,10 @@ export default function WelcomeModalPage() {
     setSettings(prev => ({ ...prev, [key]: value }));
   };
 
-  const handleSave = () => {
+  const { confirm } = useConfirm();
+
+  const handleSave = async () => {
+    if (!await confirm({ title: 'Save Changes', message: 'Are you sure you want to save these changes?' })) return;
     AdminStore.saveSettings(settings);
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
@@ -52,7 +56,7 @@ export default function WelcomeModalPage() {
       {/* Fullscreen Preview Overlay */}
       {preview && (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 px-4"
+          className="fixed inset-0 z-100 flex items-center justify-center bg-black/70 px-4"
           onClick={() => setPreview(false)}
         >
           <div className="relative" onClick={e => e.stopPropagation()}>

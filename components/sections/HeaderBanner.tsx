@@ -55,23 +55,6 @@ export const HeaderBanner = () => {
             priority
           />
           
-          {/* Badge Overlay */}
-          <div className="absolute bottom-3 left-3 bg-white/90 rounded-lg px-3 py-2 shadow-md flex items-center gap-2">
-            <Image
-              src="/sells-report.jpg"
-              alt="Award"
-              width={40}
-              height={40}
-              className="rounded-md border w-10 h-10"
-            />
-            <div>
-              <div className="font-bold text-gray-800 text-xs">
-                {sliderImages[currentSlide].badge}
-              </div>
-              <div className="text-[10px] text-gray-500">{sliderImages[currentSlide].year}</div>
-            </div>
-          </div>
-
           {/* Dots Navigation */}
           <div className="absolute bottom-3 right-3 flex gap-1.5">
             {sliderImages.map((_, index) => (
@@ -123,33 +106,17 @@ export const HeaderBanner = () => {
               </a>
             </div>
           </div>
-          {/* Right: Image with Badge Overlay */}
+          {/* Right: Image */}
           <div className="lg:col-span-3 relative w-full">
             <div className="relative rounded-3xl overflow-hidden shadow-2xl border-4 border-white">
               <Image
-                src="/hero_img_4.jpg"
-                alt="Award Banner"
+                src="/header1.jpeg"
+                alt="Motion Booster IT Training"
                 width={1000}
                 height={680}
                 className="w-full lg:h-115 object-cover"
                 priority
               />
-              {/* Badge Overlay */}
-              <div className="absolute bottom-4 left-4 bg-white/90 rounded-lg px-4 py-2 shadow flex items-center gap-3">
-                <Image
-                  src="/sells-report.jpg"
-                  alt="Award"
-                  width={56}
-                  height={56}
-                  className="rounded-md border w-14 h-14"
-                />
-                <div>
-                  <div className="font-bold text-gray-800 text-lg">
-                    South Asia&apos;s Best IT Institute
-                  </div>
-                  <div className="text-xs text-gray-500">Awarded 2024</div>
-                </div>
-              </div>
             </div>
           </div>
         </div>

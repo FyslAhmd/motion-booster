@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import AdminShell from '../_components/AdminShell';
+import { useConfirm } from '@/lib/admin/confirm';
 import { AdminStore, SiteSettings, defaultSettings } from '@/lib/admin/store';
 import { Check, RotateCcw, Save, Sparkles, NotebookPen } from 'lucide-react';
 
@@ -48,7 +49,10 @@ export default function AdminSettingsPage() {
     setSettings(prev => ({ ...prev, [key]: value }));
   };
 
-  const handleSave = () => {
+  const { confirm } = useConfirm();
+
+  const handleSave = async () => {
+    if (!await confirm({ title: 'Save Settings', message: 'Are you sure you want to save all settings?' })) return;
     AdminStore.saveSettings(settings);
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
@@ -95,7 +99,7 @@ export default function AdminSettingsPage() {
       <div className="space-y-6">
         {/* General */}
         <div className="bg-white rounded-2xl border border-gray-100 p-6">
-          <h2 className="font-semibold text-gray-900 mb-4 text-sm uppercase tracking-wider text-gray-500">General</h2>
+          <h2 className="font-semibold text-gray-900 mb-4 text-sm uppercase tracking-wider">General</h2>
           <div className="grid sm:grid-cols-2 gap-4">
             <Field label="Site Name" value={settings.siteName} onChange={set('siteName')} placeholder="Motion Booster" />
             <Field label="Tagline" value={settings.tagline} onChange={set('tagline')} placeholder="Your tagline here" />

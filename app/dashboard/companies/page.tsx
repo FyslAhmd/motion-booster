@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import AdminShell from '../_components/AdminShell';
+import { useConfirm } from '@/lib/admin/confirm';
 import { AdminStore, CompanyItem, defaultCompanies, generateId } from '@/lib/admin/store';
 import ImageUpload from '@/components/ui/ImageUpload';
 import { Plus, Trash2, GripVertical, Check, RotateCcw, Building2, Image as ImageIcon, Type, NotebookPen } from 'lucide-react';
@@ -21,6 +22,8 @@ export default function AdminCompaniesPage() {
     setToast(msg); setToastType(type);
     setTimeout(() => setToast(''), 3000);
   };
+
+  const { confirm } = useConfirm();
 
   const save = (data: CompanyItem[]) => {
     AdminStore.saveCompanies(data);
@@ -97,7 +100,7 @@ export default function AdminCompaniesPage() {
               <RotateCcw className="w-3.5 h-3.5" /> Reset
             </button>
             <button
-              onClick={() => save(companies)}
+              onClick={async () => { if (await confirm({ title: 'Save Changes', message: 'Are you sure you want to save?' })) save(companies); }}
               className="flex items-center gap-1.5 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-xl transition-colors"
             >
               <Check className="w-3.5 h-3.5" /> Save All
@@ -202,7 +205,7 @@ export default function AdminCompaniesPage() {
         </div>
 
         <button
-          onClick={() => save(companies)}
+          onClick={async () => { if (await confirm({ title: 'Save Changes', message: 'Are you sure you want to save?' })) save(companies); }}
           className="w-full py-3 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-xl transition-colors"
         >
           Save Changes

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import AdminShell from '../_components/AdminShell';
+import { useConfirm } from '@/lib/admin/confirm';
 import { HeroSlideItem } from '@/lib/admin/store';
 import { Plus, Pencil, Trash2, X, Save, AlertTriangle, ChevronUp, ChevronDown } from 'lucide-react';
 import Image from 'next/image';
@@ -45,10 +46,13 @@ export default function HeroSliderPage() {
     setTimeout(() => setToast(''), 3000);
   };
 
+  const { confirm } = useConfirm();
+
   const save = async () => {
     if (!editing) return;
     const hasImage = editing.customImage || editing.image;
     if (!hasImage) { showToast('Please add an image.'); return; }
+    if (!await confirm({ title: 'Save Changes', message: 'Are you sure you want to save these changes?' })) return;
     setLoading(true);
     try {
       const payload = { ...editing, title: editing.title || 'Slide' };

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { AdminStore, FAQItem } from '@/lib/admin/store';
 
 export const FAQ = () => {
-  const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const [openId, setOpenId] = useState<string | null>(null);
   const [faqs, setFAQs] = useState<FAQItem[]>([]);
 
   useEffect(() => {
@@ -14,27 +14,27 @@ export const FAQ = () => {
     return () => window.removeEventListener('storage', handler);
   }, []);
 
-  const toggleFAQ = (index: number) => {
-    setOpenIndex(prev => prev === index ? null : index);
+  const toggleFAQ = (id: string) => {
+    setOpenId(prev => (prev === id ? null : id));
   };
 
   return (
-    <section className="py-2 sm:py-6 md:py-8 lg:py-12 bg-white">
+    <section className="pt-0 pb-2 sm:pb-4 md:pb-6 lg:pb-8 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 text-center mb-8 sm:mb-10 md:mb-12 px-4">
           Answers to Your Frequently Asked Questions
         </h2>
 
-        <div className="grid md:grid-cols-2 gap-3 sm:gap-4 md:gap-6" suppressHydrationWarning>
-          {faqs.map((faq, index) => {
-            const isOpen = openIndex === index;
+        <div className="grid grid-cols-1 gap-3 sm:gap-4 md:gap-6" suppressHydrationWarning>
+          {faqs.map((faq) => {
+            const isOpen = openId === faq.id;
             return (
               <div
                 key={faq.id}
                 className="faq-item bg-white rounded-xl sm:rounded-2xl p-5 sm:p-6 md:p-7 shadow-sm hover:shadow-md transition-shadow border border-gray-100"
               >
                 <button
-                  onClick={() => toggleFAQ(index)}
+                  onClick={() => toggleFAQ(faq.id)}
                   className="w-full flex items-start justify-between gap-4 sm:gap-5 text-left"
                 >
                   <span className="font-semibold text-gray-900 text-base sm:text-lg md:text-xl flex-1 leading-relaxed">

@@ -10,40 +10,8 @@ export const Footer = () => {
 
   return (
     <footer>
-      {/* CTA Banner */}
-      <div className="relative py-14 overflow-hidden" style={{ background: 'linear-gradient(135deg, #3b1c14 0%, #2d1810 50%, #1f120c 100%)' }}>
-        {/* Dot Pattern */}
-        <div className="absolute top-4 left-4 grid grid-cols-6 gap-2 opacity-30">
-          {Array.from({ length: 24 }).map((_, i) => (
-            <div key={i} className="w-1.5 h-1.5 rounded-full bg-white" />
-          ))}
-        </div>
-        <div className="absolute top-4 right-4 grid grid-cols-6 gap-2 opacity-30">
-          {Array.from({ length: 24 }).map((_, i) => (
-            <div key={i} className="w-1.5 h-1.5 rounded-full bg-white" />
-          ))}
-        </div>
-
-        <div className="max-w-4xl mx-auto px-4 text-center relative z-10">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-3">
-            We Are Ready To Serve You
-          </h2>
-          <p className="text-gray-400 mb-8 max-w-xl mx-auto">
-            Get in touch with us today, take one step ahead towards a successful digital presence.
-          </p>
-          <div className="flex flex-wrap gap-4 justify-center">
-            <Link
-              href="/service"
-              className="px-6 py-3 border-2 border-white text-white font-semibold rounded-lg hover:bg-white hover:text-gray-900 transition-all"
-            >
-              Browse Services
-            </Link>
-          </div>
-        </div>
-      </div>
-
       {/* Main Footer */}
-      <div style={{ background: '#2d1810' }}>
+      <div style={{ background: '#111827' }}>
         <div className="max-w-7xl mx-auto px-6 lg:px-8 py-14">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-10">
             {/* Brand */}
@@ -145,7 +113,7 @@ export const Footer = () => {
         </div>
 
         {/* Bottom Bar */}
-        <div className="border-t border-white/10">
+        <div className="border-t border-white/10" style={{ background: '#111827' }}>
           <div className="max-w-7xl mx-auto px-6 lg:px-8 py-6 flex flex-col sm:flex-row justify-between items-center gap-4">
             {/* Logo */}
             <Link href="/" className="flex items-center">
