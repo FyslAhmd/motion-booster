@@ -2,19 +2,34 @@
 
 import { useState, useEffect } from 'react';
 import AdminShell from '../_components/AdminShell';
-import { AdminStore, CompanyItem, defaultCompanies, generateId } from '@/lib/admin/store';
 import ImageUpload from '@/components/ui/ImageUpload';
-import { Plus, Trash2, GripVertical, Check, RotateCcw, Building2, Image as ImageIcon, Type, NotebookPen } from 'lucide-react';
+import { Plus, Trash2, GripVertical, Check, Image as ImageIcon, Type, NotebookPen, Loader2 } from 'lucide-react';
+
+interface CompanyItem {
+  id: string;
+  name: string;
+  logoImage?: string | null;
+  order: number;
+}
 
 export default function AdminCompaniesPage() {
   const [companies, setCompanies] = useState<CompanyItem[]>([]);
+  const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const [toast, setToast] = useState('');
   const [toastType, setToastType] = useState<'success' | 'error'>('success');
   const [dragIdx, setDragIdx] = useState<number | null>(null);
-  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    setCompanies(AdminStore.getCompanies());
+    fetch('/api/v1/cms/companies')
+      .then(r => r.json())
+      .then((data: CompanyItem[]) => {
+        if (Array.isArray(data)) {
+          setCompanies(data);
+          setSavedIds(new Set(data.map(c => c.id)));
+        }
+      })
+      .catch(() => showMsg('Failed to load companies.', 'error'));
   }, []);
 
   const showMsg = (msg: string, type: 'success' | 'error' = 'success') => {
@@ -22,29 +37,27 @@ export default function AdminCompaniesPage() {
     setTimeout(() => setToast(''), 3000);
   };
 
-  const save = (data: CompanyItem[]) => {
-    AdminStore.saveCompanies(data);
-    setCompanies(data);
-    window.dispatchEvent(new Event('storage'));
-    showMsg('Saved!');
-  };
-
   const addCompany = () => {
-    const updated = [...companies, { id: generateId(), name: 'New Company', logoImage: '' }];
-    setCompanies(updated);
+    const tempId = `new_${Date.now()}`;
+    setCompanies(prev => [...prev, { id: tempId, name: 'New Company', logoImage: null, order: prev.length }]);
   };
 
-  const update = (id: string, field: keyof CompanyItem, value: string) => {
+  const update = (id: string, field: 'name' | 'logoImage', value: string | null) => {
     setCompanies(prev => prev.map(c => c.id === id ? { ...c, [field]: value } : c));
   };
 
-  const remove = (id: string) => {
+  const remove = async (id: string) => {
+    if (savedIds.has(id)) {
+      try {
+        const res = await fetch(`/api/v1/cms/companies/${id}`, { method: 'DELETE' });
+        if (!res.ok) { showMsg('Delete failed.', 'error'); return; }
+        setSavedIds(prev => { const s = new Set(prev); s.delete(id); return s; });
+      } catch {
+        showMsg('Delete failed.', 'error');
+        return;
+      }
+    }
     setCompanies(prev => prev.filter(c => c.id !== id));
-  };
-
-  const reset = () => {
-    save(defaultCompanies);
-    showMsg('Reset to defaults!');
   };
 
   // drag-reorder
@@ -60,25 +73,58 @@ export default function AdminCompaniesPage() {
   };
   const onDragEnd = () => setDragIdx(null);
 
+  const saveAll = async () => {
+    setSaving(true);
+    try {
+      let finalCompanies = [...companies];
+
+      // POST new (unsaved) items
+      const newItems = companies.filter(c => !savedIds.has(c.id));
+      for (const item of newItems) {
+        if (!item.name.trim()) { showMsg('Company name cannot be empty.', 'error'); setSaving(false); return; }
+        const res = await fetch('/api/v1/cms/companies', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: item.name, logoImage: item.logoImage }),
+        });
+        if (!res.ok) { showMsg('Failed to save "' + item.name + '"', 'error'); setSaving(false); return; }
+        const created: CompanyItem = await res.json();
+        finalCompanies = finalCompanies.map(c => c.id === item.id ? created : c);
+      }
+
+      // PATCH existing items
+      const existingItems = finalCompanies.filter(c => savedIds.has(c.id));
+      await Promise.all(existingItems.map(item =>
+        fetch(`/api/v1/cms/companies/${item.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: item.name, logoImage: item.logoImage }),
+        })
+      ));
+
+      // Reorder
+      await fetch('/api/v1/cms/companies/reorder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: finalCompanies.map(c => c.id) }),
+      });
+
+      setCompanies(finalCompanies);
+      setSavedIds(new Set(finalCompanies.map(c => c.id)));
+      showMsg('Saved!');
+    } catch {
+      showMsg('Save failed.', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <AdminShell>
       {toast && (
         <div className={`fixed top-6 right-6 z-50 text-white text-sm px-4 py-3 rounded-xl shadow-2xl ${toastType === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>
           {toastType === 'success' && <Check className="inline w-4 h-4 mr-1.5" />}
           {toast}
-        </div>
-      )}
-
-      {showResetConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl">
-            <h3 className="font-semibold text-gray-900 mb-2">Reset to Default?</h3>
-            <p className="text-sm text-gray-500 mb-6">All company logos will be replaced with the default data. This cannot be undone.</p>
-            <div className="flex gap-3 justify-end">
-              <button onClick={() => setShowResetConfirm(false)} className="px-4 py-2 text-sm rounded-xl border border-gray-200 hover:bg-gray-50">Cancel</button>
-              <button onClick={() => { reset(); setShowResetConfirm(false); }} className="px-4 py-2 text-sm rounded-xl bg-red-600 text-white hover:bg-red-700">Reset</button>
-            </div>
-          </div>
         </div>
       )}
 
@@ -89,20 +135,14 @@ export default function AdminCompaniesPage() {
             <h1 className="text-xl font-bold text-gray-900">Companies Marquee</h1>
             <p className="text-sm text-gray-500 mt-0.5">Manage the scrolling company logos on the homepage</p>
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowResetConfirm(true)}
-              className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
-            >
-              <RotateCcw className="w-3.5 h-3.5" /> Reset
-            </button>
-            <button
-              onClick={() => save(companies)}
-              className="flex items-center gap-1.5 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-xl transition-colors"
-            >
-              <Check className="w-3.5 h-3.5" /> Save All
-            </button>
-          </div>
+          <button
+            onClick={saveAll}
+            disabled={saving}
+            className="flex items-center gap-1.5 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white text-sm font-medium rounded-xl transition-colors"
+          >
+            {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+            Save All
+          </button>
         </div>
 
         {/* Info banner */}
@@ -134,7 +174,7 @@ export default function AdminCompaniesPage() {
                 {idx + 1}
               </div>
 
-              {/* Company Name */}
+              {/* Company Name + Logo */}
               <div className="flex-1 min-w-0 space-y-3">
                 <div>
                   <label className="flex items-center gap-1 text-xs font-medium text-gray-500 mb-1.5">
@@ -151,7 +191,7 @@ export default function AdminCompaniesPage() {
                 {/* Logo Upload */}
                 <div>
                   <label className="flex items-center gap-1 text-xs font-medium text-gray-500 mb-1.5">
-                    <ImageIcon className="w-3 h-3" /> Logo Image 
+                    <ImageIcon className="w-3 h-3" /> Logo Image
                   </label>
                   <div className="flex items-center gap-3">
                     {company.logoImage && (
@@ -161,7 +201,7 @@ export default function AdminCompaniesPage() {
                     <div className="flex-1">
                       <ImageUpload
                         value={company.logoImage || ''}
-                        onChange={v => update(company.id, 'logoImage', v)}
+                        onChange={v => update(company.id, 'logoImage', v || null)}
                         label={company.logoImage ? 'Replace Logo' : 'Upload Logo'}
                         aspectRatio="wide"
                         maxPx={400}
@@ -170,7 +210,7 @@ export default function AdminCompaniesPage() {
                     </div>
                     {company.logoImage && (
                       <button
-                        onClick={() => update(company.id, 'logoImage', '')}
+                        onClick={() => update(company.id, 'logoImage', null)}
                         className="text-xs text-red-500 hover:text-red-700 whitespace-nowrap"
                       >
                         Remove
@@ -191,23 +231,24 @@ export default function AdminCompaniesPage() {
           ))}
         </div>
 
-        {/* Add + Save */}
-        <div className="flex items-center gap-3">
-          <button
-            onClick={addCompany}
-            className="flex items-center gap-2 px-4 py-2.5 border-2 border-dashed border-gray-300 hover:border-red-400 text-gray-500 hover:text-red-600 text-sm font-medium rounded-xl transition-colors w-full justify-center"
-          >
-            <Plus className="w-4 h-4" /> Add Company
-          </button>
-        </div>
+        {/* Add button */}
+        <button
+          onClick={addCompany}
+          className="flex items-center gap-2 px-4 py-2.5 border-2 border-dashed border-gray-300 hover:border-red-400 text-gray-500 hover:text-red-600 text-sm font-medium rounded-xl transition-colors w-full justify-center"
+        >
+          <Plus className="w-4 h-4" /> Add Company
+        </button>
 
         <button
-          onClick={() => save(companies)}
-          className="w-full py-3 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-xl transition-colors"
+          onClick={saveAll}
+          disabled={saving}
+          className="w-full py-3 bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
         >
+          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
           Save Changes
         </button>
       </div>
     </AdminShell>
   );
 }
+

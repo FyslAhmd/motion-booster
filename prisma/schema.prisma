@@ -156,6 +156,19 @@ model ServiceCategory {
   @@map("service_categories")
 }
 
+// ─── CMS: SITE SETTINGS (Welcome Popup, etc.) ────────
+
+model SiteSettings {
+  id                    String   @id @default("default")
+  welcomeModalImage     String?  @map("welcome_modal_image") @db.Text
+  welcomeModalTitle     String?  @map("welcome_modal_title")
+  welcomeModalBody      String?  @map("welcome_modal_body") @db.Text
+  welcomeModalExploreLink String? @map("welcome_modal_explore_link")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  @@map("site_settings")
+}
+
 // ─── CMS: POPULAR SERVICES ───────────────────────────
 
 model PopularService {
@@ -173,6 +186,19 @@ model PopularService {
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   @@map("popular_services")
+}
+
+// ─── CMS: COMPANIES (Trusted by Top Companies marquee) ───────────────────────
+
+model Company {
+  id          String   @id @default(cuid())
+  name        String
+  logoImage   String?  @map("logo_image") @db.Text
+  order       Int      @default(0)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("companies")
 }
 
 // ─── META AD ASSIGNMENTS ──────────────────────────────

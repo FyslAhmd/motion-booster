@@ -2,27 +2,63 @@
 
 import { useEffect, useRef, useState } from 'react';
 import AdminShell from '../_components/AdminShell';
-import { AdminStore, SiteSettings, defaultSettings } from '@/lib/admin/store';
-import { Check, ImagePlus, Save, Trash2, Eye, NotebookPen } from 'lucide-react';
+import { Check, ImagePlus, Loader2, Save, Trash2, Eye, NotebookPen } from 'lucide-react';
+
+interface WelcomeSettings {
+  welcomeModalImage: string;
+  welcomeModalTitle: string;
+  welcomeModalBody: string;
+  welcomeModalExploreLink: string;
+}
+
+const DEFAULT: WelcomeSettings = {
+  welcomeModalImage: '',
+  welcomeModalTitle: 'Welcome to Motion Booster! 👋',
+  welcomeModalBody: 'We help businesses grow with creative branding, motion graphics, web development & digital marketing.',
+  welcomeModalExploreLink: '/service',
+};
 
 export default function WelcomeModalPage() {
-  const [settings, setSettings] = useState<SiteSettings>(defaultSettings);
+  const [settings, setSettings] = useState<WelcomeSettings>(DEFAULT);
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [preview, setPreview] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    setSettings(AdminStore.getSettings());
+    fetch('/api/v1/cms/site-settings')
+      .then(r => r.json())
+      .then((data) => {
+        setSettings({
+          welcomeModalImage: data.welcomeModalImage || '',
+          welcomeModalTitle: data.welcomeModalTitle || DEFAULT.welcomeModalTitle,
+          welcomeModalBody: data.welcomeModalBody || DEFAULT.welcomeModalBody,
+          welcomeModalExploreLink: data.welcomeModalExploreLink || DEFAULT.welcomeModalExploreLink,
+        });
+      })
+      .catch(() => {});
   }, []);
 
-  const set = (key: keyof SiteSettings) => (value: string) => {
+  const set = (key: keyof WelcomeSettings) => (value: string) => {
     setSettings(prev => ({ ...prev, [key]: value }));
   };
 
-  const handleSave = () => {
-    AdminStore.saveSettings(settings);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch('/api/v1/cms/site-settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settings),
+      });
+      if (!res.ok) throw new Error('Save failed');
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch {
+      // silent — could add toast here
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleImageUpload = (file: File) => {
@@ -42,17 +78,17 @@ export default function WelcomeModalPage() {
     img.src = URL.createObjectURL(file);
   };
 
-  const currentImage = settings.welcomeModalImage || '';
-  const currentTitle = settings.welcomeModalTitle || 'Welcome to Motion Booster! 👋';
-  const currentBody = settings.welcomeModalBody || 'We help businesses grow with creative branding, motion graphics, web development & digital marketing.';
-  const currentLink = settings.welcomeModalExploreLink || '/service';
+  const currentImage = settings.welcomeModalImage;
+  const currentTitle = settings.welcomeModalTitle || DEFAULT.welcomeModalTitle;
+  const currentBody = settings.welcomeModalBody || DEFAULT.welcomeModalBody;
+  const currentLink = settings.welcomeModalExploreLink || DEFAULT.welcomeModalExploreLink;
 
   return (
     <AdminShell>
       {/* Fullscreen Preview Overlay */}
       {preview && (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 px-4"
+          className="fixed inset-0 z-100 flex items-center justify-center bg-black/70 px-4"
           onClick={() => setPreview(false)}
         >
           <div className="relative" onClick={e => e.stopPropagation()}>
@@ -125,9 +161,11 @@ export default function WelcomeModalPage() {
           </button>
           <button
             onClick={handleSave}
-            className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-4 py-2 rounded-xl"
+            disabled={saving}
+            className="flex items-center gap-2 bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-xl"
           >
-            <Save className="w-4 h-4" /> Save
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            {saving ? 'Saving…' : 'Save'}
           </button>
         </div>
       </div>
