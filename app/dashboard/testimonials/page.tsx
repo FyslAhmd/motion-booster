@@ -2,9 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import AdminShell from '../_components/AdminShell';
-import { useConfirm } from '@/lib/admin/confirm';
-import { AdminStore, TestimonialItem, defaultTestimonials, generateId } from '@/lib/admin/store';
-import { Plus, Pencil, Trash2, X, Check, AlertTriangle, Star } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, AlertTriangle, Star, Loader2 } from 'lucide-react';
 import ImageUpload from '@/components/ui/ImageUpload';
 
 const AVATAR_BG_OPTIONS = [
@@ -20,7 +18,20 @@ const AVATAR_BG_OPTIONS = [
 
 const SERVICE_OPTIONS = ['Web Development', 'Digital Marketing', 'Brand Design', 'Graphic Design', 'Video Editing', 'App Development', 'SEO', 'Content Marketing', 'Photography', 'Other'];
 
-const BLANK: Omit<TestimonialItem, 'id'> = {
+interface TestimonialItem {
+  id: string;
+  name: string;
+  role: string;
+  avatar: string;
+  avatarBg: string;
+  avatarImage?: string | null;
+  rating: number;
+  review: string;
+  service: string;
+  order: number;
+}
+
+const BLANK: Omit<TestimonialItem, 'id' | 'order'> = {
   name: '',
   role: '',
   avatar: '',
@@ -36,122 +47,125 @@ export default function AdminTestimonialsPage() {
   const [editing, setEditing] = useState<TestimonialItem | null>(null);
   const [isNew, setIsNew] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
-  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    setItems(AdminStore.getTestimonials());
+    fetch('/api/v1/cms/testimonials')
+      .then(r => r.json())
+      .then(data => setItems(Array.isArray(data) ? data : []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
-
-  const persist = (data: TestimonialItem[]) => {
-    AdminStore.saveTestimonials(data);
-    setItems(data);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
-  };
-
-  const { confirm } = useConfirm();
 
   const handleSave = async () => {
     if (!editing || !editing.name.trim() || !editing.review.trim()) return;
-    if (!await confirm({ title: 'Save Changes', message: 'Are you sure you want to save these changes?' })) return;
     const clean = {
       ...editing,
       avatar: editing.avatar.trim() || editing.name.slice(0, 2).toUpperCase(),
     };
-    let updated: TestimonialItem[];
-    if (isNew) {
-      updated = [...items, { ...clean, id: generateId() }];
-    } else {
-      updated = items.map(t => t.id === editing.id ? clean : t);
+    setSaving(true);
+    try {
+      if (isNew) {
+        const res = await fetch('/api/v1/cms/testimonials', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(clean),
+        });
+        const created = await res.json();
+        setItems(prev => [...prev, created]);
+      } else {
+        const res = await fetch(`/api/v1/cms/testimonials/${editing.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(clean),
+        });
+        const updated = await res.json();
+        setItems(prev => prev.map(t => t.id === updated.id ? updated : t));
+      }
+      setEditing(null);
+      setIsNew(false);
+    } catch {
+      alert('Failed to save testimonial.');
+    } finally {
+      setSaving(false);
     }
-    persist(updated);
-    setEditing(null);
-    setIsNew(false);
   };
 
-  const handleDelete = (id: string) => {
-    persist(items.filter(t => t.id !== id));
-    setDeleteId(null);
+  const handleDelete = async (id: string) => {
+    setDeleting(true);
+    try {
+      await fetch(`/api/v1/cms/testimonials/${id}`, { method: 'DELETE' });
+      setItems(prev => prev.filter(t => t.id !== id));
+      setDeleteId(null);
+    } catch {
+      alert('Failed to delete testimonial.');
+    } finally {
+      setDeleting(false);
+    }
   };
 
   return (
     <AdminShell>
-      {showResetConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl">
-            <h3 className="font-semibold text-gray-900 mb-2">Reset to Default?</h3>
-            <p className="text-sm text-gray-500 mb-6">All current testimonials will be replaced with the default data. This cannot be undone.</p>
-            <div className="flex gap-3 justify-end">
-              <button onClick={() => setShowResetConfirm(false)} className="px-4 py-2 text-sm rounded-xl border border-gray-200 hover:bg-gray-50">Cancel</button>
-              <button onClick={() => { persist(defaultTestimonials); setShowResetConfirm(false); }} className="px-4 py-2 text-sm rounded-xl bg-red-600 text-white hover:bg-red-700">Reset</button>
-            </div>
-          </div>
-        </div>
-      )}
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Testimonials</h1>
           <p className="text-sm text-gray-500 mt-0.5">Manage client reviews and testimonials</p>
         </div>
-        <div className="flex items-center gap-2">
-          {saved && <span className="flex items-center gap-1.5 text-green-600 text-sm"><Check className="w-4 h-4" /> Saved!</span>}
-          <button onClick={() => setShowResetConfirm(true)} className="text-xs text-gray-500 border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50">Reset Default</button>
-          <button onClick={() => { setEditing({ id: '', ...BLANK }); setIsNew(true); }} className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-4 py-2 rounded-xl">
-            <Plus className="w-4 h-4" /> Add Review
-          </button>
-        </div>
-      </div>
-
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {items.map(item => (
-          <div key={item.id} className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-md transition-shadow">
-            {/* Stars */}
-            <div className="flex gap-0.5 mb-3">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Star key={i} className={`w-3.5 h-3.5 ${i < item.rating ? 'text-amber-400 fill-amber-400' : 'text-gray-200'}`} />
-              ))}
-            </div>
-
-            <p className="text-xs text-gray-600 leading-relaxed mb-4 line-clamp-4">"{item.review}"</p>
-
-            <div className="flex items-center gap-3 mb-3">
-              {item.avatarImage ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={item.avatarImage} alt={item.name} className="w-9 h-9 rounded-xl object-cover shrink-0" />
-              ) : (
-                <div className={`w-9 h-9 rounded-xl bg-linear-to-br ${item.avatarBg} flex items-center justify-center text-white text-xs font-bold shrink-0`}>
-                  {item.avatar || item.name.slice(0, 2).toUpperCase()}
-                </div>
-              )}
-              <div>
-                <div className="text-sm font-semibold text-gray-900">{item.name}</div>
-                <div className="text-xs text-gray-400">{item.role}</div>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-lg">{item.service}</span>
-              <div className="flex items-center gap-1">
-                <button onClick={() => { setEditing({ ...item }); setIsNew(false); }} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg">
-                  <Pencil className="w-3.5 h-3.5" />
-                </button>
-                <button onClick={() => setDeleteId(item.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg">
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
-
-        <button
-          onClick={() => { setEditing({ id: '', ...BLANK }); setIsNew(true); }}
-          className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl p-5 hover:border-red-300 hover:bg-red-50/30 transition-colors flex flex-col items-center justify-center gap-2 min-h-45"
-        >
-          <Plus className="w-6 h-6 text-gray-300" />
-          <span className="text-sm text-gray-400">Add Testimonial</span>
+        <button onClick={() => { setEditing({ id: '', order: 0, ...BLANK }); setIsNew(true); }} className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-4 py-2 rounded-xl">
+          <Plus className="w-4 h-4" /> Add Review
         </button>
       </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
+      ) : (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {items.map(item => (
+            <div key={item.id} className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-md transition-shadow">
+              <div className="flex gap-0.5 mb-3">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star key={i} className={`w-3.5 h-3.5 ${i < item.rating ? 'text-amber-400 fill-amber-400' : 'text-gray-200'}`} />
+                ))}
+              </div>
+              <p className="text-xs text-gray-600 leading-relaxed mb-4 line-clamp-4">"{item.review}"</p>
+              <div className="flex items-center gap-3 mb-3">
+                {item.avatarImage ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={item.avatarImage} alt={item.name} className="w-9 h-9 rounded-xl object-cover shrink-0" />
+                ) : (
+                  <div className={`w-9 h-9 rounded-xl bg-linear-to-br ${item.avatarBg} flex items-center justify-center text-white text-xs font-bold shrink-0`}>
+                    {item.avatar || item.name.slice(0, 2).toUpperCase()}
+                  </div>
+                )}
+                <div>
+                  <div className="text-sm font-semibold text-gray-900">{item.name}</div>
+                  <div className="text-xs text-gray-400">{item.role}</div>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-lg">{item.service}</span>
+                <div className="flex items-center gap-1">
+                  <button onClick={() => { setEditing({ ...item }); setIsNew(false); }} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg">
+                    <Pencil className="w-3.5 h-3.5" />
+                  </button>
+                  <button onClick={() => setDeleteId(item.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+          <button
+            onClick={() => { setEditing({ id: '', order: 0, ...BLANK }); setIsNew(true); }}
+            className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl p-5 hover:border-red-300 hover:bg-red-50/30 transition-colors flex flex-col items-center justify-center gap-2 min-h-45"
+          >
+            <Plus className="w-6 h-6 text-gray-300" />
+            <span className="text-sm text-gray-400">Add Testimonial</span>
+          </button>
+        </div>
+      )}
 
       {/* Edit Modal */}
       {editing && (
@@ -162,7 +176,6 @@ export default function AdminTestimonialsPage() {
               <button onClick={() => { setEditing(null); setIsNew(false); }} className="p-2 hover:bg-gray-100 rounded-lg"><X className="w-4 h-4" /></button>
             </div>
             <div className="p-6 space-y-4">
-              {/* Profile Photo Upload */}
               <ImageUpload
                 value={editing.avatarImage || ''}
                 onChange={v => setEditing({ ...editing, avatarImage: v })}
@@ -191,8 +204,6 @@ export default function AdminTestimonialsPage() {
                   </select>
                 </div>
               </div>
-
-              {/* Star rating */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Rating</label>
                 <div className="flex gap-1">
@@ -203,8 +214,6 @@ export default function AdminTestimonialsPage() {
                   ))}
                 </div>
               </div>
-
-              {/* Avatar color */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Avatar Color</label>
                 <div className="flex flex-wrap gap-2">
@@ -216,7 +225,6 @@ export default function AdminTestimonialsPage() {
                   ))}
                 </div>
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Review *</label>
                 <textarea
@@ -230,7 +238,8 @@ export default function AdminTestimonialsPage() {
             </div>
             <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-100">
               <button onClick={() => { setEditing(null); setIsNew(false); }} className="px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50">Cancel</button>
-              <button onClick={handleSave} disabled={!editing.name.trim() || !editing.review.trim()} className="px-5 py-2 text-sm bg-red-600 text-white rounded-xl hover:bg-red-700 disabled:opacity-50 font-medium">
+              <button onClick={handleSave} disabled={saving || !editing.name.trim() || !editing.review.trim()} className="flex items-center gap-2 px-5 py-2 text-sm bg-red-600 text-white rounded-xl hover:bg-red-700 disabled:opacity-50 font-medium">
+                {saving && <Loader2 className="w-4 h-4 animate-spin" />}
                 {isNew ? 'Add Review' : 'Save Changes'}
               </button>
             </div>
@@ -249,7 +258,9 @@ export default function AdminTestimonialsPage() {
             <p className="text-sm text-gray-500 mb-5">This review will be permanently removed from the website.</p>
             <div className="flex gap-3">
               <button onClick={() => setDeleteId(null)} className="flex-1 border border-gray-200 rounded-xl py-2 text-sm text-gray-600 hover:bg-gray-50">Cancel</button>
-              <button onClick={() => handleDelete(deleteId)} className="flex-1 bg-red-600 text-white rounded-xl py-2 text-sm hover:bg-red-700">Delete</button>
+              <button onClick={() => handleDelete(deleteId)} disabled={deleting} className="flex-1 flex items-center justify-center gap-2 bg-red-600 text-white rounded-xl py-2 text-sm hover:bg-red-700 disabled:opacity-50">
+                {deleting && <Loader2 className="w-4 h-4 animate-spin" />}Delete
+              </button>
             </div>
           </div>
         </div>

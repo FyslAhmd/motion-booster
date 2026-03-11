@@ -2,19 +2,31 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { AdminStore, PortfolioItem, defaultPortfolio } from '@/lib/admin/store';
 import { Tag, User, TrendingUp } from 'lucide-react';
 
+interface PortfolioItem {
+  id: string;
+  title: string;
+  category: string;
+  description: string;
+  client: string;
+  result: string;
+  tags: string[];
+  coverColor: string;
+  coverImage?: string | null;
+  featured: boolean;
+}
+
 export default function PortfolioPage() {
-  const [items, setItems] = useState<PortfolioItem[]>(defaultPortfolio);
+  const [items, setItems] = useState<PortfolioItem[]>([]);
   const [activeCategory, setActiveCategory] = useState('All');
   const [selected, setSelected] = useState<PortfolioItem | null>(null);
 
   useEffect(() => {
-    const load = () => setItems(AdminStore.getPortfolio());
-    load();
-    window.addEventListener('storage', load);
-    return () => window.removeEventListener('storage', load);
+    fetch('/api/v1/cms/portfolio')
+      .then(r => r.json())
+      .then(data => setItems(Array.isArray(data) ? data : []))
+      .catch(() => {});
   }, []);
 
   const categories = ['All', ...Array.from(new Set(items.map(i => i.category)))];

@@ -1,17 +1,22 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { AdminStore, FAQItem } from '@/lib/admin/store';
+
+interface FAQItem {
+  id: string;
+  question: string;
+  answer: string;
+}
 
 export const FAQ = () => {
   const [openId, setOpenId] = useState<string | null>(null);
   const [faqs, setFAQs] = useState<FAQItem[]>([]);
 
   useEffect(() => {
-    setFAQs(AdminStore.getFAQs());
-    const handler = () => setFAQs(AdminStore.getFAQs());
-    window.addEventListener('storage', handler);
-    return () => window.removeEventListener('storage', handler);
+    fetch('/api/v1/cms/faq')
+      .then(r => r.json())
+      .then(data => setFAQs(Array.isArray(data) ? data : []))
+      .catch(() => {});
   }, []);
 
   const toggleFAQ = (id: string) => {
