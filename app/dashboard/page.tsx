@@ -10,6 +10,7 @@ import {
   UserCheck,
   BellDot,
   TrendingUp,
+  CalendarDays,
   Eye,
   EyeOff,
   X,
@@ -484,6 +485,14 @@ export default function DashboardPage() {
       bg: unseenMessages ? "bg-orange-50" : "bg-gray-50",
       href: "/dashboard/chat",
     },
+    {
+      label: "Schedule",
+      value: "—",
+      icon: CalendarDays,
+      color: "text-violet-600",
+      bg: "bg-violet-50",
+      href: "/dashboard/schedule",
+    },
   ];
 
   const clientStatCards: StatCard[] = [
@@ -602,7 +611,7 @@ export default function DashboardPage() {
         {/* Main Dashboard Content */}
         <div className="max-w-7xl mx-auto px-3 py-3 sm:p-6 space-y-4 sm:space-y-6">
           {/* Quick Stats */}
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
             {statCards.map((card) => {
               const Icon = card.icon;
               const inner = (
