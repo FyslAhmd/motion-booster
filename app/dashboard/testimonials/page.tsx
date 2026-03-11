@@ -61,6 +61,7 @@ export default function AdminTestimonialsPage() {
 
   const handleSave = async () => {
     if (!editing || !editing.name.trim() || !editing.review.trim()) return;
+    if (!await confirm({ title: 'Save Changes', message: 'Are you sure you want to save these changes?' })) return;
     const clean = {
       ...editing,
       avatar: editing.avatar.trim() || editing.name.slice(0, 2).toUpperCase(),

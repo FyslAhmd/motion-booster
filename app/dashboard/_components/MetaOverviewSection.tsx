@@ -95,7 +95,7 @@ export default function MetaOverviewSection() {
           <div className="w-full sm:w-auto sm:shrink-0">
             <AccountSwitcher value={accountId} onChange={setAccountId} />
           </div>
-          <div className="flex min-w-0 flex-1 items-start gap-2">
+          <div className="flex min-w-0 items-start gap-2 sm:max-w-xs">
             <div className="min-w-0 flex-1">
               <DatePresetSelector
                 value={datePreset}

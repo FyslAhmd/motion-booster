@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import AdminShell from '../_components/AdminShell';
+import { useConfirm } from '@/lib/admin/confirm';
 import { ServiceCategoryItem } from '@/lib/admin/store';
 import { CategoryIcon, ICON_OPTIONS } from '@/lib/admin/categoryIcons';
 import { Plus, Pencil, Trash2, X, Save, GripVertical, ChevronUp, ChevronDown } from 'lucide-react';
@@ -53,9 +54,12 @@ export default function CategoriesPage() {
     setTimeout(() => setToast(''), 3000);
   };
 
+  const { confirm } = useConfirm();
+
   const save = async () => {
     if (!editing) return;
     if (!editing.title.trim()) { showToast('Title is required.'); return; }
+    if (!await confirm({ title: 'Save Changes', message: 'Are you sure you want to save these changes?' })) return;
     const withSlug = { ...editing, slug: editing.slug.trim() || toSlug(editing.title) };
     setLoading(true);
     try {

@@ -1,6 +1,7 @@
 'use client';
 
 import AdminShell from '../_components/AdminShell';
+import { useConfirm } from '@/lib/admin/confirm';
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/lib/auth/context';
 import {
@@ -96,7 +97,10 @@ export default function ProfilePage() {
     }
   };
 
+  const { confirm } = useConfirm();
+
   const handleSaveProfile = async () => {
+    if (!await confirm({ title: 'Save Profile', message: 'Are you sure you want to save your profile changes?' })) return;
     setIsSaving(true);
     setProfileMsg(null);
     try {

@@ -2,63 +2,31 @@
 
 import { useEffect, useRef, useState } from 'react';
 import AdminShell from '../_components/AdminShell';
-import { Check, ImagePlus, Loader2, Save, Trash2, Eye, NotebookPen } from 'lucide-react';
-
-interface WelcomeSettings {
-  welcomeModalImage: string;
-  welcomeModalTitle: string;
-  welcomeModalBody: string;
-  welcomeModalExploreLink: string;
-}
-
-const DEFAULT: WelcomeSettings = {
-  welcomeModalImage: '',
-  welcomeModalTitle: 'Welcome to Motion Booster! 👋',
-  welcomeModalBody: 'We help businesses grow with creative branding, motion graphics, web development & digital marketing.',
-  welcomeModalExploreLink: '/service',
-};
+import { useConfirm } from '@/lib/admin/confirm';
+import { AdminStore, SiteSettings, defaultSettings } from '@/lib/admin/store';
+import { Check, ImagePlus, Save, Trash2, Eye, NotebookPen } from 'lucide-react';
 
 export default function WelcomeModalPage() {
-  const [settings, setSettings] = useState<WelcomeSettings>(DEFAULT);
+  const [settings, setSettings] = useState<SiteSettings>(defaultSettings);
   const [saved, setSaved] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [preview, setPreview] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    fetch('/api/v1/cms/site-settings')
-      .then(r => r.json())
-      .then((data) => {
-        setSettings({
-          welcomeModalImage: data.welcomeModalImage || '',
-          welcomeModalTitle: data.welcomeModalTitle || DEFAULT.welcomeModalTitle,
-          welcomeModalBody: data.welcomeModalBody || DEFAULT.welcomeModalBody,
-          welcomeModalExploreLink: data.welcomeModalExploreLink || DEFAULT.welcomeModalExploreLink,
-        });
-      })
-      .catch(() => {});
+    setSettings(AdminStore.getSettings());
   }, []);
 
-  const set = (key: keyof WelcomeSettings) => (value: string) => {
+  const set = (key: keyof SiteSettings) => (value: string) => {
     setSettings(prev => ({ ...prev, [key]: value }));
   };
 
+  const { confirm } = useConfirm();
+
   const handleSave = async () => {
-    setSaving(true);
-    try {
-      const res = await fetch('/api/v1/cms/site-settings', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(settings),
-      });
-      if (!res.ok) throw new Error('Save failed');
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2500);
-    } catch {
-      // silent — could add toast here
-    } finally {
-      setSaving(false);
-    }
+    if (!await confirm({ title: 'Save Changes', message: 'Are you sure you want to save these changes?' })) return;
+    AdminStore.saveSettings(settings);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2500);
   };
 
   const handleImageUpload = (file: File) => {
@@ -78,10 +46,10 @@ export default function WelcomeModalPage() {
     img.src = URL.createObjectURL(file);
   };
 
-  const currentImage = settings.welcomeModalImage;
-  const currentTitle = settings.welcomeModalTitle || DEFAULT.welcomeModalTitle;
-  const currentBody = settings.welcomeModalBody || DEFAULT.welcomeModalBody;
-  const currentLink = settings.welcomeModalExploreLink || DEFAULT.welcomeModalExploreLink;
+  const currentImage = settings.welcomeModalImage || '';
+  const currentTitle = settings.welcomeModalTitle || 'Welcome to Motion Booster! 👋';
+  const currentBody = settings.welcomeModalBody || 'We help businesses grow with creative branding, motion graphics, web development & digital marketing.';
+  const currentLink = settings.welcomeModalExploreLink || '/service';
 
   return (
     <AdminShell>
@@ -161,11 +129,9 @@ export default function WelcomeModalPage() {
           </button>
           <button
             onClick={handleSave}
-            disabled={saving}
-            className="flex items-center gap-2 bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-xl"
+            className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-4 py-2 rounded-xl"
           >
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            {saving ? 'Saving…' : 'Save'}
+            <Save className="w-4 h-4" /> Save
           </button>
         </div>
       </div>

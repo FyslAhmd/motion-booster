@@ -87,10 +87,10 @@ export const Testimonials = () => {
           to   { transform: translateX(-50%); }
         }
         .marquee-right {
-          animation: marquee-right 35s linear infinite;
+          animation: marquee-right 60s linear infinite;
         }
         .marquee-left {
-          animation: marquee-left 35s linear infinite;
+          animation: marquee-left 60s linear infinite;
         }
         .marquee-right:hover,
         .marquee-left:hover {
@@ -101,7 +101,7 @@ export const Testimonials = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Stats Section — auto-scroll left → right */}
         <div className="mb-12 sm:mb-16 md:mb-20 overflow-hidden">
-          <div className="flex w-max marquee-right gap-3 sm:gap-4 md:gap-6">
+          <div className="flex w-max marquee-left gap-3 sm:gap-4 md:gap-6">
             {[...stats, ...stats].map((stat, index) => (
               <div
                 key={index}
@@ -128,20 +128,11 @@ export const Testimonials = () => {
         </div>
       </div>
 
-      {/* Row 1 — left → right */}
-      <div className="mb-4 sm:mb-6 overflow-hidden">
-        <div className="flex w-max marquee-right gap-3 sm:gap-4 md:gap-6 pb-4">
-          {[...reviews, ...reviews].map((review, index) => (
-            <ReviewCard key={`r1-${index}`} review={review} />
-          ))}
-        </div>
-      </div>
-
-      {/* Row 2 — right → left */}
-      <div className="overflow-hidden">
+      {/* Row 1 — left → right (single row only) */}
+      <div className="max-w-7xl mx-auto overflow-hidden">
         <div className="flex w-max marquee-left gap-3 sm:gap-4 md:gap-6 pb-4">
           {[...reviews, ...reviews].map((review, index) => (
-            <ReviewCard key={`r2-${index}`} review={review} />
+            <ReviewCard key={`r1-${index}`} review={review} />
           ))}
         </div>
       </div>

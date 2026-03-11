@@ -1,3 +1,6 @@
+'use client';
+import { ConfirmProvider } from '@/lib/admin/confirm';
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+  return <ConfirmProvider>{children}</ConfirmProvider>;
 }

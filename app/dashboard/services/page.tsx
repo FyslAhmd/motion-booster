@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import AdminShell from '../_components/AdminShell';
+import { useConfirm } from '@/lib/admin/confirm';
 import { AdminStore, ServiceItem, defaultServices, generateId } from '@/lib/admin/store';
 import { Plus, Pencil, Trash2, X, Check, GripVertical, AlertTriangle } from 'lucide-react';
 
@@ -59,9 +60,12 @@ export default function AdminServicesPage() {
     setTimeout(() => setSaved(false), 2000);
   };
 
-  const handleSave = () => {
+  const { confirm } = useConfirm();
+
+  const handleSave = async () => {
     if (!editing) return;
     if (!editing.title.trim() || !editing.description.trim()) return;
+    if (!await confirm({ title: 'Save Changes', message: 'Are you sure you want to save these changes?' })) return;
     let updated: ServiceItem[];
     if (isNew) {
       updated = [...services, { ...editing, id: generateId() }];

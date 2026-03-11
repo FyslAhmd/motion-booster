@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { useState, useEffect, useCallback, Fragment } from 'react';
 import AdminShell from '../_components/AdminShell';
+import { useConfirm } from '@/lib/admin/confirm';
 import {
   Users,
   Search,
@@ -88,6 +89,8 @@ function EditModal({ client, onClose, onSave }: EditModalProps) {
   const set = (key: string, val: string | boolean) =>
     setForm((f) => ({ ...f, [key]: val }));
 
+  const { confirm } = useConfirm();
+
   const handleSave = async () => {
     if (!form.fullName.trim() || !form.username.trim() || !form.email.trim()) {
       setError('Full name, username, and email are required.');
@@ -97,6 +100,7 @@ function EditModal({ client, onClose, onSave }: EditModalProps) {
       setError('New password must be at least 8 characters.');
       return;
     }
+    if (!await confirm({ title: 'Save Changes', message: 'Are you sure you want to save client changes?' })) return;
     setSaving(true);
     setError('');
     try {

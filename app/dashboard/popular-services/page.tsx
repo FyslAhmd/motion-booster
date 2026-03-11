@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import AdminShell from '../_components/AdminShell';
+import { useConfirm } from '@/lib/admin/confirm';
 import { PopularServiceItem } from '@/lib/admin/store';
 import { Plus, Pencil, Trash2, X, Save, ChevronUp, ChevronDown, GripVertical } from 'lucide-react';
 import Image from 'next/image';
@@ -66,9 +67,12 @@ export default function PopularServicesPage() {
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 3000); };
 
+  const { confirm } = useConfirm();
+
   const save = async () => {
     if (!editing) return;
     if (!editing.title.trim()) { setModalError('Title is required.'); return; }
+    if (!await confirm({ title: 'Save Changes', message: 'Are you sure you want to save these changes?' })) return;
     setModalError('');
     const item = {
       ...editing,

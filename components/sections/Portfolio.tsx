@@ -78,23 +78,20 @@ export const Portfolio = () => {
                 )}
                 <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-                {/* Overlay Content */}
-                <div className="absolute inset-0 flex items-end p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <div className="w-full">
-                    <span className="inline-block px-3 py-1 bg-red-500 text-white text-xs font-semibold rounded-full mb-2">
-                      {item.category}
-                    </span>
-                    <h3 className="text-white font-bold text-lg mb-1">{item.title}</h3>
-                    <p className="text-white/90 text-sm mb-3 line-clamp-2">{item.description}</p>
-                    <Link href="/portfolio" className="inline-flex items-center gap-2 text-white font-semibold text-sm hover:gap-3 transition-all">
-                      View Project <ExternalLink className="w-4 h-4" />
-                    </Link>
-                  </div>
+                {/* Hover: live link button only */}
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <Link
+                    href="/portfolio"
+                    className="inline-flex items-center gap-2 bg-white text-gray-900 px-5 py-2.5 rounded-full font-semibold text-sm shadow-lg hover:bg-red-500 hover:text-white transition-all"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    Live Preview
+                  </Link>
                 </div>
               </div>
 
               {/* Card Info */}
-              <div className="p-4 group-hover:opacity-0 transition-opacity duration-300">
+              <div className="p-4">
                 <span className="inline-block px-3 py-1 bg-gray-100 text-gray-700 text-xs font-semibold rounded-full mb-2">
                   {item.category}
                 </span>

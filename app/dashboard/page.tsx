@@ -16,6 +16,8 @@ import {
   Lock,
   Loader2,
   ShieldCheck,
+  Megaphone,
+  DollarSign,
 } from "lucide-react";
 import AdminShell from "./_components/AdminShell";
 import MetaOverviewSection from "./_components/MetaOverviewSection";
@@ -330,6 +332,8 @@ export default function DashboardPage() {
   const [totalClients, setTotalClients] = useState<number | null>(null);
   const [unseenMessages, setUnseenMessages] = useState<number | null>(null);
   const [totalSpendBDT, setTotalSpendBDT] = useState<number | null>(null);
+  const [totalAds, setTotalAds] = useState<number | null>(null);
+  const [dailySpendBDT, setDailySpendBDT] = useState<number | null>(null);
 
   // Spend reveal / mask
   const [spendRevealed, setSpendRevealed] = useState(false);
@@ -419,6 +423,30 @@ export default function DashboardPage() {
               0,
             );
             setTotalSpendBDT(total * BDT_RATE);
+
+            // Use first account for active ads count + daily spend
+            const firstAccount = d.data[0];
+            const accountId = firstAccount?.account_id || firstAccount?.id;
+            if (accountId) {
+              fetch(`/api/v1/meta/active-counts?account_id=${accountId}`)
+                .then((r) => r.json())
+                .then((json) => {
+                  if (json.success) setTotalAds(json.data.ads ?? null);
+                })
+                .catch(() => {});
+
+              fetch(`/api/v1/meta/insights?type=account&date_preset=today&account_id=${accountId}`)
+                .then((r) => r.json())
+                .then((json) => {
+                  if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+                    const spend = parseFloat(json.data[0]?.spend ?? "0");
+                    setDailySpendBDT(spend * BDT_RATE);
+                  } else {
+                    setDailySpendBDT(0);
+                  }
+                })
+                .catch(() => {});
+            }
           }
         })
         .catch(() => {});
@@ -427,32 +455,26 @@ export default function DashboardPage() {
 
   const statCards: StatCard[] = [
     {
-      label: "Total Clients",
-      value: totalClients ?? "—",
-      icon: UserCheck,
-      color: "text-indigo-600",
-      bg: "bg-indigo-50",
-    },
-    {
-      label: "Team Members",
-      value: team.length,
-      icon: Users,
-      color: "text-blue-600",
-      bg: "bg-blue-50",
-    },
-    {
-      label: "Portfolio Items",
-      value: portfolio.length,
-      icon: Briefcase,
+      label: "Total Ads",
+      value: totalAds ?? "—",
+      icon: Megaphone,
       color: "text-red-600",
       bg: "bg-red-50",
+      href: "/dashboard/meta",
     },
     {
-      label: "Services",
-      value: services.length,
-      icon: Layers,
-      color: "text-purple-600",
-      bg: "bg-purple-50",
+      label: "Daily Spend",
+      value: dailySpendBDT != null ? fmtBDT(dailySpendBDT) : "—",
+      icon: TrendingUp,
+      color: "text-green-600",
+      bg: "bg-green-50",
+    },
+    {
+      label: "Total Client Due",
+      value: "—",
+      icon: DollarSign,
+      color: "text-amber-600",
+      bg: "bg-amber-50",
     },
     {
       label: "Unseen Messages",
@@ -460,7 +482,7 @@ export default function DashboardPage() {
       icon: BellDot,
       color: unseenMessages ? "text-orange-600" : "text-gray-400",
       bg: unseenMessages ? "bg-orange-50" : "bg-gray-50",
-      href: "/dashboard/messages",
+      href: "/dashboard/chat",
     },
   ];
 
@@ -580,7 +602,7 @@ export default function DashboardPage() {
         {/* Main Dashboard Content */}
         <div className="max-w-7xl mx-auto px-3 py-3 sm:p-6 space-y-4 sm:space-y-6">
           {/* Quick Stats */}
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {statCards.map((card) => {
               const Icon = card.icon;
               const inner = (

@@ -9,7 +9,7 @@ function parse(val: string): { num: number; suffix: string } | null {
   return { num: parseFloat(m[1]), suffix: m[2] ?? '' };
 }
 
-function useCountUp(target: number, duration = 1800, started = false) {
+function useCountUp(target: number, duration = 2500, started = false) {
   const [count, setCount] = useState(0);
 
   useEffect(() => {
@@ -94,7 +94,7 @@ export const AchievementStats = () => {
           observer.disconnect();
         }
       },
-      { threshold: 0.2 },
+      { threshold: 0.3, rootMargin: '0px 0px -80px 0px' },
     );
     observer.observe(el);
     return () => observer.disconnect();
