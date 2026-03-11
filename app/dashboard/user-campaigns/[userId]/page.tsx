@@ -290,51 +290,23 @@ export default function UserCampaignDetailPage({
           </div>
         </div>
 
-        {/* Mobile: stacked sections */}
-        <div className="flex flex-col gap-6 sm:hidden">
-          {campaignRefs.length > 0 && (
-            <section>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
-                Campaigns
-              </p>
-              <CampaignsSection campaigns={campaigns} loading={loadingCampaigns} />
-            </section>
-          )}
-          {adSetRefs.length > 0 && (
-            <section>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
-                Ad Sets
-              </p>
-              <AdSetsSection adSets={adSets} loading={loadingAdSets} />
-            </section>
-          )}
-          {adRefs.length > 0 && (
-            <section>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
-                Ads
-              </p>
-              <AdsSection ads={ads} loading={loadingAds} />
-            </section>
-          )}
-        </div>
-
-        {/* Desktop: tabs */}
-        <div className="hidden sm:block">
-          <div className="mb-6 flex gap-1 rounded-xl border border-gray-200 bg-gray-50 p-1">
+        {/* Tabs — all screen sizes */}
+        <div>
+          <div className="mb-4 flex gap-1 rounded-xl border border-gray-200 bg-gray-50 p-1">
             {TABS.map((t) => (
               <button
                 key={t.id}
                 onClick={() => setTab(t.id)}
-                className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
+                className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-xs font-medium transition-all sm:gap-2 sm:px-3 sm:text-sm ${
                   tab === t.id
                     ? 'bg-red-600 text-white shadow-sm shadow-red-500/20'
                     : 'text-gray-500 hover:bg-white hover:text-gray-700'
                 }`}
               >
-                <t.icon className="h-4 w-4" />
-                {t.label}
+                <t.icon className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
+                <span className="truncate">{t.label}</span>
                 <span
-                  className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+                  className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
                     tab === t.id ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-600'
                   }`}
                 >
@@ -390,42 +362,7 @@ function CampaignsSection({
 
   return (
     <div className="rounded-xl border border-gray-100 bg-white">
-      {/* Mobile cards */}
-      <div className="divide-y divide-gray-100 sm:hidden">
-        {campaigns.map((c) => {
-          const st = getStatusStyle(c.effective_status);
-          const thumb = c.ads?.data?.[0]?.creative?.thumbnail_url;
-          return (
-            <div key={c.id} className="flex items-start gap-3 px-4 py-3">
-              {thumb ? (
-                <img
-                  src={thumb}
-                  alt={c.name}
-                  className="h-10 w-10 shrink-0 rounded-lg object-cover"
-                />
-              ) : (
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-xs text-gray-400">
-                  N/A
-                </div>
-              )}
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-gray-900">{c.name}</p>
-                <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
-                  <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${st.color}`}>
-                    {st.label}
-                  </span>
-                  <span className="text-xs text-gray-400">
-                    {c.objective?.replace(/_/g, ' ') || '—'}
-                  </span>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Desktop table */}
-      <div className="hidden overflow-x-auto sm:block">
+      <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="border-b border-gray-100 text-xs uppercase text-gray-500">
@@ -512,30 +449,7 @@ function AdSetsSection({
 
   return (
     <div className="rounded-xl border border-gray-100 bg-white">
-      {/* Mobile cards */}
-      <div className="divide-y divide-gray-100 sm:hidden">
-        {adSets.map((a) => {
-          const st = getStatusStyle(a.effective_status);
-          return (
-            <div key={a.id} className="px-4 py-3">
-              <p className="truncate text-sm font-medium text-gray-900">{a.name}</p>
-              <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
-                <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${st.color}`}>
-                  {st.label}
-                </span>
-                {a.optimization_goal && (
-                  <span className="text-xs text-gray-400">
-                    {a.optimization_goal.replace(/_/g, ' ')}
-                  </span>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Desktop table */}
-      <div className="hidden overflow-x-auto sm:block">
+      <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="border-b border-gray-100 text-xs uppercase text-gray-500">
@@ -607,50 +521,7 @@ function AdsSection({
 
   return (
     <div className="rounded-xl border border-gray-100 bg-white">
-      {/* Mobile cards */}
-      <div className="divide-y divide-gray-100 sm:hidden">
-        {ads.map((ad) => {
-          const st = getStatusStyle(ad.effective_status);
-          return (
-            <div key={ad.id} className="flex items-start gap-3 px-4 py-3">
-              {ad.creative?.thumbnail_url ? (
-                <img
-                  src={ad.creative.thumbnail_url}
-                  alt={ad.name}
-                  className="h-12 w-12 shrink-0 rounded-lg object-cover"
-                />
-              ) : (
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-xs text-gray-400">
-                  N/A
-                </div>
-              )}
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-gray-900">{ad.name}</p>
-                {ad.creative?.title && (
-                  <p className="mt-0.5 truncate text-xs font-medium text-gray-600">
-                    {ad.creative.title}
-                  </p>
-                )}
-                <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
-                  <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${st.color}`}>
-                    {st.label}
-                  </span>
-                  <span className="text-xs text-gray-400">
-                    {new Date(ad.created_time).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                    })}
-                  </span>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Desktop table */}
-      <div className="hidden overflow-x-auto sm:block">
+      <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="border-b border-gray-100 text-xs uppercase text-gray-500">

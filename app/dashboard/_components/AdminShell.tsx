@@ -345,7 +345,7 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
       >
         {/* Logo */}
         <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-          <div>
+          <Link href="/dashboard" onClick={() => setSidebarOpen(false)}>
             <Image
               src="/Motion Booster Black Logo-01.svg"
               alt="Motion Booster"
@@ -355,7 +355,7 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
               priority
             />
             <div className="text-gray-400 text-xs mt-1 pl-0.5 font-medium tracking-wide uppercase">{isAdmin ? 'Admin Panel' : 'Dashboard'}</div>
-          </div>
+          </Link>
           <button
             onClick={() => setSidebarOpen(false)}
             className="lg:hidden p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100"
