@@ -188,6 +188,98 @@ model PopularService {
   @@map("popular_services")
 }
 
+// ─── CMS: STATS ──────────────────────────────────────────────────────────────
+
+model Stat {
+  id          String   @id @default(cuid())
+  value       String
+  title       String
+  description String   @db.Text
+  bgColor     String   @map("bg_color")
+  valueColor  String   @map("value_color")
+  order       Int      @default(0)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("stats")
+}
+
+// ─── CMS: PORTFOLIO ──────────────────────────────────────────────────────────
+
+model PortfolioItem {
+  id          String   @id @default(cuid())
+  title       String
+  category    String
+  description String   @db.Text
+  client      String
+  result      String
+  tags        String[]
+  coverColor  String   @map("cover_color")
+  coverImage  String?  @map("cover_image") @db.Text
+  featured    Boolean  @default(false)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("portfolio_items")
+}
+
+// ─── CMS: TESTIMONIALS ───────────────────────────────────────────────────────
+
+model Testimonial {
+  id          String   @id @default(cuid())
+  name        String
+  role        String
+  avatar      String
+  avatarBg    String   @map("avatar_bg")
+  avatarImage String?  @map("avatar_image") @db.Text
+  rating      Int      @default(5)
+  review      String   @db.Text
+  service     String
+  order       Int      @default(0)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("testimonials")
+}
+
+// ─── CMS: TEAM MEMBERS ───────────────────────────────────────────────────────
+
+model TeamMember {
+  id              String   @id @default(cuid())
+  name            String
+  role            String
+  experience      String
+  projects        String
+  department      String
+  featured        Boolean  @default(false)
+  avatar          String
+  avatarColor     String   @map("avatar_color")
+  avatarImage     String?  @map("avatar_image") @db.Text
+  workExperience  String[] @map("work_experience")
+  specializedArea String[] @map("specialized_area")
+  education       String[]
+  workPlaces      String[] @map("work_places")
+  order           Int      @default(0)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("team_members")
+}
+
+// ─── CMS: FAQ ────────────────────────────────────────────────────────────────
+
+model FAQ {
+  id        String   @id @default(cuid())
+  question  String
+  answer    String   @db.Text
+  order     Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("faqs")
+}
+
 // ─── CMS: COMPANIES (Trusted by Top Companies marquee) ───────────────────────
 
 model Company {

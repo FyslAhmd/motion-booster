@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import AdminShell from '../_components/AdminShell';
-import { AdminStore, PortfolioItem, generateId } from '@/lib/admin/store';
-import { Plus, Pencil, Trash2, Star, X, Save, GripVertical } from 'lucide-react';
+import { Plus, Pencil, Trash2, Star, X, Save, Loader2 } from 'lucide-react';
 import ImageUpload from '@/components/ui/ImageUpload';
 
 const CATEGORIES = [
@@ -33,7 +32,21 @@ const GRADIENTS = [
   { label: 'Sky–Blue', value: 'from-sky-500 to-blue-600' },
 ];
 
-const empty: Omit<PortfolioItem, 'id'> = {
+interface PortfolioItem {
+  id: string;
+  title: string;
+  category: string;
+  description: string;
+  client: string;
+  result: string;
+  tags: string[];
+  coverColor: string;
+  coverImage?: string | null;
+  featured: boolean;
+  order: number;
+}
+
+const empty: Omit<PortfolioItem, 'id' | 'order'> = {
   title: '',
   category: CATEGORIES[0],
   description: '',
@@ -49,58 +62,80 @@ export default function PortfolioPage() {
   const [editing, setEditing] = useState<PortfolioItem | null>(null);
   const [isNew, setIsNew] = useState(false);
   const [tagInput, setTagInput] = useState('');
-  const [toast, setToast] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [filterCat, setFilterCat] = useState('All');
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    setItems(AdminStore.getPortfolio());
+    fetch('/api/v1/cms/portfolio')
+      .then(r => r.json())
+      .then(data => setItems(Array.isArray(data) ? data : []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
-  const showToast = (msg: string) => {
-    setToast(msg);
-    setTimeout(() => setToast(''), 3000);
-  };
-
-  const save = () => {
+  const save = async () => {
     if (!editing) return;
     if (!editing.title.trim() || !editing.client.trim()) {
-      showToast('Title and Client are required.');
+      alert('Title and Client are required.');
       return;
     }
-    let updated: PortfolioItem[];
-    if (isNew) {
-      updated = [...items, { ...editing, id: generateId() }];
-    } else {
-      updated = items.map(i => (i.id === editing.id ? editing : i));
+    setSaving(true);
+    try {
+      if (isNew) {
+        const res = await fetch('/api/v1/cms/portfolio', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(editing),
+        });
+        const created = await res.json();
+        setItems(prev => [...prev, created]);
+      } else {
+        const res = await fetch(`/api/v1/cms/portfolio/${editing.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(editing),
+        });
+        const updated = await res.json();
+        setItems(prev => prev.map(i => i.id === updated.id ? updated : i));
+      }
+      setEditing(null);
+      setIsNew(false);
+      setTagInput('');
+    } catch {
+      alert('Failed to save portfolio item.');
+    } finally {
+      setSaving(false);
     }
-    AdminStore.savePortfolio(updated);
-    setItems(updated);
-    setEditing(null);
-    setIsNew(false);
-    setTagInput('');
-    showToast(isNew ? 'Portfolio item added!' : 'Changes saved!');
-    window.dispatchEvent(new Event('storage'));
   };
 
-  const remove = (id: string) => {
-    const updated = items.filter(i => i.id !== id);
-    AdminStore.savePortfolio(updated);
-    setItems(updated);
-    setDeleteId(null);
-    showToast('Item deleted.');
-    window.dispatchEvent(new Event('storage'));
+  const remove = async (id: string) => {
+    setDeleting(true);
+    try {
+      await fetch(`/api/v1/cms/portfolio/${id}`, { method: 'DELETE' });
+      setItems(prev => prev.filter(i => i.id !== id));
+      setDeleteId(null);
+    } catch {
+      alert('Failed to delete item.');
+    } finally {
+      setDeleting(false);
+    }
   };
 
-  const toggleFeatured = (id: string) => {
-    const updated = items.map(i => (i.id === id ? { ...i, featured: !i.featured } : i));
-    AdminStore.savePortfolio(updated);
-    setItems(updated);
-    window.dispatchEvent(new Event('storage'));
+  const toggleFeatured = async (item: PortfolioItem) => {
+    const updated = { ...item, featured: !item.featured };
+    setItems(prev => prev.map(i => i.id === item.id ? updated : i));
+    await fetch(`/api/v1/cms/portfolio/${item.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updated),
+    }).catch(() => {});
   };
 
   const openNew = () => {
-    setEditing({ ...empty, id: '' });
+    setEditing({ ...empty, id: '', order: 0 });
     setIsNew(true);
     setTagInput('');
   };
@@ -129,13 +164,6 @@ export default function PortfolioPage() {
 
   return (
     <AdminShell>
-      {/* Toast */}
-      {toast && (
-        <div className="fixed top-6 right-6 z-50 bg-gray-900 text-white text-sm px-4 py-3 rounded-xl shadow-2xl">
-          {toast}
-        </div>
-      )}
-
       {/* Delete confirm */}
       {deleteId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
@@ -144,7 +172,9 @@ export default function PortfolioPage() {
             <p className="text-sm text-gray-500 mb-6">This action cannot be undone.</p>
             <div className="flex gap-3 justify-end">
               <button onClick={() => setDeleteId(null)} className="px-4 py-2 text-sm rounded-xl border border-gray-200 hover:bg-gray-50">Cancel</button>
-              <button onClick={() => remove(deleteId)} className="px-4 py-2 text-sm rounded-xl bg-red-600 text-white hover:bg-red-700">Delete</button>
+              <button onClick={() => remove(deleteId)} disabled={deleting} className="flex items-center gap-2 px-4 py-2 text-sm rounded-xl bg-red-600 text-white hover:bg-red-700 disabled:opacity-50">
+                {deleting && <Loader2 className="w-4 h-4 animate-spin" />}Delete
+              </button>
             </div>
           </div>
         </div>
@@ -162,7 +192,6 @@ export default function PortfolioPage() {
             </div>
 
             <div className="p-6 space-y-5">
-              {/* Title */}
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1.5">Project Title *</label>
                 <input
@@ -173,7 +202,6 @@ export default function PortfolioPage() {
                 />
               </div>
 
-              {/* Client + Category */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-gray-500 mb-1.5">Client Name *</label>
@@ -205,7 +233,6 @@ export default function PortfolioPage() {
                 </div>
               </div>
 
-              {/* Description */}
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1.5">Description</label>
                 <textarea
@@ -217,7 +244,6 @@ export default function PortfolioPage() {
                 />
               </div>
 
-              {/* Result */}
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1.5">Result / Impact</label>
                 <input
@@ -228,7 +254,6 @@ export default function PortfolioPage() {
                 />
               </div>
 
-              {/* Tags */}
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1.5">Tags / Tech Stack</label>
                 <div className="flex gap-2 mb-2">
@@ -255,7 +280,6 @@ export default function PortfolioPage() {
                 )}
               </div>
 
-              {/* Cover Color + Image + Featured */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-gray-500 mb-1.5">Cover Color</label>
@@ -289,7 +313,6 @@ export default function PortfolioPage() {
                 </div>
               </div>
 
-              {/* Cover Image Upload */}
               <ImageUpload
                 value={editing.coverImage || ''}
                 onChange={v => setEditing({ ...editing, coverImage: v })}
@@ -308,9 +331,10 @@ export default function PortfolioPage() {
               </button>
               <button
                 onClick={save}
-                className="flex items-center gap-2 px-4 py-2 text-sm rounded-xl bg-red-600 hover:bg-red-700 text-white font-medium"
+                disabled={saving}
+                className="flex items-center gap-2 px-4 py-2 text-sm rounded-xl bg-red-600 hover:bg-red-700 text-white font-medium disabled:opacity-50"
               >
-                <Save className="w-4 h-4" />
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                 {isNew ? 'Add Project' : 'Save Changes'}
               </button>
             </div>
@@ -350,8 +374,9 @@ export default function PortfolioPage() {
         ))}
       </div>
 
-      {/* Grid */}
-      {displayed.length === 0 ? (
+      {loading ? (
+        <div className="flex items-center justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
+      ) : displayed.length === 0 ? (
         <div className="text-center py-20 text-gray-400">
           <p className="font-medium text-gray-500">No portfolio items yet</p>
           <p className="text-sm mt-1">Click "Add Project" to get started.</p>
@@ -360,7 +385,6 @@ export default function PortfolioPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
           {displayed.map(item => (
             <div key={item.id} className="bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-md transition-shadow group">
-              {/* Cover */}
               <div className={`h-28 bg-linear-to-br ${item.coverColor} relative flex items-end p-4 overflow-hidden`}>
                 {item.coverImage && (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -374,7 +398,6 @@ export default function PortfolioPage() {
                 <span className="text-white/70 text-xs bg-white/20 backdrop-blur-sm px-2 py-0.5 rounded-full">{item.category}</span>
               </div>
 
-              {/* Body */}
               <div className="p-4">
                 <div className="text-xs text-gray-400 mb-1">{item.client}</div>
                 <h3 className="font-semibold text-gray-900 text-sm leading-snug mb-2 line-clamp-2">{item.title}</h3>
@@ -395,10 +418,9 @@ export default function PortfolioPage() {
                   </div>
                 )}
 
-                {/* Actions */}
                 <div className="flex items-center justify-between pt-3 border-t border-gray-50">
                   <button
-                    onClick={() => toggleFeatured(item.id)}
+                    onClick={() => toggleFeatured(item)}
                     title={item.featured ? 'Remove from featured' : 'Mark as featured'}
                     className={`p-1.5 rounded-lg transition-colors ${item.featured ? 'text-yellow-400 hover:text-yellow-600' : 'text-gray-300 hover:text-yellow-400'}`}
                   >
@@ -427,3 +449,4 @@ export default function PortfolioPage() {
     </AdminShell>
   );
 }
+

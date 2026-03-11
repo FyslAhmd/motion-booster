@@ -2,164 +2,42 @@
 
 import React, { useState, useEffect } from 'react';
 import { Star } from 'lucide-react';
-import { AdminStore, TestimonialItem } from '@/lib/admin/store';
 
-const stats = [
-  {
-    value: '89%',
-    title: 'Success Ratio',
-    description: 'The practical approach towards problems puts our clients ahead of any other competitors in global markets. All our services are structured considering market demands.',
-    bgColor: 'bg-green-50',
-    valueColor: 'text-teal-500',
-  },
-  {
-    value: '34000+',
-    title: 'Works As Expert Freelancer',
-    description: 'After project completion, a significant number of our clients find success in multiple sectors. Many professionals start working in the IT domain, earning dollars from the global marketplace.',
-    bgColor: 'bg-lime-50',
-    valueColor: 'text-teal-500',
-  },
-  {
-    value: '20000+',
-    title: 'Clients Choose Motion Booster',
-    description: 'Motion Booster has become a trusted service provider for not only Bangladeshi residents but also those living abroad. More than 20,000 passionate clients are in different markets.',
-    bgColor: 'bg-yellow-50',
-    valueColor: 'text-teal-500',
-  },
-  {
-    value: '150+',
-    title: 'Expert Team Members',
-    description: 'Our dedicated team of over 150 professionals brings expertise across digital marketing, design, development, and consulting to deliver the highest quality services.',
-    bgColor: 'bg-blue-50',
-    valueColor: 'text-teal-500',
-  },
-  {
-    value: '500+',
-    title: 'Projects Delivered',
-    description: 'We have successfully delivered over 500 projects ranging from small business websites to enterprise-level applications across healthcare, education, e-commerce, and fintech.',
-    bgColor: 'bg-purple-50',
-    valueColor: 'text-teal-500',
-  },
-  {
-    value: '50+',
-    title: 'Countries Served',
-    description: 'Our services reach clients in over 50 countries worldwide. From Bangladesh to the USA, UK, Canada, and Australia — we provide world-class digital solutions across borders.',
-    bgColor: 'bg-orange-50',
-    valueColor: 'text-teal-500',
-  },
-];
+interface StatItem {
+  id: string;
+  value: string;
+  title: string;
+  description: string;
+  bgColor: string;
+  valueColor: string;
+}
 
-const staticReviews: TestimonialItem[] = [
-  {
-    id: '1',
-    name: 'Rafiq Ahmed',
-    role: 'CEO, TechVenture BD',
-    avatar: 'RA',
-    avatarBg: 'from-blue-500 to-indigo-600',
-    rating: 5,
-    review: 'Motion Booster transformed our entire digital presence. Their web development team built us a stunning e-commerce platform that increased our sales by 200%.',
-    service: 'Web Development',
-  },
-  {
-    id: '2',
-    name: 'Fatima Khatun',
-    role: 'Founder, GreenLeaf Organics',
-    avatar: 'FK',
-    avatarBg: 'from-green-500 to-emerald-600',
-    rating: 5,
-    review: 'The digital marketing team helped us reach 50,000+ customers in just 3 months. Their Facebook and Google Ads strategy was brilliant. Our ROI increased by 340%!',
-    service: 'Digital Marketing',
-  },
-  {
-    id: '3',
-    name: 'Tanvir Hasan',
-    role: 'MD, BuildRight Construction',
-    avatar: 'TH',
-    avatarBg: 'from-orange-500 to-red-600',
-    rating: 5,
-    review: 'We needed a complete brand identity and Motion Booster delivered beyond expectations. From logo to marketing materials, everything was cohesive and professional.',
-    service: 'Branding & Creative',
-  },
-  {
-    id: '4',
-    name: 'Nusrat Jahan',
-    role: 'Co-founder, EduTech Solutions',
-    avatar: 'NJ',
-    avatarBg: 'from-purple-500 to-pink-600',
-    rating: 5,
-    review: 'Motion Booster built our mobile app from scratch using Flutter. The app handles 10,000+ daily users seamlessly. They delivered on time with transparent process.',
-    service: 'Mobile App Development',
-  },
-  {
-    id: '5',
-    name: 'Kamal Uddin',
-    role: 'Owner, KamalFoods International',
-    avatar: 'KU',
-    avatarBg: 'from-teal-500 to-cyan-600',
-    rating: 5,
-    review: 'SEO work brought our website from page 5 to page 1 on Google within 4 months. Our organic traffic grew by 500%. Their content marketing strategy is world-class.',
-    service: 'Digital Marketing',
-  },
-  {
-    id: '6',
-    name: 'Sadia Rahman',
-    role: 'Creative Director, PixelStudio',
-    avatar: 'SR',
-    avatarBg: 'from-pink-500 to-rose-600',
-    rating: 5,
-    review: 'Their graphics design quality is on par with international standards. Logo designs, social media creatives, packaging — they handle everything with perfection.',
-    service: 'Graphics Design',
-  },
-  {
-    id: '7',
-    name: 'Mohammad Ali',
-    role: 'CTO, FinanceHub BD',
-    avatar: 'MA',
-    avatarBg: 'from-indigo-500 to-blue-600',
-    rating: 5,
-    review: 'Motion Booster developed a custom CRM system for our financial services. The software handles complex workflows effortlessly. Robust and reliable solution.',
-    service: 'Software Development',
-  },
-  {
-    id: '8',
-    name: 'Ayesha Begum',
-    role: 'Marketing Head, FashionBD',
-    avatar: 'AB',
-    avatarBg: 'from-yellow-500 to-amber-600',
-    rating: 5,
-    review: 'The video production team created stunning product videos for our fashion brand. Social media engagement increased by 300% after using their video content.',
-    service: 'Video & Animation',
-  },
-  {
-    id: '9',
-    name: 'Imran Khan',
-    role: 'Startup Founder, HealthFirst',
-    avatar: 'IK',
-    avatarBg: 'from-red-500 to-orange-600',
-    rating: 5,
-    review: 'From UI/UX design to full-stack development, Motion Booster handled our healthcare app end-to-end. The user interface is intuitive and patients love it.',
-    service: 'UI/UX Design',
-  },
-  {
-    id: '10',
-    name: 'Rubina Akter',
-    role: 'Director, GlobalTrade BD',
-    avatar: 'RA',
-    avatarBg: 'from-emerald-500 to-teal-600',
-    rating: 5,
-    review: 'They set up our entire AWS cloud infrastructure and CI/CD pipelines. Deployment time reduced from hours to minutes. Their specialized team is highly skilled.',
-    service: 'Specialized Services',
-  },
-];
+interface TestimonialItem {
+  id: string;
+  name: string;
+  role: string;
+  avatar: string;
+  avatarBg: string;
+  avatarImage?: string | null;
+  rating: number;
+  review: string;
+  service: string;
+}
 
 export const Testimonials = () => {
-  const [reviews, setReviews] = useState<TestimonialItem[]>(staticReviews);
+  const [reviews, setReviews] = useState<TestimonialItem[]>([]);
+  const [stats, setStats] = useState<StatItem[]>([]);
 
   useEffect(() => {
-    const load = () => setReviews(AdminStore.getTestimonials());
-    load();
-    window.addEventListener('storage', load);
-    return () => window.removeEventListener('storage', load);
+    fetch('/api/v1/cms/testimonials')
+      .then(r => r.json())
+      .then(data => setReviews(Array.isArray(data) ? data : []))
+      .catch(() => {});
+
+    fetch('/api/v1/cms/stats')
+      .then(r => r.json())
+      .then(data => setStats(Array.isArray(data) ? data : []))
+      .catch(() => {});
   }, []);
 
   const ReviewCard = ({ review }: { review: TestimonialItem }) => (

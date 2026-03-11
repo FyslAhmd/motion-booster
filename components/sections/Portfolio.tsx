@@ -3,19 +3,29 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ExternalLink } from 'lucide-react';
-import { AdminStore, PortfolioItem, defaultPortfolio } from '@/lib/admin/store';
 
-const categories = ['All', 'Web Development', 'Graphics Design', 'Mobile App', 'Digital Marketing', 'Software Development', 'Video & Animation', 'UI/UX Design'];
+interface PortfolioItem {
+  id: string;
+  title: string;
+  category: string;
+  description: string;
+  client: string;
+  result: string;
+  tags: string[];
+  coverColor: string;
+  coverImage?: string | null;
+  featured: boolean;
+}
 
 export const Portfolio = () => {
   const [activeCategory, setActiveCategory] = useState('All');
-  const [items, setItems] = useState<PortfolioItem[]>(defaultPortfolio);
+  const [items, setItems] = useState<PortfolioItem[]>([]);
 
   useEffect(() => {
-    const load = () => setItems(AdminStore.getPortfolio());
-    load();
-    window.addEventListener('storage', load);
-    return () => window.removeEventListener('storage', load);
+    fetch('/api/v1/cms/portfolio')
+      .then(r => r.json())
+      .then(data => setItems(Array.isArray(data) ? data : []))
+      .catch(() => {});
   }, []);
 
   const availableCategories = ['All', ...Array.from(new Set(items.map(i => i.category)))];
@@ -64,9 +74,9 @@ export const Portfolio = () => {
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={item.coverImage} alt={item.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
                 ) : (
-                  <div className={`w-full h-full bg-gradient-to-br ${item.coverColor}`} />
+                  <div className={`w-full h-full bg-linear-to-br ${item.coverColor}`} />
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
                 {/* Overlay Content */}
                 <div className="absolute inset-0 flex items-end p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
