@@ -85,7 +85,7 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
   };
 
   return (
-    <div className="h-screen overflow-hidden bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50">
       {/* Sidebar Overlay (mobile) */}
       {sidebarOpen && (
         <div
@@ -96,7 +96,7 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 lg:static lg:inset-auto shrink-0 w-64 bg-white border-r border-gray-100 flex flex-col z-30 transition-transform duration-300 shadow-sm ${
+        className={`fixed inset-y-0 left-0 w-64 bg-white border-r border-gray-100 flex flex-col z-30 transition-transform duration-300 shadow-sm ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
@@ -181,9 +181,9 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
       </aside>
 
       {/* Main content */}
-      <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
+      <div className="lg:ml-64 flex flex-col min-h-screen">
         {/* Top bar — mobile only */}
-        <header className="lg:hidden sticky top-0 z-10 bg-white border-b border-gray-100 px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
+        <header className="lg:hidden fixed top-0 left-0 right-0 z-20 bg-white border-b border-gray-100 px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setSidebarOpen(true)}
@@ -210,7 +210,7 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
         </header>
 
         {/* Page content */}
-        <main className={`flex-1 ${noPadding ? 'overflow-hidden' : 'overflow-y-auto p-4 sm:p-6'}`}>
+        <main className={`flex-1 lg:pt-0 pt-14 ${noPadding ? '' : 'p-4 sm:p-6'}`}>
           {children}
         </main>
       </div>

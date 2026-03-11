@@ -261,7 +261,7 @@ export default function AdsTable({ accountId }: AdsTableProps) {
           ) : (
             <>
               {/* Mobile card list */}
-              <div className="divide-y divide-gray-100 sm:hidden">
+              <div className="hidden">
                 {data.map((ad) => {
                   const derived = ad.derived_status || { label: ad.effective_status?.replace(/_/g, ' ') || 'Unknown', key: ad.effective_status || 'UNKNOWN' };
                   const color = STATUS_STYLES[derived.key]?.color || 'bg-gray-100 text-gray-500';
@@ -313,7 +313,7 @@ export default function AdsTable({ accountId }: AdsTableProps) {
               </div>
 
               {/* Desktop table */}
-              <div className="hidden overflow-x-auto sm:block">
+              <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
                   <thead>
                     <tr className="border-b border-gray-100 text-xs uppercase text-gray-500">

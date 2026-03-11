@@ -60,7 +60,7 @@ export default function MetaDashboardPage() {
               <button
                 key={t.id}
                 onClick={() => setTab(t.id)}
-                className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-all
+                className={`flex flex-1 items-center justify-center gap-1 rounded-lg px-2 py-1.5 text-xs sm:px-3 sm:py-2 sm:text-sm font-medium transition-all
                   ${
                     tab === t.id
                       ? 'bg-red-600 text-white shadow-sm shadow-red-500/20'

@@ -275,7 +275,7 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
           ) : (
             <>
               {/* Mobile card list */}
-              <div className="divide-y divide-gray-100 sm:hidden">
+              <div className="hidden">
                 {data.map((c) => {
                   const derived = c.derived_status || { label: c.effective_status?.replace(/_/g, ' ') || 'Unknown', key: c.effective_status || 'UNKNOWN' };
                   const color = STATUS_STYLES[derived.key] || STATUS_STYLES.UNKNOWN;
@@ -333,7 +333,7 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
               </div>
 
               {/* Desktop table */}
-              <div className="hidden overflow-x-auto sm:block">
+              <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
                   <thead>
                     <tr className="border-b border-gray-100 text-xs uppercase text-gray-500">
