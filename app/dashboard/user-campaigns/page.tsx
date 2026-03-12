@@ -458,7 +458,7 @@ function UserOwnView({ userId }: { userId: string }) {
     }
   };
 
-  // Toggle ad status  
+  // Toggle ad status
   const toggleAdStatus = async (ad: Ad) => {
     const newStatus = ad.status === 'ACTIVE' ? 'PAUSED' : 'ACTIVE';
     setTogglingId(ad.id);
@@ -491,7 +491,7 @@ function UserOwnView({ userId }: { userId: string }) {
   const canToggleAdSet = (a: AdSet) =>
     ['ACTIVE', 'PAUSED'].includes(a.status) &&
     !['DELETED', 'ARCHIVED'].includes(a.effective_status);
-    
+
   const canToggleAd = (a: Ad) =>
     ['ACTIVE', 'PAUSED'].includes(a.status) &&
     !['DELETED', 'ARCHIVED'].includes(a.effective_status);
