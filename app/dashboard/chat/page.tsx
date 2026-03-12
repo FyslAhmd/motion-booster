@@ -25,6 +25,7 @@ import {
   Image as ImageIcon,
   Film,
   Square,
+  Rocket,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────
@@ -155,7 +156,7 @@ function getFileIcon(mimeType?: string | null) {
 // ─── Component ────────────────────────────────────────
 
 export default function MessagesPage() {
-  const { user, accessToken } = useAuth();
+  const { user, accessToken, refreshSession } = useAuth();
   const [conversations, setConversations] = useState<ConversationItem[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<ConversationItem | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -169,6 +170,14 @@ export default function MessagesPage() {
   const [chatableUsers, setChatableUsers] = useState<ChatableUser[]>([]);
   const [showNewChat, setShowNewChat] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // ─── Boost form state ──────────────────────────────
+  const [showBoostForm, setShowBoostForm] = useState(false);
+  const [boostStep, setBoostStep] = useState(0); // 0=lang, 1=form
+  const [boostLang, setBoostLang] = useState<'en' | 'bn'>('en');
+  const [boostData, setBoostData] = useState({ postLink: '', totalBudget: '', dailyBudget: '', targetAudience: '' });
+  const [boostSubmitting, setBoostSubmitting] = useState(false);
+  const [boostSuccess, setBoostSuccess] = useState(false);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const selectedConvRef = useRef<ConversationItem | null>(null);
 
@@ -193,6 +202,21 @@ export default function MessagesPage() {
   const getAuthHeaders = useCallback((): Record<string, string> => {
     return accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
   }, [accessToken]);
+
+  // ─── Fetch wrapper: auto-refresh on 401 & retry once ──
+  const authFetch = useCallback(async (url: string, options: RequestInit = {}): Promise<Response> => {
+    const res = await fetch(url, { ...options, headers: { ...options.headers, ...getAuthHeaders() } });
+    if (res.status === 401) {
+      const newToken = await refreshSession();
+      if (newToken) {
+        return fetch(url, {
+          ...options,
+          headers: { ...options.headers, Authorization: `Bearer ${newToken}` },
+        });
+      }
+    }
+    return res;
+  }, [getAuthHeaders, refreshSession]);
 
   // ─── Socket connection ──────────────────────────────
   const token = accessToken;
@@ -297,9 +321,7 @@ export default function MessagesPage() {
   const fetchConversations = useCallback(async () => {
     if (!accessToken) return;
     try {
-      const res = await fetch('/api/v1/chat/conversations', {
-        headers: getAuthHeaders(),
-      });
+      const res = await authFetch('/api/v1/chat/conversations');
       if (res.ok) {
         const data = await res.json();
         setConversations(data.conversations);
@@ -309,15 +331,13 @@ export default function MessagesPage() {
     } finally {
       setLoadingConversations(false);
     }
-  }, [accessToken, getAuthHeaders]);
+  }, [accessToken, authFetch]);
 
   // ─── Fetch chatable users ──────────────────────────
   const fetchChatableUsers = useCallback(async () => {
     if (!accessToken) return;
     try {
-      const res = await fetch('/api/v1/chat/users', {
-        headers: getAuthHeaders(),
-      });
+      const res = await authFetch('/api/v1/chat/users');
       if (res.ok) {
         const data = await res.json();
         setChatableUsers(data.users);
@@ -325,7 +345,7 @@ export default function MessagesPage() {
     } catch (err) {
       console.error('Failed to fetch users:', err);
     }
-  }, [accessToken, getAuthHeaders]);
+  }, [accessToken, authFetch]);
 
   useEffect(() => {
     if (!accessToken) return; // Wait for auth to be ready
@@ -348,10 +368,7 @@ export default function MessagesPage() {
       );
 
       try {
-        const headers = getAuthHeaders();
-        const res = await fetch(`/api/v1/chat/conversations/${conv.id}/messages`, {
-          headers,
-        });
+        const res = await authFetch(`/api/v1/chat/conversations/${conv.id}/messages`);
         if (res.ok) {
           const data = await res.json();
           setMessages(data.messages);
@@ -364,7 +381,7 @@ export default function MessagesPage() {
         setLoadingMessages(false);
       }
     },
-    [markAsRead, getAuthHeaders]
+    [markAsRead, authFetch]
   );
 
   // ─── Start new conversation ─────────────────────────
@@ -382,11 +399,10 @@ export default function MessagesPage() {
       }
 
       try {
-        const res = await fetch('/api/v1/chat/conversations', {
+        const res = await authFetch('/api/v1/chat/conversations', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            ...getAuthHeaders(),
           },
           body: JSON.stringify({ participantId: targetUser.id }),
         });
@@ -407,7 +423,7 @@ export default function MessagesPage() {
         console.error('Failed to create conversation:', err);
       }
     },
-    [conversations, selectConversation, getAuthHeaders]
+    [conversations, selectConversation, authFetch]
   );
 
   // ─── Send via REST (fallback) ──────────────────────
@@ -424,11 +440,10 @@ export default function MessagesPage() {
     }
   ) => {
     try {
-      const res = await fetch(`/api/v1/chat/conversations/${conversationId}/messages`, {
+      const res = await authFetch(`/api/v1/chat/conversations/${conversationId}/messages`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...getAuthHeaders(),
         },
         body: JSON.stringify({ content, ...metadata }),
       });
@@ -444,7 +459,7 @@ export default function MessagesPage() {
     } finally {
       setSendingMessage(false);
     }
-  }, [getAuthHeaders]);
+  }, [authFetch]);
 
   // ─── Upload file to server ─────────────────────────
   const uploadFile = useCallback(async (file: File): Promise<{
@@ -457,9 +472,8 @@ export default function MessagesPage() {
     formData.append('file', file);
 
     try {
-      const res = await fetch('/api/v1/chat/upload', {
+      const res = await authFetch('/api/v1/chat/upload', {
         method: 'POST',
-        headers: getAuthHeaders(),
         body: formData,
       });
 
@@ -475,7 +489,7 @@ export default function MessagesPage() {
       toast.error('Failed to upload file. Please try again.');
       return null;
     }
-  }, [getAuthHeaders]);
+  }, [authFetch]);
 
   // ─── Handle file selection ─────────────────────────
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -720,6 +734,72 @@ export default function MessagesPage() {
   const typingText = typingUsers.size > 0
     ? `${Array.from(typingUsers.values()).join(', ')} is typing...`
     : null;
+
+  // ─── Boost form helpers ────────────────────────────
+  const boostLabels = boostLang === 'bn'
+    ? {
+        title: 'পোস্ট বুস্ট করুন',
+        langTitle: 'ভাষা নির্বাচন করুন',
+        postLink: 'ফেসবুক পোস্ট লিংক',
+        postLinkPlaceholder: 'https://www.facebook.com/... পোস্টের লিংক দিন',
+        totalBudget: 'মোট বাজেট',
+        totalBudgetPlaceholder: 'যেমন: ৫০০০ টাকা',
+        dailyBudget: 'দৈনিক বাজেট',
+        dailyBudgetPlaceholder: 'যেমন: ৫০০ টাকা',
+        targetAudience: 'টার্গেট অডিয়েন্স',
+        targetAudiencePlaceholder: 'কাদের কাছে পৌঁছাতে চান তা লিখুন...',
+        submit: 'জমা দিন',
+        cancel: 'বাতিল',
+        next: 'পরবর্তী',
+        back: 'পেছনে',
+        success: 'আপনার বুস্ট রিকুয়েস্ট সফলভাবে জমা হয়েছে!',
+        close: 'বন্ধ করুন',
+      }
+    : {
+        title: 'Boost Your Post',
+        langTitle: 'Select Language',
+        postLink: 'Facebook Post Link',
+        postLinkPlaceholder: 'https://www.facebook.com/... paste post link',
+        totalBudget: 'Total Budget',
+        totalBudgetPlaceholder: 'e.g. 5000 BDT',
+        dailyBudget: 'Daily Budget',
+        dailyBudgetPlaceholder: 'e.g. 500 BDT',
+        targetAudience: 'Target Audience',
+        targetAudiencePlaceholder: 'Describe who you want to reach...',
+        submit: 'Submit',
+        cancel: 'Cancel',
+        next: 'Next',
+        back: 'Back',
+        success: 'Your boost request has been submitted successfully!',
+        close: 'Close',
+      };
+
+  const openBoostForm = () => {
+    setBoostStep(0);
+    setBoostLang('en');
+    setBoostData({ postLink: '', totalBudget: '', dailyBudget: '', targetAudience: '' });
+    setBoostSuccess(false);
+    setShowBoostForm(true);
+    setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+  };
+
+  const handleBoostSubmit = async () => {
+    if (!boostData.postLink.trim() || !boostData.totalBudget.trim() || !boostData.dailyBudget.trim() || !boostData.targetAudience.trim()) return;
+    setBoostSubmitting(true);
+    try {
+      const res = await authFetch('/api/v1/boost-requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ language: boostLang, ...boostData }),
+      });
+      if (!res.ok) throw new Error();
+      setBoostSuccess(true);
+    } catch {
+      alert(boostLang === 'bn' ? 'জমা দিতে সমস্যা হয়েছে।' : 'Failed to submit. Please try again.');
+    } finally {
+      setBoostSubmitting(false);
+    }
+  };
 
   return (
     <AdminShell noPadding>
@@ -1190,11 +1270,148 @@ export default function MessagesPage() {
                 </div>
               )}
 
+              {/* ─── Inline Boost Form ───────────────────── */}
+              {showBoostForm && user?.role !== 'ADMIN' && (
+                <div className="flex justify-start">
+                  <div className="w-full max-w-sm">
+                    <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-sm shadow-sm overflow-hidden">
+                      {boostSuccess ? (
+                        <div className="p-6 text-center">
+                          <div className="w-14 h-14 mx-auto mb-3 bg-green-100 rounded-full flex items-center justify-center">
+                            <Check className="w-7 h-7 text-green-600" />
+                          </div>
+                          <h3 className="text-base font-bold text-gray-900 mb-1">{boostLabels.success}</h3>
+                          <button onClick={() => setShowBoostForm(false)} className="mt-3 px-5 py-2 bg-red-500 text-white rounded-xl text-sm font-semibold hover:bg-red-600 transition-colors">
+                            {boostLabels.close}
+                          </button>
+                        </div>
+                      ) : boostStep === 0 ? (
+                        <div className="p-5">
+                          <div className="flex items-center gap-2 mb-3">
+                            <div className="w-8 h-8 bg-linear-to-br from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
+                              <Rocket className="w-4 h-4 text-white" />
+                            </div>
+                            <h3 className="text-sm font-bold text-gray-900">{boostLabels.langTitle}</h3>
+                          </div>
+                          <p className="text-xs text-gray-500 mb-4">Choose your preferred language</p>
+                          <div className="grid grid-cols-2 gap-2 mb-4">
+                            <button
+                              onClick={() => setBoostLang('en')}
+                              className={`p-3 rounded-xl border-2 text-center transition-all ${boostLang === 'en' ? 'border-red-500 bg-red-50 shadow-md' : 'border-gray-200 hover:border-gray-300'}`}
+                            >
+                              <span className="text-xl mb-0.5 block">🇬🇧</span>
+                              <span className="text-xs font-semibold text-gray-900">English</span>
+                            </button>
+                            <button
+                              onClick={() => setBoostLang('bn')}
+                              className={`p-3 rounded-xl border-2 text-center transition-all ${boostLang === 'bn' ? 'border-red-500 bg-red-50 shadow-md' : 'border-gray-200 hover:border-gray-300'}`}
+                            >
+                              <span className="text-xl mb-0.5 block">🇧🇩</span>
+                              <span className="text-xs font-semibold text-gray-900">বাংলা</span>
+                            </button>
+                          </div>
+                          <div className="flex gap-2">
+                            <button onClick={() => setShowBoostForm(false)} className="flex-1 py-2 border border-gray-200 rounded-xl text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors">
+                              {boostLabels.cancel}
+                            </button>
+                            <button onClick={() => { setBoostStep(1); setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100); }} className="flex-1 py-2 bg-red-500 text-white rounded-xl text-xs font-semibold hover:bg-red-600 transition-colors">
+                              {boostLabels.next} →
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div>
+                          <div className="px-5 pt-5 pb-3 border-b border-gray-100">
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 bg-linear-to-br from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
+                                <Rocket className="w-4 h-4 text-white" />
+                              </div>
+                              <div>
+                                <h3 className="text-sm font-bold text-gray-900">{boostLabels.title}</h3>
+                                <p className="text-[11px] text-gray-500">{boostLang === 'bn' ? 'নিচের তথ্যগুলো পূরণ করুন' : 'Fill in the details below'}</p>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="p-5 space-y-3">
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-1">{boostLabels.postLink} <span className="text-red-500">*</span></label>
+                              <input
+                                type="url"
+                                value={boostData.postLink}
+                                onChange={e => setBoostData(p => ({ ...p, postLink: e.target.value }))}
+                                placeholder={boostLabels.postLinkPlaceholder}
+                                className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent"
+                              />
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <label className="block text-xs font-medium text-gray-700 mb-1">{boostLabels.totalBudget} <span className="text-red-500">*</span></label>
+                                <input
+                                  type="text"
+                                  value={boostData.totalBudget}
+                                  onChange={e => setBoostData(p => ({ ...p, totalBudget: e.target.value }))}
+                                  placeholder={boostLabels.totalBudgetPlaceholder}
+                                  className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-medium text-gray-700 mb-1">{boostLabels.dailyBudget} <span className="text-red-500">*</span></label>
+                                <input
+                                  type="text"
+                                  value={boostData.dailyBudget}
+                                  onChange={e => setBoostData(p => ({ ...p, dailyBudget: e.target.value }))}
+                                  placeholder={boostLabels.dailyBudgetPlaceholder}
+                                  className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent"
+                                />
+                              </div>
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-1">{boostLabels.targetAudience} <span className="text-red-500">*</span></label>
+                              <textarea
+                                value={boostData.targetAudience}
+                                onChange={e => setBoostData(p => ({ ...p, targetAudience: e.target.value }))}
+                                placeholder={boostLabels.targetAudiencePlaceholder}
+                                rows={2}
+                                className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent resize-none"
+                              />
+                            </div>
+                          </div>
+                          <div className="flex gap-2 px-5 pb-5">
+                            <button onClick={() => setBoostStep(0)} disabled={boostSubmitting} className="flex-1 py-2 border border-gray-200 rounded-xl text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50">
+                              ← {boostLabels.back}
+                            </button>
+                            <button
+                              onClick={handleBoostSubmit}
+                              disabled={boostSubmitting || !boostData.postLink.trim() || !boostData.totalBudget.trim() || !boostData.dailyBudget.trim() || !boostData.targetAudience.trim()}
+                              className="flex-1 py-2 bg-red-500 text-white rounded-xl text-xs font-semibold hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1.5"
+                            >
+                              {boostSubmitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                              {boostLabels.submit}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div ref={messagesEndRef} />
             </div>
 
             {/* Message Input */}
             <div className="bg-white border-t border-gray-100 px-3 md:px-8 py-3 md:py-4">
+              {/* Boost Post CTA — visible only for non-admin users */}
+              {user?.role !== 'ADMIN' && (
+                <button
+                  onClick={openBoostForm}
+                  className="w-full mb-3 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-linear-to-r from-orange-500 via-red-500 to-pink-500 text-white text-sm font-semibold shadow-lg shadow-red-300/40 hover:shadow-red-400/50 hover:scale-[1.01] active:scale-[0.99] transition-all animate-pulse hover:animate-none"
+                >
+                  <Rocket className="w-4 h-4" />
+                  Boost Your Facebook Post 🚀
+                </button>
+              )}
+
               {/* Hidden file input */}
               <input
                 ref={fileInputRef}
@@ -1335,6 +1552,7 @@ export default function MessagesPage() {
         )}
       </div>
     </div>
+
     </AdminShell>
   );
 }

@@ -31,6 +31,7 @@ import {
   MoreHorizontal,
   Home,
   UserCheck,
+  Rocket,
   BookOpen,
 } from 'lucide-react';
 interface NavItem {
@@ -55,6 +56,7 @@ const navItems: NavEntry[] = [
   { href: '/dashboard/meta', label: 'Ads Manager', icon: Megaphone, adminOnly: true },
   { href: '/dashboard/user-campaigns', label: 'Assign User', icon: UserCheck, adminOnly: true },
   { href: '/dashboard/chat', label: 'Chat Messages', icon: MessageCircle },
+  { href: '/dashboard/boost-requests', label: 'Boost Requests', icon: Rocket, adminOnly: true },
   { href: '/dashboard/clients', label: 'Clients', icon: Users, adminOnly: true },
   {
     group: true,

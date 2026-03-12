@@ -28,6 +28,7 @@ interface AuthContextType {
   login: (accessToken: string, user: User) => void;
   logout: () => void;
   updateUser: (updates: Partial<User>) => void;
+  refreshSession: () => Promise<string | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -49,20 +50,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // ─── Try to refresh tokens via the server refresh endpoint ─────────
-  const refreshSession = useCallback(async (): Promise<boolean> => {
+  const refreshSession = useCallback(async (): Promise<string | null> => {
     try {
       const res = await fetch('/api/v1/auth/refresh', { method: 'POST' });
-      if (!res.ok) return false;
+      if (!res.ok) return null;
 
       const data = await res.json();
       if (data.success && data.data?.user && data.data?.accessToken) {
         setAccessToken(data.data.accessToken);
         setUser(data.data.user);
-        return true;
+        return data.data.accessToken;
       }
-      return false;
+      return null;
     } catch {
-      return false;
+      return null;
     }
   }, []);
 
@@ -101,8 +102,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         // 2. Access token expired — try refreshing
-        const refreshed = await refreshSession();
-        if (!cancelled && refreshed) {
+        const newToken = await refreshSession();
+        if (!cancelled && newToken) {
           startRefreshTimer();
           return;
         }
@@ -170,6 +171,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         logout,
         updateUser,
+        refreshSession,
       }}
     >
       {children}
