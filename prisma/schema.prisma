@@ -44,6 +44,7 @@ model User {
   sentMessages     Message[]      @relation("sender")
   conversations    Conversation[] @relation("ConversationParticipants")
   metaAdAssignments MetaAdAssignment[]
+  boostRequests     BoostRequest[]
 
   @@index([email])
   @@index([username])
@@ -333,4 +334,22 @@ model MetaAdAssignment {
   @@index([metaAccountId])
   @@index([metaObjectType, metaAccountId])
   @@map("meta_ad_assignments")
+}
+
+// ─── BOOST REQUESTS (Ad boost form submissions from chat) ────────────────────
+
+model BoostRequest {
+  id             String   @id @default(cuid())
+  userId         String   @map("user_id")
+  language       String   @default("en")          // "en" | "bn"
+  postLink       String   @map("post_link") @db.Text
+  totalBudget    String   @map("total_budget")
+  dailyBudget    String   @map("daily_budget")
+  targetAudience String   @map("target_audience") @db.Text
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("boost_requests")
 }
