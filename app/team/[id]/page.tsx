@@ -21,9 +21,9 @@ export default function TeamMemberPage({ params }: { params: Promise<{ id: strin
   if (member === null) return notFound();
 
   return (
-    <main className="min-h-screen bg-white pb-20 lg:pb-0">
-      {/* Header */}
-      <div className="bg-white sticky top-0 z-30 border-b border-gray-100">
+    <main className="min-h-screen bg-white pb-20 lg:pb-0 lg:pt-32">
+      {/* Header — mobile only */}
+      <div className="lg:hidden bg-white sticky top-0 z-30 border-b border-gray-100">
         <div className="flex items-center gap-3 px-4 py-4">
           <button
             onClick={() => router.back()}
@@ -35,7 +35,7 @@ export default function TeamMemberPage({ params }: { params: Promise<{ id: strin
         </div>
       </div>
 
-      <div className="px-4 pt-6 max-w-xl mx-auto lg:max-w-3xl space-y-4">
+      <div className="px-4 pt-6 pb-10 max-w-xl mx-auto lg:max-w-3xl space-y-4">
         {/* Profile Card */}
         <div className="flex items-center gap-4">
           {/* Avatar */}
