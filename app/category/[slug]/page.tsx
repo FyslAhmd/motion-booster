@@ -25,8 +25,8 @@ export default async function CategoryPage({ params }: PageProps) {
         }}
       >
         {/* Decorative Elements */}
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full opacity-20" style={{ background: 'radial-gradient(circle, #ff6b6b 0%, transparent 70%)', transform: 'translate(30%, -30%)' }} />
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full opacity-15" style={{ background: 'radial-gradient(circle, #ff8079 0%, transparent 70%)', transform: 'translate(-30%, 30%)' }} />
+        <div className="absolute top-0 right-0 w-125 h-125 rounded-full opacity-20" style={{ background: 'radial-gradient(circle, #ff6b6b 0%, transparent 70%)', transform: 'translate(30%, -30%)' }} />
+        <div className="absolute bottom-0 left-0 w-100 h-100 rounded-full opacity-15" style={{ background: 'radial-gradient(circle, #ff8079 0%, transparent 70%)', transform: 'translate(-30%, 30%)' }} />
         
         {/* Dotted Pattern */}
         <div className="absolute inset-0 opacity-[0.04]" style={{

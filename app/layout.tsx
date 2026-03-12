@@ -1,15 +1,9 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import { ConditionalLayout } from "@/components/layout";
 import { AuthProvider } from "@/lib/auth/context";
 import { SiteDataProvider } from "@/lib/admin/context";
 import { Toaster } from 'sonner';
-
-const inter = Inter({
-  subsets: ["latin"],
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: "MotionBooster - Elevate Your Customer Relationships",
@@ -23,7 +17,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.className} antialiased`} suppressHydrationWarning>
+      <body className="antialiased" suppressHydrationWarning>
         <SiteDataProvider>
           <AuthProvider>
             <Toaster position="top-right" richColors />

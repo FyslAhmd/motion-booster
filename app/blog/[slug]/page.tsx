@@ -16,6 +16,7 @@ interface BlogPost {
   category: string;
   tags: string[];
   author: string;
+  status: 'DRAFT' | 'PUBLISHED';
   createdAt: string;
   updatedAt: string;
 }
@@ -64,7 +65,7 @@ export default function BlogPostPage({ params }: { params: Promise<{ slug: strin
         const allPostsResponse = await fetch('/api/v1/cms/blog');
         if (allPostsResponse.ok) {
           const allPosts = await allPostsResponse.json();
-          const published = allPosts.filter((p: BlogPost) => p.status && p.id !== data.id);
+          const published = allPosts.filter((p: BlogPost) => p.status === 'PUBLISHED' && p.id !== data.id);
           const related = published
             .filter((p: BlogPost) => p.category === data.category || p.tags.some((tag: string) => data.tags.includes(tag)))
             .slice(0, 3);
@@ -128,22 +129,21 @@ export default function BlogPostPage({ params }: { params: Promise<{ slug: strin
   }
 
   return (
-    <main className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="bg-gray-50 border-b border-gray-200">
-        <div className="max-w-4xl mx-auto px-4 py-6">
-          <Link
-            href="/blog"
-            className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors mb-4"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Blog
-          </Link>
+    <main className="min-h-screen bg-white pt-20 lg:pt-24">
+      {/* Hero Section */}
+      <section className="py-12 lg:py-16 bg-linear-to-br from-red-50 via-white to-rose-50">
+        <div className="max-w-4xl mx-auto px-4 text-center">
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 leading-tight">
+            {post.title}
+          </h1>
+          <p className="text-xl text-gray-600 mb-6 leading-relaxed">
+            {post.excerpt}
+          </p>
         </div>
-      </header>
+      </section>
 
       {/* Article */}
-      <article className="max-w-4xl mx-auto px-4 py-12">
+      <article className="max-w-4xl mx-auto px-4 py-8">
         {/* Cover Image */}
         {post.coverImage && (
           <div className="relative w-full h-64 md:h-96 mb-8 rounded-2xl overflow-hidden">
@@ -159,25 +159,15 @@ export default function BlogPostPage({ params }: { params: Promise<{ slug: strin
 
         {/* Category Badge */}
         {post.category && (
-          <div className="mb-4">
+          <div className="mb-6 text-center">
             <span className="inline-block bg-red-600 text-white text-sm font-semibold px-4 py-1.5 rounded-full">
               {post.category}
             </span>
           </div>
         )}
 
-        {/* Title */}
-        <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-6 leading-tight">
-          {post.title}
-        </h1>
-
-        {/* Excerpt */}
-        <p className="text-xl text-gray-600 mb-8 leading-relaxed">
-          {post.excerpt}
-        </p>
-
         {/* Meta Information */}
-        <div className="flex flex-wrap items-center gap-6 mb-8 pb-8 border-b border-gray-200">
+        <div className="flex flex-wrap items-center justify-center gap-6 mb-8 pb-8 border-b border-gray-200">
           <div className="flex items-center gap-2 text-gray-600">
             <User className="w-4 h-4" />
             <span className="text-sm font-medium">By {post.author}</span>

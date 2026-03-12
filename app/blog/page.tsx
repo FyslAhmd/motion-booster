@@ -61,12 +61,15 @@ export default function BlogPage() {
   };
 
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-white pt-20 lg:pt-24">
       {/* Header Section */}
-      <section className="py-20 lg:py-32 bg-linear-to-br from-red-50 via-white to-rose-50">
+      <section className="py-12 lg:py-16 bg-linear-to-br from-red-50 via-white to-rose-50">
         <div className="max-w-7xl mx-auto px-6 lg:px-8 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            Latest Insights & Updates
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 leading-tight">
+            Latest Insights &
+            <span className="block text-red-600">
+              Updates
+            </span>
           </h1>
           <p className="text-gray-600 max-w-2xl mx-auto">
             Stay informed with our latest articles and updates, covering trends, tips, and insights to help you grow.
@@ -75,7 +78,7 @@ export default function BlogPage() {
       </section>
 
       {/* Main Content */}
-      <section className="py-12 px-4">
+      <section className="py-8 px-4">
         <div className="max-w-7xl mx-auto">
           {loading ? (
             <div className="flex items-center justify-center py-32">
