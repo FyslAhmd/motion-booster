@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import AdminShell from '../_components/AdminShell';
 import { Plus, Pencil, Trash2, X, AlertTriangle, ChevronDown, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface FAQItem {
   id: string;
@@ -78,7 +79,7 @@ export default function AdminFAQPage() {
       setEditing(null);
       setIsNew(false);
     } catch {
-      alert('Failed to save FAQ.');
+      toast.error('Failed to save FAQ.');
     } finally {
       setSaving(false);
     }
@@ -91,7 +92,7 @@ export default function AdminFAQPage() {
       setFAQs(prev => prev.filter(f => f.id !== id));
       setDeleteId(null);
     } catch {
-      alert('Failed to delete FAQ.');
+      toast.error('Failed to delete FAQ.');
     } finally {
       setDeleting(false);
     }

@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/lib/auth/context';
 import { useSocket, type ChatMessage, type MessageType } from '@/lib/chat/use-socket';
+import { toast } from 'sonner';
 import {
   Search,
   Send,
@@ -478,14 +479,14 @@ export default function MessagesPage() {
 
       if (!res.ok) {
         const err = await res.json();
-        alert(err.error || 'Upload failed');
+        toast.error(err.error || 'Upload failed');
         return null;
       }
 
       return await res.json();
     } catch (err) {
       console.error('Upload failed:', err);
-      alert('Failed to upload file. Please try again.');
+      toast.error('Failed to upload file. Please try again.');
       return null;
     }
   }, [authFetch]);
@@ -503,7 +504,7 @@ export default function MessagesPage() {
 
     // Size validation (voice exempt)
     if (!isVoice && file.size > MAX_FILE_SIZE) {
-      alert(`File must be under 10 MB. Your file is ${formatFileSize(file.size)}.`);
+      toast.error(`File must be under 10 MB. Your file is ${formatFileSize(file.size)}.`);
       return;
     }
 
@@ -594,7 +595,7 @@ export default function MessagesPage() {
       }, 1000);
     } catch (err) {
       console.error('Microphone error:', err);
-      alert('Could not access microphone. Please check permissions.');
+      toast.error('Could not access microphone. Please check permissions.');
     }
   }, []);
 

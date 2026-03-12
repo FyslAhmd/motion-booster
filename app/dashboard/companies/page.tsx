@@ -6,11 +6,10 @@ import { useConfirm } from '@/lib/admin/confirm';
 import { AdminStore, CompanyItem, defaultCompanies, generateId } from '@/lib/admin/store';
 import ImageUpload from '@/components/ui/ImageUpload';
 import { Plus, Trash2, GripVertical, Check, RotateCcw, Building2, Image as ImageIcon, Type, NotebookPen } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function AdminCompaniesPage() {
   const [companies, setCompanies] = useState<CompanyItem[]>([]);
-  const [toast, setToast] = useState('');
-  const [toastType, setToastType] = useState<'success' | 'error'>('success');
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
@@ -18,18 +17,13 @@ export default function AdminCompaniesPage() {
     setCompanies(AdminStore.getCompanies());
   }, []);
 
-  const showMsg = (msg: string, type: 'success' | 'error' = 'success') => {
-    setToast(msg); setToastType(type);
-    setTimeout(() => setToast(''), 3000);
-  };
-
   const { confirm } = useConfirm();
 
   const save = (data: CompanyItem[]) => {
     AdminStore.saveCompanies(data);
     setCompanies(data);
     window.dispatchEvent(new Event('storage'));
-    showMsg('Saved!');
+    toast.success('Saved!');
   };
 
   const addCompany = () => {
@@ -47,7 +41,7 @@ export default function AdminCompaniesPage() {
 
   const reset = () => {
     save(defaultCompanies);
-    showMsg('Reset to defaults!');
+    toast.success('Reset to defaults!');
   };
 
   // drag-reorder
@@ -65,13 +59,6 @@ export default function AdminCompaniesPage() {
 
   return (
     <AdminShell>
-      {toast && (
-        <div className={`fixed top-6 right-6 z-50 text-white text-sm px-4 py-3 rounded-xl shadow-2xl ${toastType === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>
-          {toastType === 'success' && <Check className="inline w-4 h-4 mr-1.5" />}
-          {toast}
-        </div>
-      )}
-
       {showResetConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
           <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl">
