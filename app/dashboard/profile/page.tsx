@@ -19,27 +19,12 @@ import {
   Eye,
   EyeOff,
   Loader2,
-  CheckCircle,
-  AlertCircle,
   AtSign,
   Calendar,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-
-function Alert({ type, message }: { type: 'success' | 'error'; message: string }) {
-  const styles =
-    type === 'success'
-      ? 'bg-green-50 border-green-200 text-green-700'
-      : 'bg-red-50 border-red-200 text-red-700';
-  const Icon = type === 'success' ? CheckCircle : AlertCircle;
-  return (
-    <div className={`flex items-center gap-2 px-4 py-3 rounded-lg border text-sm ${styles}`}>
-      <Icon className="w-4 h-4 shrink-0" />
-      {message}
-    </div>
-  );
-}
+import { toast } from 'sonner';
 
 const DEFAULT_NOTIFICATIONS = {
   emailNotifications: true,
@@ -57,7 +42,6 @@ export default function ProfilePage() {
 
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [profileMsg, setProfileMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [formData, setFormData] = useState({ fullName: '', username: '', phone: '' });
 
   useEffect(() => {
@@ -77,7 +61,6 @@ export default function ProfilePage() {
     const file = e.target.files?.[0];
     if (!file) return;
     setIsUploadingAvatar(true);
-    setProfileMsg(null);
     const fd = new FormData();
     fd.append('file', file);
     try {
@@ -85,12 +68,12 @@ export default function ProfilePage() {
       const json = await res.json();
       if (json.success) {
         updateUser({ avatarUrl: json.data.avatarUrl });
-        setProfileMsg({ type: 'success', text: 'Profile picture updated!' });
+        toast.success('Profile picture updated!');
       } else {
-        setProfileMsg({ type: 'error', text: json.error || 'Upload failed' });
+        toast.error(json.error || 'Upload failed');
       }
     } catch {
-      setProfileMsg({ type: 'error', text: 'Upload failed — please try again' });
+      toast.error('Upload failed — please try again');
     } finally {
       setIsUploadingAvatar(false);
       e.target.value = '';
@@ -102,7 +85,6 @@ export default function ProfilePage() {
   const handleSaveProfile = async () => {
     if (!await confirm({ title: 'Save Profile', message: 'Are you sure you want to save your profile changes?' })) return;
     setIsSaving(true);
-    setProfileMsg(null);
     try {
       const res = await fetch('/api/v1/auth/profile', {
         method: 'PATCH',
@@ -117,12 +99,12 @@ export default function ProfilePage() {
           phone: json.data.user.phone,
         });
         setIsEditing(false);
-        setProfileMsg({ type: 'success', text: 'Profile updated successfully!' });
+        toast.success('Profile updated successfully!');
       } else {
-        setProfileMsg({ type: 'error', text: json.error || 'Update failed' });
+        toast.error(json.error || 'Update failed');
       }
     } catch {
-      setProfileMsg({ type: 'error', text: 'Update failed — please try again' });
+      toast.error('Update failed — please try again');
     } finally {
       setIsSaving(false);
     }
@@ -133,26 +115,23 @@ export default function ProfilePage() {
       setFormData({ fullName: user.fullName || '', username: user.username || '', phone: user.phone || '' });
     }
     setIsEditing(false);
-    setProfileMsg(null);
   };
 
   const [pwData, setPwData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [showPw, setShowPw] = useState({ current: false, new: false, confirm: false });
   const [isSavingPw, setIsSavingPw] = useState(false);
-  const [pwMsg, setPwMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const handlePasswordChange = async () => {
-    setPwMsg(null);
     if (!pwData.currentPassword || !pwData.newPassword || !pwData.confirmPassword) {
-      setPwMsg({ type: 'error', text: 'All password fields are required' });
+      toast.error('All password fields are required');
       return;
     }
     if (pwData.newPassword.length < 8) {
-      setPwMsg({ type: 'error', text: 'New password must be at least 8 characters' });
+      toast.error('New password must be at least 8 characters');
       return;
     }
     if (pwData.newPassword !== pwData.confirmPassword) {
-      setPwMsg({ type: 'error', text: 'New passwords do not match' });
+      toast.error('New passwords do not match');
       return;
     }
     setIsSavingPw(true);
@@ -165,12 +144,12 @@ export default function ProfilePage() {
       const json = await res.json();
       if (json.success) {
         setPwData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-        setPwMsg({ type: 'success', text: 'Password changed successfully!' });
+        toast.success('Password changed successfully!');
       } else {
-        setPwMsg({ type: 'error', text: json.error || 'Password change failed' });
+        toast.error(json.error || 'Password change failed');
       }
     } catch {
-      setPwMsg({ type: 'error', text: 'Password change failed — please try again' });
+      toast.error('Password change failed — please try again');
     } finally {
       setIsSavingPw(false);
     }
@@ -293,7 +272,7 @@ export default function ProfilePage() {
                         </>
                       ) : (
                         <button
-                          onClick={() => { setIsEditing(true); setProfileMsg(null); }}
+                          onClick={() => setIsEditing(true)}
                           className="flex items-center gap-2 px-5 py-2 bg-red-500 text-white rounded-full text-sm font-semibold hover:bg-red-600 transition-colors"
                         >
                           <Edit2 className="w-4 h-4" />
@@ -301,11 +280,6 @@ export default function ProfilePage() {
                         </button>
                       )}
                     </div>
-                    {profileMsg && (
-                      <div className="mt-4 w-full max-w-sm">
-                        <Alert type={profileMsg.type} message={profileMsg.text} />
-                      </div>
-                    )}
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -375,8 +349,6 @@ export default function ProfilePage() {
                     <h2 className="text-lg font-bold text-gray-900 mb-1">Change Password</h2>
                     <p className="text-sm text-gray-600">Update your password to keep your account secure</p>
                   </div>
-
-                  {pwMsg && <Alert type={pwMsg.type} message={pwMsg.text} />}
 
                   <div className="space-y-4">
                     <div>

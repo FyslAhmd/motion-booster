@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, Filter, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import AssignUserDropdown from './AssignUserDropdown';
+import { toast } from 'sonner';
 
 interface Ad {
   id: string;
@@ -182,10 +183,10 @@ export default function AdsTable({ accountId }: AdsTableProps) {
           ),
         );
       } else {
-        alert(`Failed: ${json.error}`);
+        toast.error(`Failed: ${json.error}`);
       }
     } catch (e: any) {
-      alert(`Error: ${e.message}`);
+      toast.error(`Error: ${e.message}`);
     } finally {
       setTogglingId(null);
     }

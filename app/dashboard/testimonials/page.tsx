@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import AdminShell from '../_components/AdminShell';
 import { Plus, Pencil, Trash2, X, AlertTriangle, Star, Loader2 } from 'lucide-react';
 import ImageUpload from '@/components/ui/ImageUpload';
+import { toast } from 'sonner';
 
 const AVATAR_BG_OPTIONS = [
   { label: 'Blue', value: 'from-blue-500 to-indigo-600' },
@@ -87,7 +88,7 @@ export default function AdminTestimonialsPage() {
       setEditing(null);
       setIsNew(false);
     } catch {
-      alert('Failed to save testimonial.');
+      toast.error('Failed to save testimonial.');
     } finally {
       setSaving(false);
     }
@@ -100,7 +101,7 @@ export default function AdminTestimonialsPage() {
       setItems(prev => prev.filter(t => t.id !== id));
       setDeleteId(null);
     } catch {
-      alert('Failed to delete testimonial.');
+      toast.error('Failed to delete testimonial.');
     } finally {
       setDeleting(false);
     }

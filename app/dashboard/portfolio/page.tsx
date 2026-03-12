@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import AdminShell from '../_components/AdminShell';
 import { Plus, Pencil, Trash2, Star, X, Save, Loader2 } from 'lucide-react';
 import ImageUpload from '@/components/ui/ImageUpload';
+import { toast } from 'sonner';
 
 const CATEGORIES = [
   'Web Development',
@@ -79,7 +80,7 @@ export default function PortfolioPage() {
   const save = async () => {
     if (!editing) return;
     if (!editing.title.trim() || !editing.client.trim()) {
-      alert('Title and Client are required.');
+      toast.error('Title and Client are required.');
       return;
     }
     setSaving(true);
@@ -105,7 +106,7 @@ export default function PortfolioPage() {
       setIsNew(false);
       setTagInput('');
     } catch {
-      alert('Failed to save portfolio item.');
+      toast.error('Failed to save portfolio item.');
     } finally {
       setSaving(false);
     }
@@ -118,7 +119,7 @@ export default function PortfolioPage() {
       setItems(prev => prev.filter(i => i.id !== id));
       setDeleteId(null);
     } catch {
-      alert('Failed to delete item.');
+      toast.error('Failed to delete item.');
     } finally {
       setDeleting(false);
     }

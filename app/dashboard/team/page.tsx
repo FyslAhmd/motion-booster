@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import AdminShell from '../_components/AdminShell';
 import { Plus, Pencil, Trash2, X, AlertTriangle, Star, Loader2 } from 'lucide-react';
 import ImageUpload from '@/components/ui/ImageUpload';
+import { toast } from 'sonner';
 
 const AVATAR_COLORS = [
   'from-red-500 to-red-700',
@@ -126,7 +127,7 @@ export default function AdminTeamPage() {
       setEditing(null);
       setIsNew(false);
     } catch {
-      alert('Failed to save team member.');
+      toast.error('Failed to save team member.');
     } finally {
       setSaving(false);
     }
@@ -139,7 +140,7 @@ export default function AdminTeamPage() {
       setTeam(prev => prev.filter(m => m.id !== id));
       setDeleteId(null);
     } catch {
-      alert('Failed to delete team member.');
+      toast.error('Failed to delete team member.');
     } finally {
       setDeleting(false);
     }

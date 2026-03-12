@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import AdminShell from '../_components/AdminShell';
 import { useConfirm } from '@/lib/admin/confirm';
 import { ServiceItem } from '@/lib/admin/store';
-import { Plus, Pencil, Trash2, X, Check, AlertTriangle } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, AlertTriangle } from 'lucide-react';
+import { toast } from 'sonner';
 
 const COLOR_OPTIONS = [
   { label: 'Purple', value: 'bg-purple-400' },
@@ -46,7 +47,6 @@ export default function AdminServicesPage() {
   const [editing, setEditing] = useState<ServiceItem | null>(null);
   const [isNew, setIsNew] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
@@ -56,11 +56,6 @@ export default function AdminServicesPage() {
       .then(data => setServices(Array.isArray(data) ? data : []))
       .catch(() => {});
   }, []);
-
-  const flashSaved = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
-  };
 
   const { confirm } = useConfirm();
 
@@ -89,9 +84,9 @@ export default function AdminServicesPage() {
       }
       setEditing(null);
       setIsNew(false);
-      flashSaved();
+      toast.success('Saved!');
     } catch {
-      alert('Failed to save service.');
+      toast.error('Failed to save service.');
     } finally {
       setSaving(false);
     }
@@ -102,9 +97,9 @@ export default function AdminServicesPage() {
       await fetch(`/api/v1/cms/services/${id}`, { method: 'DELETE' });
       setServices(prev => prev.filter(s => s.id !== id));
       setDeleteId(null);
-      flashSaved();
+      toast.success('Saved!');
     } catch {
-      alert('Failed to delete service.');
+      toast.error('Failed to delete service.');
     }
   };
 
@@ -115,9 +110,9 @@ export default function AdminServicesPage() {
       const res = await fetch('/api/v1/cms/services');
       const data = await res.json();
       setServices(Array.isArray(data) ? data : []);
-      flashSaved();
+      toast.success('Saved!');
     } catch {
-      alert('Failed to reset services.');
+      toast.error('Failed to reset services.');
     }
   };
 
@@ -143,11 +138,6 @@ export default function AdminServicesPage() {
           <p className="text-sm text-gray-500 mt-0.5">Manage the service cards displayed on the homepage</p>
         </div>
         <div className="flex items-center gap-2">
-          {saved && (
-            <span className="flex items-center gap-1.5 text-green-600 text-sm font-medium">
-              <Check className="w-4 h-4" /> Saved!
-            </span>
-          )}
           <button
             onClick={() => setShowResetConfirm(true)}
             className="text-xs text-gray-500 hover:text-gray-700 border border-gray-200 px-3 py-1.5 rounded-lg"

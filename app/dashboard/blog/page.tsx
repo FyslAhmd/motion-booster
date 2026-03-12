@@ -4,9 +4,10 @@ import { useEffect, useState } from 'react';
 import AdminShell from '../_components/AdminShell';
 import {
   Plus, Pencil, Trash2, X, AlertTriangle, ChevronDown, Loader2,
-  Eye, EyeOff, Tag, Image as ImageIcon,
+  EyeOff, Tag, Image as ImageIcon,
 } from 'lucide-react';
 import ImageUpload from '@/components/ui/ImageUpload';
+import { toast } from 'sonner';
 
 interface BlogPostItem {
   id: string;
@@ -31,7 +32,7 @@ const BLANK: Omit<BlogPostItem, 'id' | 'order'> = {
   category: '',
   tags: [],
   author: 'Motion Booster',
-  status: 'DRAFT',
+  status: 'PUBLISHED',
 };
 
 function slugify(text: string) {
@@ -50,6 +51,7 @@ export default function AdminBlogPage() {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [tagInput, setTagInput] = useState('');
+  const [draftConfirm, setDraftConfirm] = useState(false);
 
   useEffect(() => {
     fetch('/api/v1/cms/blog')
@@ -94,31 +96,77 @@ export default function AdminBlogPage() {
     setTagInput('');
   };
 
-  const handleSave = async () => {
-    if (!editing || !editing.title.trim() || !editing.excerpt.trim() || !editing.content.trim()) return;
+  const handleSave = async (overrideStatus?: 'DRAFT' | 'PUBLISHED') => {
+    if (!editing) return;
+    
+    // Validation
+    if (!editing.title.trim()) {
+      toast.error('Title is required');
+      return;
+    }
+    if (!editing.excerpt.trim()) {
+      toast.error('Excerpt is required');
+      return;
+    }
+    if (!editing.content.trim()) {
+      toast.error('Content is required');
+      return;
+    }
+    
     setSaving(true);
+    const payload = {
+      ...editing,
+      slug: editing.slug.trim() || slugify(editing.title),
+      status: overrideStatus || editing.status
+    };
+    
     try {
       if (isNew) {
         const res = await fetch('/api/v1/cms/blog', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(editing),
+          body: JSON.stringify(payload),
         });
+        
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}));
+          throw new Error(errorData.error || `HTTP ${res.status}: Failed to create post`);
+        }
+        
         const created = await res.json();
         setPosts(prev => [...prev, created]);
+        toast.success(
+          payload.status === 'PUBLISHED'
+            ? 'Post published successfully!'
+            : 'Post saved as draft successfully!'
+        );
       } else {
         const res = await fetch(`/api/v1/cms/blog/${editing.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(editing),
+          body: JSON.stringify(payload),
         });
+        
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}));
+          throw new Error(errorData.error || `HTTP ${res.status}: Failed to update post`);
+        }
+        
         const updated = await res.json();
         setPosts(prev => prev.map(p => p.id === updated.id ? updated : p));
+        toast.success(
+          payload.status === 'PUBLISHED'
+            ? 'Post published successfully!'
+            : 'Post updated successfully!'
+        );
       }
+      
       setEditing(null);
       setIsNew(false);
-    } catch {
-      alert('Failed to save blog post.');
+      setDraftConfirm(false);
+    } catch (error: any) {
+      console.error('Save error:', error);
+      toast.error(error.message || 'Failed to save blog post');
     } finally {
       setSaving(false);
     }
@@ -127,11 +175,19 @@ export default function AdminBlogPage() {
   const handleDelete = async (id: string) => {
     setDeleting(true);
     try {
-      await fetch(`/api/v1/cms/blog/${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/v1/cms/blog/${id}`, { method: 'DELETE' });
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP ${res.status}: Failed to delete post`);
+      }
+      
       setPosts(prev => prev.filter(p => p.id !== id));
       setDeleteId(null);
-    } catch {
-      alert('Failed to delete blog post.');
+      toast.success('Blog post deleted successfully');
+    } catch (error: any) {
+      console.error('Delete error:', error);
+      toast.error(error.message || 'Failed to delete blog post');
     } finally {
       setDeleting(false);
     }
@@ -370,48 +426,86 @@ export default function AdminBlogPage() {
                 )}
               </div>
 
-              {/* Status toggle */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setEditing({ ...editing, status: 'DRAFT' })}
-                    className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium border transition-all ${
-                      editing.status === 'DRAFT'
-                        ? 'bg-yellow-50 border-yellow-300 text-yellow-700'
-                        : 'bg-gray-50 border-gray-200 text-gray-500'
-                    }`}
-                  >
-                    <EyeOff className="w-3.5 h-3.5" /> Draft
-                  </button>
-                  <button
-                    onClick={() => setEditing({ ...editing, status: 'PUBLISHED' })}
-                    className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium border transition-all ${
-                      editing.status === 'PUBLISHED'
-                        ? 'bg-green-50 border-green-300 text-green-700'
-                        : 'bg-gray-50 border-gray-200 text-gray-500'
-                    }`}
-                  >
-                    <Eye className="w-3.5 h-3.5" /> Published
-                  </button>
+              {/* Draft note */}
+              {isNew && (
+                <p className="text-xs text-gray-400 bg-gray-50 rounded-xl px-4 py-2.5">
+                  Post will be <span className="font-semibold text-green-600">published</span> immediately. Use &ldquo;Save as Draft&rdquo; below to keep it hidden.
+                </p>
+              )}
+              {!isNew && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Current Status</label>
+                  <span className={`inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full font-medium ${
+                    editing.status === 'PUBLISHED'
+                      ? 'bg-green-100 text-green-700'
+                      : 'bg-yellow-100 text-yellow-700'
+                  }`}>
+                    {editing.status === 'PUBLISHED' ? 'Published' : 'Draft'}
+                  </span>
                 </div>
-              </div>
+              )}
             </div>
 
-            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100">
+            <div className="flex items-center justify-between gap-3 px-6 py-4 border-t border-gray-100">
+              <div>
+                {isNew && (
+                  <button
+                    onClick={() => setDraftConfirm(true)}
+                    disabled={saving || !editing.title.trim()}
+                    className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-yellow-700 bg-yellow-50 hover:bg-yellow-100 border border-yellow-200 disabled:opacity-40 rounded-xl"
+                  >
+                    <EyeOff className="w-3.5 h-3.5" /> Save as Draft
+                  </button>
+                )}
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => { setEditing(null); setIsNew(false); }}
+                  className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleSave()}
+                  disabled={saving || !editing.title.trim() || !editing.excerpt.trim() || !editing.content.trim()}
+                  className="flex items-center gap-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium px-5 py-2 rounded-xl"
+                >
+                  {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  {isNew ? 'Publish Post' : 'Save Changes'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Draft Confirm Modal */}
+      {draftConfirm && editing && (
+        <div className="fixed inset-0 bg-black/50 z-60 flex items-center justify-center px-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-yellow-100 rounded-xl flex items-center justify-center">
+                <EyeOff className="w-5 h-5 text-yellow-600" />
+              </div>
+              <div>
+                <h3 className="font-bold text-gray-900">Save as Draft?</h3>
+                <p className="text-sm text-gray-500">This post will not be visible on the website.</p>
+              </div>
+            </div>
+            <div className="flex gap-3">
               <button
-                onClick={() => { setEditing(null); setIsNew(false); }}
-                className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900"
+                onClick={() => setDraftConfirm(false)}
+                className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl"
               >
                 Cancel
               </button>
               <button
-                onClick={handleSave}
-                disabled={saving || !editing.title.trim() || !editing.excerpt.trim() || !editing.content.trim()}
-                className="flex items-center gap-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium px-5 py-2 rounded-xl"
+                onClick={() => handleSave('DRAFT')}
+                disabled={saving}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-yellow-500 hover:bg-yellow-600 disabled:opacity-50 rounded-xl"
               >
                 {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                {isNew ? 'Create Post' : 'Save Changes'}
+                Save as Draft
               </button>
             </div>
           </div>

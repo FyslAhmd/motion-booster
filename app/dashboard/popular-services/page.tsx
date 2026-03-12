@@ -7,6 +7,7 @@ import { PopularServiceItem } from '@/lib/admin/store';
 import { Plus, Pencil, Trash2, X, Save, ChevronUp, ChevronDown, GripVertical } from 'lucide-react';
 import Image from 'next/image';
 import ImageUpload from '@/components/ui/ImageUpload';
+import { toast } from 'sonner';
 
 const IMAGE_OPTIONS = [
   '/service-digital-marketing.jpg',
@@ -51,7 +52,6 @@ export default function PopularServicesPage() {
   const [items, setItems] = useState<PopularServiceItem[]>([]);
   const [editing, setEditing] = useState<PopularServiceItem | null>(null);
   const [isNew, setIsNew] = useState(false);
-  const [toast, setToast] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(false);
@@ -62,10 +62,8 @@ export default function PopularServicesPage() {
     fetch('/api/v1/cms/popular-services')
       .then(r => r.json())
       .then((data) => { if (Array.isArray(data)) setItems(data); })
-      .catch(() => showToast('Failed to load services.'));
+      .catch(() => toast.error('Failed to load services.'));
   }, []);
-
-  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 3000); };
 
   const { confirm } = useConfirm();
 
@@ -94,7 +92,7 @@ export default function PopularServicesPage() {
       setItems(prev => isNew ? [...prev, saved] : prev.map(i => i.id === saved.id ? saved : i));
       setEditing(null);
       setIsNew(false);
-      showToast(isNew ? 'Service card added!' : 'Changes saved!');
+      toast.success(isNew ? 'Service card added!' : 'Changes saved!');
     } catch (err) {
       setModalError(err instanceof Error ? err.message : 'Save failed.');
     } finally { setLoading(false); }
@@ -104,11 +102,11 @@ export default function PopularServicesPage() {
     setLoading(true);
     try {
       const res = await fetch(`/api/v1/cms/popular-services/${id}`, { method: 'DELETE' });
-      if (!res.ok) { showToast('Delete failed.'); return; }
+      if (!res.ok) { toast.error('Delete failed.'); return; }
       setItems(prev => prev.filter(i => i.id !== id));
       setDeleteId(null);
-      showToast('Service deleted.');
-    } catch { showToast('Delete failed.'); } finally { setLoading(false); }
+      toast.success('Service deleted.');
+    } catch { toast.error('Delete failed.'); } finally { setLoading(false); }
   };
 
   const move = async (index: number, dir: -1 | 1) => {
@@ -121,7 +119,7 @@ export default function PopularServicesPage() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ids: arr.map(i => i.id) }),
-    }).catch(() => showToast('Reorder failed.'));
+    }).catch(() => toast.error('Reorder failed.'));
   };
 
   const updateFeature = (idx: number, val: string) => {
@@ -140,10 +138,6 @@ export default function PopularServicesPage() {
 
   return (
     <AdminShell>
-      {toast && (
-        <div className="fixed top-6 right-6 z-200 bg-gray-900 text-white text-sm px-4 py-3 rounded-xl shadow-2xl">{toast}</div>
-      )}
-
       {deleteId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
           <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl">
@@ -342,7 +336,7 @@ export default function PopularServicesPage() {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ ids: arr.map(i => i.id) }),
-                  }).catch(() => showToast('Reorder failed.'));
+                  }).catch(() => toast.error('Reorder failed.'));
                 }}
                 onDragEnd={() => setDragIdx(null)}
                 className={`flex items-center gap-2 sm:gap-4 px-3 sm:px-5 py-3 transition-colors group ${

@@ -6,6 +6,7 @@ import { useConfirm } from '@/lib/admin/confirm';
 import { ServiceCategoryItem } from '@/lib/admin/store';
 import { CategoryIcon, ICON_OPTIONS } from '@/lib/admin/categoryIcons';
 import { Plus, Pencil, Trash2, X, Save, GripVertical, ChevronUp, ChevronDown } from 'lucide-react';
+import { toast } from 'sonner';
 
 const COLOR_OPTIONS = [
   { label: 'Green',   text: 'text-green-600',  bg: 'bg-green-50'  },
@@ -37,7 +38,6 @@ export default function CategoriesPage() {
   const [items, setItems] = useState<ServiceCategoryItem[]>([]);
   const [editing, setEditing] = useState<ServiceCategoryItem | null>(null);
   const [isNew, setIsNew] = useState(false);
-  const [toast, setToast] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(false);
@@ -46,19 +46,14 @@ export default function CategoriesPage() {
     fetch('/api/v1/cms/service-categories')
       .then(r => r.json())
       .then((data) => { if (Array.isArray(data)) setItems(data); })
-      .catch(() => showToast('Failed to load categories.'));
+      .catch(() => toast.error('Failed to load categories.'));
   }, []);
-
-  const showToast = (msg: string) => {
-    setToast(msg);
-    setTimeout(() => setToast(''), 3000);
-  };
 
   const { confirm } = useConfirm();
 
   const save = async () => {
     if (!editing) return;
-    if (!editing.title.trim()) { showToast('Title is required.'); return; }
+    if (!editing.title.trim()) { toast.error('Title is required.'); return; }
     if (!await confirm({ title: 'Save Changes', message: 'Are you sure you want to save these changes?' })) return;
     const withSlug = { ...editing, slug: editing.slug.trim() || toSlug(editing.title) };
     setLoading(true);
@@ -66,24 +61,24 @@ export default function CategoriesPage() {
       const url = isNew ? '/api/v1/cms/service-categories' : `/api/v1/cms/service-categories/${editing.id}`;
       const method = isNew ? 'POST' : 'PUT';
       const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(withSlug) });
-      if (!res.ok) { const e = await res.json(); showToast(e.error || 'Save failed.'); return; }
+      if (!res.ok) { const e = await res.json(); toast.error(e.error || 'Save failed.'); return; }
       const saved: ServiceCategoryItem = await res.json();
       setItems(prev => isNew ? [...prev, saved] : prev.map(i => i.id === saved.id ? saved : i));
       setEditing(null);
       setIsNew(false);
-      showToast(isNew ? 'Category added!' : 'Changes saved!');
-    } catch { showToast('Save failed.'); } finally { setLoading(false); }
+      toast.success(isNew ? 'Category added!' : 'Changes saved!');
+    } catch { toast.error('Save failed.'); } finally { setLoading(false); }
   };
 
   const remove = async (id: string) => {
     setLoading(true);
     try {
       const res = await fetch(`/api/v1/cms/service-categories/${id}`, { method: 'DELETE' });
-      if (!res.ok) { showToast('Delete failed.'); return; }
+      if (!res.ok) { toast.error('Delete failed.'); return; }
       setItems(prev => prev.filter(i => i.id !== id));
       setDeleteId(null);
-      showToast('Category deleted.');
-    } catch { showToast('Delete failed.'); } finally { setLoading(false); }
+      toast.success('Category deleted.');
+    } catch { toast.error('Delete failed.'); } finally { setLoading(false); }
   };
 
   const move = async (index: number, dir: -1 | 1) => {
@@ -96,7 +91,7 @@ export default function CategoriesPage() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ids: arr.map(i => i.id) }),
-    }).catch(() => showToast('Reorder failed.'));
+    }).catch(() => toast.error('Reorder failed.'));
   };
 
   const openNew = () => {
@@ -118,13 +113,6 @@ export default function CategoriesPage() {
 
   return (
     <AdminShell>
-      {/* Toast */}
-      {toast && (
-        <div className="fixed top-6 right-6 z-50 bg-gray-900 text-white text-sm px-4 py-3 rounded-xl shadow-2xl">
-          {toast}
-        </div>
-      )}
-
       {/* Delete confirm */}
       {deleteId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">

@@ -7,6 +7,7 @@ import { HeroSlideItem } from '@/lib/admin/store';
 import { Plus, Pencil, Trash2, X, Save, AlertTriangle, ChevronUp, ChevronDown } from 'lucide-react';
 import Image from 'next/image';
 import ImageUpload from '@/components/ui/ImageUpload';
+import { toast } from 'sonner';
 
 const PRESET_IMAGES = [
   '/header1.jpeg',
@@ -29,7 +30,6 @@ export default function HeroSliderPage() {
   const [editing, setEditing] = useState<HeroSlideItem | null>(null);
   const [isNew, setIsNew] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [toast, setToast] = useState('');
 
   const [loading, setLoading] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
@@ -38,20 +38,15 @@ export default function HeroSliderPage() {
     fetch('/api/v1/cms/hero-slides')
       .then(r => r.json())
       .then((data) => { if (Array.isArray(data)) setSlides(data); })
-      .catch(() => showToast('Failed to load slides.'));
+      .catch(() => toast.error('Failed to load slides.'));
   }, []);
-
-  const showToast = (msg: string) => {
-    setToast(msg);
-    setTimeout(() => setToast(''), 3000);
-  };
 
   const { confirm } = useConfirm();
 
   const save = async () => {
     if (!editing) return;
     const hasImage = editing.customImage || editing.image;
-    if (!hasImage) { showToast('Please add an image.'); return; }
+    if (!hasImage) { toast.error('Please add an image.'); return; }
     if (!await confirm({ title: 'Save Changes', message: 'Are you sure you want to save these changes?' })) return;
     setLoading(true);
     try {
@@ -59,24 +54,24 @@ export default function HeroSliderPage() {
       const url = isNew ? '/api/v1/cms/hero-slides' : `/api/v1/cms/hero-slides/${editing.id}`;
       const method = isNew ? 'POST' : 'PUT';
       const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-      if (!res.ok) { showToast('Save failed.'); return; }
+      if (!res.ok) { toast.error('Save failed.'); return; }
       const saved: HeroSlideItem = await res.json();
       setSlides(prev => isNew ? [...prev, saved] : prev.map(s => s.id === saved.id ? saved : s));
       setEditing(null);
       setIsNew(false);
-      showToast(isNew ? 'Slide added!' : 'Changes saved!');
-    } catch { showToast('Save failed.'); } finally { setLoading(false); }
+      toast.success(isNew ? 'Slide added!' : 'Changes saved!');
+    } catch { toast.error('Save failed.'); } finally { setLoading(false); }
   };
 
   const remove = async (id: string) => {
     setLoading(true);
     try {
       const res = await fetch(`/api/v1/cms/hero-slides/${id}`, { method: 'DELETE' });
-      if (!res.ok) { showToast('Delete failed.'); return; }
+      if (!res.ok) { toast.error('Delete failed.'); return; }
       setSlides(prev => prev.filter(s => s.id !== id));
       setDeleteId(null);
-      showToast('Slide deleted.');
-    } catch { showToast('Delete failed.'); } finally { setLoading(false); }
+      toast.success('Slide deleted.');
+    } catch { toast.error('Delete failed.'); } finally { setLoading(false); }
   };
 
   const move = async (index: number, dir: -1 | 1) => {
@@ -89,28 +84,24 @@ export default function HeroSliderPage() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ids: arr.map(s => s.id) }),
-    }).catch(() => showToast('Reorder failed.'));
+    }).catch(() => toast.error('Reorder failed.'));
   };
 
   const resetDefault = async () => {
     setLoading(true);
     try {
       const res = await fetch('/api/v1/cms/hero-slides/reset', { method: 'POST' });
-      if (!res.ok) { showToast('Reset failed.'); return; }
+      if (!res.ok) { toast.error('Reset failed.'); return; }
       const data: HeroSlideItem[] = await res.json();
       setSlides(data);
-      showToast('Reset to defaults!');
-    } catch { showToast('Reset failed.'); } finally { setLoading(false); }
+      toast.success('Reset to defaults!');
+    } catch { toast.error('Reset failed.'); } finally { setLoading(false); }
   };
 
   const coverSrc = (slide: HeroSlideItem) => slide.customImage || slide.image;
 
   return (
     <AdminShell>
-      {toast && (
-        <div className="fixed top-6 right-6 z-50 bg-gray-900 text-white text-sm px-4 py-3 rounded-xl shadow-2xl">{toast}</div>
-      )}
-
       {/* Delete confirm */}
       {deleteId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">

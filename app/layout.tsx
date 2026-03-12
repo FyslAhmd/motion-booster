@@ -3,8 +3,8 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ConditionalLayout } from "@/components/layout";
 import { AuthProvider } from "@/lib/auth/context";
-import { ToastProvider } from "@/lib/toast/context";
 import { SiteDataProvider } from "@/lib/admin/context";
+import { Toaster } from 'sonner';
 
 const inter = Inter({
   subsets: ["latin"],
@@ -26,11 +26,10 @@ export default function RootLayout({
       <body className={`${inter.className} antialiased`} suppressHydrationWarning>
         <SiteDataProvider>
           <AuthProvider>
-            <ToastProvider>
-              <ConditionalLayout>
-                {children}
-              </ConditionalLayout>
-            </ToastProvider>
+            <Toaster position="top-right" richColors />
+            <ConditionalLayout>
+              {children}
+            </ConditionalLayout>
           </AuthProvider>
         </SiteDataProvider>
       </body>
