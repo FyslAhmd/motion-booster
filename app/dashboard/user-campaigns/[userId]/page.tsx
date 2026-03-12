@@ -4,6 +4,7 @@ import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import AdminShell from '../../_components/AdminShell';
+import { useAuth } from '@/lib/auth/context';
 import {
   Loader2,
   ArrowLeft,
@@ -118,6 +119,15 @@ export default function UserCampaignDetailPage({
 }) {
   const { userId } = use(params);
   const router = useRouter();
+  const { user: authUser } = useAuth();
+  const isAdmin = authUser?.role === 'ADMIN';
+
+  // Non-admin users can only view their own assignments
+  useEffect(() => {
+    if (authUser && !isAdmin && authUser.id !== userId) {
+      router.replace('/dashboard/user-campaigns');
+    }
+  }, [authUser, isAdmin, userId, router]);
 
   const [tab, setTab] = useState<Tab>('campaigns');
   const [loading, setLoading] = useState(true);
@@ -232,47 +242,56 @@ export default function UserCampaignDetailPage({
     <AdminShell>
       <div className="space-y-6">
         {/* Back + Header */}
-        <div className="flex items-start gap-4">
-          <button
-            onClick={() => router.push('/dashboard/user-campaigns')}
-            className="mt-1 rounded-lg border border-gray-200 p-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-600"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </button>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-3">
-              {user?.avatarUrl ? (
-                <Image src={user.avatarUrl} alt="avatar" width={44} height={44} className="h-11 w-11 shrink-0 rounded-full object-cover" />
-              ) : (
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-red-50 text-sm font-bold text-red-600">
-                  {user?.fullName
-                    ?.split(' ')
-                    .map((w) => w[0])
-                    .join('')
-                    .slice(0, 2)
-                    .toUpperCase() || '?'}
-                </div>
-              )}
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">{user?.fullName}</h1>
-                <div className="mt-0.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500">
-                  {user?.phone && (
-                    <span className="flex items-center gap-1">
-                      <Phone className="h-3 w-3" />
-                      {user.phone}
-                    </span>
-                  )}
-                  {user?.email && (
-                    <span className="flex items-center gap-1">
-                      <Mail className="h-3 w-3" />
-                      {user.email}
-                    </span>
-                  )}
+        {isAdmin ? (
+          <div className="flex items-start gap-4">
+            <button
+              onClick={() => router.push('/dashboard/user-campaigns')}
+              className="mt-1 rounded-lg border border-gray-200 p-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-600"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </button>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-3">
+                {user?.avatarUrl ? (
+                  <Image src={user.avatarUrl} alt="avatar" width={44} height={44} className="h-11 w-11 shrink-0 rounded-full object-cover" />
+                ) : (
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-red-50 text-sm font-bold text-red-600">
+                    {user?.fullName
+                      ?.split(' ')
+                      .map((w) => w[0])
+                      .join('')
+                      .slice(0, 2)
+                      .toUpperCase() || '?'}
+                  </div>
+                )}
+                <div>
+                  <h1 className="text-xl font-bold text-gray-900">{user?.fullName}</h1>
+                  <div className="mt-0.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500">
+                    {user?.phone && (
+                      <span className="flex items-center gap-1">
+                        <Phone className="h-3 w-3" />
+                        {user.phone}
+                      </span>
+                    )}
+                    {user?.email && (
+                      <span className="flex items-center gap-1">
+                        <Mail className="h-3 w-3" />
+                        {user.email}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        ) : (
+          <div>
+            <h1 className="text-xl font-bold text-gray-900">My Campaigns</h1>
+            <p className="mt-0.5 text-sm text-gray-500">
+              Campaigns, ad sets, and ads assigned to you
+            </p>
+          </div>
+        )}
 
         {/* Summary badges */}
         <div className="grid grid-cols-3 gap-3">

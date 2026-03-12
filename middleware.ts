@@ -11,6 +11,7 @@ const USER_ALLOWED_PATHS: { path: string; exact?: boolean }[] = [
   { path: '/dashboard/chat' },
   { path: '/dashboard/meta' },
   { path: '/dashboard/profile' },
+  { path: '/dashboard/user-campaigns' },
 ];
 
 function getAccessSecret(): Uint8Array {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { metaFetch } from '@/lib/meta/client';
 import { validateRequest } from '@/lib/auth/validate-request';
+import { prisma } from '@/lib/db/prisma';
 
 const CAMPAIGN_FIELDS = [
   'id', 'name', 'objective', 'status', 'effective_status',
@@ -37,7 +38,7 @@ const FIELDS_MAP: Record<string, string> = {
 export async function GET(req: NextRequest) {
   try {
     const auth = await validateRequest(req);
-    if (!auth || auth.role !== 'ADMIN') {
+    if (!auth) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -52,9 +53,22 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ success: true, data: [] });
     }
 
-    const ids = idsParam.split(',').filter(Boolean);
+    let ids = idsParam.split(',').filter(Boolean);
     if (ids.length === 0) {
       return NextResponse.json({ success: true, data: [] });
+    }
+
+    // Non-admin users: only allow IDs that are assigned to them
+    if (auth.role !== 'ADMIN') {
+      const assigned = await prisma.metaAdAssignment.findMany({
+        where: { userId: auth.id, metaObjectId: { in: ids }, metaObjectType: type },
+        select: { metaObjectId: true },
+      });
+      const allowedIds = new Set(assigned.map((a) => a.metaObjectId));
+      ids = ids.filter((id) => allowedIds.has(id));
+      if (ids.length === 0) {
+        return NextResponse.json({ success: true, data: [] });
+      }
     }
 
     // Limit to 50 per request to prevent abuse

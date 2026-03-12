@@ -6,6 +6,7 @@ import { validateRequest } from '@/lib/auth/validate-request';
  * GET /api/v1/admin/meta-assignments/users/[userId]
  * Returns all Meta ad assignments for a specific user, grouped by type.
  * Also returns the user's basic info.
+ * Admin can view any user. Regular users can only view their own.
  */
 export async function GET(
   req: NextRequest,
@@ -13,11 +14,16 @@ export async function GET(
 ) {
   try {
     const auth = await validateRequest(req);
-    if (!auth || auth.role !== 'ADMIN') {
+    if (!auth) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     const { userId } = await params;
+
+    // Non-admin users can only access their own assignments
+    if (auth.role !== 'ADMIN' && auth.id !== userId) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 403 });
+    }
 
     // Fetch user details
     const user = await prisma.user.findUnique({

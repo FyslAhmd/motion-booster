@@ -86,6 +86,7 @@ const USER_ALLOWED_ROUTES = [
   '/dashboard/chat',
   '/dashboard/meta',
   '/dashboard/profile',
+  '/dashboard/user-campaigns',
 ];
 
 // ── User Shell (non-admin layout) ─────────────────────────────────────────
@@ -102,6 +103,7 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
 
   const userNavItems = [
     { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
+    { href: '/dashboard/user-campaigns', label: 'My Campaigns', icon: Megaphone },
     { href: '/dashboard/chat', label: 'Chat', icon: MessageCircle },
   ];
 
