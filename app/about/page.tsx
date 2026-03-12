@@ -1,29 +1,28 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { TeamMemberItem } from '@/lib/admin/store';
 
-interface TeamMemberProps {
-  name: string;
-  role: string;
-  bio: string;
-  expertise?: string[];
-}
-
-const TeamMember: React.FC<TeamMemberProps> = ({ name, role, bio, expertise = [] }) => {
+const TeamMember: React.FC<{ member: TeamMemberItem }> = ({ member }) => {
+  const initials = member.avatar || member.name.slice(0, 2).toUpperCase();
   return (
-    <div className="relative">
-      <div className="bg-white rounded-3xl p-8 shadow-lg border border-gray-100 h-full">
-        {/* Avatar with gradient background */}
+    <Link href={`/team/${member.id}`} className="group block">
+      <div className="bg-white rounded-3xl p-8 shadow-lg border border-gray-100 h-full hover:border-red-200 hover:shadow-xl transition-all duration-300">
+        {/* Avatar */}
         <div className="relative mb-6">
           <div className="w-32 h-32 mx-auto rounded-full bg-linear-to-br from-red-400 via-red-500 to-red-600 p-1">
-            <div className="w-full h-full bg-white rounded-full flex items-center justify-center">
-              <span className="text-5xl font-bold bg-linear-to-br from-red-600 to-red-400 bg-clip-text text-transparent">
-                {name.charAt(0)}
-              </span>
+            <div className="w-full h-full bg-white rounded-full overflow-hidden flex items-center justify-center">
+              {member.avatarImage ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={member.avatarImage} alt={member.name} className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-5xl font-bold bg-linear-to-br from-red-600 to-red-400 bg-clip-text text-transparent">
+                  {initials.charAt(0)}
+                </span>
+              )}
             </div>
           </div>
-          {/* Status indicator */}
           <div className="absolute bottom-2 right-1/2 transform translate-x-16">
             <div className="w-5 h-5 bg-red-500 rounded-full border-4 border-white"></div>
           </div>
@@ -31,51 +30,27 @@ const TeamMember: React.FC<TeamMemberProps> = ({ name, role, bio, expertise = []
 
         {/* Content */}
         <div className="text-center">
-          <h3 className="text-2xl font-bold text-gray-900 mb-2">
-            {name}
-          </h3>
-          <p className="text-red-500 text-sm font-semibold uppercase tracking-wide mb-4">
-            {role}
-          </p>
-          <p className="text-gray-600 text-sm leading-relaxed mb-6">
-            {bio}
-          </p>
+          <h3 className="text-2xl font-bold text-gray-900 mb-2 group-hover:text-red-600 transition-colors">{member.name}</h3>
+          <p className="text-red-500 text-sm font-semibold uppercase tracking-wide mb-1">{member.role}</p>
+          {member.department && (
+            <p className="text-gray-400 text-xs mb-4">{member.department}</p>
+          )}
 
           {/* Expertise tags */}
-          {expertise.length > 0 && (
-            <div className="flex flex-wrap gap-2 justify-center mb-6">
-              {expertise.map((skill, index) => (
-                <span
-                  key={index}
-                  className="px-3 py-1 bg-red-50 text-red-600 rounded-full text-xs font-medium"
-                >
-                  {skill}
-                </span>
+          {member.specializedArea?.length > 0 && (
+            <div className="flex flex-wrap gap-2 justify-center mb-4">
+              {member.specializedArea.slice(0, 3).map((skill, i) => (
+                <span key={i} className="px-3 py-1 bg-red-50 text-red-600 rounded-full text-xs font-medium">{skill}</span>
               ))}
             </div>
           )}
 
-          {/* Social links */}
-          <div className="flex justify-center gap-3">
-            <button className="w-10 h-10 rounded-full bg-gray-100 hover:bg-red-600 text-gray-600 hover:text-white transition-colors flex items-center justify-center">
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
-              </svg>
-            </button>
-            <button className="w-10 h-10 rounded-full bg-gray-100 hover:bg-red-600 text-gray-600 hover:text-white transition-colors flex items-center justify-center">
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/>
-              </svg>
-            </button>
-            <button className="w-10 h-10 rounded-full bg-gray-100 hover:bg-red-600 text-gray-600 hover:text-white transition-colors flex items-center justify-center">
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-              </svg>
-            </button>
-          </div>
+          {member.experience && (
+            <p className="text-gray-500 text-xs">{member.experience} experience</p>
+          )}
         </div>
       </div>
-    </div>
+    </Link>
   );
 };
 
@@ -98,32 +73,14 @@ const ValueCard: React.FC<ValueCardProps> = ({ icon, title, description }) => {
 };
 
 export default function AboutPage() {
-  const team = [
-    {
-      name: 'David Thompson',
-      role: 'CEO & Founder',
-      bio: 'Visionary leader with 15+ years in software development and business strategy.',
-      expertise: ['Leadership', 'Strategy', 'Business Dev'],
-    },
-    {
-      name: 'Sarah Chen',
-      role: 'CTO',
-      bio: 'Technology expert passionate about building scalable and innovative solutions.',
-      expertise: ['Architecture', 'DevOps', 'Cloud'],
-    },
-    {
-      name: 'Michael Brown',
-      role: 'Lead Developer',
-      bio: 'Full-stack developer who loves solving complex technical challenges.',
-      expertise: ['React', 'Node.js', 'PostgreSQL'],
-    },
-    {
-      name: 'Emma Wilson',
-      role: 'Head of Design',
-      bio: 'Creating beautiful user experiences that users love and remember.',
-      expertise: ['UI/UX', 'Figma', 'Branding'],
-    },
-  ];
+  const [team, setTeam] = useState<TeamMemberItem[]>([]);
+
+  useEffect(() => {
+    fetch('/api/v1/cms/team')
+      .then(r => r.json())
+      .then(data => setTeam(Array.isArray(data) ? data : []))
+      .catch(() => {});
+  }, []);
 
   const values = [
     {
@@ -174,7 +131,7 @@ export default function AboutPage() {
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
-      <section className="py-20 lg:py-32 bg-linear-to-br from-red-50 via-white to-rose-50">
+      <section className="py-12 lg:py-16 bg-linear-to-br from-red-50 via-white to-rose-50">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="text-center max-w-4xl mx-auto">
             <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 mb-6">
@@ -219,7 +176,7 @@ export default function AboutPage() {
       </section>
 
       {/* Story Section */}
-      <section className="py-20 lg:py-32">
+      <section className="py-10 lg:py-14">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <div>
@@ -255,9 +212,9 @@ export default function AboutPage() {
       </section>
 
       {/* Values Section */}
-      <section className="py-20 lg:py-32 bg-gray-50">
+      <section className="py-12 lg:py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="text-center mb-16">
+          <div className="text-center mb-10">
             <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
               What We Stand For
             </h2>
@@ -279,15 +236,15 @@ export default function AboutPage() {
       </section>
 
       {/* Team Section */}
-      <section className="py-20 lg:py-32 bg-white">
+      <section className="py-12 lg:py-16 bg-white">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="text-center mb-16">
+          <div className="text-center mb-10">
             <div className="inline-block mb-4">
               <span className="px-4 py-2 bg-red-100 text-red-600 rounded-full text-sm font-semibold">
                 Our Team
               </span>
             </div>
-            <h2 className="text-4xl lg:text-6xl font-bold text-gray-900 mb-6">
+            <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
               Meet the <span className="text-red-500">Dream Team</span>
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
@@ -295,19 +252,13 @@ export default function AboutPage() {
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {team.map((member, index) => (
-              <TeamMember
-                key={index}
-                name={member.name}
-                role={member.role}
-                bio={member.bio}
-                expertise={member.expertise}
-              />
+            {team.map((member) => (
+              <TeamMember key={member.id} member={member} />
             ))}
           </div>
           
           {/* Join Team CTA */}
-          <div className="mt-16 text-center">
+          <div className="mt-10 text-center">
             <div className="inline-block bg-white rounded-2xl p-8 shadow-lg">
               <h3 className="text-2xl font-bold text-gray-900 mb-3">Want to join our team?</h3>
               <p className="text-gray-600 mb-6">We're always looking for talented people</p>
@@ -326,7 +277,7 @@ export default function AboutPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="relative py-16 sm:py-20 lg:py-32 bg-red-600 overflow-hidden">
+      <section className="relative py-12 sm:py-16 lg:py-20 bg-red-600 overflow-hidden">
         {/* Red Circle Decorations */}
         <div className="absolute top-0 left-0 w-32 h-32 sm:w-48 sm:h-48 md:w-64 md:h-64 bg-red-400 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
         <div className="absolute bottom-0 right-0 w-48 h-48 sm:w-64 sm:h-64 md:w-96 md:h-96 bg-red-700 rounded-full translate-x-1/2 translate-y-1/2"></div>

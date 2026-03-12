@@ -32,6 +32,7 @@ import {
   Home,
   UserCheck,
   Rocket,
+  BookOpen,
 } from 'lucide-react';
 interface NavItem {
   href: string;
@@ -73,6 +74,7 @@ const navItems: NavEntry[] = [
       { href: '/dashboard/testimonials',     label: 'Testimonials',        icon: Quote },
       { href: '/dashboard/team',             label: 'Team',                icon: Users },
       { href: '/dashboard/faq',              label: 'FAQ',                 icon: HelpCircle },
+      { href: '/dashboard/blog',             label: 'Blog Posts',          icon: BookOpen },
     ],
   },
   { href: '/dashboard/settings', label: 'Site Settings', icon: Settings, adminOnly: true },

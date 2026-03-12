@@ -309,6 +309,33 @@ model Company {
   @@map("companies")
 }
 
+// ─── CMS: BLOG POSTS ─────────────────────────────────────────────────────────
+
+enum BlogStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model BlogPost {
+  id          String     @id @default(cuid())
+  title       String
+  slug        String     @unique
+  excerpt     String     @db.Text
+  content     String     @db.Text
+  coverImage  String?    @map("cover_image") @db.Text
+  category    String
+  tags        String[]
+  author      String     @default("Motion Booster")
+  status      BlogStatus @default(DRAFT)
+  order       Int        @default(0)
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+
+  @@index([slug])
+  @@index([status])
+  @@map("blog_posts")
+}
+
 // ─── META AD ASSIGNMENTS ──────────────────────────────
 // Tracks which Meta campaign / ad set / ad is assigned to which user.
 // One Meta entity can be assigned to at most one user (unique on metaObjectId).
