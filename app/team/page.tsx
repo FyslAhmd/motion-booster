@@ -3,17 +3,17 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
-import { AdminStore, TeamMemberItem } from '@/lib/admin/store';
+import { TeamMemberItem } from '@/lib/admin/store';
 
 export default function TeamPage() {
   const [team, setTeam] = useState<TeamMemberItem[]>([]);
   const [activeTab, setActiveTab] = useState('All');
 
   useEffect(() => {
-    setTeam(AdminStore.getTeam());
-    const onStorage = () => setTeam(AdminStore.getTeam());
-    window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
+    fetch('/api/v1/cms/team')
+      .then(r => r.json())
+      .then(data => setTeam(Array.isArray(data) ? data : []))
+      .catch(() => {});
   }, []);
 
   const departments = ['All', ...Array.from(new Set(team.map(m => m.department).filter(Boolean)))];

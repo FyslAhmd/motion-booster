@@ -1,6 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { id } = await params;
+    const member = await prisma.teamMember.findUnique({ where: { id } });
+    if (!member) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    return NextResponse.json(member);
+  } catch (error) {
+    console.error('GET /api/v1/cms/team/[id] error:', error);
+    return NextResponse.json({ error: 'Failed to fetch team member' }, { status: 500 });
+  }
+}
+
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;

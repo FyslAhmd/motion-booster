@@ -1,36 +1,33 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { 
-  TrendingUp, 
-  Palette, 
-  Code, 
-  Globe, 
-  Smartphone, 
-  Layers, 
-  Sparkles, 
-  Video, 
-  Briefcase, 
-  Zap,
-  Check,
-  ChevronDown
-} from 'lucide-react';
+import { Check, ChevronDown } from 'lucide-react';
+import { CategoryIcon } from '@/lib/admin/categoryIcons';
+
+interface PopularServiceItem {
+  id: string;
+  title: string;
+  description: string;
+  gradient: string;
+  category: string;
+  services: string[];
+}
 
 interface ServiceCategoryProps {
-  icon: React.ReactNode;
+  iconType: string;
   title: string;
   description: string;
   services: string[];
   gradient: string;
 }
 
-const ServiceCategory: React.FC<ServiceCategoryProps> = ({ icon, title, description, services, gradient }) => {
+const ServiceCategory: React.FC<ServiceCategoryProps> = ({ iconType, title, description, services, gradient }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
     <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300">
-      <div 
+      <div
         className={`p-6 bg-linear-to-br ${gradient} cursor-pointer`}
         onClick={() => setIsExpanded(!isExpanded)}
       >
@@ -38,7 +35,7 @@ const ServiceCategory: React.FC<ServiceCategoryProps> = ({ icon, title, descript
           <div className="flex items-start gap-4 flex-1">
             <div className="shrink-0">
               <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-md">
-                {icon}
+                <CategoryIcon iconType={iconType} className="w-8 h-8 text-white" />
               </div>
             </div>
             <div className="flex-1">
@@ -51,7 +48,7 @@ const ServiceCategory: React.FC<ServiceCategoryProps> = ({ icon, title, descript
           </button>
         </div>
       </div>
-      
+
       {isExpanded && (
         <div className="p-6 bg-gray-50">
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -69,208 +66,14 @@ const ServiceCategory: React.FC<ServiceCategoryProps> = ({ icon, title, descript
 };
 
 export default function ServicePage() {
-  const serviceCategories = [
-    {
-      icon: <TrendingUp className="w-8 h-8 text-white" />,
-      title: 'Digital Marketing Services',
-      description: 'Comprehensive digital marketing solutions to grow your online presence and drive results.',
-      gradient: 'from-red-500 to-red-600',
-      services: [
-        'Facebook & Instagram Ads Management',
-        'LinkedIn & TikTok Marketing',
-        'Google Ads & Performance Max',
-        'YouTube Ads Management',
-        'SEO Optimization & Link Building',
-        'Technical SEO Audit',
-        'Local SEO & Google My Business',
-        'Content Marketing & Blog Writing',
-        'Email Marketing Campaigns',
-        'Marketing Automation Setup',
-        'Google Analytics & Conversion Tracking',
-        'ROI Analysis & Reporting',
-      ],
-    },
-    {
-      icon: <Palette className="w-8 h-8 text-white" />,
-      title: 'Graphics Design Services',
-      description: 'Creative design solutions that make your brand stand out and communicate effectively.',
-      gradient: 'from-rose-500 to-red-500',
-      services: [
-        'Logo Design & Brand Identity',
-        'Business Card & Stationery',
-        'Social Media Graphics',
-        'Digital Ad Banners & Animations',
-        'Brochure & Flyer Design',
-        'Product Packaging Design',
-        'Presentation Design',
-        'Infographic Design',
-        'Print Design (Posters, Catalogs)',
-        'Illustration & Character Design',
-        'Motion Graphics & Logo Animation',
-        'Photo Editing & Retouching',
-      ],
-    },
-    {
-      icon: <Code className="w-8 h-8 text-white" />,
-      title: 'Software Development Services',
-      description: 'Custom software solutions tailored to your business needs and workflows.',
-      gradient: 'from-red-600 to-red-700',
-      services: [
-        'Custom Web Applications',
-        'CRM & ERP Systems',
-        'Inventory Management Systems',
-        'POS & Booking Systems',
-        'SaaS Platform Development',
-        'Multi-tenant Applications',
-        'API Development & Integration',
-        'E-commerce Solutions',
-        'Payment Gateway Integration',
-        'Multi-vendor Marketplaces',
-        'Business Intelligence Tools',
-        'Workflow Automation',
-      ],
-    },
-    {
-      icon: <Globe className="w-8 h-8 text-white" />,
-      title: 'Web Development Services',
-      description: 'Professional websites that are fast, responsive, and optimized for conversions.',
-      gradient: 'from-red-500 to-rose-600',
-      services: [
-        'Corporate & E-commerce Websites',
-        'Landing Page Development',
-        'Portfolio & Blog Websites',
-        'React.js & Next.js Development',
-        'Vue.js & Angular Development',
-        'Node.js Backend Development',
-        'PHP/Laravel Development',
-        'WordPress & WooCommerce',
-        'Shopify & Magento Development',
-        'Progressive Web Apps (PWA)',
-        'RESTful & GraphQL API',
-        'Website Maintenance & Support',
-      ],
-    },
-    {
-      icon: <Smartphone className="w-8 h-8 text-white" />,
-      title: 'Mobile App Development',
-      description: 'Native and cross-platform mobile apps that deliver exceptional user experiences.',
-      gradient: 'from-red-500 to-red-600',
-      services: [
-        'iOS App Development (Swift)',
-        'Android App Development (Kotlin)',
-        'React Native Development',
-        'Flutter Development',
-        'E-commerce Mobile Apps',
-        'Food Delivery Apps',
-        'Social Networking Apps',
-        'Healthcare & Education Apps',
-        'App Store Optimization (ASO)',
-        'Push Notification Setup',
-        'Payment Gateway Integration',
-        'App Maintenance & Updates',
-      ],
-    },
-    {
-      icon: <Layers className="w-8 h-8 text-white" />,
-      title: 'UI/UX Design Services',
-      description: 'User-centered design that creates intuitive and engaging digital experiences.',
-      gradient: 'from-rose-500 to-red-500',
-      services: [
-        'Website & App UI Design',
-        'Dashboard & Admin Panel Design',
-        'User Research & Analysis',
-        'Wireframing & Prototyping',
-        'User Journey Mapping',
-        'Usability Testing',
-        'Design System Creation',
-        'Component Library',
-        'Figma & Adobe XD Design',
-        'Interactive Prototypes',
-        'Accessibility Design (WCAG)',
-        'Design Documentation',
-      ],
-    },
-    {
-      icon: <Sparkles className="w-8 h-8 text-white" />,
-      title: 'Branding & Creative Services',
-      description: 'Build a memorable brand identity that resonates with your target audience.',
-      gradient: 'from-red-600 to-red-700',
-      services: [
-        'Brand Strategy & Positioning',
-        'Brand Messaging & Voice',
-        'Competitor Analysis',
-        'Logo Design & Redesign',
-        'Brand Guidelines & Style Guide',
-        'Color Palette Development',
-        'Typography Selection',
-        'Business Presentation Design',
-        'Company Profile Design',
-        'Marketing Collateral',
-        'Corporate Gifts Design',
-        'Brand Asset Library',
-      ],
-    },
-    {
-      icon: <Video className="w-8 h-8 text-white" />,
-      title: 'Video & Animation Services',
-      description: 'Engaging video content and animations that tell your story effectively.',
-      gradient: 'from-red-500 to-rose-600',
-      services: [
-        'Corporate Video Production',
-        'Product Demo Videos',
-        'Explainer Videos',
-        'Testimonial Videos',
-        'Social Media Videos',
-        'Video Editing & Color Grading',
-        '2D & 3D Animation',
-        'Whiteboard Animation',
-        'Character Animation',
-        'Motion Graphics',
-        'Logo Animation',
-        'Drone Videography',
-      ],
-    },
-    {
-      icon: <Briefcase className="w-8 h-8 text-white" />,
-      title: 'Business Consulting Services',
-      description: 'Strategic guidance to help your business grow and achieve digital transformation.',
-      gradient: 'from-red-500 to-red-600',
-      services: [
-        'Digital Transformation Consulting',
-        'Technology Stack Selection',
-        'Digital Marketing Strategy',
-        'Growth Hacking Strategy',
-        'Requirements Gathering',
-        'Process Optimization',
-        'Market Research & Feasibility',
-        'ROI Analysis',
-        'Team Training Sessions',
-        'Software Training Workshops',
-        'Technical Documentation',
-        'Change Management Support',
-      ],
-    },
-    {
-      icon: <Zap className="w-8 h-8 text-white" />,
-      title: 'Specialized Services',
-      description: 'Advanced technical services for complex integrations and optimizations.',
-      gradient: 'from-rose-500 to-red-500',
-      services: [
-        'Payment Gateway Integration',
-        'Social Media API Integration',
-        'SMS & Email Service Setup',
-        'CRM Integration (Salesforce, HubSpot)',
-        'AWS & Cloud Platform Setup',
-        'DevOps & CI/CD Pipeline',
-        'SSL Certificate & Security Audit',
-        'Website Speed Optimization',
-        'Database Optimization',
-        'CDN Setup (Cloudflare)',
-        'Multi-currency & Multi-language',
-        'Live Chat Integration',
-      ],
-    },
-  ];
+  const [serviceCategories, setServiceCategories] = useState<PopularServiceItem[]>([]);
+
+  useEffect(() => {
+    fetch('/api/v1/cms/popular-services')
+      .then(r => r.json())
+      .then(data => setServiceCategories(Array.isArray(data) ? data : []))
+      .catch(() => {});
+  }, []);
 
   return (
     <main className="min-h-screen pb-16 lg:pb-0">
@@ -318,10 +121,10 @@ export default function ServicePage() {
           </div>
 
           <div className="space-y-6">
-            {serviceCategories.map((category, index) => (
+            {serviceCategories.map((category) => (
               <ServiceCategory
-                key={index}
-                icon={category.icon}
+                key={category.id}
+                iconType={category.category}
                 title={category.title}
                 description={category.description}
                 services={category.services}

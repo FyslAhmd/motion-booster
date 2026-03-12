@@ -232,7 +232,7 @@ function PromoSlider() {
       autoPlayInterval={5000}
       showControls={false}
       showIndicators={true}
-      height="h-52"
+      height="h-[200px] md:h-[280px] lg:h-[320px]"
     />
   );
 }

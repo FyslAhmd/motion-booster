@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react';
 import AdminShell from '../_components/AdminShell';
 import { useConfirm } from '@/lib/admin/confirm';
-import { AdminStore, ServiceItem, defaultServices, generateId } from '@/lib/admin/store';
-import { Plus, Pencil, Trash2, X, Check, GripVertical, AlertTriangle } from 'lucide-react';
+import { ServiceItem } from '@/lib/admin/store';
+import { Plus, Pencil, Trash2, X, Check, AlertTriangle } from 'lucide-react';
 
 const COLOR_OPTIONS = [
   { label: 'Purple', value: 'bg-purple-400' },
@@ -47,15 +47,17 @@ export default function AdminServicesPage() {
   const [isNew, setIsNew] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   useEffect(() => {
-    setServices(AdminStore.getServices());
+    fetch('/api/v1/cms/services')
+      .then(r => r.json())
+      .then(data => setServices(Array.isArray(data) ? data : []))
+      .catch(() => {});
   }, []);
 
-  const persist = (data: ServiceItem[]) => {
-    AdminStore.saveServices(data);
-    setServices(data);
+  const flashSaved = () => {
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
@@ -65,25 +67,58 @@ export default function AdminServicesPage() {
   const handleSave = async () => {
     if (!editing) return;
     if (!editing.title.trim() || !editing.description.trim()) return;
-    if (!await confirm({ title: 'Save Changes', message: 'Are you sure you want to save these changes?' })) return;
-    let updated: ServiceItem[];
-    if (isNew) {
-      updated = [...services, { ...editing, id: generateId() }];
-    } else {
-      updated = services.map(s => s.id === editing.id ? editing : s);
+    if (!await confirm({ title: isNew ? 'Add Service' : 'Save Changes', message: 'Are you sure you want to save these changes?' })) return;
+    setSaving(true);
+    try {
+      if (isNew) {
+        const res = await fetch('/api/v1/cms/services', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(editing),
+        });
+        const created = await res.json();
+        setServices(prev => [...prev, created]);
+      } else {
+        const res = await fetch(`/api/v1/cms/services/${editing.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(editing),
+        });
+        const updated = await res.json();
+        setServices(prev => prev.map(s => s.id === updated.id ? updated : s));
+      }
+      setEditing(null);
+      setIsNew(false);
+      flashSaved();
+    } catch {
+      alert('Failed to save service.');
+    } finally {
+      setSaving(false);
     }
-    persist(updated);
-    setEditing(null);
-    setIsNew(false);
   };
 
-  const handleDelete = (id: string) => {
-    persist(services.filter(s => s.id !== id));
-    setDeleteId(null);
+  const handleDelete = async (id: string) => {
+    try {
+      await fetch(`/api/v1/cms/services/${id}`, { method: 'DELETE' });
+      setServices(prev => prev.filter(s => s.id !== id));
+      setDeleteId(null);
+      flashSaved();
+    } catch {
+      alert('Failed to delete service.');
+    }
   };
 
-  const handleReset = () => {
-    persist(defaultServices);
+  const handleReset = async () => {
+    try {
+      // Delete all then re-fetch (API auto-seeds defaults when empty)
+      await Promise.all(services.map(s => fetch(`/api/v1/cms/services/${s.id}`, { method: 'DELETE' })));
+      const res = await fetch('/api/v1/cms/services');
+      const data = await res.json();
+      setServices(Array.isArray(data) ? data : []);
+      flashSaved();
+    } catch {
+      alert('Failed to reset services.');
+    }
   };
 
   return (
@@ -252,10 +287,10 @@ export default function AdminServicesPage() {
               </button>
               <button
                 onClick={handleSave}
-                disabled={!editing.title.trim() || !editing.description.trim()}
+                disabled={saving || !editing.title.trim() || !editing.description.trim()}
                 className="px-5 py-2 text-sm bg-red-600 text-white rounded-xl hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
               >
-                {isNew ? 'Add Service' : 'Save Changes'}
+                {saving ? 'Saving...' : isNew ? 'Add Service' : 'Save Changes'}
               </button>
             </div>
           </div>

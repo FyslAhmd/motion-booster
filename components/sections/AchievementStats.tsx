@@ -49,10 +49,10 @@ function StatCard({ value, title, bgColor, valueColor, started }: StatCardProps)
 
   return (
     <div
-      className={`stat-card ${bgColor} cursor-default rounded-2xl p-4 text-center transition-all hover:shadow-lg md:p-6`}
+      className={`stat-card ${bgColor} cursor-default rounded-2xl p-5 sm:p-6 text-center transition-all hover:shadow-lg`}
     >
-      <div className={`mb-2 text-3xl font-bold md:text-4xl ${valueColor}`}>{display}</div>
-      <h3 className="text-xs font-semibold leading-snug text-gray-800 md:text-sm">{title}</h3>
+      <div className={`mb-2 text-4xl sm:text-5xl font-extrabold tracking-tight ${valueColor}`}>{display}</div>
+      <h3 className="text-xs sm:text-sm font-bold leading-snug text-gray-800">{title}</h3>
     </div>
   );
 }
@@ -100,27 +100,45 @@ export const AchievementStats = () => {
     return () => observer.disconnect();
   }, [loaded]);
 
-  if (!loaded || stats.length === 0) return null;
-
   return (
-    <section ref={sectionRef} className="bg-white py-4 md:py-6 lg:py-8">
+    <section ref={sectionRef} className="bg-white py-8 md:py-12 lg:py-16">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-8 text-center md:mb-12">
-          <h2 className="mb-3 text-2xl font-bold text-gray-900 md:text-3xl lg:text-4xl">
-            Our Achievements
-          </h2>
-          <p className="text-sm text-gray-600 md:text-base">
-            Numbers that speak for our success and commitment to excellence
-          </p>
+        <div className="mb-10 text-center md:mb-14">
+          {!loaded ? (
+            <>
+              <div className="mx-auto mb-3 h-8 w-64 animate-pulse rounded-full bg-gray-200 md:h-10 md:w-80" />
+              <div className="mx-auto h-4 w-80 animate-pulse rounded-full bg-gray-200 md:w-96" />
+            </>
+          ) : (
+            <>
+              <h2 className="mb-3 text-2xl font-bold text-gray-900 md:text-3xl lg:text-4xl">
+                Our Achievements
+              </h2>
+              <p className="text-sm text-gray-600 md:text-base">
+                Numbers that speak for our success and commitment to excellence
+              </p>
+            </>
+          )}
         </div>
 
         {/* Grid */}
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-5">
-          {stats.map((stat) => (
-            <StatCard key={stat.id} {...stat} started={started} />
-          ))}
-        </div>
+        {!loaded ? (
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-5 animate-pulse">
+            {Array.from({ length: 10 }).map((_, i) => (
+              <div key={i} className="rounded-2xl bg-gray-100 p-5 sm:p-6">
+                <div className="mb-2 mx-auto h-10 sm:h-12 w-20 sm:w-24 rounded-lg bg-gray-200" />
+                <div className="mx-auto h-3 w-24 rounded-full bg-gray-200" />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-5">
+            {stats.map((stat) => (
+              <StatCard key={stat.id} {...stat} started={started} />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

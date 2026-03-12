@@ -104,10 +104,62 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
   const activeLabel = userNavItems.find(n => n.href === pathname)?.label ?? 'Dashboard';
 
   return (
-    <div className="h-dvh bg-gray-50 flex flex-col overflow-hidden">
+    <div className="h-dvh bg-gray-50 flex flex-col overflow-hidden lg:pl-64">
+      {/* Desktop fixed sidebar */}
+      <aside className="hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:left-0 lg:w-64 lg:bg-white lg:border-r lg:border-gray-100 lg:z-40">
+        <div className="px-5 py-4 border-b border-gray-100">
+          <Link href="/dashboard">
+            <Image src="/Motion Booster Black Logo-01.svg" alt="Motion Booster" width={130} height={40} className="h-8 w-auto" priority />
+          </Link>
+        </div>
+        <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
+          {userNavItems.map(({ href, label, icon: Icon }) => {
+            const active = pathname === href;
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${active ? 'bg-red-600 text-white shadow-md shadow-red-500/20' : 'text-gray-500 hover:text-gray-900 hover:bg-red-50'}`}
+              >
+                <Icon className={`w-4 h-4 shrink-0 ${active ? 'text-white' : 'text-gray-400'}`} />
+                <span>{label}</span>
+                {active && <ChevronRight className="w-3 h-3 ml-auto text-white/70" />}
+              </Link>
+            );
+          })}
+        </nav>
+        <div className="p-3 border-t border-gray-100 space-y-0.5">
+          <Link
+            href="/dashboard/profile"
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${pathname === '/dashboard/profile' ? 'bg-red-600 text-white shadow-md shadow-red-500/20' : 'text-gray-500 hover:text-gray-900 hover:bg-red-50'}`}
+          >
+            {avatarUrl ? (
+              <Image src={avatarUrl} alt="avatar" width={28} height={28} className="w-7 h-7 rounded-full object-cover shrink-0" />
+            ) : (
+              <div className="w-7 h-7 rounded-full bg-linear-to-br from-red-500 to-red-700 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                {userName.slice(0, 2).toUpperCase()}
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="truncate text-xs font-semibold">{userName}</p>
+              <p className="text-[10px] text-gray-400 font-normal">My Profile</p>
+            </div>
+            <User className="w-3.5 h-3.5 shrink-0 text-gray-400" />
+          </Link>
+          <a href="/" target="_blank" className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-500 hover:text-red-600 hover:bg-red-50 transition-all font-medium">
+            <Globe className="w-4 h-4" />
+            View Website
+          </a>
+          <button onClick={handleLogout} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-500 hover:text-red-600 hover:bg-red-50 transition-all font-medium">
+            <LogOut className="w-4 h-4" />
+            Logout
+          </button>
+        </div>
+      </aside>
+
       {/* Top bar */}
       <header className="shrink-0 z-20 bg-white border-b border-gray-100 h-14 flex items-center px-4 justify-between shadow-sm">
-        <Link href="/dashboard">
+        <Link href="/dashboard" className="lg:hidden">
           <Image
             src="/Motion Booster Black Logo-01.svg"
             alt="Motion Booster"
@@ -117,8 +169,9 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
             priority
           />
         </Link>
+        <span className="hidden lg:block text-base font-semibold text-gray-800">{activeLabel}</span>
         <div className="flex items-center gap-2 text-sm text-gray-500 font-medium">
-          <span className="hidden sm:block">{activeLabel}</span>
+          <span className="hidden sm:block lg:hidden">{activeLabel}</span>
           <Link href="/dashboard/profile">
             {avatarUrl ? (
               <Image src={avatarUrl} alt="avatar" width={32} height={32} className="w-8 h-8 rounded-full object-cover" />
@@ -137,7 +190,7 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
       </main>
 
       {/* Bottom nav — shrink-0 so it's always visible at bottom of flex column */}
-      <nav className="shrink-0 z-30 bg-white border-t border-gray-200 shadow-lg flex justify-around items-center h-16 px-2">
+      <nav className="lg:hidden shrink-0 z-30 bg-white border-t border-gray-200 shadow-lg flex justify-around items-center h-16 px-2">
         {userNavItems.map(({ href, label, icon: Icon }) => {
           const active = pathname === href;
           return (

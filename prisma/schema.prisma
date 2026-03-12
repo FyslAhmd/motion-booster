@@ -267,6 +267,21 @@ model TeamMember {
   @@map("team_members")
 }
 
+// ─── CMS: SERVICES (Homepage "Our Services" section) ─────────────────────────
+
+model Service {
+  id          String   @id @default(cuid())
+  title       String
+  description String   @db.Text
+  iconColor   String   @map("icon_color")
+  iconType    String   @map("icon_type")
+  order       Int      @default(0)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("services")
+}
+
 // ─── CMS: FAQ ────────────────────────────────────────────────────────────────
 
 model FAQ {

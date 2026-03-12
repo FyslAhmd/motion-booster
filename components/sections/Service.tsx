@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { AdminStore, ServiceItem } from '@/lib/admin/store';
+import { ServiceItem } from '@/lib/admin/store';
 import { ServiceIcon } from '@/lib/admin/icons';
 
 const ServiceCard: React.FC<{ item: ServiceItem }> = ({ item }) => (
@@ -18,10 +18,10 @@ export const Service = () => {
   const [services, setServices] = useState<ServiceItem[]>([]);
 
   useEffect(() => {
-    setServices(AdminStore.getServices());
-    const handler = () => setServices(AdminStore.getServices());
-    window.addEventListener('storage', handler);
-    return () => window.removeEventListener('storage', handler);
+    fetch('/api/v1/cms/services')
+      .then(r => r.json())
+      .then(data => setServices(Array.isArray(data) ? data : []))
+      .catch(() => {});
   }, []);
 
   const first = services.slice(0, 3);

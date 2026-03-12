@@ -3,7 +3,7 @@
 import { notFound, useRouter } from 'next/navigation';
 import { use, useEffect, useState } from 'react';
 import { ChevronLeft, CheckCircle2, Building2 } from 'lucide-react';
-import { AdminStore, TeamMemberItem } from '@/lib/admin/store';
+import { TeamMemberItem } from '@/lib/admin/store';
 
 export default function TeamMemberPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -11,9 +11,10 @@ export default function TeamMemberPage({ params }: { params: Promise<{ id: strin
   const [member, setMember] = useState<TeamMemberItem | null | undefined>(undefined);
 
   useEffect(() => {
-    const team = AdminStore.getTeam();
-    const found = team.find(m => m.id === id) ?? null;
-    setMember(found);
+    fetch(`/api/v1/cms/team/${id}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => setMember(data ?? null))
+      .catch(() => setMember(null));
   }, [id]);
 
   if (member === undefined) return null; // loading

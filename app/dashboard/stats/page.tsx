@@ -3,9 +3,10 @@
 import { useEffect, useState } from 'react';
 import AdminShell from '../_components/AdminShell';
 import { Plus, Trash2, X, Loader2, AlertTriangle } from 'lucide-react';
+import { useConfirm } from '@/lib/admin/confirm';
 
-const BG_OPTIONS = ['bg-green-50', 'bg-lime-50', 'bg-yellow-50', 'bg-blue-50', 'bg-purple-50', 'bg-orange-50', 'bg-red-50', 'bg-pink-50', 'bg-teal-50', 'bg-indigo-50'];
-const VALUE_COLOR_OPTIONS = ['text-teal-500', 'text-red-500', 'text-blue-500', 'text-purple-500', 'text-green-500', 'text-orange-500', 'text-pink-500', 'text-indigo-500'];
+const BG_OPTIONS = ['bg-red-50', 'bg-orange-50', 'bg-yellow-50', 'bg-green-50', 'bg-blue-50', 'bg-indigo-50', 'bg-purple-50', 'bg-pink-50', 'bg-teal-50', 'bg-cyan-50', 'bg-lime-50', 'bg-rose-50'];
+const VALUE_COLOR_OPTIONS = ['text-red-500', 'text-orange-500', 'text-yellow-500', 'text-green-500', 'text-blue-500', 'text-indigo-500', 'text-purple-500', 'text-pink-500', 'text-teal-500', 'text-cyan-500', 'text-lime-500', 'text-rose-500'];
 
 interface StatItem {
   id: string;
@@ -26,6 +27,7 @@ const BLANK: Omit<StatItem, 'id' | 'order'> = {
 };
 
 export default function AdminStatsPage() {
+  const { confirm } = useConfirm();
   const [stats, setStats] = useState<StatItem[]>([]);
   const [editing, setEditing] = useState<StatItem | null>(null);
   const [isNew, setIsNew] = useState(false);
@@ -44,6 +46,14 @@ export default function AdminStatsPage() {
 
   const handleSave = async () => {
     if (!editing || !editing.value.trim() || !editing.title.trim()) return;
+    const ok = await confirm({
+      title: isNew ? 'Add Stat' : 'Save Changes',
+      message: isNew
+        ? 'Are you sure you want to add this stat?'
+        : 'Are you sure you want to save the changes to this stat?',
+      confirmLabel: isNew ? 'Add' : 'Save',
+    });
+    if (!ok) return;
     setSaving(true);
     try {
       if (isNew) {
