@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { jwtVerify } from 'jose';
 
-/**
- * Routes under /dashboard that normal users (non-admin) can access.
- * Everything else under /dashboard requires ADMIN role.
- * Use exact:true for paths that should not match sub-routes.
- */
 const USER_ALLOWED_PATHS: { path: string; exact?: boolean }[] = [
   { path: '/dashboard', exact: true },
   { path: '/dashboard/chat' },
