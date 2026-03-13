@@ -14,7 +14,6 @@ const ADMIN_DATA = {
 
 async function seedAdmin() {
   console.log('🔧 Seeding admin user...\n');
-
   // Check if admin already exists
   const existing = await prisma.user.findFirst({
     where: {
