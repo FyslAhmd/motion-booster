@@ -87,6 +87,7 @@ export default function AdminTestimonialsPage() {
       }
       setEditing(null);
       setIsNew(false);
+      toast.success(isNew ? 'Testimonial added successfully!' : 'Testimonial updated successfully!');
     } catch {
       toast.error('Failed to save testimonial.');
     } finally {
@@ -100,6 +101,7 @@ export default function AdminTestimonialsPage() {
       await fetch(`/api/v1/cms/testimonials/${id}`, { method: 'DELETE' });
       setItems(prev => prev.filter(t => t.id !== id));
       setDeleteId(null);
+      toast.success('Testimonial deleted successfully!');
     } catch {
       toast.error('Failed to delete testimonial.');
     } finally {

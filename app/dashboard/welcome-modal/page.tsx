@@ -5,6 +5,7 @@ import AdminShell from '../_components/AdminShell';
 import { useConfirm } from '@/lib/admin/confirm';
 import { AdminStore, SiteSettings, defaultSettings } from '@/lib/admin/store';
 import { Check, ImagePlus, Save, Trash2, Eye, NotebookPen } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function WelcomeModalPage() {
   const [settings, setSettings] = useState<SiteSettings>(defaultSettings);
@@ -26,6 +27,7 @@ export default function WelcomeModalPage() {
     if (!await confirm({ title: 'Save Changes', message: 'Are you sure you want to save these changes?' })) return;
     AdminStore.saveSettings(settings);
     setSaved(true);
+    toast.success('Welcome popup settings saved successfully!');
     setTimeout(() => setSaved(false), 2500);
   };
 

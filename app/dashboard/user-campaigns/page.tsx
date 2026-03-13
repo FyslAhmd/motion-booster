@@ -5,6 +5,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import AdminShell from '../_components/AdminShell';
 import { useAuth } from '@/lib/auth/context';
+import { useConfirm } from '@/lib/admin/confirm';
+import { toast } from 'sonner';
 import {
   Loader2,
   Users,
@@ -308,6 +310,7 @@ function AdminView() {
 
 function UserOwnView({ userId }: { userId: string }) {
   const { accessToken, refreshSession } = useAuth();
+  const { confirm } = useConfirm();
 
   // ─── Fetch wrapper: auto-refresh on 401 & retry once ──
   const authFetch = useCallback(async (url: string, options: RequestInit = {}): Promise<Response> => {
@@ -397,6 +400,12 @@ function UserOwnView({ userId }: { userId: string }) {
   // Toggle campaign status between ACTIVE and PAUSED
   const toggleStatus = async (campaign: Campaign) => {
     const newStatus = campaign.status === 'ACTIVE' ? 'PAUSED' : 'ACTIVE';
+    const ok = await confirm({
+      title: newStatus === 'ACTIVE' ? 'Activate Campaign?' : 'Pause Campaign?',
+      message: `Are you sure you want to ${newStatus === 'ACTIVE' ? 'activate' : 'pause'} this campaign?`,
+      confirmLabel: newStatus === 'ACTIVE' ? 'Activate' : 'Pause',
+    });
+    if (!ok) return;
     setTogglingId(campaign.id);
     try {
       const res = await authFetch('/api/v1/meta/status', {
@@ -414,11 +423,12 @@ function UserOwnView({ userId }: { userId: string }) {
               : c,
           ),
         );
+        toast.success(`Campaign ${newStatus === 'ACTIVE' ? 'activated' : 'paused'} successfully`);
       } else {
-        alert(`Failed: ${json.error}`);
+        toast.error(`Failed: ${json.error}`);
       }
     } catch (e: any) {
-      alert(`Error: ${e.message}`);
+      toast.error(`Error: ${e.message}`);
     } finally {
       setTogglingId(null);
     }
@@ -432,6 +442,12 @@ function UserOwnView({ userId }: { userId: string }) {
   // Toggle ad set status
   const toggleAdSetStatus = async (adSet: AdSet) => {
     const newStatus = adSet.status === 'ACTIVE' ? 'PAUSED' : 'ACTIVE';
+    const ok = await confirm({
+      title: newStatus === 'ACTIVE' ? 'Activate Ad Set?' : 'Pause Ad Set?',
+      message: `Are you sure you want to ${newStatus === 'ACTIVE' ? 'activate' : 'pause'} this ad set?`,
+      confirmLabel: newStatus === 'ACTIVE' ? 'Activate' : 'Pause',
+    });
+    if (!ok) return;
     setTogglingId(adSet.id);
     try {
       const res = await authFetch('/api/v1/meta/status', {
@@ -448,11 +464,12 @@ function UserOwnView({ userId }: { userId: string }) {
               : a,
           ),
         );
+        toast.success(`Ad set ${newStatus === 'ACTIVE' ? 'activated' : 'paused'} successfully`);
       } else {
-        alert(`Failed: ${json.error}`);
+        toast.error(`Failed: ${json.error}`);
       }
     } catch (e: any) {
-      alert(`Error: ${e.message}`);
+      toast.error(`Error: ${e.message}`);
     } finally {
       setTogglingId(null);
     }
@@ -461,6 +478,12 @@ function UserOwnView({ userId }: { userId: string }) {
   // Toggle ad status
   const toggleAdStatus = async (ad: Ad) => {
     const newStatus = ad.status === 'ACTIVE' ? 'PAUSED' : 'ACTIVE';
+    const ok = await confirm({
+      title: newStatus === 'ACTIVE' ? 'Activate Ad?' : 'Pause Ad?',
+      message: `Are you sure you want to ${newStatus === 'ACTIVE' ? 'activate' : 'pause'} this ad?`,
+      confirmLabel: newStatus === 'ACTIVE' ? 'Activate' : 'Pause',
+    });
+    if (!ok) return;
     setTogglingId(ad.id);
     try {
       const res = await authFetch('/api/v1/meta/status', {
@@ -477,11 +500,12 @@ function UserOwnView({ userId }: { userId: string }) {
               : a,
           ),
         );
+        toast.success(`Ad ${newStatus === 'ACTIVE' ? 'activated' : 'paused'} successfully`);
       } else {
-        alert(`Failed: ${json.error}`);
+        toast.error(`Failed: ${json.error}`);
       }
     } catch (e: any) {
-      alert(`Error: ${e.message}`);
+      toast.error(`Error: ${e.message}`);
     } finally {
       setTogglingId(null);
     }
@@ -504,7 +528,7 @@ function UserOwnView({ userId }: { userId: string }) {
 
   return (
     <AdminShell>
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-5">
         {/* Header */}
         <div>
           <h1 className="text-xl font-bold text-gray-900">My Campaigns</h1>
@@ -531,24 +555,24 @@ function UserOwnView({ userId }: { userId: string }) {
         {!loading && !error && (
           <>
             {/* Summary badges */}
-            <div className="grid grid-cols-3 gap-3">
-              <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-center">
-                <p className="text-2xl font-bold text-blue-700">{campaignRefs.length}</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
+              <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-2.5 sm:py-3 text-center">
+                <p className="text-xl sm:text-2xl font-bold text-blue-700">{campaignRefs.length}</p>
                 <p className="text-xs font-medium text-blue-400">Campaigns</p>
               </div>
-              <div className="rounded-xl border border-purple-100 bg-purple-50 px-4 py-3 text-center">
-                <p className="text-2xl font-bold text-purple-700">{adSetRefs.length}</p>
+              <div className="rounded-xl border border-purple-100 bg-purple-50 px-4 py-2.5 sm:py-3 text-center">
+                <p className="text-xl sm:text-2xl font-bold text-purple-700">{adSetRefs.length}</p>
                 <p className="text-xs font-medium text-purple-400">Ad Sets</p>
               </div>
-              <div className="rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-center">
-                <p className="text-2xl font-bold text-emerald-700">{adRefs.length}</p>
+              <div className="rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-2.5 sm:py-3 text-center">
+                <p className="text-xl sm:text-2xl font-bold text-emerald-700">{adRefs.length}</p>
                 <p className="text-xs font-medium text-emerald-400">Ads</p>
               </div>
             </div>
 
             {/* No assignments at all */}
             {campaignRefs.length === 0 && adSetRefs.length === 0 && adRefs.length === 0 && (
-              <div className="rounded-xl border border-gray-100 bg-white px-6 py-16 text-center">
+              <div className="rounded-xl border border-gray-100 bg-white px-4 py-10 sm:px-6 sm:py-16 text-center">
                 <Megaphone className="mx-auto h-10 w-10 text-gray-300" />
                 <p className="mt-3 text-sm text-gray-500">No campaigns assigned to you yet.</p>
                 <p className="mt-1 text-xs text-gray-400">
@@ -560,7 +584,7 @@ function UserOwnView({ userId }: { userId: string }) {
             {/* Tabs + content */}
             {(campaignRefs.length > 0 || adSetRefs.length > 0 || adRefs.length > 0) && (
               <div>
-                <div className="mb-4 flex gap-1 rounded-xl border border-gray-200 bg-gray-50 p-1">
+                <div className="mb-3 sm:mb-4 flex gap-1 rounded-xl border border-gray-200 bg-gray-50 p-1">
                   {TABS.map((t) => (
                     <button
                       key={t.id}
@@ -657,9 +681,9 @@ function CampaignsSection({ campaigns, loading, canToggle, toggleStatus, togglin
                 <tr key={c.id} className="transition-colors hover:bg-gray-50">
                   <td className="px-6 py-3">
                     {thumb ? (
-                      <img src={thumb} alt={c.name} className="h-10 w-10 rounded-lg object-cover" />
+                      <img src={thumb} alt={c.name} className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg object-cover" />
                     ) : (
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 text-xs text-gray-400">N/A</div>
+                      <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-gray-100 text-xs text-gray-400">N/A</div>
                     )}
                   </td>
                   <td className="max-w-50 truncate px-4 py-3 font-medium text-gray-900">{c.name}</td>
@@ -806,9 +830,9 @@ function AdsSection({ ads, loading, canToggleAd, toggleAdStatus, togglingId }: {
                 <tr key={ad.id} className="transition-colors hover:bg-gray-50">
                   <td className="px-6 py-3">
                     {ad.creative?.thumbnail_url ? (
-                      <img src={ad.creative.thumbnail_url} alt={ad.name} className="h-10 w-10 rounded-lg object-cover" />
+                      <img src={ad.creative.thumbnail_url} alt={ad.name} className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg object-cover" />
                     ) : (
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 text-xs text-gray-400">N/A</div>
+                      <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-gray-100 text-xs text-gray-400">N/A</div>
                     )}
                   </td>
                   <td className="max-w-50 truncate px-4 py-3 font-medium text-gray-900">{ad.name}</td>

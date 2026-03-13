@@ -76,6 +76,7 @@ export default function AdminStatsPage() {
       }
       setEditing(null);
       setIsNew(false);
+      toast.success(isNew ? 'Stat added successfully!' : 'Stat updated successfully!');
     } catch {
       toast.error('Failed to save stat.');
     } finally {
@@ -89,6 +90,7 @@ export default function AdminStatsPage() {
       await fetch(`/api/v1/cms/stats/${id}`, { method: 'DELETE' });
       setStats(prev => prev.filter(s => s.id !== id));
       setDeleteId(null);
+      toast.success('Stat deleted successfully!');
     } catch {
       toast.error('Failed to delete stat.');
     } finally {

@@ -167,7 +167,7 @@ export default function CategoriesPage() {
               {/* Icon picker */}
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-2">Icon</label>
-                <div className="grid grid-cols-10 gap-1.5">
+                <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-1.5">
                   {ICON_OPTIONS.map(icon => (
                     <button
                       key={icon}
@@ -188,7 +188,7 @@ export default function CategoriesPage() {
               {/* Color picker */}
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-2">Color</label>
-                <div className="grid grid-cols-6 gap-2">
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
                   {COLOR_OPTIONS.map(opt => (
                     <button
                       key={opt.text}

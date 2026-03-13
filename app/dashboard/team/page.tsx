@@ -126,6 +126,7 @@ export default function AdminTeamPage() {
       }
       setEditing(null);
       setIsNew(false);
+      toast.success(isNew ? 'Team member added successfully!' : 'Team member updated successfully!');
     } catch {
       toast.error('Failed to save team member.');
     } finally {
@@ -139,6 +140,7 @@ export default function AdminTeamPage() {
       await fetch(`/api/v1/cms/team/${id}`, { method: 'DELETE' });
       setTeam(prev => prev.filter(m => m.id !== id));
       setDeleteId(null);
+      toast.success('Team member deleted successfully!');
     } catch {
       toast.error('Failed to delete team member.');
     } finally {

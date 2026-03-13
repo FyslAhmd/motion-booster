@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { useState, useEffect, useCallback, Fragment } from 'react';
 import AdminShell from '../_components/AdminShell';
 import { useConfirm } from '@/lib/admin/confirm';
+import { toast } from 'sonner';
 import {
   Users,
   Search,
@@ -114,11 +115,14 @@ function EditModal({ client, onClose, onSave }: EditModalProps) {
       const json = await res.json();
       if (json.success) {
         onSave(json.data);
+        toast.success('Client changes saved successfully!');
       } else {
         setError(json.error || 'Failed to save');
+        toast.error(json.error || 'Failed to save client changes');
       }
     } catch {
       setError('Network error');
+      toast.error('Network error while saving client changes');
     } finally {
       setSaving(false);
     }
@@ -436,7 +440,7 @@ export default function ClientsPage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
               <Users className="w-5 h-5 text-red-500" />
               Clients
             </h1>

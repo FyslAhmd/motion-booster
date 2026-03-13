@@ -61,9 +61,9 @@ export default function BlogPage() {
   };
 
   return (
-    <main className="min-h-screen bg-white pt-20 lg:pt-24">
+    <main className="min-h-screen bg-white pb-16 lg:pb-0">
       {/* Header Section */}
-      <section className="py-12 lg:py-16 bg-linear-to-br from-red-50 via-white to-rose-50">
+      <section className="py-20 lg:py-32 bg-linear-to-br from-red-50 via-white to-rose-50">
         <div className="max-w-7xl mx-auto px-6 lg:px-8 text-center">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 leading-tight">
             Latest Insights &

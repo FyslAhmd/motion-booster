@@ -197,7 +197,7 @@ export default function HeroSliderPage() {
       {/* Page Header */}
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">Hero Slider</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Hero Slider</h1>
           <p className="text-sm text-gray-500 mt-0.5">{slides.length} slide{slides.length !== 1 ? 's' : ''} · shown on homepage</p>
         </div>
         <div className="flex items-center gap-2">

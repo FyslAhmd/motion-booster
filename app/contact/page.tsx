@@ -2,8 +2,10 @@
 
 import React, { useState } from 'react';
 import { Phone, Mail, MessageSquare, MapPin, Clock } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function ContactPage() {
+  const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -16,9 +18,38 @@ export default function ContactPage() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Form submitted:', formData);
+    setSubmitting(true);
+
+    try {
+      const response = await fetch('/api/v1/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const result = (await response.json()) as { error?: string; message?: string };
+      if (!response.ok) {
+        toast.error(result.error || 'Failed to send your message. Please try again.');
+        return;
+      }
+
+      toast.success(result.message || 'Message sent successfully. We will contact you soon.');
+      setFormData({
+        fullName: '',
+        email: '',
+        companyName: '',
+        mobile: '',
+        queryDetails: '',
+      });
+    } catch {
+      toast.error('Unable to send message right now. Please try again later.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -53,7 +84,9 @@ export default function ContactPage() {
               </div>
               <h3 className="text-lg font-bold text-gray-900 mb-2">Email Us</h3>
               <p className="text-gray-500 text-sm leading-relaxed">
-                <span className="text-red-500 font-semibold">info@motionbooster.com</span><br />
+                <a href="mailto:hello@motionbooster.com" className="text-red-500 font-semibold hover:text-red-600 transition-colors">
+                  hello@motionbooster.com
+                </a><br />
                 We reply within 24 hours
               </p>
             </div>
@@ -180,9 +213,10 @@ export default function ContactPage() {
               </div>
               <button
                 type="submit"
+                disabled={submitting}
                 className="w-full py-3.5 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl transition-all shadow hover:shadow-lg"
               >
-                Send Message
+                {submitting ? 'Sending...' : 'Send Message'}
               </button>
             </form>
           </div>

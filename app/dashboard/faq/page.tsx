@@ -78,6 +78,7 @@ export default function AdminFAQPage() {
       }
       setEditing(null);
       setIsNew(false);
+      toast.success(isNew ? 'FAQ added successfully!' : 'FAQ updated successfully!');
     } catch {
       toast.error('Failed to save FAQ.');
     } finally {
@@ -91,6 +92,7 @@ export default function AdminFAQPage() {
       await fetch(`/api/v1/cms/faq/${id}`, { method: 'DELETE' });
       setFAQs(prev => prev.filter(f => f.id !== id));
       setDeleteId(null);
+      toast.success('FAQ deleted successfully!');
     } catch {
       toast.error('Failed to delete FAQ.');
     } finally {

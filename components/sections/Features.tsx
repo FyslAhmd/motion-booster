@@ -12,26 +12,26 @@ interface FeatureCardProps {
 
 const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, description, iconColor }) => {
   return (
-    <div className="bg-white border border-gray-100 rounded-2xl sm:rounded-3xl p-6 sm:p-8 flex flex-col items-start text-left h-full hover:shadow-xl transition-all duration-300 group min-h-70 sm:min-h-70 hover:border-red-100">
+    <div className="bg-white border border-gray-100 rounded-2xl sm:rounded-3xl p-4 sm:p-8 flex flex-col items-start text-left h-full hover:shadow-xl transition-all duration-300 group min-h-0 sm:min-h-70 hover:border-red-100">
       {/* Icon */}
-      <div className={`w-12 h-12 sm:w-16 sm:h-16 ${iconColor} rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 transition-transform duration-300`}>
+      <div className={`w-12 h-12 sm:w-16 sm:h-16 ${iconColor} rounded-xl sm:rounded-2xl flex items-center justify-center mb-3 sm:mb-6 transition-transform duration-300`}>
         <div className="group-hover:animate-flip-horizontal">
           {icon}
         </div>
       </div>
       
       {/* Title */}
-      <h3 className="text-gray-900 text-lg sm:text-xl font-bold mb-3 sm:mb-4">
+      <h3 className="text-gray-900 text-lg sm:text-xl font-bold mb-2 sm:mb-4">
         {title}
       </h3>
       
       {/* Description */}
-      <p className="text-gray-500 text-sm sm:text-base leading-relaxed mb-4 sm:mb-6 grow">
+      <p className="text-gray-500 text-sm sm:text-base leading-snug sm:leading-relaxed mb-3 sm:mb-6 grow">
         {description}
       </p>
       
       {/* Learn More Link */}
-      <Link href="#" className="text-red-500 font-semibold flex items-center gap-2 hover:text-red-600 group-hover:gap-4 transition-all mt-auto">
+      <Link href="/service" className="text-red-500 font-semibold flex items-center gap-2 hover:text-red-600 group-hover:gap-4 transition-all mt-1 sm:mt-auto">
         Learn More
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
@@ -96,9 +96,17 @@ export const Features = () => {
             </h2>
           </div>
           <div className="flex items-center">
-            <p className="text-gray-600 text-sm sm:text-base leading-relaxed">
-              Everything you need for successful digital transformation and business growth
-            </p>
+            <div>
+              <p className="text-gray-600 text-sm sm:text-base leading-relaxed">
+                Everything you need for successful digital transformation and business growth
+              </p>
+              <p className="mt-2 text-sm text-gray-700">
+                Need help?{' '}
+                <a href="mailto:hello@motionbooster.com" className="font-semibold text-red-500 hover:text-red-600">
+                  hello@motionbooster.com
+                </a>
+              </p>
+            </div>
           </div>
         </div>
 

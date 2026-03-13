@@ -349,7 +349,7 @@ export default function AdminBlogPage() {
               </div>
 
               {/* Category & Author row */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
                   <input

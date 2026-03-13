@@ -240,7 +240,7 @@ export default function UserCampaignDetailPage({
 
   return (
     <AdminShell>
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-5">
         {/* Back + Header */}
         {isAdmin ? (
           <div className="flex items-start gap-4">
@@ -294,17 +294,17 @@ export default function UserCampaignDetailPage({
         )}
 
         {/* Summary badges */}
-        <div className="grid grid-cols-3 gap-3">
-          <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-center">
-            <p className="text-2xl font-bold text-blue-700">{campaignRefs.length}</p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
+          <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-2.5 sm:py-3 text-center">
+            <p className="text-xl sm:text-2xl font-bold text-blue-700">{campaignRefs.length}</p>
             <p className="text-xs font-medium text-blue-400">Campaigns</p>
           </div>
-          <div className="rounded-xl border border-purple-100 bg-purple-50 px-4 py-3 text-center">
-            <p className="text-2xl font-bold text-purple-700">{adSetRefs.length}</p>
+          <div className="rounded-xl border border-purple-100 bg-purple-50 px-4 py-2.5 sm:py-3 text-center">
+            <p className="text-xl sm:text-2xl font-bold text-purple-700">{adSetRefs.length}</p>
             <p className="text-xs font-medium text-purple-400">Ad Sets</p>
           </div>
-          <div className="rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-center">
-            <p className="text-2xl font-bold text-emerald-700">{adRefs.length}</p>
+          <div className="rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-2.5 sm:py-3 text-center">
+            <p className="text-xl sm:text-2xl font-bold text-emerald-700">{adRefs.length}</p>
             <p className="text-xs font-medium text-emerald-400">Ads</p>
           </div>
         </div>
@@ -421,10 +421,10 @@ function CampaignsSection({
                       <img
                         src={thumb}
                         alt={c.name}
-                        className="h-10 w-10 rounded-lg object-cover"
+                        className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg object-cover"
                       />
                     ) : (
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 text-xs text-gray-400">
+                      <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-gray-100 text-xs text-gray-400">
                         N/A
                       </div>
                     )}
@@ -562,10 +562,10 @@ function AdsSection({
                       <img
                         src={ad.creative.thumbnail_url}
                         alt={ad.name}
-                        className="h-10 w-10 rounded-lg object-cover"
+                        className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg object-cover"
                       />
                     ) : (
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 text-xs text-gray-400">
+                      <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-gray-100 text-xs text-gray-400">
                         N/A
                       </div>
                     )}

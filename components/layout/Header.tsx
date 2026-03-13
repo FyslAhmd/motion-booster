@@ -133,9 +133,9 @@ export const Header = () => {
                 <Phone className="w-4 h-4" />
                 <span className="hidden sm:inline">+880 1790-939394</span>
               </a>
-              <a href="mailto:info@motionbooster.com" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+              <a href="mailto:hello@motionbooster.com" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
                 <Mail className="w-4 h-4" />
-                <span className="hidden md:inline">info@motionbooster.com</span>
+                <span className="hidden md:inline">hello@motionbooster.com</span>
               </a>
             </div>
             

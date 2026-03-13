@@ -129,24 +129,52 @@ export default function BlogPostPage({ params }: { params: Promise<{ slug: strin
   }
 
   return (
-    <main className="min-h-screen bg-white pt-20 lg:pt-24">
+    <main className="min-h-screen bg-white pb-16 lg:pb-0">
       {/* Hero Section */}
-      <section className="py-12 lg:py-16 bg-linear-to-br from-red-50 via-white to-rose-50">
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 leading-tight">
+      <section className="py-20 lg:py-32 bg-linear-to-br from-red-50 via-white to-rose-50">
+        <div className="max-w-4xl mx-auto px-6 lg:px-8 text-center">
+          {/* Category Badge */}
+          {post.category && (
+            <span className="inline-block px-4 py-1.5 bg-red-100 text-red-600 rounded-full text-sm font-semibold mb-6">
+              {post.category}
+            </span>
+          )}
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-6 leading-tight">
             {post.title}
           </h1>
-          <p className="text-xl text-gray-600 mb-6 leading-relaxed">
+          <p className="text-xl text-gray-600 mb-8 leading-relaxed max-w-3xl mx-auto">
             {post.excerpt}
           </p>
+          {/* Meta Information */}
+          <div className="flex flex-wrap items-center justify-center gap-6 mb-4">
+            <div className="flex items-center gap-2 text-gray-600">
+              <User className="w-4 h-4" />
+              <span className="text-sm font-medium">By {post.author}</span>
+            </div>
+            <div className="flex items-center gap-2 text-gray-600">
+              <Calendar className="w-4 h-4" />
+              <span className="text-sm">{formatDate(post.createdAt)}</span>
+            </div>
+            <div className="flex items-center gap-2 text-gray-600">
+              <Clock className="w-4 h-4" />
+              <span className="text-sm">{estimateReadTime(post.content)}</span>
+            </div>
+            <button
+              onClick={handleShare}
+              className="flex items-center gap-2 text-gray-600 hover:text-red-600 transition-colors"
+            >
+              <Share2 className="w-4 h-4" />
+              <span className="text-sm font-medium">Share</span>
+            </button>
+          </div>
         </div>
       </section>
 
       {/* Article */}
-      <article className="max-w-4xl mx-auto px-4 py-8">
+      <article className="max-w-4xl mx-auto px-6 lg:px-8 py-12">
         {/* Cover Image */}
         {post.coverImage && (
-          <div className="relative w-full h-64 md:h-96 mb-8 rounded-2xl overflow-hidden">
+          <div className="relative w-full h-64 md:h-80 mb-12 rounded-2xl overflow-hidden shadow-lg">
             <Image
               src={post.coverImage}
               alt={post.title}
@@ -156,38 +184,6 @@ export default function BlogPostPage({ params }: { params: Promise<{ slug: strin
             />
           </div>
         )}
-
-        {/* Category Badge */}
-        {post.category && (
-          <div className="mb-6 text-center">
-            <span className="inline-block bg-red-600 text-white text-sm font-semibold px-4 py-1.5 rounded-full">
-              {post.category}
-            </span>
-          </div>
-        )}
-
-        {/* Meta Information */}
-        <div className="flex flex-wrap items-center justify-center gap-6 mb-8 pb-8 border-b border-gray-200">
-          <div className="flex items-center gap-2 text-gray-600">
-            <User className="w-4 h-4" />
-            <span className="text-sm font-medium">By {post.author}</span>
-          </div>
-          <div className="flex items-center gap-2 text-gray-600">
-            <Calendar className="w-4 h-4" />
-            <span className="text-sm">{formatDate(post.createdAt)}</span>
-          </div>
-          <div className="flex items-center gap-2 text-gray-600">
-            <Clock className="w-4 h-4" />
-            <span className="text-sm">{estimateReadTime(post.content)}</span>
-          </div>
-          <button
-            onClick={handleShare}
-            className="flex items-center gap-2 text-gray-600 hover:text-red-600 transition-colors ml-auto"
-          >
-            <Share2 className="w-4 h-4" />
-            <span className="text-sm font-medium">Share</span>
-          </button>
-        </div>
 
         {/* Content */}
         <div className="prose prose-lg max-w-none">

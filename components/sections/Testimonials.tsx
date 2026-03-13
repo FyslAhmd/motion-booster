@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Star } from 'lucide-react';
 
 interface StatItem {
@@ -27,18 +27,50 @@ interface TestimonialItem {
 export const Testimonials = () => {
   const [reviews, setReviews] = useState<TestimonialItem[]>([]);
   const [stats, setStats] = useState<StatItem[]>([]);
+  const [loadingReviews, setLoadingReviews] = useState(true);
+  const [loadingStats, setLoadingStats] = useState(true);
+  const statsRef = useRef<HTMLDivElement>(null);
+  const reviewsRef = useRef<HTMLDivElement>(null);
+  const [draggingTarget, setDraggingTarget] = useState<'stats' | 'reviews' | null>(null);
+  const [dragStartX, setDragStartX] = useState(0);
+  const [dragStartScroll, setDragStartScroll] = useState(0);
 
   useEffect(() => {
     fetch('/api/v1/cms/testimonials')
       .then(r => r.json())
       .then(data => setReviews(Array.isArray(data) ? data : []))
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setLoadingReviews(false));
 
     fetch('/api/v1/cms/stats')
       .then(r => r.json())
       .then(data => setStats(Array.isArray(data) ? data : []))
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setLoadingStats(false));
   }, []);
+
+  useEffect(() => {
+    const statsEl = statsRef.current;
+    const reviewsEl = reviewsRef.current;
+    if (!statsEl || !reviewsEl) return;
+
+    const interval = window.setInterval(() => {
+      if (draggingTarget === 'stats') return;
+      statsEl.scrollLeft += 0.7;
+      if (statsEl.scrollLeft >= statsEl.scrollWidth / 2) statsEl.scrollLeft = 0;
+    }, 16);
+
+    const interval2 = window.setInterval(() => {
+      if (draggingTarget === 'reviews') return;
+      reviewsEl.scrollLeft += 0.8;
+      if (reviewsEl.scrollLeft >= reviewsEl.scrollWidth / 2) reviewsEl.scrollLeft = 0;
+    }, 16);
+
+    return () => {
+      window.clearInterval(interval);
+      window.clearInterval(interval2);
+    };
+  }, [draggingTarget]);
 
   const ReviewCard = ({ review }: { review: TestimonialItem }) => (
     <div className="shrink-0 w-80 sm:w-90 md:w-100 bg-white border border-gray-100 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm hover:shadow-lg transition-shadow cursor-default">
@@ -78,31 +110,46 @@ export const Testimonials = () => {
   return (
     <section className="py-12 md:py-16 lg:py-24 bg-white overflow-hidden">
       <style>{`
-        @keyframes marquee-right {
-          from { transform: translateX(-50%); }
-          to   { transform: translateX(0%); }
+        .drag-scroll {
+          scrollbar-width: none;
+          -ms-overflow-style: none;
         }
-        @keyframes marquee-left {
-          from { transform: translateX(0%); }
-          to   { transform: translateX(-50%); }
-        }
-        .marquee-right {
-          animation: marquee-right 60s linear infinite;
-        }
-        .marquee-left {
-          animation: marquee-left 60s linear infinite;
-        }
-        .marquee-right:hover,
-        .marquee-left:hover {
-          animation-play-state: paused;
+        .drag-scroll::-webkit-scrollbar {
+          display: none;
         }
       `}</style>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Stats Section — auto-scroll left → right */}
-        <div className="mb-12 sm:mb-16 md:mb-20 overflow-hidden">
-          <div className="flex w-max marquee-left gap-3 sm:gap-4 md:gap-6">
-            {[...stats, ...stats].map((stat, index) => (
+        <div
+          ref={statsRef}
+          className="mb-12 sm:mb-16 md:mb-20 overflow-x-auto overflow-y-hidden drag-scroll cursor-grab active:cursor-grabbing select-none"
+          onPointerDown={(e) => {
+            const el = statsRef.current;
+            if (!el) return;
+            setDraggingTarget('stats');
+            setDragStartX(e.clientX);
+            setDragStartScroll(el.scrollLeft);
+          }}
+          onPointerMove={(e) => {
+            if (draggingTarget !== 'stats') return;
+            const el = statsRef.current;
+            if (!el) return;
+            const delta = e.clientX - dragStartX;
+            el.scrollLeft = dragStartScroll - delta;
+          }}
+          onPointerUp={() => setDraggingTarget(null)}
+          onPointerLeave={() => setDraggingTarget(null)}
+        >
+          <div className="flex w-max gap-3 sm:gap-4 md:gap-6">
+            {loadingStats && Array.from({ length: 5 }).map((_, i) => (
+              <div key={`stats-skeleton-${i}`} className="shrink-0 w-64 sm:w-72 md:w-75 lg:w-85 rounded-xl sm:rounded-2xl p-5 sm:p-6 md:p-8 bg-gray-100">
+                <div className="h-9 sm:h-10 md:h-12 w-2/3 bg-gray-200 rounded animate-pulse mb-2 sm:mb-3" />
+                <div className="h-5 w-3/4 bg-gray-200 rounded animate-pulse mb-2 sm:mb-3 md:mb-4" />
+                <div className="h-3 w-full bg-gray-200 rounded animate-pulse" />
+              </div>
+            ))}
+            {!loadingStats && [...stats, ...stats].map((stat, index) => (
               <div
                 key={index}
                 className={`shrink-0 w-64 sm:w-72 md:w-75 lg:w-85 ${stat.bgColor} rounded-xl sm:rounded-2xl p-5 sm:p-6 md:p-8 transition-all hover:shadow-lg`}
@@ -129,9 +176,41 @@ export const Testimonials = () => {
       </div>
 
       {/* Row 1 — left → right (single row only) */}
-      <div className="max-w-7xl mx-auto overflow-hidden">
-        <div className="flex w-max marquee-left gap-3 sm:gap-4 md:gap-6 pb-4">
-          {[...reviews, ...reviews].map((review, index) => (
+      <div
+        ref={reviewsRef}
+        className="max-w-7xl mx-auto overflow-x-auto overflow-y-hidden drag-scroll cursor-grab active:cursor-grabbing select-none"
+        onPointerDown={(e) => {
+          const el = reviewsRef.current;
+          if (!el) return;
+          setDraggingTarget('reviews');
+          setDragStartX(e.clientX);
+          setDragStartScroll(el.scrollLeft);
+        }}
+        onPointerMove={(e) => {
+          if (draggingTarget !== 'reviews') return;
+          const el = reviewsRef.current;
+          if (!el) return;
+          const delta = e.clientX - dragStartX;
+          el.scrollLeft = dragStartScroll - delta;
+        }}
+        onPointerUp={() => setDraggingTarget(null)}
+        onPointerLeave={() => setDraggingTarget(null)}
+      >
+        <div className="flex w-max gap-3 sm:gap-4 md:gap-6 pb-4">
+          {loadingReviews && Array.from({ length: 4 }).map((_, i) => (
+            <div key={`review-skeleton-${i}`} className="shrink-0 w-80 sm:w-90 md:w-100 bg-white border border-gray-100 rounded-xl sm:rounded-2xl p-4 sm:p-6">
+              <div className="flex items-start gap-3 sm:gap-4">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gray-200 animate-pulse shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 w-1/2 bg-gray-200 rounded animate-pulse" />
+                  <div className="h-3 w-1/3 bg-gray-200 rounded animate-pulse" />
+                  <div className="h-3 w-full bg-gray-200 rounded animate-pulse" />
+                  <div className="h-3 w-5/6 bg-gray-200 rounded animate-pulse" />
+                </div>
+              </div>
+            </div>
+          ))}
+          {!loadingReviews && [...reviews, ...reviews].map((review, index) => (
             <ReviewCard key={`r1-${index}`} review={review} />
           ))}
         </div>

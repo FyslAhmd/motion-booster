@@ -72,28 +72,36 @@ export default function AdminCompaniesPage() {
         </div>
       )}
 
-      <div className="space-y-5">
-        {/* Header */}
+      {/* Hero Header Section */}
+      <div className="bg-linear-to-br from-red-50 via-white to-rose-50 -mx-6 -mt-6 px-6 pt-8 pb-6 mb-6">
         <div className="flex items-center justify-between flex-wrap gap-3">
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">Companies Marquee</h1>
-            <p className="text-sm text-gray-500 mt-0.5">Manage the scrolling company logos on the homepage</p>
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
+              <Building2 className="w-6 h-6 text-red-600" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 mb-1">Companies Marquee</h1>
+              <p className="text-sm text-gray-600">Manage the scrolling company logos on the homepage</p>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowResetConfirm(true)}
-              className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+              className="flex items-center gap-1.5 px-4 py-2.5 text-sm text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all shadow-sm"
             >
-              <RotateCcw className="w-3.5 h-3.5" /> Reset
+              <RotateCcw className="w-4 h-4" /> Reset
             </button>
             <button
               onClick={async () => { if (await confirm({ title: 'Save Changes', message: 'Are you sure you want to save?' })) save(companies); }}
-              className="flex items-center gap-1.5 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-xl transition-colors"
+              className="flex items-center gap-1.5 px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-xl transition-all shadow-lg hover:shadow-xl"
             >
-              <Check className="w-3.5 h-3.5" /> Save All
+              <Check className="w-4 h-4" /> Save All
             </button>
           </div>
         </div>
+      </div>
+
+      <div className="space-y-5">
 
         {/* Info banner */}
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 flex items-start gap-2.5">

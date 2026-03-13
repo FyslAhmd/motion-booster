@@ -20,12 +20,15 @@ interface PortfolioItem {
 export const Portfolio = () => {
   const [activeCategory, setActiveCategory] = useState('All');
   const [items, setItems] = useState<PortfolioItem[]>([]);
+  const [mobilePreviewId, setMobilePreviewId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetch('/api/v1/cms/portfolio')
       .then(r => r.json())
       .then(data => setItems(Array.isArray(data) ? data : []))
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
   const availableCategories = ['All', ...Array.from(new Set(items.map(i => i.category)))];
@@ -36,17 +39,29 @@ export const Portfolio = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-8 md:mb-10">
-          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-3">
-            Our Portfolio
-          </h2>
-          <p className="text-gray-600 text-sm md:text-base max-w-2xl mx-auto">
-            Explore our latest projects and success stories
-          </p>
+          {loading ? (
+            <>
+              <div className="h-8 md:h-10 w-52 rounded-full bg-gray-200 animate-pulse mx-auto mb-3" />
+              <div className="h-4 w-72 md:w-96 rounded-full bg-gray-200 animate-pulse mx-auto" />
+            </>
+          ) : (
+            <>
+              <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-3">
+                Our Portfolio
+              </h2>
+              <p className="text-gray-600 text-sm md:text-base max-w-2xl mx-auto">
+                Explore our latest projects and success stories
+              </p>
+            </>
+          )}
         </div>
 
         {/* Category Filter */}
         <div className="flex flex-wrap justify-center gap-2 md:gap-3 mb-8 md:mb-10">
-          {availableCategories.map((category) => (
+          {loading && Array.from({ length: 4 }).map((_, i) => (
+            <div key={`portfolio-tab-skeleton-${i}`} className="h-9 w-24 rounded-full bg-gray-200 animate-pulse" />
+          ))}
+          {!loading && availableCategories.map((category) => (
             <button
               key={category}
               onClick={() => setActiveCategory(category)}
@@ -63,13 +78,28 @@ export const Portfolio = () => {
 
         {/* Portfolio Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-          {filteredItems.map((item) => (
+          {loading && Array.from({ length: 6 }).map((_, i) => (
+            <div key={`portfolio-skeleton-${i}`} className="bg-white rounded-xl overflow-hidden border border-gray-100">
+              <div className="h-48 md:h-56 bg-gray-200 animate-pulse" />
+              <div className="p-4 space-y-2">
+                <div className="h-5 w-2/3 rounded bg-gray-200 animate-pulse" />
+                <div className="h-4 w-full rounded bg-gray-200 animate-pulse" />
+              </div>
+            </div>
+          ))}
+          {!loading && filteredItems.map((item) => (
             <div
               key={item.id}
+              onClick={() => {
+                // Mobile: tap card to reveal Live Preview button.
+                if (typeof window !== 'undefined' && window.innerWidth < 768) {
+                  setMobilePreviewId((prev) => (prev === item.id ? null : item.id));
+                }
+              }}
               className="group relative bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300"
             >
               {/* Cover Image or Gradient */}
-              <div className="relative h-64 overflow-hidden">
+              <div className="relative h-48 md:h-56 overflow-hidden">
                 {item.coverImage ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={item.coverImage} alt={item.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
@@ -79,9 +109,16 @@ export const Portfolio = () => {
                 <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
                 {/* Hover: live link button only */}
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <div
+                  className={`absolute inset-0 flex items-center justify-center transition-opacity duration-300 ${
+                    mobilePreviewId === item.id
+                      ? 'opacity-100 md:opacity-0 md:group-hover:opacity-100'
+                      : 'opacity-0 group-hover:opacity-100'
+                  }`}
+                >
                   <Link
                     href="/portfolio"
+                    onClick={(e) => e.stopPropagation()}
                     className="inline-flex items-center gap-2 bg-white text-gray-900 px-5 py-2.5 rounded-full font-semibold text-sm shadow-lg hover:bg-red-500 hover:text-white transition-all"
                   >
                     <ExternalLink className="w-4 h-4" />

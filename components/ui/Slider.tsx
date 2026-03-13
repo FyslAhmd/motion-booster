@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Image from 'next/image';
@@ -34,6 +34,8 @@ export const Slider: React.FC<SliderProps> = ({
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState(0);
+  const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
+  const suppressTapRef = useRef(false);
 
   const slideVariants = {
     enter: (direction: number) => ({
@@ -101,6 +103,20 @@ export const Slider: React.FC<SliderProps> = ({
           dragConstraints={{ left: 0, right: 0 }}
           dragElastic={1}
           style={{ touchAction: 'pan-y' }}
+          onPointerDown={(e) => {
+            pointerStartRef.current = { x: e.clientX, y: e.clientY };
+            suppressTapRef.current = false;
+          }}
+          onPointerMove={(e) => {
+            if (!pointerStartRef.current) return;
+            const dx = Math.abs(e.clientX - pointerStartRef.current.x);
+            const dy = Math.abs(e.clientY - pointerStartRef.current.y);
+            // If pointer has moved enough, treat as swipe/drag and suppress tap navigation.
+            if (dx > 6 || dy > 6) suppressTapRef.current = true;
+          }}
+          onDragStart={() => {
+            suppressTapRef.current = true;
+          }}
           onDragEnd={(e, { offset, velocity }) => {
             const swipe = swipePower(offset.x, velocity.x);
 
@@ -109,8 +125,14 @@ export const Slider: React.FC<SliderProps> = ({
             } else if (swipe > swipeConfidenceThreshold) {
               paginate(-1);
             }
+
+            // Keep tap suppressed briefly so mouse/touch release after drag doesn't trigger navigation.
+            window.setTimeout(() => {
+              suppressTapRef.current = false;
+            }, 140);
           }}
           onTap={() => {
+            if (suppressTapRef.current) return;
             const link = slides[currentIndex].ctaLink;
             if (link) window.location.href = link;
           }}
@@ -118,14 +140,6 @@ export const Slider: React.FC<SliderProps> = ({
         >
           {/* Slide Background Image */}
           <div className="relative w-full h-full">
-            {slides[currentIndex].ctaLink ? (
-              <a
-                href={slides[currentIndex].ctaLink}
-                className="absolute inset-0 z-2 cursor-pointer"
-                aria-label={slides[currentIndex].title}
-                tabIndex={-1}
-              />
-            ) : null}
             {slides[currentIndex].image.startsWith('data:') ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={slides[currentIndex].image} alt={slides[currentIndex].title} className="w-full h-full object-cover" />

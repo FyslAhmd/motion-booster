@@ -105,6 +105,7 @@ export default function PortfolioPage() {
       setEditing(null);
       setIsNew(false);
       setTagInput('');
+      toast.success(isNew ? 'Project added successfully!' : 'Project updated successfully!');
     } catch {
       toast.error('Failed to save portfolio item.');
     } finally {
@@ -118,6 +119,7 @@ export default function PortfolioPage() {
       await fetch(`/api/v1/cms/portfolio/${id}`, { method: 'DELETE' });
       setItems(prev => prev.filter(i => i.id !== id));
       setDeleteId(null);
+      toast.success('Project deleted successfully!');
     } catch {
       toast.error('Failed to delete item.');
     } finally {

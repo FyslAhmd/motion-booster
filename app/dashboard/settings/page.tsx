@@ -5,6 +5,7 @@ import AdminShell from '../_components/AdminShell';
 import { useConfirm } from '@/lib/admin/confirm';
 import { AdminStore, SiteSettings, defaultSettings } from '@/lib/admin/store';
 import { Check, RotateCcw, Save, Sparkles, NotebookPen } from 'lucide-react';
+import { toast } from 'sonner';
 
 function Field({ label, value, onChange, placeholder, hint }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string; hint?: string }) {
   return (
@@ -55,6 +56,7 @@ export default function AdminSettingsPage() {
     if (!await confirm({ title: 'Save Settings', message: 'Are you sure you want to save all settings?' })) return;
     AdminStore.saveSettings(settings);
     setSaved(true);
+    toast.success('Settings saved successfully!');
     setTimeout(() => setSaved(false), 3000);
   };
 
@@ -62,6 +64,7 @@ export default function AdminSettingsPage() {
     setSettings(defaultSettings);
     AdminStore.saveSettings(defaultSettings);
     setSaved(true);
+    toast.success('Settings reset to default!');
     setTimeout(() => setSaved(false), 2000);
   };
 

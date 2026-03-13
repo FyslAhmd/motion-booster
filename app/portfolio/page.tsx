@@ -77,7 +77,7 @@ export default function PortfolioPage() {
                 className="group text-left bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-red-200 hover:shadow-xl transition-all duration-300"
               >
                 {/* Cover */}
-                <div className="relative h-48 overflow-hidden">
+                <div className="relative h-40 md:h-44 overflow-hidden">
                   {item.coverImage ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={item.coverImage} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
