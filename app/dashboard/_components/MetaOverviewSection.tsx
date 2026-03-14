@@ -7,6 +7,7 @@ import AccountSwitcher from '../meta/_components/AccountSwitcher';
 import InsightsCards from '../meta/_components/InsightsCards';
 import SpendChart from '../meta/_components/SpendChart';
 import DatePresetSelector from '../meta/_components/DatePresetSelector';
+import { AdminSectionSkeleton } from '@/components/ui/AdminSectionSkeleton';
 import type { MetaAccount, InsightRow } from '../meta/_components/useMetaData';
 
 type DatePreset =
@@ -136,9 +137,7 @@ export default function MetaOverviewSection() {
 
       {/* Content */}
       {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-red-500 border-t-transparent" />
-        </div>
+        <AdminSectionSkeleton variant="overview" />
       ) : (
         <div className="space-y-5">
           <AccountOverview account={account} lifetimeSpend={lifetimeSpend} />

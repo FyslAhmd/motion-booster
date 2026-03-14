@@ -39,36 +39,21 @@ export const PopularCourses = () => {
   };
 
   return (
-    <section className="py-6 md:py-8 lg:py-12 bg-white">
+    <section className="py-6 md:py-8 lg:py-9 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-8 md:mb-10">
-          {loading ? (
-            <>
-              <div className="h-8 sm:h-10 md:h-12 w-60 sm:w-80 rounded-full bg-gray-200 animate-pulse mx-auto mb-3 md:mb-4" />
-              <div className="h-4 w-full max-w-2xl rounded-full bg-gray-200 animate-pulse mx-auto" />
-            </>
-          ) : (
-            <>
-              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-3 md:mb-4">
-                Our Popular Services
-              </h2>
-              <p className="text-sm sm:text-base text-gray-500 max-w-2xl mx-auto leading-relaxed px-4">
-                We provide comprehensive digital solutions to help your business grow. Explore our wide range of services tailored to meet your specific needs.
-              </p>
-            </>
-          )}
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-3 md:mb-4">
+            Our Popular Services
+          </h2>
+          <p className="text-sm sm:text-base text-gray-500 max-w-2xl mx-auto leading-relaxed px-4">
+            We provide comprehensive digital solutions to help your business grow. Explore our wide range of services tailored to meet your specific needs.
+          </p>
         </div>
 
         {/* Tabs */}
+        {!loading && (
         <div className="mb-8 md:mb-10">
-          {loading ? (
-            <div className="flex gap-2 pb-4">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="h-9 w-28 rounded-t-lg bg-gray-200 animate-pulse" />
-              ))}
-            </div>
-          ) : (
           <div ref={tabsScrollRef} className="flex gap-1.5 sm:gap-2 overflow-x-auto scroll-smooth border-b border-gray-200 pb-3 sm:pb-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
             <style jsx>{`div::-webkit-scrollbar { display: none; }`}</style>
             {tabs.map(tab => (
@@ -83,8 +68,8 @@ export const PopularCourses = () => {
               </button>
             ))}
           </div>
-          )}
         </div>
+        )}
 
         {/* Cards + Arrows */}
         <div className="relative px-0 sm:px-8">

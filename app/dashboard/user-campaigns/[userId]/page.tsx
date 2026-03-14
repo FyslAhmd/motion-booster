@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import AdminShell from '../../_components/AdminShell';
 import { useAuth } from '@/lib/auth/context';
+import { AdminSectionSkeleton } from '@/components/ui/AdminSectionSkeleton';
 import {
-  Loader2,
   ArrowLeft,
   Megaphone,
   LayoutGrid,
@@ -223,9 +223,7 @@ export default function UserCampaignDetailPage({
   if (loading) {
     return (
       <AdminShell>
-        <div className="flex items-center justify-center py-32">
-          <Loader2 className="h-6 w-6 animate-spin text-red-500" />
-        </div>
+        <AdminSectionSkeleton variant="meta" />
       </AdminShell>
     );
   }
@@ -294,24 +292,24 @@ export default function UserCampaignDetailPage({
         )}
 
         {/* Summary badges */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
-          <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-2.5 sm:py-3 text-center">
-            <p className="text-xl sm:text-2xl font-bold text-blue-700">{campaignRefs.length}</p>
-            <p className="text-xs font-medium text-blue-400">Campaigns</p>
+        <div className="grid grid-cols-3 gap-2 sm:gap-3">
+          <div className="rounded-xl border border-blue-100 bg-blue-50 px-2 py-2 sm:px-4 sm:py-3 text-center">
+            <p className="text-lg sm:text-2xl font-bold text-blue-700">{campaignRefs.length}</p>
+            <p className="text-[10px] sm:text-xs font-medium text-blue-400">Campaigns</p>
           </div>
-          <div className="rounded-xl border border-purple-100 bg-purple-50 px-4 py-2.5 sm:py-3 text-center">
-            <p className="text-xl sm:text-2xl font-bold text-purple-700">{adSetRefs.length}</p>
-            <p className="text-xs font-medium text-purple-400">Ad Sets</p>
+          <div className="rounded-xl border border-purple-100 bg-purple-50 px-2 py-2 sm:px-4 sm:py-3 text-center">
+            <p className="text-lg sm:text-2xl font-bold text-purple-700">{adSetRefs.length}</p>
+            <p className="text-[10px] sm:text-xs font-medium text-purple-400">Ad Sets</p>
           </div>
-          <div className="rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-2.5 sm:py-3 text-center">
-            <p className="text-xl sm:text-2xl font-bold text-emerald-700">{adRefs.length}</p>
-            <p className="text-xs font-medium text-emerald-400">Ads</p>
+          <div className="rounded-xl border border-emerald-100 bg-emerald-50 px-2 py-2 sm:px-4 sm:py-3 text-center">
+            <p className="text-lg sm:text-2xl font-bold text-emerald-700">{adRefs.length}</p>
+            <p className="text-[10px] sm:text-xs font-medium text-emerald-400">Ads</p>
           </div>
         </div>
 
         {/* Tabs — all screen sizes */}
         <div>
-          <div className="mb-4 flex gap-1 rounded-xl border border-gray-200 bg-gray-50 p-1">
+          <div className="mb-4 flex flex-nowrap gap-1 rounded-xl border border-gray-200 bg-gray-50 p-1">
             {TABS.map((t) => (
               <button
                 key={t.id}
@@ -352,11 +350,7 @@ export default function UserCampaignDetailPage({
    ═══════════════════════════════════════════════════════════════ */
 
 function Spinner() {
-  return (
-    <div className="flex items-center justify-center py-16">
-      <Loader2 className="h-6 w-6 animate-spin text-red-500" />
-    </div>
-  );
+  return <AdminSectionSkeleton variant="tableEmbedded" />;
 }
 
 function Empty({ label }: { label: string }) {

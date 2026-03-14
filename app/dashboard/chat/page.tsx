@@ -6,6 +6,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/lib/auth/context';
 import { useSocket, type ChatMessage, type MessageType } from '@/lib/chat/use-socket';
 import { toast } from 'sonner';
+import { AdminSectionSkeleton } from '@/components/ui/AdminSectionSkeleton';
 import {
   Search,
   Send,
@@ -906,8 +907,8 @@ export default function MessagesPage() {
         {/* Conversation List */}
         <div className="flex-1 overflow-y-auto">
           {loadingConversations ? (
-            <div className="flex items-center justify-center py-16">
-              <Loader2 className="w-6 h-6 text-red-500 animate-spin" />
+            <div className="px-4 py-4">
+              <AdminSectionSkeleton variant="list" />
             </div>
           ) : filteredConversations.length === 0 ? (
             <div className="text-center py-16 px-4">
@@ -1058,9 +1059,7 @@ export default function MessagesPage() {
             {/* Messages */}
             <div className="flex-1 overflow-y-auto px-4 md:px-8 py-4 md:py-6 space-y-4 md:space-y-6">
               {loadingMessages ? (
-                <div className="flex items-center justify-center py-16">
-                  <Loader2 className="w-6 h-6 text-red-500 animate-spin" />
-                </div>
+                <AdminSectionSkeleton variant="chatThread" />
               ) : messages.length === 0 ? (
                 <div className="flex items-center justify-center py-16 text-center">
                   <div>

@@ -42,17 +42,13 @@ export const CompanyMarquee = () => {
   }, [isDragging, list.length]);
 
   return (
-    <section className="py-8 md:py-10 bg-white border-y border-gray-100">
+    <section className="py-8 md:py-10 lg:py-8 bg-white border-y border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-6 md:mb-8">
-          {loading ? (
-            <div className="h-8 sm:h-10 w-64 sm:w-80 rounded-full bg-gray-200 animate-pulse mx-auto" />
-          ) : (
-            <h2 className="text-2xl font-bold text-gray-900 md:text-3xl lg:text-4xl">
-              Trusted by Top Clients
-            </h2>
-          )}
+          <h2 className="text-2xl font-bold text-gray-900 md:text-3xl lg:text-4xl">
+            Trusted by Top Clients
+          </h2>
         </div>
 
         {/* Marquee Container */}

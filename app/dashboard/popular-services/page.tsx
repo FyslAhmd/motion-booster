@@ -48,6 +48,30 @@ const emptyItem: Omit<PopularServiceItem, 'id'> = {
   services: [''],
 };
 
+function PopularServicesListSkeleton() {
+  return (
+    <ul className="divide-y divide-gray-50">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <li key={i} className="flex items-center gap-2 px-3 py-3 sm:gap-4 sm:px-5">
+          <div className="h-4 w-4 shrink-0 animate-pulse rounded bg-gray-200" />
+          <div className="h-9 w-12 shrink-0 animate-pulse rounded-lg bg-gray-200 sm:h-10 sm:w-14" />
+          <div className="min-w-0 flex-1 space-y-2">
+            <div className="h-4 w-48 animate-pulse rounded bg-gray-200" />
+            <div className="h-3 w-28 animate-pulse rounded bg-gray-200" />
+            <div className="h-3 w-3/4 animate-pulse rounded bg-gray-200" />
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="h-8 w-8 animate-pulse rounded-lg bg-gray-200" />
+            <div className="h-8 w-8 animate-pulse rounded-lg bg-gray-200" />
+            <div className="h-8 w-8 animate-pulse rounded-lg bg-gray-200" />
+            <div className="h-8 w-8 animate-pulse rounded-lg bg-gray-200" />
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export default function PopularServicesPage() {
   const [items, setItems] = useState<PopularServiceItem[]>([]);
   const [editing, setEditing] = useState<PopularServiceItem | null>(null);
@@ -55,6 +79,7 @@ export default function PopularServicesPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [modalError, setModalError] = useState('');
   const [dragIdx, setDragIdx] = useState<number | null>(null);
 
@@ -62,7 +87,8 @@ export default function PopularServicesPage() {
     fetch('/api/v1/cms/popular-services')
       .then(r => r.json())
       .then((data) => { if (Array.isArray(data)) setItems(data); })
-      .catch(() => toast.error('Failed to load services.'));
+      .catch(() => toast.error('Failed to load services.'))
+      .finally(() => setInitialLoading(false));
   }, []);
 
   const { confirm } = useConfirm();
@@ -313,7 +339,9 @@ export default function PopularServicesPage() {
 
       {/* List */}
       <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-        {items.length === 0 ? (
+        {initialLoading ? (
+          <PopularServicesListSkeleton />
+        ) : items.length === 0 ? (
           <div className="text-center py-16 text-gray-400">
             <p className="font-medium text-gray-500">No service cards yet</p>
           </div>

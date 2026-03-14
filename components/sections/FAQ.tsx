@@ -49,15 +49,11 @@ export const FAQ = () => {
   };
 
   return (
-    <section className="pt-0 pb-1 sm:pb-2 md:pb-4 lg:pb-6 bg-white">
+    <section className="pt-0 pb-1 sm:pb-2 md:pb-4 lg:pb-4 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {loading ? (
-          <div className="h-8 sm:h-9 md:h-10 lg:h-12 w-2/3 sm:w-1/2 rounded-full bg-gray-200 animate-pulse mx-auto mb-8 sm:mb-10 md:mb-12" />
-        ) : (
-          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 text-center mb-8 sm:mb-10 md:mb-12 px-4">
-            Answers to Your Frequently Asked Questions
-          </h2>
-        )}
+        <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 text-center mb-8 sm:mb-10 md:mb-12 px-4">
+          Answers to Your Frequently Asked Questions
+        </h2>
 
         {loading ? (
           <SkeletonFAQ />
@@ -101,4 +97,3 @@ export const FAQ = () => {
     </section>
   );
 };
-

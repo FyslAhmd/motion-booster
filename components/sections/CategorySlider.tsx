@@ -9,9 +9,9 @@ function SkeletonCard() {
   return (
     <div className="shrink-0 flex flex-col items-center justify-center w-28 h-24 sm:w-36 sm:h-30 md:w-40 md:h-32 bg-white border border-gray-100 rounded-xl sm:rounded-2xl px-2 sm:px-4">
       {/* icon box */}
-      <div className="mb-1.5 sm:mb-3 w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-gray-200" />
+      <div className="mb-1.5 sm:mb-3 w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-gray-200 animate-pulse" />
       {/* title line */}
-      <div className="h-2.5 w-14 sm:w-20 rounded-full bg-gray-200" />
+      <div className="h-2.5 w-14 sm:w-20 rounded-full bg-gray-200 animate-pulse" />
     </div>
   );
 }
@@ -38,18 +38,13 @@ export const CategorySlider = () => {
   return (
     <section className="relative z-20 py-2 sm:py-3 lg:py-4 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Heading — skeleton or real */}
-        {loading ? (
-          <div className="h-7 sm:h-8 md:h-9 w-36 sm:w-44 rounded-lg bg-gray-200 animate-pulse mb-6 sm:mb-8" />
-        ) : (
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-6 sm:mb-8">
-            Our Service
-          </h2>
-        )}
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-6 sm:mb-8">
+          Our Service
+        </h2>
 
         <div className="relative flex items-center">
           {loading ? (
-            <div className="flex gap-2.5 sm:gap-4 overflow-x-hidden animate-pulse">
+            <div className="flex gap-2.5 sm:gap-4 overflow-x-hidden">
               {Array.from({ length: 7 }).map((_, i) => (
                 <SkeletonCard key={i} />
               ))}

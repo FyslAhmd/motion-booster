@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import AdminShell from '../_components/AdminShell';
 import { Plus, Pencil, Trash2, Star, X, Save, Loader2 } from 'lucide-react';
 import ImageUpload from '@/components/ui/ImageUpload';
+import { AdminSectionSkeleton } from '@/components/ui/AdminSectionSkeleton';
 import { toast } from 'sonner';
 
 const CATEGORIES = [
@@ -378,7 +379,7 @@ export default function PortfolioPage() {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
+        <AdminSectionSkeleton variant="grid" />
       ) : displayed.length === 0 ? (
         <div className="text-center py-20 text-gray-400">
           <p className="font-medium text-gray-500">No portfolio items yet</p>
@@ -452,4 +453,3 @@ export default function PortfolioPage() {
     </AdminShell>
   );
 }
-

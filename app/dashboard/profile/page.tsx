@@ -1,6 +1,7 @@
 'use client';
 
 import AdminShell from '../_components/AdminShell';
+import { AdminSectionSkeleton } from '@/components/ui/AdminSectionSkeleton';
 import { useConfirm } from '@/lib/admin/confirm';
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/lib/auth/context';
@@ -37,6 +38,14 @@ const DEFAULT_NOTIFICATIONS = {
 
 export default function ProfilePage() {
   const { user, updateUser } = useAuth();
+
+  if (!user) {
+    return (
+      <AdminShell>
+        <AdminSectionSkeleton variant="editor" />
+      </AdminShell>
+    );
+  }
 
   const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'notifications' | 'billing'>('profile');
 
@@ -168,7 +177,7 @@ export default function ProfilePage() {
 
   return (
     <AdminShell>
-      <div className="h-full overflow-y-auto bg-gray-50">
+      <div className="h-full overflow-y-auto no-scrollbar bg-gray-50">
         <div className="bg-white border-b border-gray-100">
           <div className="max-w-5xl mx-auto p-4 sm:p-6">
             <div className="flex items-center gap-3">
@@ -244,13 +253,13 @@ export default function ProfilePage() {
                         onChange={handleAvatarChange}
                       />
                     </div>
-                    <h2 className="text-xl font-bold text-gray-900">{user?.fullName || user?.username}</h2>
-                    <p className="text-sm text-gray-500 mt-0.5">{user?.email}</p>
+                    <h2 className="text-xl font-bold text-gray-900">{user.fullName || user.username}</h2>
+                    <p className="text-sm text-gray-500 mt-0.5">{user.email}</p>
                     <div className="flex items-center gap-2 mt-3">
                       <span className="px-3 py-1 bg-red-50 text-red-600 text-xs font-semibold rounded-full">
                         Active Account
                       </span>
-                      <span className="text-xs text-gray-400 capitalize">{user?.role?.toLowerCase()}</span>
+                      <span className="text-xs text-gray-400 capitalize">{user.role?.toLowerCase()}</span>
                     </div>
                     <div className="flex gap-2 mt-4">
                       {isEditing ? (

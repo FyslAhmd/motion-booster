@@ -7,14 +7,55 @@ import { AdminStore, SiteSettings, defaultSettings } from '@/lib/admin/store';
 import { Check, ImagePlus, Save, Trash2, Eye, NotebookPen } from 'lucide-react';
 import { toast } from 'sonner';
 
+function WelcomeModalCardsSkeleton() {
+  return (
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className="space-y-5">
+        <div className="rounded-2xl border border-gray-100 bg-white p-5">
+          <div className="h-4 w-28 animate-pulse rounded bg-gray-200 mb-4" />
+          <div className="h-36 w-full animate-pulse rounded-xl bg-gray-200 mb-3" />
+          <div className="h-4 w-24 animate-pulse rounded bg-gray-200" />
+        </div>
+        <div className="rounded-2xl border border-gray-100 bg-white p-5 space-y-4">
+          <div className="h-4 w-24 animate-pulse rounded bg-gray-200" />
+          <div className="space-y-2">
+            <div className="h-3 w-16 animate-pulse rounded bg-gray-200" />
+            <div className="h-10 w-full animate-pulse rounded-xl bg-gray-200" />
+          </div>
+          <div className="space-y-2">
+            <div className="h-3 w-20 animate-pulse rounded bg-gray-200" />
+            <div className="h-20 w-full animate-pulse rounded-xl bg-gray-200" />
+          </div>
+          <div className="space-y-2">
+            <div className="h-3 w-28 animate-pulse rounded bg-gray-200" />
+            <div className="h-10 w-full animate-pulse rounded-xl bg-gray-200" />
+          </div>
+        </div>
+      </div>
+      <div className="space-y-4">
+        <div className="rounded-2xl border border-gray-100 bg-white p-5">
+          <div className="h-4 w-24 animate-pulse rounded bg-gray-200 mb-4" />
+          <div className="h-80 w-full animate-pulse rounded-xl bg-gray-200" />
+        </div>
+        <div className="rounded-xl border border-amber-100 bg-amber-50 p-4">
+          <div className="h-4 w-32 animate-pulse rounded bg-amber-200 mb-2" />
+          <div className="h-3 w-full animate-pulse rounded bg-amber-200" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function WelcomeModalPage() {
   const [settings, setSettings] = useState<SiteSettings>(defaultSettings);
   const [saved, setSaved] = useState(false);
   const [preview, setPreview] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setSettings(AdminStore.getSettings());
+    setInitialLoading(false);
   }, []);
 
   const set = (key: keyof SiteSettings) => (value: string) => {
@@ -138,6 +179,9 @@ export default function WelcomeModalPage() {
         </div>
       </div>
 
+      {initialLoading ? (
+        <WelcomeModalCardsSkeleton />
+      ) : (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Form */}
         <div className="space-y-5">
@@ -290,6 +334,7 @@ export default function WelcomeModalPage() {
           </div>
         </div>
       </div>
+      )}
     </AdminShell>
   );
 }

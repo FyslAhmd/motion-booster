@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import AdminShell from '../_components/AdminShell';
 import { Plus, Pencil, Trash2, X, AlertTriangle, Star, Loader2 } from 'lucide-react';
 import ImageUpload from '@/components/ui/ImageUpload';
+import { AdminSectionSkeleton } from '@/components/ui/AdminSectionSkeleton';
 import { toast } from 'sonner';
 
 const AVATAR_BG_OPTIONS = [
@@ -122,7 +123,7 @@ export default function AdminTestimonialsPage() {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
+        <AdminSectionSkeleton variant="grid" />
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {items.map(item => (

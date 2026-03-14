@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Filter, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
 import AssignUserDropdown from './AssignUserDropdown';
+import { AdminSectionSkeleton } from '@/components/ui/AdminSectionSkeleton';
 import { toast } from 'sonner';
 
 interface Ad {
@@ -244,9 +245,7 @@ export default function AdsTable({ accountId }: AdsTableProps) {
 
       {/* Loading */}
       {loading && (
-        <div className="flex items-center justify-center py-16">
-          <Loader2 className="h-6 w-6 animate-spin text-red-500" />
-        </div>
+        <AdminSectionSkeleton variant="tableEmbedded" />
       )}
 
       {/* Error */}

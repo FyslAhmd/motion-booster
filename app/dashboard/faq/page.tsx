@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import AdminShell from '../_components/AdminShell';
 import { Plus, Pencil, Trash2, X, AlertTriangle, ChevronDown, Loader2 } from 'lucide-react';
+import { AdminSectionSkeleton } from '@/components/ui/AdminSectionSkeleton';
 import { toast } from 'sonner';
 
 interface FAQItem {
@@ -116,7 +117,7 @@ export default function AdminFAQPage() {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
+        <AdminSectionSkeleton variant="list" />
       ) : (
         <div className="space-y-3">
           {faqs.map((faq, idx) => (

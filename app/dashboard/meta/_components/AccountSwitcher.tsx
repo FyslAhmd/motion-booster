@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ChevronDown, Building2, Loader2 } from 'lucide-react';
+import { ChevronDown, Building2 } from 'lucide-react';
+import { AdminSectionSkeleton } from '@/components/ui/AdminSectionSkeleton';
 
 interface AdAccount {
   id: string;
@@ -79,12 +80,7 @@ export default function AccountSwitcher({ value, onChange }: AccountSwitcherProp
   const selected = accounts.find((a) => a.id === value);
 
   if (loading) {
-    return (
-      <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-400">
-        <Loader2 className="h-4 w-4 animate-spin" />
-        <span>Loading accounts...</span>
-      </div>
-    );
+    return <AdminSectionSkeleton variant="inline" />;
   }
 
   if (accounts.length <= 1) return null; // No switcher needed for single account

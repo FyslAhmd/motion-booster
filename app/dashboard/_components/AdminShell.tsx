@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/lib/auth/context';
+import { AdminSectionSkeleton } from '@/components/ui/AdminSectionSkeleton';
 import {
   LayoutDashboard,
   Users,
@@ -110,7 +111,7 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
   const activeLabel = userNavItems.find(n => n.href === pathname)?.label ?? 'Dashboard';
 
   return (
-    <div className="h-dvh bg-gray-50 flex flex-col overflow-hidden lg:pl-64">
+    <div className="h-svh min-h-svh bg-gray-50 flex flex-col overflow-hidden lg:pl-64">
       {/* Desktop fixed sidebar */}
       <aside className="hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:left-0 lg:w-64 lg:bg-white lg:border-r lg:border-gray-100 lg:z-40">
         <div className="px-5 py-4 border-b border-gray-100">
@@ -118,7 +119,7 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
             <Image src="/Motion Booster Black Logo-01.svg" alt="Motion Booster" width={130} height={40} className="h-8 w-auto" priority />
           </Link>
         </div>
-        <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
+        <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto no-scrollbar">
           {userNavItems.map(({ href, label, icon: Icon }) => {
             const active = pathname === href;
             return (
@@ -191,7 +192,7 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
       </header>
 
       {/* Page content — flex-1 + min-h-0 so it doesn't overflow on noPadding pages */}
-      <main className={`flex-1 min-h-0 w-full min-w-0 ${noPadding ? 'overflow-hidden' : 'overflow-x-hidden overflow-y-auto'}`}>
+      <main className={`flex-1 min-h-0 w-full min-w-0 no-scrollbar ${noPadding ? 'overflow-hidden' : 'overflow-x-hidden overflow-y-auto'}`}>
         {children}
       </main>
 
@@ -248,7 +249,7 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
             </div>
 
             {/* Nav links */}
-            <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
+            <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto no-scrollbar">
               {userNavItems.map(({ href, label, icon: Icon }) => {
                 const active = pathname === href;
                 return (
@@ -360,14 +361,8 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="flex items-center gap-3 text-gray-400">
-          <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z" />
-          </svg>
-          Loading...
-        </div>
+      <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
+        <AdminSectionSkeleton variant="meta" />
       </div>
     );
   }
@@ -387,7 +382,7 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
   }
 
   return (
-    <div className="h-dvh bg-gray-50 flex overflow-hidden">
+    <div className="h-svh min-h-svh bg-gray-50 flex overflow-hidden">
       {/* Sidebar Overlay (mobile) */}
       {sidebarOpen && (
         <div
@@ -398,7 +393,7 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
 
       {/* Sidebar */}
       <aside
-        className={`fixed lg:relative top-0 left-0 h-dvh w-72 shrink-0 bg-white border-r border-gray-100 flex flex-col z-50 transition-transform duration-300 ease-in-out shadow-xl lg:shadow-sm lg:w-64 ${
+        className={`fixed lg:relative top-0 left-0 h-svh w-72 shrink-0 bg-white border-r border-gray-100 flex flex-col z-50 transition-transform duration-300 ease-in-out shadow-xl lg:shadow-sm lg:w-64 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
@@ -424,7 +419,7 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
+        <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto no-scrollbar">
           {visibleNavItems.map(entry => {
             // ── Group ──
             if ('group' in entry) {
@@ -568,7 +563,7 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
         </header>
 
         {/* Page content */}
-        <main className={`flex-1 ${noPadding ? 'overflow-hidden' : 'p-4 sm:p-6 overflow-y-auto'}`}>
+        <main className={`flex-1 no-scrollbar ${noPadding ? 'overflow-hidden' : 'p-4 sm:p-6 overflow-y-auto'}`}>
           {children}
         </main>
       </div>

@@ -11,7 +11,7 @@ export const Footer = () => {
   return (
     <footer>
       {/* Main Footer */}
-      <div style={{ background: '#111827' }}>
+      <div style={{ background: '#000000' }}>
         <div className="max-w-7xl mx-auto px-6 lg:px-8 py-10 sm:py-12 lg:py-14">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-10">
             {/* Brand */}
@@ -115,7 +115,7 @@ export const Footer = () => {
         </div>
 
         {/* Bottom Bar */}
-        <div className="border-t border-white/10" style={{ background: '#111827' }}>
+        <div className="border-t border-white/10" style={{ background: '#000000' }}>
           <div className="max-w-7xl mx-auto px-6 lg:px-8 py-6 flex flex-col sm:flex-row justify-between items-center gap-4">
             {/* Logo */}
             <Link href="/" className="flex items-center">

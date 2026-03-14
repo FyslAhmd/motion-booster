@@ -34,6 +34,29 @@ const emptyItem: Omit<ServiceCategoryItem, 'id'> = {
   iconBg: 'bg-blue-50',
 };
 
+function CategoriesListSkeleton() {
+  return (
+    <ul className="divide-y divide-gray-50">
+      {Array.from({ length: 8 }).map((_, i) => (
+        <li key={i} className="flex items-center gap-4 px-5 py-3.5">
+          <div className="h-4 w-4 animate-pulse rounded bg-gray-200" />
+          <div className="h-10 w-10 shrink-0 animate-pulse rounded-xl bg-gray-200" />
+          <div className="min-w-0 flex-1 space-y-2">
+            <div className="h-4 w-40 animate-pulse rounded bg-gray-200" />
+            <div className="h-3 w-28 animate-pulse rounded bg-gray-200" />
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="h-8 w-8 animate-pulse rounded-lg bg-gray-200" />
+            <div className="h-8 w-8 animate-pulse rounded-lg bg-gray-200" />
+            <div className="h-8 w-8 animate-pulse rounded-lg bg-gray-200" />
+            <div className="h-8 w-8 animate-pulse rounded-lg bg-gray-200" />
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export default function CategoriesPage() {
   const [items, setItems] = useState<ServiceCategoryItem[]>([]);
   const [editing, setEditing] = useState<ServiceCategoryItem | null>(null);
@@ -41,12 +64,14 @@ export default function CategoriesPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
 
   useEffect(() => {
     fetch('/api/v1/cms/service-categories')
       .then(r => r.json())
       .then((data) => { if (Array.isArray(data)) setItems(data); })
-      .catch(() => toast.error('Failed to load categories.'));
+      .catch(() => toast.error('Failed to load categories.'))
+      .finally(() => setInitialLoading(false));
   }, []);
 
   const { confirm } = useConfirm();
@@ -252,7 +277,9 @@ export default function CategoriesPage() {
 
       {/* List */}
       <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-        {items.length === 0 ? (
+        {initialLoading ? (
+          <CategoriesListSkeleton />
+        ) : items.length === 0 ? (
           <div className="text-center py-16 text-gray-400">
             <p className="font-medium text-gray-500">No categories yet</p>
           </div>

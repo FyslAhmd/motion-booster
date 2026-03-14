@@ -72,10 +72,10 @@ export const HeaderBanner = () => {
 
       {/* Desktop Grid View */}
       <div 
-        className="hidden lg:block pt-32 pb-16"
+        className="hidden lg:block pt-24 pb-10"
         style={{ background: "url('/banner_bg.png') center / cover no-repeat" }}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 mt-10 lg:grid-cols-5 items-center gap-12 relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 mt-4 lg:grid-cols-5 items-center gap-10 relative z-10">
           {/* Left: Text & Badge */}
           <div className="lg:col-span-2 w-full z-10 text-left flex flex-col justify-center md:items-start md:justify-center lg:min-h-90 xl:min-h-100">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-full text-sm font-semibold mb-3">

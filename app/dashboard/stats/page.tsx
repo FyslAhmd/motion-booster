@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import AdminShell from '../_components/AdminShell';
 import { Plus, Trash2, X, Loader2, AlertTriangle } from 'lucide-react';
+import { AdminSectionSkeleton } from '@/components/ui/AdminSectionSkeleton';
 import { useConfirm } from '@/lib/admin/confirm';
 import { toast } from 'sonner';
 
@@ -111,7 +112,7 @@ export default function AdminStatsPage() {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
+        <AdminSectionSkeleton variant="grid" />
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {stats.map(stat => (

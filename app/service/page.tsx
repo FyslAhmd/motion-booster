@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Check, ChevronDown } from 'lucide-react';
 import { CategoryIcon } from '@/lib/admin/categoryIcons';
+import { ServiceCategoryListSkeleton } from '@/components/ui/PublicPageLoadingSkeleton';
 
 interface PopularServiceItem {
   id: string;
@@ -67,12 +68,14 @@ const ServiceCategory: React.FC<ServiceCategoryProps> = ({ iconType, title, desc
 
 export default function ServicePage() {
   const [serviceCategories, setServiceCategories] = useState<PopularServiceItem[]>([]);
+  const [serviceLoading, setServiceLoading] = useState(true);
 
   useEffect(() => {
     fetch('/api/v1/cms/popular-services')
       .then(r => r.json())
       .then(data => setServiceCategories(Array.isArray(data) ? data : []))
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setServiceLoading(false));
   }, []);
 
   return (
@@ -120,18 +123,22 @@ export default function ServicePage() {
             </p>
           </div>
 
-          <div className="space-y-6">
-            {serviceCategories.map((category) => (
-              <ServiceCategory
-                key={category.id}
-                iconType={category.category}
-                title={category.title}
-                description={category.description}
-                services={category.services}
-                gradient={category.gradient}
-              />
-            ))}
-          </div>
+          {serviceLoading ? (
+            <ServiceCategoryListSkeleton />
+          ) : (
+            <div className="space-y-6">
+              {serviceCategories.map((category) => (
+                <ServiceCategory
+                  key={category.id}
+                  iconType={category.category}
+                  title={category.title}
+                  description={category.description}
+                  services={category.services}
+                  gradient={category.gradient}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </section>
 

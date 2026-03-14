@@ -8,13 +8,42 @@ import ImageUpload from '@/components/ui/ImageUpload';
 import { Plus, Trash2, GripVertical, Check, RotateCcw, Building2, Image as ImageIcon, Type, NotebookPen } from 'lucide-react';
 import { toast } from 'sonner';
 
+function CompaniesCardsSkeleton() {
+  return (
+    <div className="space-y-2">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div
+          key={i}
+          className="flex items-start gap-3 rounded-xl border border-gray-100 bg-white p-4"
+        >
+          <div className="mt-1 h-4 w-4 shrink-0 animate-pulse rounded bg-gray-200" />
+          <div className="mt-1 h-6 w-6 shrink-0 animate-pulse rounded-full bg-gray-200" />
+          <div className="min-w-0 flex-1 space-y-3">
+            <div className="space-y-2">
+              <div className="h-3 w-24 animate-pulse rounded bg-gray-200" />
+              <div className="h-9 w-full animate-pulse rounded-xl bg-gray-200" />
+            </div>
+            <div className="space-y-2">
+              <div className="h-3 w-20 animate-pulse rounded bg-gray-200" />
+              <div className="h-9 w-40 animate-pulse rounded-xl bg-gray-200" />
+            </div>
+          </div>
+          <div className="mt-1 h-8 w-8 shrink-0 animate-pulse rounded-lg bg-gray-200" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function AdminCompaniesPage() {
   const [companies, setCompanies] = useState<CompanyItem[]>([]);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
 
   useEffect(() => {
     setCompanies(AdminStore.getCompanies());
+    setInitialLoading(false);
   }, []);
 
   const { confirm } = useConfirm();
@@ -112,82 +141,86 @@ export default function AdminCompaniesPage() {
         </div>
 
         {/* Card List */}
-        <div className="space-y-2">
-          {companies.map((company, idx) => (
-            <div
-              key={company.id}
-              draggable
-              onDragStart={() => onDragStart(idx)}
-              onDragOver={e => onDragOver(e, idx)}
-              onDragEnd={onDragEnd}
-              className={`bg-white rounded-xl border border-gray-100 p-4 flex items-start gap-3 transition-shadow ${dragIdx === idx ? 'opacity-50 shadow-lg' : 'hover:shadow-sm'}`}
-            >
-              {/* Drag handle */}
-              <div className="mt-1 cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 shrink-0">
-                <GripVertical className="w-4 h-4" />
-              </div>
-
-              {/* Index */}
-              <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-500 shrink-0 mt-1">
-                {idx + 1}
-              </div>
-
-              {/* Company Name */}
-              <div className="flex-1 min-w-0 space-y-3">
-                <div>
-                  <label className="flex items-center gap-1 text-xs font-medium text-gray-500 mb-1.5">
-                    <Type className="w-3 h-3" /> Company Name
-                  </label>
-                  <input
-                    value={company.name}
-                    onChange={e => update(company.id, 'name', e.target.value)}
-                    className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
-                    placeholder="Company name"
-                  />
+        {initialLoading ? (
+          <CompaniesCardsSkeleton />
+        ) : (
+          <div className="space-y-2">
+            {companies.map((company, idx) => (
+              <div
+                key={company.id}
+                draggable
+                onDragStart={() => onDragStart(idx)}
+                onDragOver={e => onDragOver(e, idx)}
+                onDragEnd={onDragEnd}
+                className={`bg-white rounded-xl border border-gray-100 p-4 flex items-start gap-3 transition-shadow ${dragIdx === idx ? 'opacity-50 shadow-lg' : 'hover:shadow-sm'}`}
+              >
+                {/* Drag handle */}
+                <div className="mt-1 cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 shrink-0">
+                  <GripVertical className="w-4 h-4" />
                 </div>
 
-                {/* Logo Upload */}
-                <div>
-                  <label className="flex items-center gap-1 text-xs font-medium text-gray-500 mb-1.5">
-                    <ImageIcon className="w-3 h-3" /> Logo Image 
-                  </label>
-                  <div className="flex items-center gap-3">
-                    {company.logoImage && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={company.logoImage} alt={company.name} className="h-10 object-contain border border-gray-100 rounded-lg px-2 bg-gray-50" />
-                    )}
-                    <div className="flex-1">
-                      <ImageUpload
-                        value={company.logoImage || ''}
-                        onChange={v => update(company.id, 'logoImage', v)}
-                        label={company.logoImage ? 'Replace Logo' : 'Upload Logo'}
-                        aspectRatio="wide"
-                        maxPx={400}
-                        sizeHint="400×200px, PNG transparent bg"
-                      />
+                {/* Index */}
+                <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-500 shrink-0 mt-1">
+                  {idx + 1}
+                </div>
+
+                {/* Company Name */}
+                <div className="flex-1 min-w-0 space-y-3">
+                  <div>
+                    <label className="flex items-center gap-1 text-xs font-medium text-gray-500 mb-1.5">
+                      <Type className="w-3 h-3" /> Company Name
+                    </label>
+                    <input
+                      value={company.name}
+                      onChange={e => update(company.id, 'name', e.target.value)}
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
+                      placeholder="Company name"
+                    />
+                  </div>
+
+                  {/* Logo Upload */}
+                  <div>
+                    <label className="flex items-center gap-1 text-xs font-medium text-gray-500 mb-1.5">
+                      <ImageIcon className="w-3 h-3" /> Logo Image
+                    </label>
+                    <div className="flex items-center gap-3">
+                      {company.logoImage && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={company.logoImage} alt={company.name} className="h-10 object-contain border border-gray-100 rounded-lg px-2 bg-gray-50" />
+                      )}
+                      <div className="flex-1">
+                        <ImageUpload
+                          value={company.logoImage || ''}
+                          onChange={v => update(company.id, 'logoImage', v)}
+                          label={company.logoImage ? 'Replace Logo' : 'Upload Logo'}
+                          aspectRatio="wide"
+                          maxPx={400}
+                          sizeHint="400×200px, PNG transparent bg"
+                        />
+                      </div>
+                      {company.logoImage && (
+                        <button
+                          onClick={() => update(company.id, 'logoImage', '')}
+                          className="text-xs text-red-500 hover:text-red-700 whitespace-nowrap"
+                        >
+                          Remove
+                        </button>
+                      )}
                     </div>
-                    {company.logoImage && (
-                      <button
-                        onClick={() => update(company.id, 'logoImage', '')}
-                        className="text-xs text-red-500 hover:text-red-700 whitespace-nowrap"
-                      >
-                        Remove
-                      </button>
-                    )}
                   </div>
                 </div>
-              </div>
 
-              {/* Delete */}
-              <button
-                onClick={() => remove(company.id)}
-                className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors mt-1 shrink-0"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
-          ))}
-        </div>
+                {/* Delete */}
+                <button
+                  onClick={() => remove(company.id)}
+                  className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors mt-1 shrink-0"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Add + Save */}
         <div className="flex items-center gap-3">

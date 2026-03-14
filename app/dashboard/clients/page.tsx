@@ -64,6 +64,75 @@ function fmtTime(iso: string | null) {
     + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 }
 
+function Pulse({ className }: { className: string }) {
+  return <div className={`animate-pulse rounded-xl bg-gray-200/80 ${className}`} />;
+}
+
+function ClientsStatsSkeleton() {
+  return (
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div key={i} className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+          <div className="flex items-center gap-3">
+            <Pulse className="h-8 w-8 rounded-lg" />
+            <div className="space-y-2">
+              <Pulse className="h-3 w-12" />
+              <Pulse className="h-3 w-16" />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ClientsCardsSkeleton() {
+  return (
+    <>
+      <div className="divide-y divide-gray-100 sm:hidden">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="space-y-2.5 px-4 py-3.5">
+            <div className="flex items-center gap-3">
+              <Pulse className="h-9 w-9 rounded-full" />
+              <div className="min-w-0 flex-1 space-y-2">
+                <Pulse className="h-3.5 w-2/5" />
+                <Pulse className="h-3 w-1/3" />
+              </div>
+              <Pulse className="h-7 w-14 rounded-lg" />
+            </div>
+            <div className="space-y-1 pl-12">
+              <Pulse className="h-3 w-3/4" />
+              <Pulse className="h-3 w-2/5" />
+            </div>
+            <div className="flex flex-wrap items-center gap-2 pl-12">
+              <Pulse className="h-5 w-20 rounded-full" />
+              <Pulse className="h-5 w-18 rounded-full" />
+              <Pulse className="h-5 w-16 rounded-full" />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="hidden px-4 py-4 sm:block sm:px-6">
+        <div className="space-y-3">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-3">
+              <Pulse className="h-9 w-9 rounded-full" />
+              <div className="min-w-0 flex-1 space-y-2">
+                <Pulse className="h-4 w-2/5" />
+                <Pulse className="h-3 w-3/5" />
+              </div>
+              <Pulse className="h-6 w-20 rounded-full" />
+              <Pulse className="h-6 w-20 rounded-full" />
+              <Pulse className="h-7 w-16 rounded-lg" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
+  );
+}
+
 /* ─── Edit Modal ──────────────────────────────────────── */
 
 interface EditModalProps {
@@ -445,7 +514,11 @@ export default function ClientsPage() {
               Clients
             </h1>
             <p className="text-sm text-gray-400 mt-0.5">
-              {loading ? 'Loading…' : `${clients.length} registered client${clients.length !== 1 ? 's' : ''}`}
+              {loading ? (
+                <span className="inline-block h-3 w-40 animate-pulse rounded-full bg-gray-200" />
+              ) : (
+                `${clients.length} registered client${clients.length !== 1 ? 's' : ''}`
+              )}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -470,29 +543,30 @@ export default function ClientsPage() {
         </div>
 
         {/* Stats row */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {[
-            { label: 'Total',     value: counts.total,      cls: 'text-indigo-600', bg: 'bg-indigo-50' },
-            { label: 'Active',    value: counts.active,     cls: 'text-green-600',  bg: 'bg-green-50' },
-            { label: 'Suspended', value: counts.suspended,  cls: 'text-amber-600',  bg: 'bg-amber-50' },
-            { label: 'Ads Access',value: counts.adsAccess,  cls: 'text-red-600',    bg: 'bg-red-50' },
-          ].map(s => (
-            <div key={s.label} className="rounded-xl border border-gray-100 bg-white p-4 flex items-center gap-3 shadow-sm">
-              <div className={`w-8 h-8 rounded-lg ${s.bg} flex items-center justify-center shrink-0`}>
-                <span className={`text-sm font-bold ${s.cls}`}>{s.value}</span>
+        {loading ? (
+          <ClientsStatsSkeleton />
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              { label: 'Total',     value: counts.total,      cls: 'text-indigo-600', bg: 'bg-indigo-50' },
+              { label: 'Active',    value: counts.active,     cls: 'text-green-600',  bg: 'bg-green-50' },
+              { label: 'Suspended', value: counts.suspended,  cls: 'text-amber-600',  bg: 'bg-amber-50' },
+              { label: 'Ads Access',value: counts.adsAccess,  cls: 'text-red-600',    bg: 'bg-red-50' },
+            ].map(s => (
+              <div key={s.label} className="rounded-xl border border-gray-100 bg-white p-4 flex items-center gap-3 shadow-sm">
+                <div className={`w-8 h-8 rounded-lg ${s.bg} flex items-center justify-center shrink-0`}>
+                  <span className={`text-sm font-bold ${s.cls}`}>{s.value}</span>
+                </div>
+                <p className="text-xs text-gray-500 font-medium">{s.label}</p>
               </div>
-              <p className="text-xs text-gray-500 font-medium">{s.label}</p>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
         {/* Table */}
         <div className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden">
           {loading ? (
-            <div className="flex items-center justify-center py-16 gap-3 text-gray-400">
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-red-500 border-t-transparent" />
-              <span className="text-sm">Loading clients…</span>
-            </div>
+            <ClientsCardsSkeleton />
           ) : clients.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-gray-400">
               <Users className="w-10 h-10 mb-3 opacity-30" />

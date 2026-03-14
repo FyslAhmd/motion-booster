@@ -22,6 +22,10 @@ import {
 } from "lucide-react";
 import AdminShell from "./_components/AdminShell";
 import MetaOverviewSection from "./_components/MetaOverviewSection";
+import {
+  DashboardHeaderSkeleton,
+  DashboardQuickStatsSkeleton,
+} from "./_components/OverviewSectionSkeletons";
 import { useAuth } from "@/lib/auth/context";
 import { useSiteData } from "@/lib/admin/context";
 import { AdminStore } from "@/lib/admin/store";
@@ -256,7 +260,7 @@ function UserOverview({ statCards }: Pick<UserOverviewProps, "statCards">) {
   return (
     <div className="w-full overflow-x-hidden bg-gray-50 pb-6">
       {/* Promo banner slider — full width top */}
-      <div className="px-3 sm:px-4 pt-3">
+      <div className="px-3 sm:px-4 pt-3 lg:hidden">
         <PromoSlider />
       </div>
 
@@ -335,6 +339,8 @@ export default function DashboardPage() {
   const [totalSpendBDT, setTotalSpendBDT] = useState<number | null>(null);
   const [totalAds, setTotalAds] = useState<number | null>(null);
   const [dailySpendBDT, setDailySpendBDT] = useState<number | null>(null);
+  const [adminStatsLoading, setAdminStatsLoading] = useState(true);
+  const [metaSummaryLoading, setMetaSummaryLoading] = useState(true);
 
   // Spend reveal / mask
   const [spendRevealed, setSpendRevealed] = useState(false);
@@ -383,6 +389,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (isAdmin) {
+      setAdminStatsLoading(true);
       fetch("/api/v1/admin/stats")
         .then((r) => r.json())
         .then((d) => {
@@ -391,8 +398,12 @@ export default function DashboardPage() {
             setUnseenMessages(d.data.unseenMessages ?? 0);
           }
         })
-        .catch(() => {});
+        .catch(() => {})
+        .finally(() => setAdminStatsLoading(false));
+      return;
     }
+
+    setAdminStatsLoading(false);
   }, [isAdmin]);
 
   useEffect(() => {
@@ -414,44 +425,72 @@ export default function DashboardPage() {
   }, [isAdmin]);
 
   useEffect(() => {
-    if (isAdmin) {
-      fetch("/api/v1/meta/account?discover=1")
-        .then((r) => r.json())
-        .then((d) => {
-          if (d.success && Array.isArray(d.data)) {
-            const total = d.data.reduce(
-              (sum: number, a: any) => sum + usdCentsToNum(a.amount_spent),
-              0,
-            );
-            setTotalSpendBDT(total * BDT_RATE);
-
-            // Use first account for active ads count + daily spend
-            const firstAccount = d.data[0];
-            const accountId = firstAccount?.account_id || firstAccount?.id;
-            if (accountId) {
-              fetch(`/api/v1/meta/active-counts?account_id=${accountId}`)
-                .then((r) => r.json())
-                .then((json) => {
-                  if (json.success) setTotalAds(json.data.ads ?? null);
-                })
-                .catch(() => {});
-
-              fetch(`/api/v1/meta/insights?type=account&date_preset=today&account_id=${accountId}`)
-                .then((r) => r.json())
-                .then((json) => {
-                  if (json.success && Array.isArray(json.data) && json.data.length > 0) {
-                    const spend = parseFloat(json.data[0]?.spend ?? "0");
-                    setDailySpendBDT(spend * BDT_RATE);
-                  } else {
-                    setDailySpendBDT(0);
-                  }
-                })
-                .catch(() => {});
-            }
-          }
-        })
-        .catch(() => {});
+    if (!isAdmin) {
+      setMetaSummaryLoading(false);
+      return;
     }
+
+    let mounted = true;
+    setMetaSummaryLoading(true);
+
+    const loadMetaSummary = async () => {
+      try {
+        const response = await fetch("/api/v1/meta/account?discover=1");
+        const d = await response.json();
+
+        if (!mounted || !d.success || !Array.isArray(d.data)) {
+          return;
+        }
+
+        const total = d.data.reduce(
+          (sum: number, a: any) => sum + usdCentsToNum(a.amount_spent),
+          0,
+        );
+        setTotalSpendBDT(total * BDT_RATE);
+
+        const firstAccount = d.data[0];
+        const accountId = firstAccount?.account_id || firstAccount?.id;
+        if (!accountId) {
+          setDailySpendBDT(0);
+          return;
+        }
+
+        const [activeCountsRes, insightsRes] = await Promise.allSettled([
+          fetch(`/api/v1/meta/active-counts?account_id=${accountId}`).then((r) =>
+            r.json(),
+          ),
+          fetch(
+            `/api/v1/meta/insights?type=account&date_preset=today&account_id=${accountId}`,
+          ).then((r) => r.json()),
+        ]);
+
+        if (!mounted) return;
+
+        if (activeCountsRes.status === "fulfilled" && activeCountsRes.value.success) {
+          setTotalAds(activeCountsRes.value.data.ads ?? null);
+        }
+
+        if (insightsRes.status === "fulfilled") {
+          const json = insightsRes.value;
+          if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+            const spend = parseFloat(json.data[0]?.spend ?? "0");
+            setDailySpendBDT(spend * BDT_RATE);
+          } else {
+            setDailySpendBDT(0);
+          }
+        }
+      } catch {
+        // Keep null values when API is unavailable; overview cards will show dashes.
+      } finally {
+        if (mounted) setMetaSummaryLoading(false);
+      }
+    };
+
+    loadMetaSummary();
+
+    return () => {
+      mounted = false;
+    };
   }, [isAdmin]);
 
   const statCards: StatCard[] = [
@@ -522,131 +561,139 @@ export default function DashboardPage() {
 
   return (
     <AdminShell>
-      <div className="h-full overflow-y-auto bg-gray-50">
-        {/* Welcome Header */}
-        <div className="bg-white border-b border-gray-100 px-4 sm:px-6 py-5 sm:py-6">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-              <div>
-                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
-                  Welcome back, {userName}! 👋
-                </h1>
-                <p className="text-sm sm:text-base text-gray-600 mt-1">
-                  <span className="hidden sm:inline">
-                    {new Date().toLocaleDateString("en-US", {
-                      weekday: "long",
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}
-                  </span>
-                  <span className="sm:hidden">
-                    {new Date().toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
-                  </span>
-                </p>
-              </div>
-              <div className="flex items-center gap-2 text-xs text-gray-400">
-                {totalSpendBDT !== null ? (
-                  <div className="flex items-center gap-2 rounded-xl bg-red-600 px-3 py-2 text-white shadow-md shadow-red-500/20">
-                    <TrendingUp className="h-3.5 w-3.5 shrink-0" />
-                    <div className="min-w-0">
-                      <p className="text-[9px] font-medium text-red-200 uppercase tracking-wide leading-none mb-0.5">
-                        Total Ad Spend (BDT)
-                      </p>
-                      {spendRevealed ? (
-                        <p className="text-sm font-bold leading-none truncate">
-                          {fmtBDT(totalSpendBDT)}
+      <div className="h-full overflow-y-auto no-scrollbar bg-gray-50">
+        {metaSummaryLoading ? (
+          <DashboardHeaderSkeleton />
+        ) : (
+          /* Welcome Header */
+          <div className="bg-white border-b border-gray-100 px-4 sm:px-6 py-5 sm:py-6">
+            <div className="max-w-7xl mx-auto">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <div>
+                  <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
+                    Welcome back, {userName}! 👋
+                  </h1>
+                  <p className="text-sm sm:text-base text-gray-600 mt-1">
+                    <span className="hidden sm:inline">
+                      {new Date().toLocaleDateString("en-US", {
+                        weekday: "long",
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </span>
+                    <span className="sm:hidden">
+                      {new Date().toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </span>
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-gray-400">
+                  {totalSpendBDT !== null ? (
+                    <div className="flex items-center gap-2 rounded-xl bg-red-600 px-3 py-2 text-white shadow-md shadow-red-500/20">
+                      <TrendingUp className="h-3.5 w-3.5 shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-[9px] font-medium text-red-200 uppercase tracking-wide leading-none mb-0.5">
+                          Total Ad Spend (BDT)
                         </p>
-                      ) : (
-                        <p className="text-sm font-bold leading-none tracking-widest">
-                          ••••••
-                        </p>
-                      )}
-                    </div>
-                    {/* Eye toggle */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (spendRevealed) {
-                          handleHideSpend();
-                        } else {
-                          setShowSpendModal(true);
+                        {spendRevealed ? (
+                          <p className="text-sm font-bold leading-none truncate">
+                            {fmtBDT(totalSpendBDT)}
+                          </p>
+                        ) : (
+                          <p className="text-sm font-bold leading-none tracking-widest">
+                            ••••••
+                          </p>
+                        )}
+                      </div>
+                      {/* Eye toggle */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (spendRevealed) {
+                            handleHideSpend();
+                          } else {
+                            setShowSpendModal(true);
+                          }
+                        }}
+                        title={
+                          spendRevealed
+                            ? `Hide (auto-hides in ${revealCountdown}s)`
+                            : "Click to reveal"
                         }
-                      }}
-                      title={
-                        spendRevealed
-                          ? `Hide (auto-hides in ${revealCountdown}s)`
-                          : "Click to reveal"
-                      }
-                      className="ml-1 p-1 rounded-lg hover:bg-red-700 transition-colors shrink-0 relative group"
-                    >
-                      {spendRevealed ? (
-                        <EyeOff className="h-3.5 w-3.5 text-red-200" />
-                      ) : (
-                        <Eye className="h-3.5 w-3.5 text-red-200" />
-                      )}
-                      {/* Countdown badge */}
-                      {spendRevealed && revealCountdown > 0 && (
-                        <span className="absolute -top-2 -right-2 min-w-4 h-4 flex items-center justify-center bg-yellow-400 text-gray-900 text-[9px] font-bold rounded-full px-0.5 leading-none">
-                          {revealCountdown}
-                        </span>
-                      )}
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    <BarChart2 className="h-4 w-4" />
-                    <span>Overview Dashboard</span>
-                  </>
-                )}
+                        className="ml-1 p-1 rounded-lg hover:bg-red-700 transition-colors shrink-0 relative group"
+                      >
+                        {spendRevealed ? (
+                          <EyeOff className="h-3.5 w-3.5 text-red-200" />
+                        ) : (
+                          <Eye className="h-3.5 w-3.5 text-red-200" />
+                        )}
+                        {/* Countdown badge */}
+                        {spendRevealed && revealCountdown > 0 && (
+                          <span className="absolute -top-2 -right-2 min-w-4 h-4 flex items-center justify-center bg-yellow-400 text-gray-900 text-[9px] font-bold rounded-full px-0.5 leading-none">
+                            {revealCountdown}
+                          </span>
+                        )}
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <BarChart2 className="h-4 w-4" />
+                      <span>Overview Dashboard</span>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Main Dashboard Content */}
         <div className="max-w-7xl mx-auto px-3 py-3 sm:p-6 space-y-4 sm:space-y-6">
-          {/* Quick Stats */}
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-            {statCards.map((card) => {
-              const Icon = card.icon;
-              const inner = (
-                <>
-                  <div
-                    className={`w-9 h-9 rounded-lg ${card.bg} flex items-center justify-center`}
-                  >
-                    <Icon className={`h-5 w-5 ${card.color}`} />
+          {adminStatsLoading || metaSummaryLoading ? (
+            <DashboardQuickStatsSkeleton />
+          ) : (
+            /* Quick Stats */
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+              {statCards.map((card) => {
+                const Icon = card.icon;
+                const inner = (
+                  <>
+                    <div
+                      className={`w-9 h-9 rounded-lg ${card.bg} flex items-center justify-center`}
+                    >
+                      <Icon className={`h-5 w-5 ${card.color}`} />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-gray-900">
+                        {card.value}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-0.5">{card.label}</p>
+                      {card.label === "Unseen Messages" &&
+                        (unseenMessages ?? 0) > 0 && (
+                          <span className="inline-block mt-1 text-[10px] bg-orange-100 text-orange-600 font-semibold px-1.5 py-0.5 rounded-full">
+                            New
+                          </span>
+                        )}
+                    </div>
+                  </>
+                );
+                const cls = `rounded-xl border border-gray-100 bg-white p-4 flex flex-col gap-3 shadow-sm hover:shadow-md transition-shadow${card.href ? " cursor-pointer" : ""}`;
+                return card.href ? (
+                  <Link key={card.label} href={card.href} className={cls}>
+                    {inner}
+                  </Link>
+                ) : (
+                  <div key={card.label} className={cls}>
+                    {inner}
                   </div>
-                  <div>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {card.value}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-0.5">{card.label}</p>
-                    {card.label === "Unseen Messages" &&
-                      (unseenMessages ?? 0) > 0 && (
-                        <span className="inline-block mt-1 text-[10px] bg-orange-100 text-orange-600 font-semibold px-1.5 py-0.5 rounded-full">
-                          New
-                        </span>
-                      )}
-                  </div>
-                </>
-              );
-              const cls = `rounded-xl border border-gray-100 bg-white p-4 flex flex-col gap-3 shadow-sm hover:shadow-md transition-shadow${card.href ? " cursor-pointer" : ""}`;
-              return card.href ? (
-                <Link key={card.label} href={card.href} className={cls}>
-                  {inner}
-                </Link>
-              ) : (
-                <div key={card.label} className={cls}>
-                  {inner}
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
 
           {/* Meta Ads Performance Overview */}
           <MetaOverviewSection />

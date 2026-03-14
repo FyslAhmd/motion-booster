@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import AdminShell from '../_components/AdminShell';
+import { AdminSectionSkeleton } from '@/components/ui/AdminSectionSkeleton';
 import { useConfirm } from '@/lib/admin/confirm';
 import { ServiceItem } from '@/lib/admin/store';
 import { Plus, Pencil, Trash2, X, AlertTriangle } from 'lucide-react';
@@ -49,12 +50,14 @@ export default function AdminServicesPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
 
   useEffect(() => {
     fetch('/api/v1/cms/services')
       .then(r => r.json())
       .then(data => setServices(Array.isArray(data) ? data : []))
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setInitialLoading(false));
   }, []);
 
   const { confirm } = useConfirm();
@@ -154,47 +157,51 @@ export default function AdminServicesPage() {
       </div>
 
       {/* Services Grid */}
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-        {services.map((service, idx) => (
-          <div key={service.id} className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-md transition-shadow">
-            <div className="flex items-start justify-between gap-2 mb-3">
-              <div className={`w-10 h-10 ${service.iconColor} rounded-xl flex items-center justify-center shrink-0`}>
-                <span className="text-white text-xs font-bold">{service.iconType.slice(0, 2).toUpperCase()}</span>
+      {initialLoading ? (
+        <AdminSectionSkeleton variant="grid" />
+      ) : (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+          {services.map((service, idx) => (
+            <div key={service.id} className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-md transition-shadow">
+              <div className="flex items-start justify-between gap-2 mb-3">
+                <div className={`w-10 h-10 ${service.iconColor} rounded-xl flex items-center justify-center shrink-0`}>
+                  <span className="text-white text-xs font-bold">{service.iconType.slice(0, 2).toUpperCase()}</span>
+                </div>
+                <div className="flex items-center gap-1 ml-auto">
+                  <button
+                    onClick={() => { setEditing({ ...service }); setIsNew(false); }}
+                    className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => setDeleteId(service.id)}
+                    className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
-              <div className="flex items-center gap-1 ml-auto">
-                <button
-                  onClick={() => { setEditing({ ...service }); setIsNew(false); }}
-                  className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                >
-                  <Pencil className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  onClick={() => setDeleteId(service.id)}
-                  className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
+              <h3 className="font-semibold text-gray-900 text-sm mb-1">{service.title}</h3>
+              <p className="text-xs text-gray-500 leading-relaxed line-clamp-3">{service.description}</p>
+              <div className="mt-3 flex items-center gap-1.5">
+                <span className={`w-3 h-3 rounded-full ${service.iconColor}`} />
+                <span className="text-xs text-gray-400">{service.iconType}</span>
+                <span className="text-xs text-gray-300 ml-auto">#{idx + 1}</span>
               </div>
             </div>
-            <h3 className="font-semibold text-gray-900 text-sm mb-1">{service.title}</h3>
-            <p className="text-xs text-gray-500 leading-relaxed line-clamp-3">{service.description}</p>
-            <div className="mt-3 flex items-center gap-1.5">
-              <span className={`w-3 h-3 rounded-full ${service.iconColor}`} />
-              <span className="text-xs text-gray-400">{service.iconType}</span>
-              <span className="text-xs text-gray-300 ml-auto">#{idx + 1}</span>
-            </div>
-          </div>
-        ))}
+          ))}
 
-        {/* Add new card placeholder */}
-        <button
-          onClick={() => { setEditing({ id: '', ...BLANK }); setIsNew(true); }}
-          className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl p-5 hover:border-red-300 hover:bg-red-50/30 transition-colors flex flex-col items-center justify-center gap-2 min-h-40"
-        >
-          <Plus className="w-6 h-6 text-gray-300" />
-          <span className="text-sm text-gray-400">Add New Service</span>
-        </button>
-      </div>
+          {/* Add new card placeholder */}
+          <button
+            onClick={() => { setEditing({ id: '', ...BLANK }); setIsNew(true); }}
+            className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl p-5 hover:border-red-300 hover:bg-red-50/30 transition-colors flex flex-col items-center justify-center gap-2 min-h-40"
+          >
+            <Plus className="w-6 h-6 text-gray-300" />
+            <span className="text-sm text-gray-400">Add New Service</span>
+          </button>
+        </div>
+      )}
 
       {/* Edit / Add Modal */}
       {editing && (

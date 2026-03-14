@@ -7,8 +7,8 @@ import AdminShell from '../_components/AdminShell';
 import { useAuth } from '@/lib/auth/context';
 import { useConfirm } from '@/lib/admin/confirm';
 import { toast } from 'sonner';
+import { AdminSectionSkeleton } from '@/components/ui/AdminSectionSkeleton';
 import {
-  Loader2,
   Users,
   Megaphone,
   LayoutGrid,
@@ -130,9 +130,7 @@ export default function UserCampaignsPage() {
   if (!authUser) {
     return (
       <AdminShell>
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="h-6 w-6 animate-spin text-red-500" />
-        </div>
+        <AdminSectionSkeleton variant="meta" />
       </AdminShell>
     );
   }
@@ -191,11 +189,7 @@ function AdminView() {
           </p>
         </div>
 
-        {loading && (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="h-6 w-6 animate-spin text-red-500" />
-          </div>
-        )}
+        {loading && <AdminSectionSkeleton variant="grid" />}
 
         {error && !loading && (
           <div className="rounded-xl border border-red-100 bg-red-50 px-6 py-10 text-center text-sm text-red-500">
@@ -528,7 +522,7 @@ function UserOwnView({ userId }: { userId: string }) {
 
   return (
     <AdminShell>
-      <div className="space-y-4 sm:space-y-5">
+      <div className="space-y-4 px-3 pt-3 pb-20 sm:space-y-5 sm:px-4 sm:pt-4 sm:pb-6">
         {/* Header */}
         <div>
           <h1 className="text-xl font-bold text-gray-900">My Campaigns</h1>
@@ -538,11 +532,7 @@ function UserOwnView({ userId }: { userId: string }) {
         </div>
 
         {/* Loading */}
-        {loading && (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="h-6 w-6 animate-spin text-red-500" />
-          </div>
-        )}
+        {loading && <AdminSectionSkeleton variant="meta" />}
 
         {/* Error */}
         {error && !loading && (
@@ -555,18 +545,18 @@ function UserOwnView({ userId }: { userId: string }) {
         {!loading && !error && (
           <>
             {/* Summary badges */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
-              <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-2.5 sm:py-3 text-center">
-                <p className="text-xl sm:text-2xl font-bold text-blue-700">{campaignRefs.length}</p>
-                <p className="text-xs font-medium text-blue-400">Campaigns</p>
+            <div className="grid grid-cols-3 gap-2 sm:gap-3">
+              <div className="rounded-xl border border-blue-100 bg-blue-50 px-2 py-2 sm:px-4 sm:py-3 text-center">
+                <p className="text-lg sm:text-2xl font-bold text-blue-700">{campaignRefs.length}</p>
+                <p className="text-[10px] sm:text-xs font-medium text-blue-400">Campaigns</p>
               </div>
-              <div className="rounded-xl border border-purple-100 bg-purple-50 px-4 py-2.5 sm:py-3 text-center">
-                <p className="text-xl sm:text-2xl font-bold text-purple-700">{adSetRefs.length}</p>
-                <p className="text-xs font-medium text-purple-400">Ad Sets</p>
+              <div className="rounded-xl border border-purple-100 bg-purple-50 px-2 py-2 sm:px-4 sm:py-3 text-center">
+                <p className="text-lg sm:text-2xl font-bold text-purple-700">{adSetRefs.length}</p>
+                <p className="text-[10px] sm:text-xs font-medium text-purple-400">Ad Sets</p>
               </div>
-              <div className="rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-2.5 sm:py-3 text-center">
-                <p className="text-xl sm:text-2xl font-bold text-emerald-700">{adRefs.length}</p>
-                <p className="text-xs font-medium text-emerald-400">Ads</p>
+              <div className="rounded-xl border border-emerald-100 bg-emerald-50 px-2 py-2 sm:px-4 sm:py-3 text-center">
+                <p className="text-lg sm:text-2xl font-bold text-emerald-700">{adRefs.length}</p>
+                <p className="text-[10px] sm:text-xs font-medium text-emerald-400">Ads</p>
               </div>
             </div>
 
@@ -624,11 +614,7 @@ function UserOwnView({ userId }: { userId: string }) {
    ═════════════════════════════════════════════════════════════════ */
 
 function Spinner() {
-  return (
-    <div className="flex items-center justify-center py-16">
-      <Loader2 className="h-6 w-6 animate-spin text-red-500" />
-    </div>
-  );
+  return <AdminSectionSkeleton variant="tableEmbedded" />;
 }
 
 function Empty({ label }: { label: string }) {
@@ -653,7 +639,59 @@ function CampaignsSection({ campaigns, loading, canToggle, toggleStatus, togglin
 
   return (
     <div className="rounded-xl border border-gray-100 bg-white">
-      <div className="overflow-x-auto">
+      {/* Mobile cards */}
+      <div className="space-y-3 p-3 md:hidden">
+        {campaigns.map((c) => {
+          const st = getStatusStyle(c.effective_status);
+          const thumb = c.ads?.data?.[0]?.creative?.thumbnail_url;
+          const budget = c.daily_budget
+            ? `$${(parseInt(c.daily_budget) / 100).toFixed(2)}/day`
+            : c.lifetime_budget
+              ? `$${(parseInt(c.lifetime_budget) / 100).toFixed(2)} total`
+              : '—';
+          const start = c.start_time ? new Date(c.start_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+          const end = c.stop_time ? new Date(c.stop_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Ongoing';
+
+          return (
+            <div key={c.id} className="rounded-lg border border-gray-200 bg-white p-3">
+              <div className="flex items-start gap-3">
+                {thumb ? (
+                  <img src={thumb} alt={c.name} className="h-10 w-10 rounded-lg object-cover" />
+                ) : (
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 text-xs text-gray-400">N/A</div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-gray-900">{c.name}</p>
+                  <p className="mt-0.5 text-[11px] text-gray-500 capitalize">{c.objective?.replace(/_/g, ' ').toLowerCase() || '—'}</p>
+                  <div className="mt-1.5 flex items-center gap-2">
+                    <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${st.color}`}>{st.label}</span>
+                    <span className="text-[11px] text-gray-500">{budget}</span>
+                  </div>
+                  <p className="mt-1 text-[11px] text-gray-500">{start ? `${start} - ${end}` : '—'}</p>
+                </div>
+                {canToggle(c) ? (
+                  <button
+                    onClick={() => toggleStatus(c)}
+                    disabled={togglingId === c.id}
+                    className={`relative mt-0.5 inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-1 ${
+                      c.status === 'ACTIVE' ? 'bg-green-500' : 'bg-gray-300'
+                    } ${togglingId === c.id ? 'opacity-50' : ''}`}
+                  >
+                    <span
+                      className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
+                        c.status === 'ACTIVE' ? 'translate-x-4' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                ) : null}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Desktop table */}
+      <div className="hidden overflow-x-auto md:block">
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="border-b border-gray-100 text-xs uppercase text-gray-500">
@@ -736,7 +774,53 @@ function AdSetsSection({ adSets, loading, canToggleAdSet, toggleAdSetStatus, tog
 
   return (
     <div className="rounded-xl border border-gray-100 bg-white">
-      <div className="overflow-x-auto">
+      {/* Mobile cards */}
+      <div className="space-y-3 p-3 md:hidden">
+        {adSets.map((a) => {
+          const st = getStatusStyle(a.effective_status);
+          const budget = a.daily_budget
+            ? `$${(parseInt(a.daily_budget) / 100).toFixed(2)}/day`
+            : a.lifetime_budget
+              ? `$${(parseInt(a.lifetime_budget) / 100).toFixed(2)} total`
+              : '—';
+          const start = a.start_time ? new Date(a.start_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+          const end = a.end_time ? new Date(a.end_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Ongoing';
+
+          return (
+            <div key={a.id} className="rounded-lg border border-gray-200 bg-white p-3">
+              <div className="flex items-start gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-gray-900">{a.name}</p>
+                  <p className="mt-0.5 text-[11px] text-gray-500 capitalize">{a.optimization_goal?.replace(/_/g, ' ').toLowerCase() || '—'}</p>
+                  <div className="mt-1.5 flex items-center gap-2">
+                    <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${st.color}`}>{st.label}</span>
+                    <span className="text-[11px] text-gray-500">{budget}</span>
+                  </div>
+                  <p className="mt-1 text-[11px] text-gray-500">{start ? `${start} - ${end}` : '—'}</p>
+                </div>
+                {canToggleAdSet(a) ? (
+                  <button
+                    onClick={() => toggleAdSetStatus(a)}
+                    disabled={togglingId === a.id}
+                    className={`relative mt-0.5 inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-1 ${
+                      a.status === 'ACTIVE' ? 'bg-green-500' : 'bg-gray-300'
+                    } ${togglingId === a.id ? 'opacity-50' : ''}`}
+                  >
+                    <span
+                      className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
+                        a.status === 'ACTIVE' ? 'translate-x-4' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                ) : null}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Desktop table */}
+      <div className="hidden overflow-x-auto md:block">
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="border-b border-gray-100 text-xs uppercase text-gray-500">
@@ -810,7 +894,51 @@ function AdsSection({ ads, loading, canToggleAd, toggleAdStatus, togglingId }: {
 
   return (
     <div className="rounded-xl border border-gray-100 bg-white">
-      <div className="overflow-x-auto">
+      {/* Mobile cards */}
+      <div className="space-y-3 p-3 md:hidden">
+        {ads.map((ad) => {
+          const st = getStatusStyle(ad.effective_status);
+          return (
+            <div key={ad.id} className="rounded-lg border border-gray-200 bg-white p-3">
+              <div className="flex items-start gap-3">
+                {ad.creative?.thumbnail_url ? (
+                  <img src={ad.creative.thumbnail_url} alt={ad.name} className="h-10 w-10 rounded-lg object-cover" />
+                ) : (
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 text-xs text-gray-400">N/A</div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-gray-900">{ad.name}</p>
+                  <p className="mt-0.5 truncate text-[11px] text-gray-500">{ad.creative?.title || 'No creative title'}</p>
+                  <div className="mt-1.5 flex items-center gap-2">
+                    <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${st.color}`}>{st.label}</span>
+                    <span className="text-[11px] text-gray-500">
+                      {new Date(ad.created_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </span>
+                  </div>
+                </div>
+                {canToggleAd(ad) ? (
+                  <button
+                    onClick={() => toggleAdStatus(ad)}
+                    disabled={togglingId === ad.id}
+                    className={`relative mt-0.5 inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-1 ${
+                      ad.status === 'ACTIVE' ? 'bg-green-500' : 'bg-gray-300'
+                    } ${togglingId === ad.id ? 'opacity-50' : ''}`}
+                  >
+                    <span
+                      className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
+                        ad.status === 'ACTIVE' ? 'translate-x-4' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                ) : null}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Desktop table */}
+      <div className="hidden overflow-x-auto md:block">
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="border-b border-gray-100 text-xs uppercase text-gray-500">

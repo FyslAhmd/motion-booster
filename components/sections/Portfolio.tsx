@@ -35,33 +35,22 @@ export const Portfolio = () => {
   const filteredItems = activeCategory === 'All' ? items.slice(0, 6) : items.filter(i => i.category === activeCategory).slice(0, 6);
 
   return (
-    <section className="py-8 md:py-12 lg:py-16 bg-gray-50">
+    <section className="py-8 md:py-12 lg:py-10 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-8 md:mb-10">
-          {loading ? (
-            <>
-              <div className="h-8 md:h-10 w-52 rounded-full bg-gray-200 animate-pulse mx-auto mb-3" />
-              <div className="h-4 w-72 md:w-96 rounded-full bg-gray-200 animate-pulse mx-auto" />
-            </>
-          ) : (
-            <>
-              <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-3">
-                Our Portfolio
-              </h2>
-              <p className="text-gray-600 text-sm md:text-base max-w-2xl mx-auto">
-                Explore our latest projects and success stories
-              </p>
-            </>
-          )}
+          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-3">
+            Our Portfolio
+          </h2>
+          <p className="text-gray-600 text-sm md:text-base max-w-2xl mx-auto">
+            Explore our latest projects and success stories
+          </p>
         </div>
 
         {/* Category Filter */}
+        {!loading && (
         <div className="flex flex-wrap justify-center gap-2 md:gap-3 mb-8 md:mb-10">
-          {loading && Array.from({ length: 4 }).map((_, i) => (
-            <div key={`portfolio-tab-skeleton-${i}`} className="h-9 w-24 rounded-full bg-gray-200 animate-pulse" />
-          ))}
-          {!loading && availableCategories.map((category) => (
+          {availableCategories.map((category) => (
             <button
               key={category}
               onClick={() => setActiveCategory(category)}
@@ -75,6 +64,7 @@ export const Portfolio = () => {
             </button>
           ))}
         </div>
+        )}
 
         {/* Portfolio Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">

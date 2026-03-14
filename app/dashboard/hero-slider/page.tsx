@@ -25,6 +25,43 @@ const emptySlide: Omit<HeroSlideItem, 'id'> = {
   ctaLink: '',
 };
 
+function HeroSlidesListSkeleton() {
+  return (
+    <div className="space-y-4">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div
+          key={i}
+          className="flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white sm:flex-row"
+        >
+          <div className="h-32 w-full animate-pulse bg-gray-200 sm:h-auto sm:w-48" />
+          <div className="flex-1 p-4">
+            <div className="space-y-2">
+              <div className="h-3 w-16 animate-pulse rounded bg-gray-200" />
+              <div className="h-4 w-3/5 animate-pulse rounded bg-gray-200" />
+            </div>
+            <div className="mt-4 flex items-center justify-between border-t border-gray-50 pt-3">
+              <div className="flex items-center gap-1">
+                <div className="h-7 w-7 animate-pulse rounded-lg bg-gray-200" />
+                <div className="h-7 w-7 animate-pulse rounded-lg bg-gray-200" />
+                <div className="ml-2 h-3 w-14 animate-pulse rounded bg-gray-200" />
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="h-7 w-7 animate-pulse rounded-lg bg-gray-200" />
+                <div className="h-7 w-7 animate-pulse rounded-lg bg-gray-200" />
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
+
+      <div className="flex w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 p-8">
+        <div className="h-6 w-6 animate-pulse rounded bg-gray-200" />
+        <div className="h-4 w-28 animate-pulse rounded bg-gray-200" />
+      </div>
+    </div>
+  );
+}
+
 export default function HeroSliderPage() {
   const [slides, setSlides] = useState<HeroSlideItem[]>([]);
   const [editing, setEditing] = useState<HeroSlideItem | null>(null);
@@ -32,13 +69,15 @@ export default function HeroSliderPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   useEffect(() => {
     fetch('/api/v1/cms/hero-slides')
       .then(r => r.json())
       .then((data) => { if (Array.isArray(data)) setSlides(data); })
-      .catch(() => toast.error('Failed to load slides.'));
+      .catch(() => toast.error('Failed to load slides.'))
+      .finally(() => setInitialLoading(false));
   }, []);
 
   const { confirm } = useConfirm();
@@ -212,6 +251,9 @@ export default function HeroSliderPage() {
       </div>
 
       {/* Slides list */}
+      {initialLoading ? (
+        <HeroSlidesListSkeleton />
+      ) : (
       <div className="space-y-4">
         {slides.map((slide, index) => (
           <div key={slide.id} className="bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-md transition-shadow flex flex-col sm:flex-row">
@@ -273,6 +315,7 @@ export default function HeroSliderPage() {
           <span className="text-sm text-gray-400">Add New Slide</span>
         </button>
       </div>
+      )}
     </AdminShell>
   );
 }

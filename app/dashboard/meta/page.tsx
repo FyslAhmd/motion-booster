@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import AdminShell from '../_components/AdminShell';
+import { AdminSectionSkeleton } from '@/components/ui/AdminSectionSkeleton';
 import { CampaignsTable, AdSetsTable, AdsTable } from './_components';
 import AccountSwitcher from './_components/AccountSwitcher';
 
@@ -21,6 +22,10 @@ export default function MetaDashboardPage() {
     adsets: null,
     ads: null,
   });
+  const countsLoading =
+    activeCounts.campaigns === null &&
+    activeCounts.adsets === null &&
+    activeCounts.ads === null;
 
   // Fetch total active counts whenever account changes
   useEffect(() => {
@@ -52,6 +57,8 @@ export default function MetaDashboardPage() {
 
         {/* Account Switcher */}
         <AccountSwitcher value={accountId} onChange={setAccountId} />
+
+        {countsLoading && <AdminSectionSkeleton variant="inline" />}
 
         {/* Tabs — same on mobile and desktop */}
         <div>

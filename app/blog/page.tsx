@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Search, Calendar, User, Loader2 } from 'lucide-react';
+import { Search, Calendar, User } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { BlogContentSkeleton } from '@/components/ui/PublicPageLoadingSkeleton';
 
 interface BlogPost {
   id: string;
@@ -81,9 +82,7 @@ export default function BlogPage() {
       <section className="py-8 px-4">
         <div className="max-w-7xl mx-auto">
           {loading ? (
-            <div className="flex items-center justify-center py-32">
-              <Loader2 className="w-8 h-8 animate-spin text-gray-300" />
-            </div>
+            <BlogContentSkeleton />
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
               {/* Sidebar */}

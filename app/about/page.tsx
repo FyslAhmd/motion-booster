@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { TeamMemberItem } from '@/lib/admin/store';
+import { AboutTeamGridSkeleton } from '@/components/ui/PublicPageLoadingSkeleton';
 
 const TeamMember: React.FC<{ member: TeamMemberItem }> = ({ member }) => {
   const initials = member.avatar || member.name.slice(0, 2).toUpperCase();
@@ -74,12 +75,14 @@ const ValueCard: React.FC<ValueCardProps> = ({ icon, title, description }) => {
 
 export default function AboutPage() {
   const [team, setTeam] = useState<TeamMemberItem[]>([]);
+  const [teamLoading, setTeamLoading] = useState(true);
 
   useEffect(() => {
     fetch('/api/v1/cms/team')
       .then(r => r.json())
       .then(data => setTeam(Array.isArray(data) ? data : []))
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setTeamLoading(false));
   }, []);
 
   const values = [
@@ -251,11 +254,15 @@ export default function AboutPage() {
               Talented individuals working together to build exceptional software solutions
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {team.map((member) => (
-              <TeamMember key={member.id} member={member} />
-            ))}
-          </div>
+          {teamLoading ? (
+            <AboutTeamGridSkeleton />
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {team.map((member) => (
+                <TeamMember key={member.id} member={member} />
+              ))}
+            </div>
+          )}
           
           {/* Join Team CTA */}
           <div className="mt-10 text-center">

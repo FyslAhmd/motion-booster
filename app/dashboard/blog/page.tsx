@@ -7,6 +7,7 @@ import {
   EyeOff, Tag, Image as ImageIcon,
 } from 'lucide-react';
 import ImageUpload from '@/components/ui/ImageUpload';
+import { AdminSectionSkeleton } from '@/components/ui/AdminSectionSkeleton';
 import { toast } from 'sonner';
 
 interface BlogPostItem {
@@ -223,9 +224,7 @@ export default function AdminBlogPage() {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-        </div>
+        <AdminSectionSkeleton variant="list" />
       ) : (
         <div className="space-y-3">
           {posts.map((post, idx) => (

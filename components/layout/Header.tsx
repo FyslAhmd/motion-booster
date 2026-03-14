@@ -45,6 +45,16 @@ export const Header = () => {
   }, [showSearch]);
 
   useEffect(() => {
+    const shouldLockScroll = showSearch || showNotif || showMoreDrawer;
+    document.documentElement.style.overflow = shouldLockScroll ? 'hidden' : '';
+    document.body.style.overflow = shouldLockScroll ? 'hidden' : '';
+    return () => {
+      document.documentElement.style.overflow = '';
+      document.body.style.overflow = '';
+    };
+  }, [showSearch, showNotif, showMoreDrawer]);
+
+  useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') { setShowSearch(false); setShowNotif(false); }
     };
@@ -80,9 +90,9 @@ export const Header = () => {
   const visibleNavItems = navItems;
 
   return (
-    <header className={`z-50 lg:fixed lg:top-0 lg:left-0 lg:right-0 transition-all duration-300 ${scrolled ? 'bg-white shadow-md' : 'bg-transparent'}`}>
+    <header className={`relative z-50 lg:fixed lg:top-0 lg:left-0 lg:right-0 transition-all duration-300 ${scrolled ? 'lg:bg-white lg:shadow-md' : 'lg:bg-transparent'}`}>
       {/* Mobile Top Bar - Logo + Icons */}
-      <div className={`lg:hidden py-3 px-4 transition-all duration-300 ${scrolled ? 'bg-white shadow-md' : 'bg-transparent'}`}>
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 py-3 px-4 bg-white/95 backdrop-blur-sm border-b border-gray-100">
         <div className="flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
@@ -122,6 +132,7 @@ export const Header = () => {
           </div>
         </div>
       </div>
+      <div className="lg:hidden h-[74px]" aria-hidden="true" />
 
       {/* Desktop Top Bar */}
       <div className="hidden lg:block text-white" style={{ background: 'linear-gradient(214.38deg, #ff8079 -2.24%, #ff1e1e 59.38%)', padding: '7px 0' }}>
@@ -253,10 +264,10 @@ export const Header = () => {
       </nav>
 
       {/* Bottom Navbar for Mobile */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 shadow-lg flex lg:hidden justify-around items-center h-16 px-2">
+      <nav className="fixed bottom-0 left-0 right-0 z-40 flex lg:hidden justify-around items-center px-2 pt-1 h-[calc(4rem+env(safe-area-inset-bottom))] pb-[env(safe-area-inset-bottom)] bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-lg">
         <Link
           href="/"
-          className={`flex flex-col items-center justify-center gap-1 px-3 py-2 transition-colors flex-1 ${
+          className={`flex flex-col items-center justify-center gap-1 px-3 py-2 transition-colors flex-1 min-w-0 ${
             pathname === '/' ? 'text-red-500' : 'text-gray-500 hover:text-red-500'
           }`}
         >
@@ -265,7 +276,7 @@ export const Header = () => {
         </Link>
         <Link
           href="/service"
-          className={`flex flex-col items-center justify-center gap-1 px-3 py-2 transition-colors flex-1 ${
+          className={`flex flex-col items-center justify-center gap-1 px-3 py-2 transition-colors flex-1 min-w-0 ${
             pathname === '/service' ? 'text-red-500' : 'text-gray-500 hover:text-red-500'
           }`}
         >
@@ -274,7 +285,7 @@ export const Header = () => {
         </Link>
         <Link
           href="/team"
-          className={`flex flex-col items-center justify-center gap-1 px-3 py-2 transition-colors flex-1 ${
+          className={`flex flex-col items-center justify-center gap-1 px-3 py-2 transition-colors flex-1 min-w-0 ${
             pathname === '/team' ? 'text-red-500' : 'text-gray-500 hover:text-red-500'
           }`}
         >
@@ -283,7 +294,7 @@ export const Header = () => {
         </Link>
         <button
           onClick={() => setShowMoreDrawer(true)}
-          className="flex flex-col items-center justify-center gap-1 px-3 py-2 text-gray-500 hover:text-red-500 transition-colors flex-1"
+          className="flex flex-col items-center justify-center gap-1 px-3 py-2 text-gray-500 hover:text-red-500 transition-colors flex-1 min-w-0"
         >
           <Menu className="w-6 h-6" />
           <span className="text-[10px] font-medium">More</span>
@@ -296,12 +307,12 @@ export const Header = () => {
       {/* Backdrop */}
       {showSearch && (
         <div
-          className="fixed inset-0 z-90 bg-black/30 lg:hidden"
+          className="fixed inset-0 z-[90] bg-black/30 lg:hidden"
           onClick={() => setShowSearch(false)}
         />
       )}
       <div
-        className={`fixed top-0 right-0 z-91 h-full w-4/5 max-w-sm bg-white shadow-2xl flex flex-col lg:hidden
+        className={`fixed top-0 right-0 z-[91] h-full w-4/5 max-w-sm bg-white shadow-2xl flex flex-col lg:hidden
           transition-transform duration-300 ease-in-out
           ${showSearch ? 'translate-x-0' : 'translate-x-full'}`}
       >
@@ -345,12 +356,12 @@ export const Header = () => {
       {/* ── Notification Panel (right → left slide) ── */}
       {showNotif && (
         <div
-          className="fixed inset-0 z-90 bg-black/30 lg:hidden"
+          className="fixed inset-0 z-[90] bg-black/30 lg:hidden"
           onClick={() => setShowNotif(false)}
         />
       )}
       <div
-        className={`fixed top-0 right-0 z-91 h-full w-4/5 max-w-sm bg-white shadow-2xl flex flex-col lg:hidden
+        className={`fixed top-0 right-0 z-[91] h-full w-4/5 max-w-sm bg-white shadow-2xl flex flex-col lg:hidden
           transition-transform duration-300 ease-in-out
           ${showNotif ? 'translate-x-0' : 'translate-x-full'}`}
       >
