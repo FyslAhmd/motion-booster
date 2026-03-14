@@ -49,7 +49,7 @@ function StatCard({ value, title, bgColor, valueColor, started }: StatCardProps)
 
   return (
     <div
-      className={`stat-card ${bgColor} cursor-default rounded-2xl p-5 sm:p-6 text-center transition-all hover:shadow-lg`}
+      className={`stat-card achievement-stat-card ${bgColor} cursor-default rounded-2xl p-5 sm:p-6 text-center transition-all hover:shadow-lg`}
     >
       <div className={`mb-2 text-4xl sm:text-5xl font-extrabold tracking-tight ${valueColor}`}>{display}</div>
       <h3 className="text-xs sm:text-sm font-bold leading-snug text-gray-800">{title}</h3>

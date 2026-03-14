@@ -86,7 +86,7 @@ export const Portfolio = () => {
                   setMobilePreviewId((prev) => (prev === item.id ? null : item.id));
                 }
               }}
-              className="group relative bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300"
+              className="portfolio-card group relative bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300"
             >
               {/* Cover Image or Gradient */}
               <div className="relative h-48 md:h-56 overflow-hidden">

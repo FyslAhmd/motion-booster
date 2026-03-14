@@ -103,6 +103,7 @@ export interface ServiceCategoryItem {
   iconType: string;   // lucide icon key: 'trending-up' | 'palette' | 'code' | 'globe' | 'smartphone' | 'layers' | 'sparkles' | 'video' | 'briefcase' | 'zap' | 'star' | 'rocket' | 'shield' | 'settings'
   iconColor: string;  // Tailwind text color e.g. 'text-green-600'
   iconBg: string;     // Tailwind bg color e.g. 'bg-green-50'
+  logoImage?: string; // base64 uploaded category logo
 }
 
 export interface HeroSlideItem {

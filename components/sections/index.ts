@@ -12,6 +12,7 @@ export { CTA } from './CTA';
 export { Upgrade } from './Upgrade';
 export { Service } from './Service';
 export { HeaderBanner } from './HeaderBanner';
+export { HomePageGsap } from './HomePageGsap';
 export { CategorySlider } from './CategorySlider';
 export { PopularCourses } from './PopularCourses';
 export { CourseListing } from './CourseListing';

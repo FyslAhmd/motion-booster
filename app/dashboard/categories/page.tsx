@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, type DragEvent } from 'react';
 import AdminShell from '../_components/AdminShell';
 import { useConfirm } from '@/lib/admin/confirm';
 import { ServiceCategoryItem } from '@/lib/admin/store';
 import { CategoryIcon, ICON_OPTIONS } from '@/lib/admin/categoryIcons';
-import { Plus, Pencil, Trash2, X, Save, GripVertical, ChevronUp, ChevronDown } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Save, GripVertical, ChevronUp, ChevronDown, Image as ImageIcon } from 'lucide-react';
+import ImageUpload from '@/components/ui/ImageUpload';
 import { toast } from 'sonner';
 
 const COLOR_OPTIONS = [
@@ -32,6 +33,7 @@ const emptyItem: Omit<ServiceCategoryItem, 'id'> = {
   iconType: 'layers',
   iconColor: 'text-blue-600',
   iconBg: 'bg-blue-50',
+  logoImage: '',
 };
 
 function CategoriesListSkeleton() {
@@ -62,9 +64,12 @@ export default function CategoriesPage() {
   const [editing, setEditing] = useState<ServiceCategoryItem | null>(null);
   const [isNew, setIsNew] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [dragReordered, setDragReordered] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
+  const itemsRef = useRef<ServiceCategoryItem[]>([]);
 
   useEffect(() => {
     fetch('/api/v1/cms/service-categories')
@@ -74,7 +79,19 @@ export default function CategoriesPage() {
       .finally(() => setInitialLoading(false));
   }, []);
 
+  useEffect(() => {
+    itemsRef.current = items;
+  }, [items]);
+
   const { confirm } = useConfirm();
+
+  const persistOrder = async (orderedItems: ServiceCategoryItem[]) => {
+    await fetch('/api/v1/cms/service-categories/reorder', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: orderedItems.map(i => i.id) }),
+    }).catch(() => toast.error('Reorder failed.'));
+  };
 
   const save = async () => {
     if (!editing) return;
@@ -112,11 +129,43 @@ export default function CategoriesPage() {
     if (target < 0 || target >= arr.length) return;
     [arr[index], arr[target]] = [arr[target], arr[index]];
     setItems(arr);
-    await fetch('/api/v1/cms/service-categories/reorder', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ids: arr.map(i => i.id) }),
-    }).catch(() => toast.error('Reorder failed.'));
+    await persistOrder(arr);
+  };
+
+  const onDragStart = (e: DragEvent<HTMLLIElement>, index: number) => {
+    const fromHandle = (e.target as HTMLElement).closest('[data-drag-handle="true"]');
+    if (!fromHandle) {
+      e.preventDefault();
+      return;
+    }
+    setDragIdx(index);
+    setDragReordered(false);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', items[index]?.id || '');
+  };
+
+  const onDragOver = (e: DragEvent<HTMLLIElement>, overIndex: number) => {
+    e.preventDefault();
+    if (dragIdx === null || dragIdx === overIndex) return;
+
+    setItems(prev => {
+      const arr = [...prev];
+      const [moved] = arr.splice(dragIdx, 1);
+      arr.splice(overIndex, 0, moved);
+      itemsRef.current = arr;
+      return arr;
+    });
+    setDragIdx(overIndex);
+    setDragReordered(true);
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const onDragEnd = async () => {
+    const shouldPersist = dragReordered;
+    setDragIdx(null);
+    setDragReordered(false);
+    if (!shouldPersist) return;
+    await persistOrder(itemsRef.current);
   };
 
   const openNew = () => {
@@ -132,6 +181,28 @@ export default function CategoriesPage() {
   const setColor = (opt: typeof COLOR_OPTIONS[0]) => {
     if (!editing) return;
     setEditing({ ...editing, iconColor: opt.text, iconBg: opt.bg });
+  };
+
+  const handleLogoChange = (nextValue: string) => {
+    if (nextValue !== '') {
+      setEditing(prev => (prev ? { ...prev, logoImage: nextValue } : prev));
+      return;
+    }
+
+    if (!editing?.logoImage) {
+      setEditing(prev => (prev ? { ...prev, logoImage: '' } : prev));
+      return;
+    }
+
+    void confirm({
+      title: 'Remove Logo?',
+      message: 'Are you sure you want to remove this category logo?',
+      confirmLabel: 'Remove',
+      cancelLabel: 'Cancel',
+    }).then((ok) => {
+      if (!ok) return;
+      setEditing(prev => (prev ? { ...prev, logoImage: '' } : prev));
+    });
   };
 
   const selectedColor = COLOR_OPTIONS.find(c => c.text === editing?.iconColor);
@@ -233,12 +304,32 @@ export default function CategoriesPage() {
                 </div>
               </div>
 
+              {/* Logo upload */}
+              <div>
+                <label className="flex items-center gap-1 text-xs font-medium text-gray-500 mb-2">
+                  <ImageIcon className="w-3 h-3" /> Logo Image
+                </label>
+                <ImageUpload
+                  value={editing.logoImage || ''}
+                  onChange={handleLogoChange}
+                  label={editing.logoImage ? 'Replace Logo' : 'Upload Logo'}
+                  aspectRatio="square"
+                  maxPx={360}
+                  sizeHint="360×360px PNG recommended"
+                />
+              </div>
+
               {/* Preview */}
               <div className="border border-gray-100 rounded-xl p-4 bg-gray-50">
                 <p className="text-xs text-gray-400 mb-3">Preview</p>
                 <div className="flex flex-col items-center justify-center w-36 h-28 bg-white border border-gray-100 rounded-2xl shadow-sm mx-auto">
                   <div className={`mb-2 w-11 h-11 rounded-xl flex items-center justify-center ${editing.iconBg}`}>
-                    <CategoryIcon iconType={editing.iconType} className={`w-6 h-6 ${editing.iconColor}`} />
+                    {editing.logoImage ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={editing.logoImage} alt="Category logo preview" className="w-7 h-7 object-contain" />
+                    ) : (
+                      <CategoryIcon iconType={editing.iconType} className={`w-6 h-6 ${editing.iconColor}`} />
+                    )}
                   </div>
                   <span className="text-xs font-bold text-gray-800 text-center leading-tight px-3">
                     {editing.title || 'Category Name'}
@@ -286,13 +377,34 @@ export default function CategoriesPage() {
         ) : (
           <ul className="divide-y divide-gray-50">
             {items.map((item, index) => (
-              <li key={item.id} className="flex items-center gap-4 px-5 py-3.5 hover:bg-gray-50 transition-colors group">
+              <li
+                key={item.id}
+                draggable
+                onDragStart={e => onDragStart(e, index)}
+                onDragOver={e => onDragOver(e, index)}
+                onDragEnd={onDragEnd}
+                className={`flex items-center gap-4 px-5 py-3.5 hover:bg-gray-50 transition-colors group ${
+                  dragIdx === index ? 'opacity-60 bg-gray-50' : ''
+                }`}
+              >
                 {/* Grip */}
-                <GripVertical className="w-4 h-4 text-gray-300 shrink-0" />
+                <button
+                  type="button"
+                  data-drag-handle="true"
+                  className="cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 shrink-0 p-0.5 rounded"
+                  title="Drag to reorder"
+                >
+                  <GripVertical className="w-4 h-4 pointer-events-none" />
+                </button>
 
                 {/* Icon preview */}
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${item.iconBg}`}>
-                  <CategoryIcon iconType={item.iconType} className={`w-5 h-5 ${item.iconColor}`} />
+                  {item.logoImage ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={item.logoImage} alt={item.title} className="w-6 h-6 object-contain" />
+                  ) : (
+                    <CategoryIcon iconType={item.iconType} className={`w-5 h-5 ${item.iconColor}`} />
+                  )}
                 </div>
 
                 {/* Title + slug */}

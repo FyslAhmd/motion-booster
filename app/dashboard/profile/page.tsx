@@ -15,13 +15,11 @@ import {
   Edit2,
   Lock,
   Bell,
-  CreditCard,
   Shield,
   Eye,
   EyeOff,
   Loader2,
   AtSign,
-  Calendar,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -47,7 +45,7 @@ export default function ProfilePage() {
     );
   }
 
-  const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'notifications' | 'billing'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'notifications'>('profile');
 
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -170,7 +168,6 @@ export default function ProfilePage() {
     { id: 'profile', label: 'Profile', icon: User },
     { id: 'security', label: 'Security', icon: Lock },
     { id: 'notifications', label: 'Notifications', icon: Bell },
-    { id: 'billing', label: 'Billing', icon: CreditCard },
   ];
 
   const avatarSrc = user?.avatarUrl ?? null;
@@ -467,67 +464,6 @@ export default function ProfilePage() {
                 </div>
               )}
 
-              {/* Billing Tab */}
-              {activeTab === 'billing' && (
-                <div className="bg-white/50 backdrop-blur-sm rounded-xl p-6 space-y-6">
-                  <div>
-                    <h2 className="text-lg font-bold text-gray-900 mb-1">Billing & Subscription</h2>
-                    <p className="text-sm text-gray-600">Manage your subscription and payment methods</p>
-                  </div>
-
-                  <div className="p-6 bg-linear-to-br from-red-50 to-rose-50 rounded-xl border border-red-100">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h3 className="text-lg font-bold text-gray-900">Professional Plan</h3>
-                        <p className="text-sm text-gray-600 mt-1">Perfect for growing businesses</p>
-                        <div className="flex items-center gap-4 mt-4">
-                          <span className="text-3xl font-bold text-gray-900">$99</span>
-                          <span className="text-gray-600">/month</span>
-                        </div>
-                      </div>
-                      <button className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 text-sm font-medium">Upgrade Plan</button>
-                    </div>
-                    <div className="mt-4 pt-4 border-t border-red-100">
-                      <p className="text-sm text-gray-600">Next billing date: <span className="font-medium text-gray-900">March 1, 2026</span></p>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h3 className="text-lg font-bold text-gray-900 mb-3">Payment Method</h3>
-                    <div className="p-4 bg-gray-50 rounded-lg flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-8 bg-red-500 rounded flex items-center justify-center text-white text-xs font-bold">VISA</div>
-                        <div>
-                          <p className="font-medium text-gray-900">•••• •••• •••• 4242</p>
-                          <p className="text-sm text-gray-600">Expires 12/2026</p>
-                        </div>
-                      </div>
-                      <button className="text-red-500 hover:text-red-600 text-sm font-medium">Update</button>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h3 className="text-lg font-bold text-gray-900 mb-3">Billing History</h3>
-                    <div className="space-y-2">
-                      {[{ date: 'Feb 1, 2026', amount: '$99.00' }, { date: 'Jan 1, 2026', amount: '$99.00' }, { date: 'Dec 1, 2025', amount: '$99.00' }].map((invoice, i) => (
-                        <div key={i} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                          <div className="flex items-center gap-4">
-                            <Calendar className="w-5 h-5 text-gray-400" />
-                            <div>
-                              <p className="font-medium text-gray-900">{invoice.date}</p>
-                              <p className="text-sm text-gray-600">Professional Plan</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-4">
-                            <span className="font-medium text-gray-900">{invoice.amount}</span>
-                            <span className="px-2 py-1 bg-red-50 text-red-600 text-xs font-medium rounded-full">Paid</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </div>

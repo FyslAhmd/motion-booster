@@ -84,7 +84,7 @@ export const CompanyMarquee = () => {
             ))}
             {/* First set */}
             {!loading && list.map((company) => (
-              <div key={`first-${company.id}`} className="shrink-0 mx-6 md:mx-10">
+              <div key={`first-${company.id}`} className="company-logo-item shrink-0 mx-6 md:mx-10">
                 <div className="flex items-center justify-center h-14 md:h-16">
                   {company.logoImage ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -103,7 +103,7 @@ export const CompanyMarquee = () => {
             ))}
             {/* Duplicate for seamless loop */}
             {!loading && list.map((company) => (
-              <div key={`second-${company.id}`} className="shrink-0 mx-6 md:mx-10">
+              <div key={`second-${company.id}`} className="company-logo-item shrink-0 mx-6 md:mx-10">
                 <div className="flex items-center justify-center h-14 md:h-16">
                   {company.logoImage ? (
                     // eslint-disable-next-line @next/next/no-img-element

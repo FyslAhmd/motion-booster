@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import AdminShell from '../_components/AdminShell';
+import { AdminSectionSkeleton } from '@/components/ui/AdminSectionSkeleton';
 
 interface UserBudgetRow {
   id: string;
@@ -149,11 +150,7 @@ export default function UserBudgetPage() {
           </div>
         </div>
 
-        {loading && (
-          <div className="rounded-xl border border-gray-100 bg-white px-6 py-10 text-center text-sm text-gray-500">
-            Loading user budgets...
-          </div>
-        )}
+        {loading && <AdminSectionSkeleton variant="table" />}
 
         {error && !loading && (
           <div className="rounded-xl border border-red-100 bg-red-50 px-6 py-10 text-center text-sm text-red-600">

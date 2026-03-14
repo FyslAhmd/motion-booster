@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { TeamMemberItem } from '@/lib/admin/store';
-import { AboutTeamGridSkeleton } from '@/components/ui/PublicPageLoadingSkeleton';
+import { PublicPageLoadingSkeleton } from '@/components/ui/PublicPageLoadingSkeleton';
 
 const TeamMember: React.FC<{ member: TeamMemberItem }> = ({ member }) => {
   const initials = member.avatar || member.name.slice(0, 2).toUpperCase();
@@ -85,6 +85,10 @@ export default function AboutPage() {
       .finally(() => setTeamLoading(false));
   }, []);
 
+  if (teamLoading) {
+    return <PublicPageLoadingSkeleton variant='about' />;
+  }
+
   const values = [
     {
       icon: (
@@ -134,7 +138,7 @@ export default function AboutPage() {
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
-      <section className="pt-20 lg:pt-32 pb-12 lg:pb-16 bg-linear-to-br from-red-50 via-white to-rose-50">
+      <section className="pt-10 sm:pt-14 lg:pt-32 pb-10 sm:pb-12 lg:pb-16 bg-linear-to-br from-red-50 via-white to-rose-50">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="text-center max-w-4xl mx-auto">
             <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 mb-6">
@@ -254,15 +258,11 @@ export default function AboutPage() {
               Talented individuals working together to build exceptional software solutions
             </p>
           </div>
-          {teamLoading ? (
-            <AboutTeamGridSkeleton />
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {team.map((member) => (
-                <TeamMember key={member.id} member={member} />
-              ))}
-            </div>
-          )}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {team.map((member) => (
+              <TeamMember key={member.id} member={member} />
+            ))}
+          </div>
           
           {/* Join Team CTA */}
           <div className="mt-10 text-center">

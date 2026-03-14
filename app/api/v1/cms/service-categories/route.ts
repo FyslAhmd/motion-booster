@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import { Prisma } from '@/lib/generated/prisma';
 
 const DEFAULT_CATEGORIES = [
   { title: 'Digital Marketing',     slug: 'digital-marketing',     iconType: 'trending-up', iconColor: 'text-green-600',  iconBg: 'bg-green-50',  order: 0 },
@@ -24,8 +25,16 @@ export async function GET() {
     }
 
     return NextResponse.json(categories);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('[CMS service-categories GET]', error);
+
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2022') {
+      return NextResponse.json(
+        { error: 'Database schema is out of date. Run Prisma migrations on this environment.' },
+        { status: 500 },
+      );
+    }
+
     return NextResponse.json({ error: 'Failed to load categories' }, { status: 500 });
   }
 }
@@ -33,13 +42,22 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { title, slug, iconType, iconColor, iconBg } = body;
+    const { title, slug, iconType, iconColor, iconBg, logoImage } = body;
 
     if (!title?.trim()) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 });
     }
 
     const finalSlug = (slug || title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')).trim();
+    if (!finalSlug) {
+      return NextResponse.json({ error: 'Slug is required' }, { status: 400 });
+    }
+
+    const existing = await prisma.serviceCategory.findUnique({ where: { slug: finalSlug } });
+    if (existing) {
+      return NextResponse.json({ error: 'Slug already exists' }, { status: 409 });
+    }
+
     const count = await prisma.serviceCategory.count();
 
     const category = await prisma.serviceCategory.create({
@@ -49,6 +67,7 @@ export async function POST(req: NextRequest) {
         iconType: iconType || 'layers',
         iconColor: iconColor || 'text-blue-600',
         iconBg: iconBg || 'bg-blue-50',
+        logoImage: logoImage || null,
         order: count,
       },
     });
@@ -56,9 +75,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(category, { status: 201 });
   } catch (error: unknown) {
     console.error('[CMS service-categories POST]', error);
-    const msg = error instanceof Error && error.message.includes('Unique constraint')
-      ? 'Slug already exists'
-      : 'Failed to create category';
-    return NextResponse.json({ error: msg }, { status: 500 });
+
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2002') {
+        return NextResponse.json({ error: 'Slug already exists' }, { status: 409 });
+      }
+
+      if (error.code === 'P2022') {
+        return NextResponse.json(
+          { error: 'Database schema is out of date. Run Prisma migrations on this environment.' },
+          { status: 500 },
+        );
+      }
+    }
+
+    return NextResponse.json({ error: 'Failed to create category' }, { status: 500 });
   }
 }

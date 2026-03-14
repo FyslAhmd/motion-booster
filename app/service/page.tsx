@@ -81,7 +81,7 @@ export default function ServicePage() {
   return (
     <main className="min-h-screen pb-16 lg:pb-0">
       {/* Hero Section */}
-      <section className="py-20 lg:py-32 bg-linear-to-br from-red-50 via-white to-rose-50">
+      <section className="pt-8 pb-14 sm:py-16 lg:py-32 bg-linear-to-br from-red-50 via-white to-rose-50">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="text-center max-w-4xl mx-auto">
             <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
@@ -112,7 +112,7 @@ export default function ServicePage() {
       </section>
 
       {/* Services Section */}
-      <section className="py-20 bg-white">
+      <section className="pt-10 pb-16 sm:py-16 lg:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">

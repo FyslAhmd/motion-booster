@@ -20,6 +20,10 @@ export const CategorySlider = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [categories, setCategories] = useState<ServiceCategoryItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStartX, setDragStartX] = useState(0);
+  const [dragStartScroll, setDragStartScroll] = useState(0);
+  const dragMovedRef = useRef(false);
 
   useEffect(() => {
     fetch('/api/v1/cms/service-categories')
@@ -52,20 +56,58 @@ export const CategorySlider = () => {
           ) : (
             <div
               ref={scrollRef}
-              className="flex gap-2.5 sm:gap-4 overflow-x-auto scrollbar-hide scroll-smooth"
+              className="flex gap-2.5 sm:gap-4 overflow-x-auto scrollbar-hide scroll-smooth cursor-grab active:cursor-grabbing select-none"
               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+              onPointerDown={(e) => {
+                const el = scrollRef.current;
+                if (!el) return;
+                setIsDragging(true);
+                dragMovedRef.current = false;
+                setDragStartX(e.clientX);
+                setDragStartScroll(el.scrollLeft);
+              }}
+              onPointerMove={(e) => {
+                if (!isDragging) return;
+                const el = scrollRef.current;
+                if (!el) return;
+                const delta = e.clientX - dragStartX;
+                if (Math.abs(delta) > 4) dragMovedRef.current = true;
+                el.scrollLeft = dragStartScroll - delta;
+              }}
+              onPointerUp={() => setIsDragging(false)}
+              onPointerLeave={() => setIsDragging(false)}
             >
               {categories.map((category) => (
                 <Link
                   key={category.id}
                   href={`/category/${category.slug}`}
+                  onClick={(e) => {
+                    if (!dragMovedRef.current) return;
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dragMovedRef.current = false;
+                  }}
+                  onDragStart={(e) => e.preventDefault()}
                   className="category-card group shrink-0 flex flex-col items-center justify-center w-28 h-24 sm:w-36 sm:h-30 md:w-40 md:h-32 bg-white border border-gray-100 rounded-xl sm:rounded-2xl shadow-sm hover:shadow-xl hover:border-red-200 transition-all duration-300 px-2 sm:px-4"
                 >
-                  <div className={`mb-1.5 sm:mb-3 w-9 h-9 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center ${category.iconBg}`}>
-                    <CategoryIcon
-                      iconType={category.iconType}
-                      className={`w-5 h-5 sm:w-6 sm:h-6 ${category.iconColor}`}
-                    />
+                  <div
+                    className={`mb-1.5 sm:mb-3 w-9 h-9 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center ${
+                      category.logoImage ? 'bg-white border border-gray-100' : category.iconBg
+                    }`}
+                  >
+                    {category.logoImage ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={category.logoImage}
+                        alt={`${category.title} logo`}
+                        className="w-5 h-5 sm:w-6 sm:h-6 object-contain"
+                      />
+                    ) : (
+                      <CategoryIcon
+                        iconType={category.iconType}
+                        className={`w-5 h-5 sm:w-6 sm:h-6 ${category.iconColor}`}
+                      />
+                    )}
                   </div>
                   <span className="text-xs sm:text-sm font-bold text-gray-800 group-hover:text-red-500 text-center leading-tight transition-colors">
                     {category.title}

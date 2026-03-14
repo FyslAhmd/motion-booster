@@ -73,7 +73,7 @@ export const Testimonials = () => {
   }, [draggingTarget]);
 
   const ReviewCard = ({ review }: { review: TestimonialItem }) => (
-    <div className="shrink-0 w-80 sm:w-90 md:w-100 bg-white border border-gray-100 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm hover:shadow-lg transition-shadow cursor-default">
+    <div className="testimonial-review-card shrink-0 w-80 sm:w-90 md:w-100 bg-white border border-gray-100 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm hover:shadow-lg transition-shadow cursor-default">
       <div className="flex items-start gap-3 sm:gap-4">
         {/* Avatar on left */}
         {review.avatarImage ? (
