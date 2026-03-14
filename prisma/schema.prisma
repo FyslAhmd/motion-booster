@@ -45,11 +45,32 @@ model User {
   conversations    Conversation[] @relation("ConversationParticipants")
   metaAdAssignments MetaAdAssignment[]
   boostRequests     BoostRequest[]
+  budgetDeposits    UserBudgetDeposit[] @relation("BudgetDepositsForUser")
+  budgetEntriesCreated UserBudgetDeposit[] @relation("BudgetDepositsCreatedByAdmin")
 
   @@index([email])
   @@index([username])
   @@index([phone])
   @@map("users")
+}
+
+// ─── USER BUDGET DEPOSIT HISTORY ─────────────────────
+
+model UserBudgetDeposit {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  amount      Decimal  @db.Decimal(14, 2)
+  note        String?  @db.Text
+  createdById String?  @map("created_by_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user      User  @relation("BudgetDepositsForUser", fields: [userId], references: [id], onDelete: Cascade)
+  createdBy User? @relation("BudgetDepositsCreatedByAdmin", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([createdById])
+  @@index([createdAt])
+  @@map("user_budget_deposits")
 }
 
 // ─── REFRESH TOKENS ───────────────────────────────────
