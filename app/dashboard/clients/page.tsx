@@ -65,7 +65,7 @@ function fmtTime(iso: string | null) {
 }
 
 function Pulse({ className }: { className: string }) {
-  return <div className={`animate-pulse rounded-xl bg-gray-200/80 ${className}`} />;
+  return <div className={`skeleton-breathe rounded-xl bg-gray-200/80 ${className}`} />;
 }
 
 function ClientsStatsSkeleton() {
@@ -515,7 +515,7 @@ export default function ClientsPage() {
             </h1>
             <p className="text-sm text-gray-400 mt-0.5">
               {loading ? (
-                <span className="inline-block h-3 w-40 animate-pulse rounded-full bg-gray-200" />
+                <span className="inline-block h-3 w-40 skeleton-breathe rounded-full bg-gray-200" />
               ) : (
                 `${clients.length} registered client${clients.length !== 1 ? 's' : ''}`
               )}
@@ -661,158 +661,100 @@ export default function ClientsPage() {
                 })}
               </div>
 
-              {/* ── Desktop table (hidden on mobile) ── */}
-              <div className="hidden sm:block overflow-x-auto">
-              <table className="w-full min-w-225 text-sm">
-                <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50">
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Client</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Contact</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
-                    {/* <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Ads Access</th> */}
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Email Verified</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Last Login</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Joined</th>
-                    <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {clients.map(client => {
-                    const st = STATUS_STYLES[client.status];
-                    const StIcon = st.icon;
-                    const busy = updating === client.id;
-                    return (
-                      <tr key={client.id} className="hover:bg-gray-50/60 transition-colors">
-                        {/* Client */}
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-3">
-                            {client.avatarUrl ? (
-                              <Image src={client.avatarUrl} alt="avatar" width={36} height={36} className="w-9 h-9 rounded-full object-cover shrink-0" />
-                            ) : (
-                              <div className="w-9 h-9 rounded-full bg-linear-to-br from-red-500 to-red-700 flex items-center justify-center text-white text-xs font-bold shrink-0">
-                                {client.fullName.slice(0, 2).toUpperCase()}
-                              </div>
-                            )}
-                            <div className="min-w-0">
-                              <p className="font-semibold text-gray-900 truncate">{client.fullName}</p>
-                              <p className="text-[11px] text-gray-400 truncate">@{client.username}</p>
-                            </div>
-                          </div>
-                        </td>
+	              {/* ── Desktop cards (hidden on mobile) ── */}
+	              <div className="hidden sm:grid grid-cols-1 gap-3 p-4 sm:p-5 lg:grid-cols-2 xl:grid-cols-3">
+	                {clients.map(client => {
+	                  const st = STATUS_STYLES[client.status];
+	                  const StIcon = st.icon;
+	                  const busy = updating === client.id;
+	                  return (
+	                    <div key={client.id} className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+	                      <div className="flex items-center gap-3">
+	                        {client.avatarUrl ? (
+	                          <Image src={client.avatarUrl} alt="avatar" width={40} height={40} className="w-10 h-10 rounded-full object-cover shrink-0" />
+	                        ) : (
+	                          <div className="w-10 h-10 rounded-full bg-linear-to-br from-red-500 to-red-700 flex items-center justify-center text-white text-xs font-bold shrink-0">
+	                            {client.fullName.slice(0, 2).toUpperCase()}
+	                          </div>
+	                        )}
+	                        <div className="min-w-0 flex-1">
+	                          <p className="font-semibold text-gray-900 text-sm truncate">{client.fullName}</p>
+	                          <p className="text-[11px] text-gray-400 truncate">@{client.username}</p>
+	                        </div>
+	                        <div className="flex items-center gap-1 shrink-0">
+	                          <button onClick={() => setEditClient(client)} title="Edit client" className="rounded-lg p-1.5 text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-colors">
+	                            <Pencil className="w-3.5 h-3.5" />
+	                          </button>
+	                          <button onClick={() => setDeleteClient(client)} title="Delete client" className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors">
+	                            <Trash2 className="w-3.5 h-3.5" />
+	                          </button>
+	                        </div>
+	                      </div>
 
-                        {/* Contact */}
-                        <td className="px-4 py-3">
-                          <div className="space-y-0.5 min-w-0">
-                            <div className="flex items-center gap-1.5 text-xs text-gray-600 truncate">
-                              <Mail className="w-3 h-3 text-gray-400 shrink-0" />
-                              <span className="truncate">{client.email}</span>
-                            </div>
-                            <div className="flex items-center gap-1.5 text-xs text-gray-400">
-                              <Phone className="w-3 h-3 shrink-0" />
-                              <span>{client.phone || '—'}</span>
-                            </div>
-                          </div>
-                        </td>
+	                      <div className="mt-3 space-y-1.5">
+	                        <div className="flex items-center gap-1.5 text-xs text-gray-600">
+	                          <Mail className="w-3 h-3 text-gray-400 shrink-0" />
+	                          <span className="truncate">{client.email}</span>
+	                        </div>
+	                        <div className="flex items-center gap-1.5 text-xs text-gray-400">
+	                          <Phone className="w-3 h-3 shrink-0" />
+	                          <span>{client.phone || '—'}</span>
+	                        </div>
+	                      </div>
 
-                        {/* Status */}
-                        <td className="px-4 py-3">
-                          <button
-                            onClick={() => cycleStatus(client)}
-                            disabled={busy}
-                            title="Click to change status"
-                            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold transition-opacity hover:opacity-70 disabled:opacity-50 ${st.cls}`}
-                          >
-                            {busy ? (
-                              <RefreshCw className="w-3 h-3 animate-spin" />
-                            ) : (
-                              <StIcon className="w-3 h-3" />
-                            )}
-                            {st.label}
-                          </button>
-                        </td>
+	                      <div className="mt-3 flex flex-wrap items-center gap-2">
+	                        <button
+	                          onClick={() => cycleStatus(client)}
+	                          disabled={busy}
+	                          title="Click to change status"
+	                          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold transition-opacity hover:opacity-70 disabled:opacity-50 ${st.cls}`}
+	                        >
+	                          {busy ? <RefreshCw className="w-3 h-3 animate-spin" /> : <StIcon className="w-3 h-3" />}
+	                          {st.label}
+	                        </button>
 
-                        {/* Ads Access */}
-                        {/* <td className="px-4 py-3">
-                          <button
-                            onClick={() => patch(client.id, { adsAccess: !client.adsAccess })}
-                            disabled={busy}
-                            title={client.adsAccess ? 'Revoke Ads Access' : 'Grant Ads Access'}
-                            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold transition-opacity hover:opacity-70 disabled:opacity-50 ${
-                              client.adsAccess
-                                ? 'bg-red-50 text-red-600 border border-red-200'
-                                : 'bg-gray-100 text-gray-400 border border-gray-200'
-                            }`}
-                          >
-                            {client.adsAccess ? <Megaphone className="w-3 h-3" /> : <MegaphoneOff className="w-3 h-3" />}
-                            {client.adsAccess ? 'Enabled' : 'Disabled'}
-                          </button>
-                        </td> */}
+	                        <button
+	                          onClick={() => patch(client.id, { adsAccess: !client.adsAccess })}
+	                          disabled={busy}
+	                          title={client.adsAccess ? 'Revoke Ads Access' : 'Grant Ads Access'}
+	                          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold transition-opacity hover:opacity-70 disabled:opacity-50 ${
+	                            client.adsAccess ? 'bg-red-50 text-red-600 border border-red-200' : 'bg-gray-100 text-gray-400 border border-gray-200'
+	                          }`}
+	                        >
+	                          {client.adsAccess ? <Megaphone className="w-3 h-3" /> : <MegaphoneOff className="w-3 h-3" />}
+	                          {client.adsAccess ? 'Ads On' : 'No Ads'}
+	                        </button>
 
-                        {/* Email Verified */}
-                        <td className="px-4 py-3">
-                          {client.emailVerified ? (
-                            <span className="inline-flex items-center gap-1 text-xs font-medium text-green-600">
-                              <CheckCircle2 className="w-3.5 h-3.5" /> Verified
-                            </span>
-                          ) : (
-                            <button
-                              onClick={() => patch(client.id, { emailVerified: true })}
-                              disabled={busy}
-                              title="Click to verify this email"
-                              className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700 transition-opacity hover:opacity-70 disabled:opacity-50"
-                            >
-                              {busy ? <RefreshCw className="w-3 h-3 animate-spin" /> : <XCircle className="w-3 h-3" />}
-                              Verify
-                            </button>
-                          )}
-                        </td>
+	                        {client.emailVerified ? (
+	                          <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold bg-green-50 text-green-600 border border-green-200">
+	                            <CheckCircle2 className="w-3 h-3" /> Verified
+	                          </span>
+	                        ) : (
+	                          <button
+	                            onClick={() => patch(client.id, { emailVerified: true })}
+	                            disabled={busy}
+	                            className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700 transition-opacity hover:opacity-70 disabled:opacity-50"
+	                          >
+	                            {busy ? <RefreshCw className="w-3 h-3 animate-spin" /> : <XCircle className="w-3 h-3" />}
+	                            Verify
+	                          </button>
+	                        )}
+	                      </div>
 
-                        {/* Last Login */}
-                        <td className="px-4 py-3">
-                          <div className="space-y-0.5">
-                            <div className="flex items-center gap-1.5 text-xs text-gray-400">
-                              <Clock className="w-3 h-3 shrink-0" />
-                              <span className="truncate">{fmtTime(client.lastLoginAt)}</span>
-                            </div>
-                            {client.lastLoginIp && (
-                              <p className="text-[10px] text-gray-300 pl-4.5">IP: {client.lastLoginIp}</p>
-                            )}
-                          </div>
-                        </td>
-
-                        {/* Joined */}
-                        <td className="px-4 py-3">
-                          <p className="text-xs text-gray-400">{fmtDate(client.createdAt)}</p>
-                          {client.updatedAt !== client.createdAt && (
-                            <p className="text-[10px] text-gray-300 mt-0.5">Updated {fmtDate(client.updatedAt)}</p>
-                          )}
-                        </td>
-
-                        {/* Actions */}
-                        <td className="px-4 py-3">
-                          <div className="flex items-center justify-center gap-1.5">
-                            <button
-                              onClick={() => setEditClient(client)}
-                              title="Edit client"
-                              className="rounded-lg p-1.5 text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                            >
-                              <Pencil className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              onClick={() => setDeleteClient(client)}
-                              title="Delete client"
-                              className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-              </div>
+	                      <div className="mt-3 grid grid-cols-2 gap-2 text-[11px] text-gray-500">
+	                        <div className="rounded-lg bg-gray-50 px-2 py-2">
+	                          <p className="text-gray-400">Last login</p>
+	                          <p className="mt-0.5 text-gray-600">{fmtTime(client.lastLoginAt)}</p>
+	                        </div>
+	                        <div className="rounded-lg bg-gray-50 px-2 py-2">
+	                          <p className="text-gray-400">Joined</p>
+	                          <p className="mt-0.5 text-gray-600">{fmtDate(client.createdAt)}</p>
+	                        </div>
+	                      </div>
+	                    </div>
+	                  );
+	                })}
+	              </div>
 
               {/* Pagination */}
               {totalPages > 1 && (

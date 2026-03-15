@@ -4,24 +4,66 @@ import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ChevronLeft, ChevronRight, Check, ArrowRight } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { PopularServiceItem } from '@/lib/admin/store';
 
 export const PopularCourses = () => {
   const [allServices, setAllServices] = useState<PopularServiceItem[]>([]);
+  const [categoryLabels, setCategoryLabels] = useState<Record<string, string>>({});
   const [activeTab, setActiveTab] = useState('All Services');
   const [loading, setLoading] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const tabsScrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetch('/api/v1/cms/popular-services')
-      .then(r => r.json())
-      .then((data) => { if (Array.isArray(data)) setAllServices(data); })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    let cancelled = false;
+
+    const load = async () => {
+      const [servicesResult, categoriesResult] = await Promise.allSettled([
+        fetch('/api/v1/cms/popular-services').then((r) => r.json()),
+        fetch('/api/v1/cms/service-categories').then((r) => r.json()),
+      ]);
+
+      if (!cancelled && servicesResult.status === 'fulfilled' && Array.isArray(servicesResult.value)) {
+        setAllServices(servicesResult.value);
+      }
+
+      if (!cancelled && categoriesResult.status === 'fulfilled' && Array.isArray(categoriesResult.value)) {
+        const nextMap: Record<string, string> = {};
+        categoriesResult.value.forEach((cat: { title?: string; slug?: string; iconType?: string }) => {
+          const title = cat.title?.trim();
+          if (!title) return;
+          [cat.slug, cat.iconType, cat.title].forEach((key) => {
+            if (!key?.trim()) return;
+            nextMap[key] = title;
+            nextMap[key.toLowerCase()] = title;
+          });
+        });
+        setCategoryLabels(nextMap);
+      }
+
+      if (!cancelled) setLoading(false);
+    };
+
+    load().catch(() => {
+      if (!cancelled) setLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const tabs = ['All Services', ...Array.from(new Set(allServices.map(s => s.category)))];
+  const tabs = ['All Services', ...Array.from(new Set(allServices.map(s => s.category).filter(Boolean)))];
+
+  const humanize = (value: string) =>
+    value
+      .replace(/[-_]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .replace(/\b\w/g, (char) => char.toUpperCase());
+
+  const getTabLabel = (value: string) =>
+    categoryLabels[value] || categoryLabels[value.toLowerCase()] || humanize(value);
 
   const filteredServices = activeTab === 'All Services'
     ? allServices
@@ -39,16 +81,34 @@ export const PopularCourses = () => {
   };
 
   return (
-    <section className="py-6 md:py-8 lg:py-9 bg-white">
+    <motion.section
+      className="py-6 md:py-8 lg:py-9 bg-white"
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.2 }}
+      transition={{ duration: 0.55, ease: 'easeOut' }}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-8 md:mb-10">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-3 md:mb-4">
+          <motion.h2
+            className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-3 md:mb-4"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.5 }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
+          >
             Our Popular Services
-          </h2>
-          <p className="text-sm sm:text-base text-gray-500 max-w-2xl mx-auto leading-relaxed px-4">
+          </motion.h2>
+          <motion.p
+            className="text-sm sm:text-base text-gray-500 max-w-2xl mx-auto leading-relaxed px-4"
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.5 }}
+            transition={{ duration: 0.45, delay: 0.08, ease: 'easeOut' }}
+          >
             We provide comprehensive digital solutions to help your business grow. Explore our wide range of services tailored to meet your specific needs.
-          </p>
+          </motion.p>
         </div>
 
         {/* Tabs */}
@@ -64,7 +124,7 @@ export const PopularCourses = () => {
                   activeTab === tab ? 'text-red-500 border-b-2 border-red-500' : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
-                {tab}
+                {tab === 'All Services' ? tab : getTabLabel(tab)}
               </button>
             ))}
           </div>
@@ -89,8 +149,15 @@ export const PopularCourses = () => {
                 </div>
               </div>
             ))}
-            {!loading && filteredServices.map(service => (
-              <div key={service.id} className="service-card shrink-0 w-72 sm:w-80 md:w-85 bg-white rounded-xl sm:rounded-2xl overflow-hidden shadow-sm hover:shadow-xl border border-gray-100 transition-all duration-300 group">
+            {!loading && filteredServices.map((service, index) => (
+              <motion.div
+                key={service.id}
+                className="service-card shrink-0 w-72 sm:w-80 md:w-85 bg-white rounded-xl sm:rounded-2xl overflow-hidden shadow-sm hover:shadow-xl border border-gray-100 transition-all duration-300 group"
+                initial={{ opacity: 0, y: 26 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.35 }}
+                transition={{ duration: 0.45, delay: Math.min(index * 0.06, 0.3), ease: 'easeOut' }}
+              >
                 <div className="relative h-40 sm:h-48 w-full overflow-hidden">
                   {service.customImage ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -113,11 +180,11 @@ export const PopularCourses = () => {
                     ))}
                   </div>
                   <Link href={`/category/${service.slug}`} className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-red-500 hover:text-red-600 transition-colors group/link">
-                    View All Services
+                    Read More
                     <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover/link:translate-x-1 transition-transform" />
                   </Link>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
 
@@ -126,6 +193,6 @@ export const PopularCourses = () => {
           </button>
         </div>
       </div>
-    </section>
+    </motion.section>
   );
 };

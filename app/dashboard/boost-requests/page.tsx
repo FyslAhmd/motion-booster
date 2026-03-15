@@ -5,6 +5,7 @@ import AdminShell from '../_components/AdminShell';
 import { useAuth } from '@/lib/auth/context';
 import { Search, ChevronLeft, ChevronRight, ExternalLink, User, Calendar, Target, Wallet, Clock3, Megaphone, Users2, Monitor } from 'lucide-react';
 import { AdminSectionSkeleton } from '@/components/ui/AdminSectionSkeleton';
+import { createPortal } from 'react-dom';
 
 interface BoostRequestItem {
   id: string;
@@ -53,7 +54,12 @@ export default function BoostRequestsPage() {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selected, setSelected] = useState<BoostRequestItem | null>(null);
   const [showAllAudience, setShowAllAudience] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const limit = 15;
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Debounce search input
   useEffect(() => {
@@ -315,73 +321,8 @@ export default function BoostRequestsPage() {
         </div>
       ) : (
         <>
-          {/* Desktop table */}
-          <div className="hidden md:block bg-white rounded-2xl border border-gray-100 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-gray-50 border-b border-gray-100">
-                    <th className="text-left px-5 py-3 font-semibold text-gray-600">User</th>
-                    <th className="text-left px-5 py-3 font-semibold text-gray-600">Post Link</th>
-                    <th className="text-left px-5 py-3 font-semibold text-gray-600">Total Budget</th>
-                    <th className="text-left px-5 py-3 font-semibold text-gray-600">Daily Budget</th>
-                    <th className="text-left px-5 py-3 font-semibold text-gray-600">Target Audience</th>
-                    <th className="text-left px-5 py-3 font-semibold text-gray-600">Date</th>
-                    <th className="text-left px-5 py-3 font-semibold text-gray-600">Lang</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {data.items.map(item => (
-                    <tr
-                      key={item.id}
-                      className="hover:bg-gray-50/50 cursor-pointer transition-colors"
-                      onClick={() => setSelected(item)}
-                    >
-                      <td className="px-5 py-3.5">
-                        <div className="flex items-center gap-2.5">
-                          {item.user.avatarUrl ? (
-                            <img src={item.user.avatarUrl} alt="" className="w-8 h-8 rounded-full object-cover" />
-                          ) : (
-                            <div className="w-8 h-8 rounded-full bg-linear-to-br from-red-500 to-pink-500 flex items-center justify-center text-white text-xs font-bold">
-                              {getInitials(item.user.fullName)}
-                            </div>
-                          )}
-                          <div>
-                            <p className="font-medium text-gray-900 text-sm">{item.user.fullName}</p>
-                            <p className="text-xs text-gray-400">{item.user.email}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-5 py-3.5">
-                        <a
-                          href={item.postLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={e => e.stopPropagation()}
-                          className="text-blue-600 hover:text-blue-700 hover:underline text-xs flex items-center gap-1 max-w-50 truncate"
-                        >
-                          {item.postLink.replace(/^https?:\/\/(www\.)?/, '').slice(0, 40)}...
-                          <ExternalLink className="w-3 h-3 shrink-0" />
-                        </a>
-                      </td>
-                      <td className="px-5 py-3.5 font-medium text-gray-900">{item.totalBudget}</td>
-                      <td className="px-5 py-3.5 font-medium text-gray-900">{item.dailyBudget}</td>
-                      <td className="px-5 py-3.5 text-gray-600 max-w-50 truncate">{item.targetAudience}</td>
-                      <td className="px-5 py-3.5 text-gray-500 text-xs whitespace-nowrap">{formatDate(item.createdAt)}</td>
-                      <td className="px-5 py-3.5">
-                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${item.language === 'bn' ? 'bg-green-50 text-green-700' : 'bg-blue-50 text-blue-700'}`}>
-                          {item.language === 'bn' ? 'বাংলা' : 'EN'}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Mobile cards */}
-          <div className="md:hidden space-y-3">
+          {/* Cards */}
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
             {data.items.map(item => (
               <button
                 key={item.id}
@@ -404,14 +345,31 @@ export default function BoostRequestsPage() {
                     {item.language === 'bn' ? 'বাংলা' : 'EN'}
                   </span>
                 </div>
+                <p className="text-sm font-medium text-gray-900 truncate mb-2">
+                  {getCampaignName(item)}
+                </p>
+                <a
+                  href={item.postLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={e => e.stopPropagation()}
+                  className="text-blue-600 hover:text-blue-700 hover:underline text-xs inline-flex items-center gap-1 max-w-full truncate"
+                >
+                  {item.postLink.replace(/^https?:\/\/(www\.)?/, '').slice(0, 48)}
+                  <ExternalLink className="w-3 h-3 shrink-0" />
+                </a>
                 <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="bg-gray-50 rounded-lg p-2">
+                  <div className="bg-gray-50 rounded-lg p-2 mt-3">
                     <span className="text-gray-400">Total</span>
                     <p className="font-semibold text-gray-900">{item.totalBudget}</p>
                   </div>
-                  <div className="bg-gray-50 rounded-lg p-2">
+                  <div className="bg-gray-50 rounded-lg p-2 mt-3">
                     <span className="text-gray-400">Daily</span>
                     <p className="font-semibold text-gray-900">{item.dailyBudget}</p>
+                  </div>
+                  <div className="col-span-2 bg-gray-50 rounded-lg p-2">
+                    <span className="text-gray-400">Target audience</span>
+                    <p className="font-medium text-gray-800 line-clamp-2">{item.targetAudience || '—'}</p>
                   </div>
                 </div>
               </button>
@@ -446,9 +404,9 @@ export default function BoostRequestsPage() {
       )}
 
       {/* Detail Modal */}
-      {selected && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setSelected(null)}>
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+      {mounted && selected && createPortal(
+        <div className="fixed inset-0 bg-black/50 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={() => setSelected(null)}>
+          <div className="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl w-full sm:max-w-3xl h-[92dvh] sm:h-auto sm:max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="p-5 border-b border-gray-100 flex items-center justify-between">
               <h2 className="font-bold text-gray-900">Boost Request Details</h2>
               <button onClick={() => setSelected(null)} className="p-2 hover:bg-gray-100 rounded-lg"><span className="text-lg leading-none text-gray-400">×</span></button>
@@ -736,7 +694,8 @@ export default function BoostRequestsPage() {
               })()}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </AdminShell>
   );

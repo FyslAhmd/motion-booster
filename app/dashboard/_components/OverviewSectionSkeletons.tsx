@@ -1,7 +1,7 @@
 import React from 'react';
 
 function Pulse({ className }: { className: string }) {
-  return <div className={`animate-pulse rounded-xl bg-gray-200/80 ${className}`} />;
+  return <div className={`skeleton-breathe rounded-xl bg-gray-200/80 ${className}`} />;
 }
 
 export function DashboardHeaderSkeleton() {
@@ -13,9 +13,9 @@ export function DashboardHeaderSkeleton() {
             <Pulse className="h-8 w-64" />
             <Pulse className="h-4 w-52" />
           </div>
-          <div className="w-full max-w-52.5 rounded-xl border border-red-100 bg-red-50 px-3 py-2">
-            <Pulse className="h-3 w-28" />
-            <Pulse className="mt-2 h-5 w-24" />
+          <div className="w-full max-w-72 rounded-2xl border border-red-100 bg-red-50 px-4 py-3">
+            <Pulse className="h-3.5 w-36" />
+            <Pulse className="mt-2.5 h-6 w-32" />
           </div>
         </div>
       </div>

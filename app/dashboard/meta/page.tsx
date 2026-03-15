@@ -3,21 +3,14 @@
 import { useState, useEffect } from 'react';
 import AdminShell from '../_components/AdminShell';
 import { AdminSectionSkeleton } from '@/components/ui/AdminSectionSkeleton';
-import { CampaignsTable, AdSetsTable, AdsTable } from './_components';
+import { CampaignsTable } from './_components';
 import AccountSwitcher from './_components/AccountSwitcher';
 
-type Tab = 'campaigns' | 'adsets' | 'ads';
-
-const TABS: { id: Tab; label: string }[] = [
-  { id: 'campaigns', label: 'Campaigns' },
-  { id: 'adsets', label: 'Ad Sets' },
-  { id: 'ads', label: 'Ads' },
-];
+type CountTab = 'campaigns' | 'adsets' | 'ads';
 
 export default function MetaDashboardPage() {
-  const [tab, setTab] = useState<Tab>('campaigns');
   const [accountId, setAccountId] = useState('act_586481100654531');
-  const [activeCounts, setActiveCounts] = useState<Record<Tab, number | null>>({
+  const [activeCounts, setActiveCounts] = useState<Record<CountTab, number | null>>({
     campaigns: null,
     adsets: null,
     ads: null,
@@ -48,50 +41,44 @@ export default function MetaDashboardPage() {
     <AdminShell>
       <div className="space-y-6">
         {/* Header */}
-        <div>
+        <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
           <h1 className="text-xl font-bold text-gray-900">Meta Ads Manager</h1>
           <p className="mt-0.5 text-sm text-gray-500">
             Manage and monitor your Meta campaigns and ads
           </p>
-        </div>
+          <div className="mt-4 grid grid-cols-[minmax(0,1fr)_92px] sm:grid-cols-[minmax(0,1fr)_110px] gap-2.5">
+            <div className="h-full rounded-xl border border-gray-200 bg-gray-50 p-2.5 sm:p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                Select Account
+              </p>
+              <div className="mt-1.5 max-w-xs sm:max-w-sm">
+                <AccountSwitcher
+                  value={accountId}
+                  onChange={setAccountId}
+                  compact
+                />
+              </div>
+            </div>
 
-        {/* Account Switcher */}
-        <AccountSwitcher value={accountId} onChange={setAccountId} />
+            <div className="h-full rounded-xl border border-green-200 bg-green-50 px-2 py-2 sm:px-2.5 sm:py-2.5 text-center flex flex-col justify-center">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-green-700">
+                Active
+              </p>
+              <p className="mt-1 text-lg font-bold leading-none text-green-700 sm:text-xl">
+                {activeCounts.campaigns ?? '...'}
+              </p>
+            </div>
+          </div>
+        </div>
 
         {countsLoading && <AdminSectionSkeleton variant="inline" />}
 
-        {/* Tabs — same on mobile and desktop */}
-        <div>
-          <div className="mb-6 flex gap-1 rounded-xl border border-gray-200 bg-gray-50 p-1">
-            {TABS.map((t) => (
-              <button
-                key={t.id}
-                onClick={() => setTab(t.id)}
-                className={`flex flex-1 items-center justify-center gap-1 rounded-lg px-2 py-1.5 text-xs sm:px-3 sm:py-2 sm:text-sm font-medium transition-all
-                  ${
-                    tab === t.id
-                      ? 'bg-red-600 text-white shadow-sm shadow-red-500/20'
-                      : 'text-gray-500 hover:bg-white hover:text-gray-700'
-                  }`}
-              >
-                {t.label}
-                {activeCounts[t.id] != null && (
-                  <span
-                    className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none ${
-                      tab === t.id
-                        ? 'bg-white/20 text-white'
-                        : 'bg-green-100 text-green-700'
-                    }`}
-                  >
-                    {activeCounts[t.id]} active
-                  </span>
-                )}
-              </button>
-            ))}
+        {/* Campaigns (main view) */}
+        <div className="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm sm:p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-gray-900 sm:text-base">Campaigns</h2>
           </div>
-          {tab === 'campaigns' && <CampaignsTable accountId={accountId} />}
-          {tab === 'adsets' && <AdSetsTable accountId={accountId} />}
-          {tab === 'ads' && <AdsTable accountId={accountId} />}
+          <CampaignsTable accountId={accountId} />
         </div>
       </div>
     </AdminShell>

@@ -804,11 +804,11 @@ export default function MessagesPage() {
 
   return (
     <AdminShell noPadding>
-    <div className="flex h-full bg-white overflow-hidden">
+    <div className="flex h-full w-full min-w-0 bg-white overflow-hidden">
       {/* ───────────────────── Conversations Sidebar ──────────────── */}
       <div
-        className={`w-full md:w-80 lg:w-96 shrink-0 bg-white border-r border-gray-200 flex flex-col ${
-          showChat ? 'hidden md:flex' : 'flex'
+        className={`w-full sm:w-80 lg:w-96 shrink-0 bg-white border-r border-gray-200 flex flex-col ${
+          showChat ? 'hidden sm:flex' : 'flex'
         }`}
       >
         {/* Header */}
@@ -995,7 +995,7 @@ export default function MessagesPage() {
       {/* ───────────────────── Chat Area ─────────────────────────── */}
       <div
         className={`flex-1 flex flex-col bg-gray-50 min-w-0 ${
-          showChat ? 'flex' : 'hidden md:flex'
+          showChat ? 'flex' : 'hidden sm:flex'
         }`}
       >
         {selectedConversation ? (
@@ -1006,7 +1006,7 @@ export default function MessagesPage() {
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => setShowChat(false)}
-                    className="md:hidden p-1.5 -ml-1 hover:bg-gray-100 rounded-lg transition-colors"
+                    className="sm:hidden p-1.5 -ml-1 hover:bg-gray-100 rounded-lg transition-colors"
                   >
                     <ArrowLeft className="w-5 h-5 text-gray-600" />
                   </button>

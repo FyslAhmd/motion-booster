@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth/context';
-import { ChevronDown, LayoutDashboard, User, Phone, Mail, Search, Bell, Home, Briefcase, Users, Menu, X, ArrowRight } from 'lucide-react';
+import { ChevronDown, LayoutDashboard, User, Phone, Mail, Search, Bell, Home, Briefcase, Users, Menu, X, ArrowRight, LogOut } from 'lucide-react';
 import { MoreDrawer } from '@/components/ui/MoreDrawer';
 
 const DUMMY_NOTIFICATIONS = [
@@ -24,7 +24,7 @@ export const Header = () => {
   const [showSearch, setShowSearch] = useState(false);
   const [showNotif, setShowNotif] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { isAuthenticated, isLoading, user, logout } = useAuth();
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const pathname = usePathname();
@@ -132,7 +132,7 @@ export const Header = () => {
           </div>
         </div>
       </div>
-      <div className="lg:hidden h-[74px]" aria-hidden="true" />
+      <div className="lg:hidden h-18.5" aria-hidden="true" />
 
       {/* Desktop Top Bar */}
       <div className="hidden lg:block text-white" style={{ background: 'linear-gradient(214.38deg, #ff8079 -2.24%, #ff1e1e 59.38%)', padding: '7px 0' }}>
@@ -244,6 +244,16 @@ export const Header = () => {
                           Profile
                         </button>
                       </Link>
+                      <button
+                        onClick={async () => {
+                          await logout();
+                          setShowProfileMenu(false);
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-2 text-red-600 hover:bg-red-50 text-sm transition-colors border-t border-gray-100 mt-1"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        Logout
+                      </button>
                     </div>
                   )}
                 </div>

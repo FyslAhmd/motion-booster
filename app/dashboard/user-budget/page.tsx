@@ -29,6 +29,17 @@ function money(v: number) {
   return `$${v.toFixed(2)}`;
 }
 
+function initialsFromName(fullName?: string, username?: string) {
+  const source = fullName?.trim() || username?.trim() || 'U';
+  return source
+    .split(' ')
+    .filter(Boolean)
+    .map((w) => w[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+}
+
 export default function UserBudgetPage() {
   const [users, setUsers] = useState<UserBudgetRow[]>([]);
   const [search, setSearch] = useState('');
@@ -37,9 +48,11 @@ export default function UserBudgetPage() {
   const [depositInputs, setDepositInputs] = useState<Record<string, string>>({});
   const [savingUserId, setSavingUserId] = useState<string | null>(null);
 
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async (showPageLoader = true) => {
     try {
-      setLoading(true);
+      if (showPageLoader) {
+        setLoading(true);
+      }
       setError('');
 
       const res = await fetch('/api/v1/admin/user-budgets', {
@@ -56,7 +69,9 @@ export default function UserBudgetPage() {
     } catch (err: any) {
       setError(err?.message || 'Failed to load user budgets');
     } finally {
-      setLoading(false);
+      if (showPageLoader) {
+        setLoading(false);
+      }
     }
   }, []);
 
@@ -116,7 +131,7 @@ export default function UserBudgetPage() {
       }
 
       setDepositInputs((prev) => ({ ...prev, [userId]: '' }));
-      await loadData();
+      await loadData(false);
     } catch (err: any) {
       setError(err?.message || 'Failed to add deposit');
     } finally {
@@ -134,18 +149,18 @@ export default function UserBudgetPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3">
-            <p className="text-xs font-medium uppercase tracking-wide text-blue-500">Total Deposited</p>
-            <p className="mt-1 text-2xl font-bold text-blue-700">{money(totals.totalBudget)}</p>
+        <div className="grid grid-cols-3 gap-2 sm:gap-3">
+          <div className="rounded-xl border border-blue-100 bg-blue-50 px-2.5 py-2.5 sm:px-4 sm:py-3">
+            <p className="text-[10px] sm:text-xs font-medium uppercase tracking-wide text-blue-500">Total Deposited</p>
+            <p className="mt-1 text-lg sm:text-2xl font-bold text-blue-700">{money(totals.totalBudget)}</p>
           </div>
-          <div className="rounded-xl border border-amber-100 bg-amber-50 px-4 py-3">
-            <p className="text-xs font-medium uppercase tracking-wide text-amber-500">Total Spent</p>
-            <p className="mt-1 text-2xl font-bold text-amber-700">{money(totals.totalSpent)}</p>
+          <div className="rounded-xl border border-amber-100 bg-amber-50 px-2.5 py-2.5 sm:px-4 sm:py-3">
+            <p className="text-[10px] sm:text-xs font-medium uppercase tracking-wide text-amber-500">Total Spent</p>
+            <p className="mt-1 text-lg sm:text-2xl font-bold text-amber-700">{money(totals.totalSpent)}</p>
           </div>
-          <div className={`rounded-xl border px-4 py-3 ${totals.balance >= 0 ? 'border-green-100 bg-green-50' : 'border-red-100 bg-red-50'}`}>
-            <p className={`text-xs font-medium uppercase tracking-wide ${totals.balance >= 0 ? 'text-green-500' : 'text-red-500'}`}>Net Balance</p>
-            <p className={`mt-1 text-2xl font-bold ${totals.balance >= 0 ? 'text-green-700' : 'text-red-700'}`}>{money(totals.balance)}</p>
+          <div className={`rounded-xl border px-2.5 py-2.5 sm:px-4 sm:py-3 ${totals.balance >= 0 ? 'border-green-100 bg-green-50' : 'border-red-100 bg-red-50'}`}>
+            <p className={`text-[10px] sm:text-xs font-medium uppercase tracking-wide ${totals.balance >= 0 ? 'text-green-500' : 'text-red-500'}`}>Net Balance</p>
+            <p className={`mt-1 text-lg sm:text-2xl font-bold ${totals.balance >= 0 ? 'text-green-700' : 'text-red-700'}`}>{money(totals.balance)}</p>
           </div>
         </div>
 
@@ -168,90 +183,81 @@ export default function UserBudgetPage() {
                 className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-red-400"
               />
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-225 text-left text-sm">
-                <thead>
-                  <tr className="border-b border-gray-100 text-xs uppercase tracking-wide text-gray-500">
-                    <th className="px-6 py-3 font-medium">Profile</th>
-                    <th className="px-4 py-3 font-medium">Name</th>
-                    <th className="px-4 py-3 font-medium">Phone</th>
-                    <th className="px-4 py-3 font-medium">Total Budget</th>
-                    <th className="px-4 py-3 font-medium">Spent</th>
-                    <th className="px-4 py-3 font-medium">Balance</th>
-                    <th className="px-4 py-3 font-medium">Add Deposit</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
+            <div className="p-3 sm:p-4">
+              {filteredUsers.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-gray-200 px-4 py-10 text-center text-sm text-gray-500">
+                  No users found for this search.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
                   {filteredUsers.map((user) => {
-                    const initials =
-                      user.fullName
-                        ?.split(' ')
-                        .map((w) => w[0])
-                        .join('')
-                        .slice(0, 2)
-                        .toUpperCase() || 'U';
-
+                    const initials = initialsFromName(user.fullName, user.username);
                     return (
-                      <tr key={user.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-3">
+                      <div key={user.id} className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:p-4">
+                        <div className="flex items-center gap-3">
                           {user.avatarUrl ? (
                             <Image
                               src={user.avatarUrl}
                               alt={user.fullName || user.username}
-                              width={36}
-                              height={36}
-                              className="h-9 w-9 rounded-full object-cover"
+                              width={40}
+                              height={40}
+                              className="h-10 w-10 rounded-full object-cover"
                             />
                           ) : (
-                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-red-50 text-xs font-bold text-red-600">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-50 text-xs font-bold text-red-600">
                               {initials}
                             </div>
                           )}
-                        </td>
-                        <td className="px-4 py-3 font-medium text-gray-900">{user.fullName || '—'}</td>
-                        <td className="px-4 py-3 text-gray-600">{user.phone || '—'}</td>
-                        <td className="whitespace-nowrap px-4 py-3 font-medium text-blue-700">{money(user.totalBudget)}</td>
-                        <td className="whitespace-nowrap px-4 py-3 font-medium text-amber-700">{money(user.totalSpent)}</td>
-                        <td className={`whitespace-nowrap px-4 py-3 font-semibold ${user.balance >= 0 ? 'text-green-700' : 'text-red-700'}`}>
-                          {money(user.balance)}
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              placeholder="Amount"
-                              value={depositInputs[user.id] ?? ''}
-                              onChange={(e) =>
-                                setDepositInputs((prev) => ({
-                                  ...prev,
-                                  [user.id]: e.target.value,
-                                }))
-                              }
-                              className="w-28 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-400"
-                            />
-                            <button
-                              onClick={() => submitDeposit(user.id)}
-                              disabled={savingUserId === user.id}
-                              className="rounded-lg bg-red-600 px-3 py-2 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-50"
-                            >
-                              {savingUserId === user.id ? 'Saving...' : 'Add'}
-                            </button>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-semibold text-gray-900">{user.fullName || user.username || '—'}</p>
+                            <p className="truncate text-xs text-gray-500">{user.phone || 'No phone'}</p>
+                            <p className="truncate text-xs text-gray-400">{user.email || '—'}</p>
                           </div>
-                        </td>
-                      </tr>
+                        </div>
+
+                        <div className="mt-3 grid grid-cols-3 gap-2">
+                          <div className="rounded-lg border border-blue-100 bg-blue-50 px-2 py-2">
+                            <p className="text-[10px] uppercase tracking-wide text-blue-500">Budget</p>
+                            <p className="mt-0.5 text-sm font-semibold text-blue-700">{money(user.totalBudget)}</p>
+                          </div>
+                          <div className="rounded-lg border border-amber-100 bg-amber-50 px-2 py-2">
+                            <p className="text-[10px] uppercase tracking-wide text-amber-500">Spent</p>
+                            <p className="mt-0.5 text-sm font-semibold text-amber-700">{money(user.totalSpent)}</p>
+                          </div>
+                          <div className={`rounded-lg border px-2 py-2 ${user.balance >= 0 ? 'border-green-100 bg-green-50' : 'border-red-100 bg-red-50'}`}>
+                            <p className={`text-[10px] uppercase tracking-wide ${user.balance >= 0 ? 'text-green-500' : 'text-red-500'}`}>Balance</p>
+                            <p className={`mt-0.5 text-sm font-semibold ${user.balance >= 0 ? 'text-green-700' : 'text-red-700'}`}>{money(user.balance)}</p>
+                          </div>
+                        </div>
+
+                        <div className="mt-3 flex items-center gap-2">
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            placeholder="Deposit amount"
+                            value={depositInputs[user.id] ?? ''}
+                            onChange={(e) =>
+                              setDepositInputs((prev) => ({
+                                ...prev,
+                                [user.id]: e.target.value,
+                              }))
+                            }
+                            className="min-w-0 flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-400"
+                          />
+                          <button
+                            onClick={() => submitDeposit(user.id)}
+                            disabled={savingUserId === user.id}
+                            className="rounded-lg bg-red-600 px-3 py-2 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+                          >
+                            {savingUserId === user.id ? 'Saving...' : 'Add'}
+                          </button>
+                        </div>
+                      </div>
                     );
                   })}
-                  {filteredUsers.length === 0 && (
-                    <tr>
-                      <td colSpan={7} className="px-6 py-10 text-center text-sm text-gray-500">
-                        No users found for this search.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+                </div>
+              )}
             </div>
           </div>
         )}

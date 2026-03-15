@@ -81,7 +81,7 @@ export default function ServicePage() {
   return (
     <main className="min-h-screen pb-16 lg:pb-0">
       {/* Hero Section */}
-      <section className="pt-8 pb-14 sm:py-16 lg:py-32 bg-linear-to-br from-red-50 via-white to-rose-50">
+      <section className="pt-8 pb-12 sm:py-16 lg:pt-28 lg:pb-14 bg-linear-to-br from-red-50 via-white to-rose-50">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="text-center max-w-4xl mx-auto">
             <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
@@ -112,7 +112,7 @@ export default function ServicePage() {
       </section>
 
       {/* Services Section */}
-      <section className="pt-10 pb-16 sm:py-16 lg:py-20 bg-white">
+      <section className="pt-10 pb-14 sm:py-16 lg:pt-12 lg:pb-16 bg-white">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
@@ -143,7 +143,7 @@ export default function ServicePage() {
       </section>
 
       {/* Process Section */}
-      <section className="py-20 bg-gray-50">
+      <section className="pt-12 pb-16 lg:pt-12 lg:pb-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
@@ -174,38 +174,6 @@ export default function ServicePage() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="relative py-16 sm:py-20 lg:py-32 bg-red-600 overflow-hidden">
-        {/* Red Circle Decorations */}
-        <div className="absolute top-0 left-0 w-32 h-32 sm:w-48 sm:h-48 md:w-64 md:h-64 bg-red-400 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
-        <div className="absolute bottom-0 right-0 w-48 h-48 sm:w-64 sm:h-64 md:w-96 md:h-96 bg-red-700 rounded-full translate-x-1/2 translate-y-1/2"></div>
-
-        <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 sm:mb-6 leading-tight">
-            Ready to Start Your Project?
-          </h2>
-          <p className="text-base sm:text-lg md:text-xl text-white mb-8 sm:mb-10 opacity-90">
-            Let's discuss how we can help bring your vision to life
-          </p>
-          <div className="flex justify-center mb-6">
-            <Link
-              href="/contact"
-              className="bg-white text-red-600 px-8 sm:px-10 py-3 sm:py-4 rounded-full font-bold text-base sm:text-lg hover:bg-gray-100 transition-colors shadow-xl"
-            >
-              Contact Us Today
-            </Link>
-          </div>
-          <p className="text-white text-xs sm:text-sm opacity-80 mb-2">
-            Free consultation • Fast turnaround
-          </p>
-          <p className="text-white text-xs sm:text-sm opacity-70">
-            Questions? Contact us at{' '}
-            <a href="mailto:hello@motionbooster.com" className="underline hover:opacity-100">
-              hello@motionbooster.com
-            </a>
-          </p>
-        </div>
-      </section>
     </main>
   );
 }

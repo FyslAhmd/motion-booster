@@ -1,45 +1,8 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-
-gsap.registerPlugin(ScrollTrigger);
+import { motion } from 'framer-motion';
 
 export const HowItWorks = () => {
-  const titleRef = useRef<HTMLHeadingElement>(null);
-  const stepsRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (titleRef.current) {
-      gsap.from(titleRef.current, {
-        scrollTrigger: {
-          trigger: titleRef.current,
-          start: 'top 80%',
-        },
-        opacity: 0,
-        y: 30,
-        duration: 0.8,
-        ease: 'power3.out',
-      });
-    }
-
-    if (stepsRef.current) {
-      const steps = stepsRef.current.querySelectorAll('.step-card');
-      gsap.from(steps, {
-        scrollTrigger: {
-          trigger: stepsRef.current,
-          start: 'top 75%',
-        },
-        opacity: 0,
-        y: 50,
-        stagger: 0.2,
-        duration: 0.8,
-        ease: 'power3.out',
-      });
-    }
-  }, []);
-
   const steps = [
     {
       number: '1',
@@ -75,22 +38,41 @@ export const HowItWorks = () => {
   ];
 
   return (
-    <section className="py-20 lg:py-32 bg-white">
+    <motion.section
+      className="py-20 lg:py-32 bg-white"
+      initial={{ opacity: 0, y: 22 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.2 }}
+      transition={{ duration: 0.6, ease: 'easeOut' }}
+    >
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-16">
-          <h2 ref={titleRef} className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
+          <motion.h2
+            className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4"
+            initial={{ opacity: 0, y: 28 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.4 }}
+            transition={{ duration: 0.65, ease: 'easeOut' }}
+          >
             Start Your IT Journey in 3 Simple Steps
-          </h2>
+          </motion.h2>
         </div>
 
         {/* Steps Grid */}
-        <div ref={stepsRef} className="grid md:grid-cols-3 gap-8 lg:gap-12 relative">
+        <div className="grid md:grid-cols-3 gap-8 lg:gap-12 relative">
           {/* Connection Lines - Hidden on mobile */}
           <div className="hidden md:block absolute top-24 left-0 right-0 h-0.5 bg-linear-to-r from-blue-200 via-blue-400 to-blue-200" style={{ top: '60px' }}></div>
 
           {steps.map((step, index) => (
-            <div key={index} className="step-card relative">
+            <motion.div
+              key={index}
+              className="step-card relative"
+              initial={{ opacity: 0, y: 44 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.25 }}
+              transition={{ duration: 0.6, delay: index * 0.12, ease: 'easeOut' }}
+            >
               {/* Card */}
               <div className="bg-white rounded-2xl p-8 text-center shadow-lg hover:shadow-xl transition-shadow">
                 {/* Number Badge */}
@@ -115,10 +97,10 @@ export const HowItWorks = () => {
                   {step.description}
                 </p>
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
       </div>
-    </section>
+    </motion.section>
   );
 };

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/lib/auth/context';
 import { AdminSectionSkeleton } from '@/components/ui/AdminSectionSkeleton';
+import PageTransition from '@/components/ui/PageTransition';
 import {
   LayoutDashboard,
   Users,
@@ -195,7 +196,9 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
 
       {/* Page content — flex-1 + min-h-0 so it doesn't overflow on noPadding pages */}
       <main className={`flex-1 min-h-0 w-full min-w-0 no-scrollbar ${noPadding ? 'overflow-hidden' : 'overflow-x-hidden overflow-y-auto'}`}>
-        {children}
+        <PageTransition variant="admin" className={noPadding ? 'h-full w-full' : undefined}>
+          {children}
+        </PageTransition>
       </main>
 
       {/* Bottom nav — shrink-0 so it's always visible at bottom of flex column */}
@@ -565,8 +568,10 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
         </header>
 
         {/* Page content */}
-        <main className={`flex-1 no-scrollbar ${noPadding ? 'overflow-hidden' : 'p-4 sm:p-6 overflow-y-auto'}`}>
-          {children}
+        <main className={`flex-1 min-h-0 w-full min-w-0 no-scrollbar ${noPadding ? 'overflow-hidden' : 'p-4 sm:p-6 overflow-y-auto'}`}>
+          <PageTransition variant="admin" className={noPadding ? 'h-full w-full' : undefined}>
+            {children}
+          </PageTransition>
         </main>
       </div>
     </div>

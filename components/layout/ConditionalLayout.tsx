@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation';
 import { Header } from './Header';
 import { Footer } from './Footer';
+import PageTransition from '@/components/ui/PageTransition';
 
 export const ConditionalLayout = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
@@ -13,11 +14,17 @@ export const ConditionalLayout = ({ children }: { children: React.ReactNode }) =
   const isForgotPassword = pathname === '/forgot-password';
   
   const shouldHideLayout = isDashboard || isAdmin || isForgotPassword;
+  const isHandledByAdminShell = isDashboard || isAdmin;
+  const content = isHandledByAdminShell ? (
+    children
+  ) : (
+    <PageTransition variant="public">{children}</PageTransition>
+  );
 
   return (
     <>
       {!shouldHideLayout && <Header />}
-      {children}
+      {content}
       {!shouldHideLayout && <Footer />}
     </>
   );

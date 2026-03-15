@@ -591,20 +591,20 @@ export default function DashboardPage() {
                     </span>
                   </p>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-gray-400">
+                <div className="flex w-full items-center gap-2 text-sm text-gray-400 sm:w-auto">
                   {totalSpendBDT !== null ? (
-                    <div className="flex items-center gap-2 rounded-xl bg-red-600 px-3 py-2 text-white shadow-md shadow-red-500/20">
-                      <TrendingUp className="h-3.5 w-3.5 shrink-0" />
-                      <div className="min-w-0">
-                        <p className="text-[9px] font-medium text-red-200 uppercase tracking-wide leading-none mb-0.5">
+                    <div className="flex w-full max-w-[260px] items-center gap-3 rounded-2xl bg-red-600 px-4 py-3 sm:w-auto sm:max-w-none sm:min-w-[250px] text-white shadow-lg shadow-red-500/25">
+                      <TrendingUp className="h-4.5 w-4.5 shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <p className="mb-1 text-[10px] sm:text-[11px] font-semibold text-red-200 uppercase tracking-wide leading-none">
                           Total Ad Spend (BDT)
                         </p>
                         {spendRevealed ? (
-                          <p className="text-sm font-bold leading-none truncate">
+                          <p className="text-xl sm:text-2xl font-bold leading-none truncate">
                             {fmtBDT(totalSpendBDT)}
                           </p>
                         ) : (
-                          <p className="text-sm font-bold leading-none tracking-widest">
+                          <p className="text-xl sm:text-2xl font-bold leading-none tracking-widest">
                             ••••••
                           </p>
                         )}
@@ -624,12 +624,12 @@ export default function DashboardPage() {
                             ? `Hide (auto-hides in ${revealCountdown}s)`
                             : "Click to reveal"
                         }
-                        className="ml-1 p-1 rounded-lg hover:bg-red-700 transition-colors shrink-0 relative group"
+                        className="ml-1 p-1.5 rounded-lg hover:bg-red-700 transition-colors shrink-0 relative group"
                       >
                         {spendRevealed ? (
-                          <EyeOff className="h-3.5 w-3.5 text-red-200" />
+                          <EyeOff className="h-4 w-4 text-red-200" />
                         ) : (
-                          <Eye className="h-3.5 w-3.5 text-red-200" />
+                          <Eye className="h-4 w-4 text-red-200" />
                         )}
                         {/* Countdown badge */}
                         {spendRevealed && revealCountdown > 0 && (

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Star } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface StatItem {
   id: string;
@@ -72,8 +73,14 @@ export const Testimonials = () => {
     };
   }, [draggingTarget]);
 
-  const ReviewCard = ({ review }: { review: TestimonialItem }) => (
-    <div className="testimonial-review-card shrink-0 w-80 sm:w-90 md:w-100 bg-white border border-gray-100 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm hover:shadow-lg transition-shadow cursor-default">
+  const ReviewCard = ({ review, delay = 0 }: { review: TestimonialItem; delay?: number }) => (
+    <motion.div
+      className="testimonial-review-card shrink-0 w-80 sm:w-90 md:w-100 bg-white border border-gray-100 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm hover:shadow-lg transition-shadow cursor-default"
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.35 }}
+      transition={{ duration: 0.45, delay, ease: 'easeOut' }}
+    >
       <div className="flex items-start gap-3 sm:gap-4">
         {/* Avatar on left */}
         {review.avatarImage ? (
@@ -104,11 +111,17 @@ export const Testimonials = () => {
           </p>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 
   return (
-    <section className="py-12 md:py-16 lg:py-14 bg-white overflow-hidden">
+    <motion.section
+      className="py-12 md:py-16 lg:py-14 bg-white overflow-hidden"
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.15 }}
+      transition={{ duration: 0.55, ease: 'easeOut' }}
+    >
       <style>{`
         .drag-scroll {
           scrollbar-width: none;
@@ -150,28 +163,44 @@ export const Testimonials = () => {
               </div>
             ))}
             {!loadingStats && [...stats, ...stats].map((stat, index) => (
-              <div
+              <motion.div
                 key={index}
                 className={`shrink-0 w-64 sm:w-72 md:w-75 lg:w-85 ${stat.bgColor} rounded-xl sm:rounded-2xl p-5 sm:p-6 md:p-8 transition-all hover:shadow-lg`}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.35 }}
+                transition={{ duration: 0.4, delay: Math.min(index * 0.04, 0.24), ease: 'easeOut' }}
               >
                 <div className={`text-3xl sm:text-4xl md:text-5xl font-bold ${stat.valueColor} mb-2 sm:mb-3`}>
                   {stat.value}
                 </div>
                 <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-2 sm:mb-3 md:mb-4">{stat.title}</h3>
                 <p className="text-gray-600 text-xs sm:text-sm leading-relaxed">{stat.description}</p>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
 
         {/* Client Reviews Header */}
         <div className="text-center mb-8 sm:mb-10 md:mb-12">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-3 sm:mb-4">
+          <motion.h2
+            className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-3 sm:mb-4"
+            initial={{ opacity: 0, y: 18 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.5 }}
+            transition={{ duration: 0.45, ease: 'easeOut' }}
+          >
             What Our Clients Say
-          </h2>
-          <p className="text-sm sm:text-base text-gray-500 max-w-2xl mx-auto px-4">
+          </motion.h2>
+          <motion.p
+            className="text-sm sm:text-base text-gray-500 max-w-2xl mx-auto px-4"
+            initial={{ opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.5 }}
+            transition={{ duration: 0.4, delay: 0.08, ease: 'easeOut' }}
+          >
             Real feedback from our valued clients who trusted Motion Booster with their digital journey.
-          </p>
+          </motion.p>
         </div>
       </div>
 
@@ -211,10 +240,10 @@ export const Testimonials = () => {
             </div>
           ))}
           {!loadingReviews && [...reviews, ...reviews].map((review, index) => (
-            <ReviewCard key={`r1-${index}`} review={review} />
+            <ReviewCard key={`r1-${index}`} review={review} delay={Math.min(index * 0.04, 0.24)} />
           ))}
         </div>
       </div>
-    </section>
+    </motion.section>
   );
 };

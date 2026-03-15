@@ -3,7 +3,7 @@ import React from 'react';
 type SkeletonVariant = 'overview' | 'table' | 'editor' | 'chat' | 'meta';
 
 function PulseBlock({ className }: { className: string }) {
-  return <div className={`animate-pulse rounded-xl bg-gray-200/80 ${className}`} />;
+  return <div className={`skeleton-breathe rounded-xl bg-gray-200/80 ${className}`} />;
 }
 
 export function RouteLoadingSkeleton({ variant }: { variant: SkeletonVariant }) {

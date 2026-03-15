@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
-import { Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Search, Filter, ChevronLeft, ChevronRight, X, Loader2 } from 'lucide-react';
 import AssignUserDropdown from './AssignUserDropdown';
 import { AdminSectionSkeleton } from '@/components/ui/AdminSectionSkeleton';
 import { toast } from 'sonner';
+import { createPortal } from 'react-dom';
 
 interface Campaign {
   id: string;
@@ -26,6 +27,29 @@ interface Campaign {
   derived_status?: { label: string; key: string };
 }
 
+interface CampaignAdSet {
+  id: string;
+  name: string;
+  status: string;
+  effective_status: string;
+  daily_budget?: string;
+  lifetime_budget?: string;
+  start_time?: string;
+  end_time?: string;
+  created_time: string;
+  derived_status?: { label: string; key: string };
+}
+
+interface CampaignAd {
+  id: string;
+  name: string;
+  status: string;
+  effective_status: string;
+  adset_id: string;
+  created_time: string;
+  derived_status?: { label: string; key: string };
+}
+
 interface CursorPaging {
   cursors?: { before?: string; after?: string };
   hasNext?: boolean;
@@ -42,6 +66,12 @@ const STATUS_STYLES: Record<string, string> = {
   NOT_DELIVERING:       'bg-orange-50 text-orange-600 border border-orange-200',
   WITH_ISSUES:          'bg-orange-50 text-orange-600 border border-orange-200',
   NOT_APPROVED:         'bg-red-50 text-red-600 border border-red-200',
+  DISAPPROVED:          'bg-red-50 text-red-600 border border-red-200',
+  PENDING_REVIEW:       'bg-yellow-50 text-yellow-700 border border-yellow-200',
+  PENDING_BILLING_INFO: 'bg-orange-50 text-orange-600 border border-orange-200',
+  PREAPPROVED:          'bg-blue-50 text-blue-600 border border-blue-200',
+  CAMPAIGN_PAUSED:      'bg-amber-50 text-amber-600 border border-amber-200',
+  ADSET_PAUSED:         'bg-amber-50 text-amber-600 border border-amber-200',
   DELETED:              'bg-red-50 text-red-600 border border-red-200',
   ARCHIVED:             'bg-gray-100 text-gray-500 border border-gray-200',
   ERROR:                'bg-red-50 text-red-500 border border-red-200',
@@ -74,11 +104,28 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
   const [error, setError] = useState('');
   const [pageNum, setPageNum] = useState(1);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
+  const [campaignAdSets, setCampaignAdSets] = useState<CampaignAdSet[]>([]);
+  const [campaignAdsByAdSet, setCampaignAdsByAdSet] = useState<Record<string, CampaignAd[]>>({});
+  const [modalLoading, setModalLoading] = useState(false);
+  const [modalError, setModalError] = useState('');
+  const [mounted, setMounted] = useState(false);
 
   // Assignment tracking: metaObjectId → { id, fullName, phone, username }
   const [assignments, setAssignments] = useState<Record<string, { id: string; fullName: string; phone: string; username: string } | null>>({});
 
   const searchTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  const statusMeta = useCallback((key?: string, fallbackLabel?: string) => {
+    const normalized = key || 'UNKNOWN';
+    const color = STATUS_STYLES[normalized] || STATUS_STYLES.UNKNOWN;
+    const label = fallbackLabel || normalized.replace(/_/g, ' ');
+    return { color, label };
+  }, []);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -176,6 +223,12 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
   const hasPrev = cursorStack.length > 0;
   const totalPages = totalCount != null ? Math.ceil(totalCount / 10) : null;
 
+  const campaignBudgetLabel = (c: Campaign) =>
+    c.daily_budget ? `${fmtBudget(c.daily_budget)}/day` : c.lifetime_budget ? `${fmtBudget(c.lifetime_budget)} lifetime` : '—';
+
+  const campaignDateRangeLabel = (c: Campaign) =>
+    `${fmtDate(c.start_time)}${c.stop_time ? ` → ${fmtDate(c.stop_time)}` : ' → Ongoing'}`;
+
   /** Toggle campaign status between ACTIVE and PAUSED */
   const toggleStatus = async (campaign: Campaign) => {
     const newStatus = campaign.status === 'ACTIVE' ? 'PAUSED' : 'ACTIVE';
@@ -209,6 +262,75 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
   const canToggle = (c: Campaign) =>
     ['ACTIVE', 'PAUSED'].includes(c.status) &&
     !['DELETED', 'ARCHIVED'].includes(c.effective_status);
+
+  const closeCampaignModal = useCallback(() => {
+    setSelectedCampaign(null);
+    setCampaignAdSets([]);
+    setCampaignAdsByAdSet({});
+    setModalLoading(false);
+    setModalError('');
+  }, []);
+
+  const openCampaignModal = useCallback(async (campaign: Campaign) => {
+    setSelectedCampaign(campaign);
+    setCampaignAdSets([]);
+    setCampaignAdsByAdSet({});
+    setModalError('');
+    setModalLoading(true);
+
+    try {
+      const adSetQuery = new URLSearchParams({ campaign_id: campaign.id, limit: '12' });
+      if (accountId) adSetQuery.set('account_id', accountId);
+      const adSetRes = await fetch(`/api/v1/meta/adsets?${adSetQuery}`);
+      const adSetJson = await adSetRes.json();
+
+      if (!adSetJson.success) {
+        throw new Error(adSetJson.error || 'Failed to load ad sets');
+      }
+
+      const adSets = (adSetJson.data || []) as CampaignAdSet[];
+      setCampaignAdSets(adSets);
+
+      if (adSets.length > 0) {
+        const adFetches = adSets.map(async (adSet) => {
+          const adsQuery = new URLSearchParams({ adset_id: adSet.id, limit: '6' });
+          if (accountId) adsQuery.set('account_id', accountId);
+          const adsRes = await fetch(`/api/v1/meta/ads?${adsQuery}`);
+          const adsJson = await adsRes.json();
+          return {
+            adSetId: adSet.id,
+            ads: (adsJson.success ? adsJson.data : []) as CampaignAd[],
+          };
+        });
+
+        const adsResults = await Promise.allSettled(adFetches);
+        const nextMap: Record<string, CampaignAd[]> = {};
+        adsResults.forEach((result) => {
+          if (result.status === 'fulfilled') {
+            nextMap[result.value.adSetId] = result.value.ads;
+          }
+        });
+        setCampaignAdsByAdSet(nextMap);
+      }
+    } catch (e: any) {
+      setModalError(e?.message || 'Failed to load campaign details');
+    } finally {
+      setModalLoading(false);
+    }
+  }, [accountId]);
+
+  useEffect(() => {
+    if (!selectedCampaign) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeCampaignModal();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      document.body.style.overflow = '';
+    };
+  }, [selectedCampaign, closeCampaignModal]);
 
   return (
     <div className="rounded-xl border border-gray-100 bg-white">
@@ -266,149 +388,106 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
         <div className="px-6 py-10 text-center text-sm text-red-400">{error}</div>
       )}
 
-      {/* Table */}
+      {/* Cards */}
       {!loading && !error && (
         <>
           {data.length === 0 ? (
             <div className="px-6 py-10 text-center text-sm text-gray-500">No campaigns found.</div>
           ) : (
-            <>
-              {/* Mobile card list */}
-              <div className="hidden">
-                {data.map((c) => {
-                  const derived = c.derived_status || { label: c.effective_status?.replace(/_/g, ' ') || 'Unknown', key: c.effective_status || 'UNKNOWN' };
-                  const color = STATUS_STYLES[derived.key] || STATUS_STYLES.UNKNOWN;
-                  const thumb = c.ads?.data?.[0]?.creative?.thumbnail_url;
-                  return (
-                    <div key={c.id} className="flex items-start gap-3 px-4 py-3">
-                      {thumb ? (
-                        <img src={thumb} alt={c.name} className="h-12 w-12 shrink-0 rounded-lg object-cover" />
-                      ) : (
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-xs text-gray-400">N/A</div>
-                      )}
+            <div className="grid grid-cols-1 gap-4 p-4 sm:p-5 lg:grid-cols-3">
+	              {data.map((c) => {
+	                const derived = c.derived_status || { label: c.effective_status?.replace(/_/g, ' ') || 'Unknown', key: c.effective_status || 'UNKNOWN' };
+	                const { color, label } = statusMeta(derived.key, derived.label);
+	                const thumb = c.ads?.data?.[0]?.creative?.thumbnail_url;
+	                const isActiveCampaign = c.status === 'ACTIVE' || derived.key === 'ACTIVE';
+	                const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
+	                  const target = e.target as HTMLElement;
+	                  if (target.closest('[data-no-modal="true"]')) return;
+	                  openCampaignModal(c);
+	                };
+	                return (
+	                  <div
+	                    key={c.id}
+	                    onClick={handleCardClick}
+	                    className="w-full rounded-2xl border border-gray-200 bg-white p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md cursor-pointer"
+	                    role="button"
+	                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        openCampaignModal(c);
+                      }
+                    }}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="relative shrink-0">
+                        {thumb ? (
+                          <img src={thumb} alt={c.name} className="h-12 w-12 rounded-lg object-cover" />
+                        ) : (
+                          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gray-100 text-xs text-gray-400">N/A</div>
+                        )}
+                        <span
+                          className={`absolute -bottom-1 -right-1 h-3.5 w-3.5 rounded-full border-2 border-white shadow-sm ${
+                            isActiveCampaign ? 'bg-green-500' : 'bg-gray-300'
+                          }`}
+                          title={isActiveCampaign ? 'Active' : 'Inactive'}
+                        />
+                      </div>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-gray-900">{c.name}</p>
-                        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
-                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${color}`}>{derived.label}</span>
-                          <span className="text-xs text-gray-500">
-                            {c.daily_budget ? `${fmtBudget(c.daily_budget)}/day` : c.lifetime_budget ? `${fmtBudget(c.lifetime_budget)} lifetime` : '—'}
-                          </span>
+                        <p className="truncate text-sm font-semibold text-gray-900">{c.name}</p>
+                        <div className="mt-1 flex flex-wrap items-center gap-2">
+                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${color}`}>{label}</span>
+                          <span className="text-xs text-gray-500">{c.objective?.replace(/_/g, ' ') || '—'}</span>
                         </div>
-                        {/* Mobile toggle */}
-                        {canToggle(c) && (
-                          <div className="mt-1.5">
-                            <button
-                              onClick={() => toggleStatus(c)}
-                              disabled={togglingId === c.id}
-                              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-1 ${
-                                c.status === 'ACTIVE' ? 'bg-green-500' : 'bg-gray-300'
-                              } ${togglingId === c.id ? 'opacity-50' : ''}`}
-                            >
-                              <span
-                                className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
-                                  c.status === 'ACTIVE' ? 'translate-x-4' : 'translate-x-1'
-                                }`}
-                              />
-                            </button>
-                          </div>
-                        )}
-                        {/* Mobile assign button */}
-                        {accountId && (
-                          <div className="mt-1.5">
-                            <AssignUserDropdown
-                              metaObjectId={c.id}
-                              metaObjectType="CAMPAIGN"
-                              metaAccountId={accountId}
-                              assignedUser={assignments[c.id] || null}
-                              onAssigned={(user) => setAssignments((prev) => ({ ...prev, [c.id]: user }))}
-                            />
-                          </div>
-                        )}
-                        <p className="mt-0.5 text-xs text-gray-400">{c.objective?.replace(/_/g, ' ') || '—'} · {fmtDate(c.created_time)}</p>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
 
-              {/* Desktop table */}
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-100 text-xs uppercase text-gray-500">
-                      <th className="px-6 py-3 font-medium">Preview</th>
-                      <th className="px-4 py-3 font-medium">Campaign</th>
-                      <th className="px-4 py-3 font-medium">Status</th>
-                      <th className="px-4 py-3 font-medium">Objective</th>
-                      <th className="px-4 py-3 font-medium text-right">Budget</th>
-                      <th className="px-4 py-3 font-medium">Created</th>
-                      <th className="px-4 py-3 font-medium">Date Range</th>
-                      <th className="px-4 py-3 font-medium">Assigned To</th>
-                      <th className="px-4 py-3 font-medium text-center">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {data.map((c) => {
-                      const derived = c.derived_status || { label: c.effective_status?.replace(/_/g, ' ') || 'Unknown', key: c.effective_status || 'UNKNOWN' };
-                      const color = STATUS_STYLES[derived.key] || STATUS_STYLES.UNKNOWN;
-                      return (
-                        <tr key={c.id} className="transition-colors hover:bg-gray-50">
-                          <td className="px-6 py-3">
-                            {c.ads?.data?.[0]?.creative?.thumbnail_url ? (
-                              <img src={c.ads.data[0].creative.thumbnail_url} alt={c.name} className="h-10 w-10 rounded-lg object-cover" />
-                            ) : (
-                              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 text-xs text-gray-400">N/A</div>
-                            )}
-                          </td>
-                          <td className="max-w-50 truncate px-4 py-3 font-medium text-gray-900">{c.name}</td>
-                          <td className="px-4 py-3">
-                            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${color}`}>{derived.label}</span>
-                          </td>
-                          <td className="px-4 py-3 text-gray-400">{c.objective?.replace(/_/g, ' ') || '—'}</td>
-                          <td className="px-4 py-3 text-right text-gray-700">
-                            {c.daily_budget ? `${fmtBudget(c.daily_budget)}/day` : c.lifetime_budget ? `${fmtBudget(c.lifetime_budget)} life` : '—'}
-                          </td>
-                          <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">{fmtDate(c.created_time)}</td>
-                          <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">
-                            {fmtDate(c.start_time)}{c.stop_time ? ` → ${fmtDate(c.stop_time)}` : ' → Ongoing'}
-                          </td>
-                          <td className="px-4 py-3">
-                            {accountId && (
-                              <AssignUserDropdown
-                                metaObjectId={c.id}
-                                metaObjectType="CAMPAIGN"
-                                metaAccountId={accountId}
-                                assignedUser={assignments[c.id] || null}
-                                onAssigned={(user) => setAssignments((prev) => ({ ...prev, [c.id]: user }))}
-                              />
-                            )}
-                          </td>
-                          <td className="px-4 py-3 text-center">
-                            {canToggle(c) ? (
-                              <button
-                                onClick={() => toggleStatus(c)}
-                                disabled={togglingId === c.id}
-                                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-1 ${
-                                  c.status === 'ACTIVE' ? 'bg-green-500' : 'bg-gray-300'
-                                } ${togglingId === c.id ? 'opacity-50' : ''}`}
-                              >
-                                <span
-                                  className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
-                                    c.status === 'ACTIVE' ? 'translate-x-4' : 'translate-x-1'
-                                  }`}
-                                />
-                              </button>
-                            ) : (
-                              <span className="text-xs text-gray-300">—</span>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </>
+                    <div className="mt-3 space-y-1.5 text-sm text-gray-600">
+                      <p>Budget: <span className="font-medium text-gray-800">{campaignBudgetLabel(c)}</span></p>
+                      <p>Date Range: <span className="font-medium text-gray-800">{campaignDateRangeLabel(c)}</span></p>
+                      <p>Created: <span className="font-medium text-gray-800">{fmtDate(c.created_time)}</span></p>
+                    </div>
+
+	                    <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 pt-3">
+	                      <div className="min-w-[180px] flex-1" data-no-modal="true">
+	                        {accountId ? (
+	                          <AssignUserDropdown
+	                            metaObjectId={c.id}
+                            metaObjectType="CAMPAIGN"
+                            metaAccountId={accountId}
+                            assignedUser={assignments[c.id] || null}
+                            onAssigned={(user) => setAssignments((prev) => ({ ...prev, [c.id]: user }))}
+                          />
+	                        ) : (
+	                          <span className="text-xs text-gray-400">No account selected</span>
+	                        )}
+	                      </div>
+	                      <div className="flex items-center gap-2" data-no-modal="true">
+	                        <span className="text-xs font-medium text-gray-500">Active</span>
+	                        {canToggle(c) ? (
+	                          <button
+	                            onClick={() => toggleStatus(c)}
+	                            disabled={togglingId === c.id}
+	                            data-no-modal="true"
+	                            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-1 ${
+	                              c.status === 'ACTIVE' ? 'bg-green-500' : 'bg-gray-300'
+	                            } ${togglingId === c.id ? 'opacity-50' : ''}`}
+                          >
+                            <span
+                              className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
+                                c.status === 'ACTIVE' ? 'translate-x-4' : 'translate-x-1'
+                              }`}
+                            />
+                          </button>
+                        ) : (
+                          <span className="text-xs text-gray-300">—</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           )}
 
           {/* Pagination */}
@@ -427,6 +506,149 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
             </div>
           )}
         </>
+      )}
+
+      {mounted && selectedCampaign && createPortal(
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/55 p-3 sm:p-4"
+          onClick={closeCampaignModal}
+        >
+          <div
+            className="max-h-[92vh] w-full max-w-3xl overflow-hidden rounded-2xl bg-white shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 sm:px-5">
+              <h3 className="text-sm font-semibold text-gray-900 sm:text-base">Campaign Details</h3>
+              <button
+                type="button"
+                onClick={closeCampaignModal}
+                className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="max-h-[calc(92vh-56px)] space-y-4 overflow-y-auto p-4 sm:p-5">
+              {(() => {
+                const derived = selectedCampaign.derived_status || {
+                  label: selectedCampaign.effective_status?.replace(/_/g, ' ') || 'Unknown',
+                  key: selectedCampaign.effective_status || 'UNKNOWN',
+                };
+                const { color, label } = statusMeta(derived.key, derived.label);
+                const thumb = selectedCampaign.ads?.data?.[0]?.creative?.thumbnail_url;
+                const isActiveCampaign =
+                  selectedCampaign.status === 'ACTIVE' || derived.key === 'ACTIVE';
+                return (
+                  <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+                    <div className="flex items-start gap-3">
+                      <div className="relative shrink-0">
+                        {thumb ? (
+                          <img
+                            src={thumb}
+                            alt={selectedCampaign.name}
+                            className="h-14 w-14 rounded-lg object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-gray-100 text-xs text-gray-400">
+                            N/A
+                          </div>
+                        )}
+                        <span
+                          className={`absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-white shadow-sm ${
+                            isActiveCampaign ? 'bg-green-500' : 'bg-gray-300'
+                          }`}
+                          title={isActiveCampaign ? 'Active' : 'Inactive'}
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-gray-900 sm:text-base">
+                          {selectedCampaign.name}
+                        </p>
+                        <div className="mt-1 flex flex-wrap items-center gap-2">
+                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${color}`}>
+                            {label}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {selectedCampaign.objective?.replace(/_/g, ' ') || '—'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-3 space-y-1.5 text-sm text-gray-600">
+                      <p>Budget: <span className="font-medium text-gray-800">{campaignBudgetLabel(selectedCampaign)}</span></p>
+                      <p>Date Range: <span className="font-medium text-gray-800">{campaignDateRangeLabel(selectedCampaign)}</span></p>
+                      <p>Created: <span className="font-medium text-gray-800">{fmtDate(selectedCampaign.created_time)}</span></p>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              <div className="rounded-2xl border border-gray-200 bg-gray-50/60 p-4">
+                <h4 className="text-sm font-semibold text-gray-900">Ad Sets & Ads</h4>
+                <p className="mt-0.5 text-xs text-gray-500">
+                  All ad sets under this campaign and their ads
+                </p>
+
+                {modalLoading ? (
+                  <div className="mt-4 flex items-center gap-2 text-sm text-gray-500">
+                    <Loader2 className="h-4 w-4 animate-spin text-red-500" />
+                    Loading ad sets and ads...
+                  </div>
+                ) : modalError ? (
+                  <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">
+                    {modalError}
+                  </div>
+                ) : campaignAdSets.length === 0 ? (
+                  <div className="mt-4 rounded-xl border border-dashed border-gray-300 bg-white px-3 py-4 text-center text-xs text-gray-500">
+                    No ad sets found under this campaign.
+                  </div>
+                ) : (
+                  <div className="mt-4 space-y-3">
+                    {campaignAdSets.map((adSet) => {
+                      const adSetStatus = statusMeta(adSet.derived_status?.key || adSet.effective_status, adSet.derived_status?.label);
+                      const adList = campaignAdsByAdSet[adSet.id] || [];
+                      return (
+                        <div key={adSet.id} className="rounded-xl border border-gray-200 bg-white p-3">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="min-w-0 flex-1 truncate text-sm font-medium text-gray-900">{adSet.name}</p>
+                            <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${adSetStatus.color}`}>
+                              {adSetStatus.label}
+                            </span>
+                          </div>
+                          <p className="mt-1 text-xs text-gray-500">
+                            Budget: {adSet.daily_budget ? `${fmtBudget(adSet.daily_budget)}/day` : adSet.lifetime_budget ? `${fmtBudget(adSet.lifetime_budget)} lifetime` : '—'}
+                          </p>
+                          <p className="mt-0.5 text-xs text-gray-500">
+                            Date: {`${fmtDate(adSet.start_time)}${adSet.end_time ? ` → ${fmtDate(adSet.end_time)}` : ' → Ongoing'}`}
+                          </p>
+
+                          {adList.length > 0 ? (
+                            <div className="mt-2 space-y-1.5 border-t border-gray-100 pt-2">
+                              {adList.map((ad) => {
+                                const adStatus = statusMeta(ad.derived_status?.key || ad.effective_status, ad.derived_status?.label);
+                                return (
+                                  <div key={ad.id} className="flex items-center justify-between gap-2 rounded-lg bg-gray-50 px-2.5 py-2">
+                                    <span className="min-w-0 flex-1 truncate text-xs font-medium text-gray-700">{ad.name}</span>
+                                    <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${adStatus.color}`}>
+                                      {adStatus.label}
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <p className="mt-2 text-xs text-gray-400">No ads found in this ad set.</p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body,
       )}
     </div>
   );

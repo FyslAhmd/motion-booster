@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { useAdminAuth } from '@/lib/admin/context';
 import { useAuth } from '@/lib/auth/context';
 import { AdminStore } from '@/lib/admin/store';
+import PageTransition from '@/components/ui/PageTransition';
 import {
   LayoutDashboard,
   Layers,
@@ -211,7 +212,9 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
 
         {/* Page content */}
         <main className={`flex-1 lg:pt-0 pt-14 ${noPadding ? '' : 'p-4 sm:p-6'}`}>
-          {children}
+          <PageTransition variant="admin">
+            {children}
+          </PageTransition>
         </main>
       </div>
     </div>

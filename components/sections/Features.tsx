@@ -2,17 +2,25 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 
 interface FeatureCardProps {
   icon: React.ReactNode;
   title: string;
   description: string;
   iconColor: string;
+  delay?: number;
 }
 
-const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, description, iconColor }) => {
+const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, description, iconColor, delay = 0 }) => {
   return (
-    <div className="feature-card bg-white border border-gray-100 rounded-2xl sm:rounded-3xl p-4 sm:p-8 flex flex-col items-start text-left h-full hover:shadow-xl transition-all duration-300 group min-h-0 sm:min-h-70 hover:border-red-100">
+    <motion.div
+      className="feature-card bg-white border border-gray-100 rounded-2xl sm:rounded-3xl p-4 sm:p-8 flex flex-col items-start text-left h-full hover:shadow-xl transition-all duration-300 group min-h-0 sm:min-h-70 hover:border-red-100"
+      initial={{ opacity: 0, y: 26, scale: 0.98 }}
+      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+      viewport={{ once: true, amount: 0.3 }}
+      transition={{ duration: 0.45, delay, ease: 'easeOut' }}
+    >
       {/* Icon */}
       <div className={`w-12 h-12 sm:w-16 sm:h-16 ${iconColor} rounded-xl sm:rounded-2xl flex items-center justify-center mb-3 sm:mb-6 transition-transform duration-300`}>
         <div className="group-hover:animate-flip-horizontal">
@@ -37,7 +45,7 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, description, ico
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
         </svg>
       </Link>
-    </div>
+    </motion.div>
   );
 };
 
@@ -86,27 +94,36 @@ export const Features = () => {
   ];
 
   return (
-    <section id="features" className="py-4 sm:py-6 md:py-10 lg:py-10 bg-white mx-auto px-4 sm:px-6 lg:px-8">
+    <motion.section
+      id="features"
+      className="py-4 sm:py-6 md:py-10 lg:py-10 bg-white mx-auto px-4 sm:px-6 lg:px-8"
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.2 }}
+      transition={{ duration: 0.55, ease: 'easeOut' }}
+    >
       <div className="max-w-7xl mx-auto px-0 sm:px-4 md:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="grid lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8 mb-8 sm:mb-12 md:mb-16">
-          <div>
-            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 leading-tight">
+        <div className="mb-8 sm:mb-12 md:mb-16">
+          <div className="max-w-4xl mx-auto text-center">
+            <motion.h2
+              className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 leading-tight mb-3 sm:mb-4"
+              initial={{ opacity: 0, y: 18 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.5 }}
+              transition={{ duration: 0.45, ease: 'easeOut' }}
+            >
               Why Choose Motion Booster
-            </h2>
-          </div>
-          <div className="flex items-center">
-            <div>
-              <p className="text-gray-600 text-sm sm:text-base leading-relaxed">
-                Everything you need for successful digital transformation and business growth
-              </p>
-              <p className="mt-2 text-sm text-gray-700">
-                Need help?{' '}
-                <a href="mailto:hello@motionbooster.com" className="font-semibold text-red-500 hover:text-red-600">
-                  hello@motionbooster.com
-                </a>
-              </p>
-            </div>
+            </motion.h2>
+            <motion.p
+              className="text-gray-600 text-sm sm:text-base leading-relaxed"
+              initial={{ opacity: 0, y: 14 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.5 }}
+              transition={{ duration: 0.4, delay: 0.08, ease: 'easeOut' }}
+            >
+              Everything you need for successful digital transformation and business growth
+            </motion.p>
           </div>
         </div>
 
@@ -121,11 +138,12 @@ export const Features = () => {
                 title={feature.title}
                 description={feature.description}
                 iconColor={feature.iconColor}
+                delay={Math.min(index * 0.08, 0.28)}
               />
             </div>
           ))}
         </div>
       </div>
-    </section>
+    </motion.section>
   );
 };

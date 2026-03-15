@@ -1,45 +1,8 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-
-gsap.registerPlugin(ScrollTrigger);
+import { motion } from 'framer-motion';
 
 export const Automate = () => {
-  const titleRef = useRef<HTMLHeadingElement>(null);
-  const gridRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (titleRef.current) {
-      gsap.from(titleRef.current, {
-        scrollTrigger: {
-          trigger: titleRef.current,
-          start: 'top 80%',
-        },
-        opacity: 0,
-        y: 30,
-        duration: 0.8,
-        ease: 'power3.out',
-      });
-    }
-
-    if (gridRef.current) {
-      const cards = gridRef.current.querySelectorAll('.benefit-card');
-      gsap.from(cards, {
-        scrollTrigger: {
-          trigger: gridRef.current,
-          start: 'top 75%',
-        },
-        opacity: 0,
-        y: 40,
-        stagger: 0.15,
-        duration: 0.8,
-        ease: 'power3.out',
-      });
-    }
-  }, []);
-
   const benefits = [
     {
       icon: (
@@ -84,19 +47,38 @@ export const Automate = () => {
   ];
 
   return (
-    <section className="py-20 lg:py-32 bg-gray-50">
+    <motion.section
+      className="py-20 lg:py-32 bg-gray-50"
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.15 }}
+      transition={{ duration: 0.6, ease: 'easeOut' }}
+    >
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-16">
-          <h2 ref={titleRef} className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
+          <motion.h2
+            className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4"
+            initial={{ opacity: 0, y: 28 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.4 }}
+            transition={{ duration: 0.65, ease: 'easeOut' }}
+          >
             Why Agencies Love Our Platform
-          </h2>
+          </motion.h2>
         </div>
 
         {/* Benefits Grid */}
-        <div ref={gridRef} className="grid md:grid-cols-2 gap-8 lg:gap-12">
+        <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
           {benefits.map((benefit, index) => (
-            <div key={index} className="benefit-card bg-white rounded-2xl p-8 shadow-sm hover:shadow-lg transition-shadow">
+            <motion.div
+              key={index}
+              className="benefit-card bg-white rounded-2xl p-8 shadow-sm hover:shadow-lg transition-shadow"
+              initial={{ opacity: 0, y: 36 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.25 }}
+              transition={{ duration: 0.55, delay: index * 0.1, ease: 'easeOut' }}
+            >
               {/* Icon */}
               <div className={`inline-flex items-center justify-center w-16 h-16 ${benefit.iconColor} text-white rounded-2xl mb-6`}>
                 {benefit.icon}
@@ -111,10 +93,10 @@ export const Automate = () => {
               <p className="text-gray-600 leading-relaxed">
                 {benefit.description}
               </p>
-            </div>
+            </motion.div>
           ))}
         </div>
       </div>
-    </section>
+    </motion.section>
   );
 };

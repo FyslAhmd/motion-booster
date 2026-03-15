@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ExternalLink } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface PortfolioItem {
   id: string;
@@ -35,16 +36,34 @@ export const Portfolio = () => {
   const filteredItems = activeCategory === 'All' ? items.slice(0, 6) : items.filter(i => i.category === activeCategory).slice(0, 6);
 
   return (
-    <section className="py-8 md:py-12 lg:py-10 bg-gray-50">
+    <motion.section
+      className="py-8 md:py-12 lg:py-10 bg-gray-50"
+      initial={{ opacity: 0, y: 28 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.2 }}
+      transition={{ duration: 0.55, ease: 'easeOut' }}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-8 md:mb-10">
-          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-3">
+          <motion.h2
+            className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-3"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.5 }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
+          >
             Our Portfolio
-          </h2>
-          <p className="text-gray-600 text-sm md:text-base max-w-2xl mx-auto">
+          </motion.h2>
+          <motion.p
+            className="text-gray-600 text-sm md:text-base max-w-2xl mx-auto"
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.5 }}
+            transition={{ duration: 0.45, delay: 0.08, ease: 'easeOut' }}
+          >
             Explore our latest projects and success stories
-          </p>
+          </motion.p>
         </div>
 
         {/* Category Filter */}
@@ -77,8 +96,8 @@ export const Portfolio = () => {
               </div>
             </div>
           ))}
-          {!loading && filteredItems.map((item) => (
-            <div
+          {!loading && filteredItems.map((item, index) => (
+            <motion.div
               key={item.id}
               onClick={() => {
                 // Mobile: tap card to reveal Live Preview button.
@@ -87,6 +106,10 @@ export const Portfolio = () => {
                 }
               }}
               className="portfolio-card group relative bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.25 }}
+              transition={{ duration: 0.45, delay: Math.min(index * 0.07, 0.3), ease: 'easeOut' }}
             >
               {/* Cover Image or Gradient */}
               <div className="relative h-48 md:h-56 overflow-hidden">
@@ -125,7 +148,7 @@ export const Portfolio = () => {
                 <h3 className="font-bold text-gray-900 mb-1">{item.title}</h3>
                 <p className="text-gray-600 text-sm line-clamp-2">{item.description}</p>
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
 
@@ -140,6 +163,6 @@ export const Portfolio = () => {
           </Link>
         </div>
       </div>
-    </section>
+    </motion.section>
   );
 };

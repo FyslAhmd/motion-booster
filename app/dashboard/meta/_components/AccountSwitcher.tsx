@@ -26,9 +26,18 @@ const STATUS_MAP: Record<number, { label: string; color: string }> = {
 interface AccountSwitcherProps {
   value: string;              // currently selected account id
   onChange: (id: string) => void;
+  className?: string;
+  compact?: boolean;
+  showInlineStatus?: boolean;
 }
 
-export default function AccountSwitcher({ value, onChange }: AccountSwitcherProps) {
+export default function AccountSwitcher({
+  value,
+  onChange,
+  className,
+  compact = false,
+  showInlineStatus = false,
+}: AccountSwitcherProps) {
   const [accounts, setAccounts] = useState<AdAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
@@ -78,6 +87,9 @@ export default function AccountSwitcher({ value, onChange }: AccountSwitcherProp
   }, []);
 
   const selected = accounts.find((a) => a.id === value);
+  const selectedStatus = selected
+    ? STATUS_MAP[selected.account_status]?.label || 'Unknown'
+    : null;
 
   if (loading) {
     return <AdminSectionSkeleton variant="inline" />;
@@ -86,18 +98,31 @@ export default function AccountSwitcher({ value, onChange }: AccountSwitcherProp
   if (accounts.length <= 1) return null; // No switcher needed for single account
 
   return (
-    <div className="relative w-full min-w-0" ref={ref}>
+    <div className={`relative w-full min-w-0 ${className ?? ''}`} ref={ref}>
       <button
         onClick={() => setOpen(!open)}
-        className="flex w-full min-w-0 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-700 transition-colors hover:border-red-300 hover:bg-gray-50"
+        className={`flex w-full min-w-0 items-center rounded-lg border border-gray-200 bg-white text-gray-700 transition-colors hover:border-red-300 hover:bg-gray-50 ${
+          compact ? 'gap-1.5 px-3 py-2 text-xs' : 'gap-2 px-3 py-2.5 text-sm'
+        }`}
       >
-        <Building2 className="h-4 w-4 shrink-0 text-red-500" />
+        <Building2 className={`${compact ? 'h-3.5 w-3.5' : 'h-4 w-4'} shrink-0 text-red-500`} />
         <span className="min-w-0 flex-1 truncate text-left">{selected?.name || 'Select account'}</span>
-        <ChevronDown className={`h-4 w-4 shrink-0 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`} />
+        {showInlineStatus && selectedStatus && (
+          <span
+            className={`shrink-0 rounded-full px-2 py-0.5 font-semibold ${
+              selectedStatus === 'Active'
+                ? 'bg-green-50 text-green-600'
+                : 'bg-gray-100 text-gray-600'
+            } ${compact ? 'text-[10px]' : 'text-xs'}`}
+          >
+            {selectedStatus}
+          </span>
+        )}
+        <ChevronDown className={`${compact ? 'h-3.5 w-3.5' : 'h-4 w-4'} shrink-0 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full z-50 mt-1 w-72 rounded-xl border border-gray-200 bg-white shadow-xl shadow-black/10">
+        <div className="absolute left-0 top-full z-50 mt-1 w-full min-w-72 rounded-xl border border-gray-200 bg-white shadow-xl shadow-black/10">
           <div className="max-h-80 overflow-y-auto py-1">
             {accounts.map((acc) => {
               const st = STATUS_MAP[acc.account_status] || { label: 'Unknown', color: 'bg-gray-500' };

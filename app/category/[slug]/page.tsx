@@ -3,6 +3,19 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { Check, ArrowRight, ChevronRight } from 'lucide-react';
 
+const OFFER_CARD_BG_COLORS = [
+  'bg-red-50',
+  'bg-orange-50',
+  'bg-yellow-50',
+  'bg-green-50',
+  'bg-blue-50',
+  'bg-indigo-50',
+  'bg-purple-50',
+  'bg-pink-50',
+  'bg-teal-50',
+  'bg-cyan-50',
+];
+
 interface PageProps {
   params: Promise<{ slug: string }>;
 }
@@ -19,7 +32,7 @@ export default async function CategoryPage({ params }: PageProps) {
     <main className="min-h-screen">
       {/* Hero Banner */}
       <section
-        className="relative pt-24 pb-14 md:pt-36 md:pb-24 overflow-hidden"
+        className="relative pt-8 pb-10 sm:pt-12 sm:pb-12 md:pt-22 md:pb-20 lg:pt-32 overflow-hidden"
         style={{
           background: 'linear-gradient(135deg, #fef6f3 0%, #fde8e4 30%, #fbd5d0 60%, #f9c4be 100%)',
         }}
@@ -41,7 +54,7 @@ export default async function CategoryPage({ params }: PageProps) {
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Breadcrumb */}
-          <div className="flex items-center gap-2 text-sm mb-6">
+          <div className="flex items-center gap-2 text-sm mb-4">
             <Link href="/" className="text-gray-500 hover:text-red-500 transition-colors">Home</Link>
             <ChevronRight className="w-4 h-4 text-gray-400" />
             <Link href="/service" className="text-gray-500 hover:text-red-500 transition-colors">Services</Link>
@@ -52,25 +65,24 @@ export default async function CategoryPage({ params }: PageProps) {
           <div className="max-w-3xl">
             {/* Badge */}
             <div
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-white text-sm font-semibold mb-6"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-white text-sm font-semibold mb-4"
               style={{ background: 'linear-gradient(214.38deg, #ff8079 -2.24%, #ff1e1e 59.38%)' }}
             >
               ✓ Our Services
             </div>
 
             {/* Title */}
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-4 leading-tight">
               {category.title}
-              <span className="block text-red-500 mt-1">Services</span>
             </h1>
 
             {/* Description */}
-            <p className="text-lg md:text-xl text-gray-600 leading-relaxed mb-8 max-w-2xl">
+            <p className="text-lg md:text-xl text-gray-600 leading-relaxed mb-6 max-w-2xl">
               {category.description}
             </p>
 
             {/* Stats */}
-            <div className="flex flex-wrap gap-8">
+            <div className="flex flex-wrap gap-6">
               <div>
                 <div className="text-3xl font-bold text-gray-900">{category.services.length}+</div>
                 <div className="text-sm text-gray-500 font-medium">Services Offered</div>
@@ -98,9 +110,9 @@ export default async function CategoryPage({ params }: PageProps) {
       </section>
 
       {/* Services List */}
-      <section className="py-16 bg-gray-50">
+      <section className="pt-10 pb-14 md:py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
+          <div className="text-center mb-8 md:mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">What We Offer</h2>
             <p className="text-gray-600 text-lg">Everything you need under {category.title}</p>
           </div>
@@ -109,7 +121,7 @@ export default async function CategoryPage({ params }: PageProps) {
             {category.services.map((service, index) => (
               <div
                 key={index}
-                className="flex items-start gap-4 bg-white rounded-2xl p-5 shadow-sm hover:shadow-lg border border-gray-100 hover:border-red-100 transition-all duration-300 group"
+                className={`flex items-start gap-4 rounded-2xl p-5 shadow-sm hover:shadow-md border border-white/60 transition-all duration-300 group ${OFFER_CARD_BG_COLORS[index % OFFER_CARD_BG_COLORS.length]}`}
               >
                 <div className="shrink-0 w-10 h-10 rounded-xl flex items-center justify-center mt-0.5 group-hover:scale-110 transition-transform" style={{ background: 'linear-gradient(214.38deg, #ff8079 -2.24%, #ff1e1e 59.38%)' }}>
                   <Check className="w-5 h-5 text-white" />

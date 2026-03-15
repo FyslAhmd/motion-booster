@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 
 interface FAQItem {
   id: string;
@@ -49,22 +50,38 @@ export const FAQ = () => {
   };
 
   return (
-    <section className="pt-0 pb-1 sm:pb-2 md:pb-4 lg:pb-4 bg-white">
+    <motion.section
+      className="pt-0 pb-1 sm:pb-2 md:pb-4 lg:pb-4 bg-white"
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.2 }}
+      transition={{ duration: 0.55, ease: 'easeOut' }}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 text-center mb-8 sm:mb-10 md:mb-12 px-4">
+        <motion.h2
+          className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 text-center mb-8 sm:mb-10 md:mb-12 px-4"
+          initial={{ opacity: 0, y: 18 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 0.45, ease: 'easeOut' }}
+        >
           Answers to Your Frequently Asked Questions
-        </h2>
+        </motion.h2>
 
         {loading ? (
           <SkeletonFAQ />
         ) : (
           <div className="grid grid-cols-1 gap-3 sm:gap-4 md:gap-6" suppressHydrationWarning>
-            {faqs.map((faq) => {
+            {faqs.map((faq, index) => {
               const isOpen = openId === faq.id;
               return (
-                <div
+                <motion.div
                   key={faq.id}
                   className="faq-item bg-white rounded-xl sm:rounded-2xl p-5 sm:p-6 md:p-7 shadow-sm hover:shadow-md transition-shadow border border-gray-100"
+                  initial={{ opacity: 0, y: 22 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.35 }}
+                  transition={{ duration: 0.42, delay: Math.min(index * 0.05, 0.25), ease: 'easeOut' }}
                 >
                   <button
                     onClick={() => toggleFAQ(faq.id)}
@@ -88,12 +105,12 @@ export const FAQ = () => {
                       {faq.answer}
                     </p>
                   </div>
-                </div>
+                </motion.div>
               );
             })}
           </div>
         )}
       </div>
-    </section>
+    </motion.section>
   );
 };

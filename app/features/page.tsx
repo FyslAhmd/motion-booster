@@ -250,7 +250,7 @@ export default function FeaturesPage() {
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
-      <section className="py-20 lg:py-32 bg-linear-to-br from-red-50 via-white to-rose-50">
+      <section className="pt-14 pb-10 lg:pt-28 lg:pb-14 bg-linear-to-br from-red-50 via-white to-rose-50">
         <div className="max-w-7xl mx-auto px-6 lg:px-8 text-center">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 rounded-full text-sm font-medium mb-6">
             <Rocket className="w-4 h-4" />
@@ -282,7 +282,7 @@ export default function FeaturesPage() {
       </section>
 
       {/* Category Filter */}
-      <section className="py-8 px-4">
+      <section className="pt-3 pb-6 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-wrap gap-3 justify-center">
             {categories.map((cat) => (
@@ -335,7 +335,7 @@ export default function FeaturesPage() {
       </section>
 
       {/* Platform Capabilities */}
-      <section className="py-20 px-4 bg-white">
+      <section className="pt-10 pb-16 md:pt-12 md:pb-20 px-4 bg-white">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
@@ -366,42 +366,6 @@ export default function FeaturesPage() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="relative py-16 sm:py-20 lg:py-32 bg-red-600 overflow-hidden">
-        {/* Red Circle Decorations */}
-        <div className="absolute top-0 left-0 w-32 h-32 sm:w-48 sm:h-48 md:w-64 md:h-64 bg-red-400 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
-        <div className="absolute bottom-0 right-0 w-48 h-48 sm:w-64 sm:h-64 md:w-96 md:h-96 bg-red-700 rounded-full translate-x-1/2 translate-y-1/2"></div>
-
-        <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 sm:mb-6 leading-tight">
-            Ready to Transform Your Marketing?
-          </h2>
-          <p className="text-base sm:text-lg md:text-xl text-white mb-8 sm:mb-10 opacity-90">
-            Join thousands of businesses already using MotionBooster
-          </p>
-          <div className="flex flex-wrap gap-4 justify-center mb-6">
-            <Link href="/register">
-              <button className="bg-white text-red-600 px-8 sm:px-10 py-3 sm:py-4 rounded-full font-bold text-base sm:text-lg hover:bg-gray-100 transition-colors shadow-xl">
-                Get Started Free
-              </button>
-            </Link>
-            <Link href="/contact">
-              <button className="bg-transparent text-white px-8 sm:px-10 py-3 sm:py-4 rounded-full font-bold text-base sm:text-lg hover:bg-white/10 transition-colors border-2 border-white">
-                Contact Sales
-              </button>
-            </Link>
-          </div>
-          <p className="text-white text-xs sm:text-sm opacity-80 mb-2">
-            No credit card required • 14-day free trial • Cancel anytime
-          </p>
-          <p className="text-white text-xs sm:text-sm opacity-70">
-            Questions? Contact us at{' '}
-            <a href="mailto:hello@youragency.com" className="underline hover:opacity-100">
-              hello@youragency.com
-            </a>
-          </p>
-        </div>
-      </section>
     </div>
   );
 }

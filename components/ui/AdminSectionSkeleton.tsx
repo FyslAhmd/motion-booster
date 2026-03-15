@@ -12,7 +12,7 @@ type AdminSectionSkeletonVariant =
   | 'inline';
 
 function Pulse({ className }: { className: string }) {
-  return <div className={`animate-pulse rounded-xl bg-gray-200/80 ${className}`} />;
+  return <div className={`skeleton-breathe rounded-xl bg-gray-200/80 ${className}`} />;
 }
 
 export function AdminSectionSkeleton({

@@ -51,20 +51,20 @@ export const Footer = () => {
               <h3 className="text-white font-bold text-lg mb-6">Contact</h3>
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
-                  <MapPin className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+                  <MapPin className="w-5 h-5 text-[#FF2525] shrink-0 mt-0.5" />
                   <div className="text-gray-400 text-sm leading-relaxed">
                     Head Office<br />
                     New Market, Dhaka
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <Phone className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+                  <Phone className="w-5 h-5 text-[#FF2525] shrink-0 mt-0.5" />
                   <div className="text-gray-400 text-sm leading-relaxed">
                     +880 1790-939394
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <Mail className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+                  <Mail className="w-5 h-5 text-[#FF2525] shrink-0 mt-0.5" />
                   <a href="mailto:hello@motionbooster.com" className="text-gray-400 text-sm hover:text-white transition-colors">
                     hello@motionbooster.com
                   </a>

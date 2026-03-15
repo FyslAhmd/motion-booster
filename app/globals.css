@@ -178,3 +178,22 @@ html {
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+/* Shared loading skeleton animation (pulse + slight scale) */
+@keyframes skeletonBreathe {
+  0%,
+  100% {
+    opacity: 0.82;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.98;
+    transform: scale(1.008);
+  }
+}
+
+.skeleton-breathe {
+  animation: skeletonBreathe 0.95s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  transform-origin: center;
+  will-change: transform, opacity;
+}

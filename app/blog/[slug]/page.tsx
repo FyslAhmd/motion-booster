@@ -271,24 +271,6 @@ export default function BlogPostPage({ params }: { params: Promise<{ slug: strin
         </section>
       )}
 
-      {/* CTA Section */}
-      <section className="relative py-16 bg-red-600 overflow-hidden">
-        <div className="absolute top-0 left-0 w-32 h-32 bg-red-400 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
-        <div className="absolute bottom-0 right-0 w-48 h-48 bg-red-700 rounded-full translate-x-1/2 translate-y-1/2"></div>
-        
-        <div className="relative z-10 max-w-4xl mx-auto px-4 text-center">
-          <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
-            Ready to enhance your sales & customer satisfaction?
-          </h2>
-          <p className="text-white/90 mb-6">Get started with our CRM solution today</p>
-          <Link
-            href="/contact"
-            className="inline-block bg-white text-red-600 px-8 py-4 rounded-full font-bold hover:bg-gray-100 transition-colors"
-          >
-            Get Started Now
-          </Link>
-        </div>
-      </section>
     </main>
   );
 }
