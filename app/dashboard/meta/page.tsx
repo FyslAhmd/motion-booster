@@ -41,7 +41,7 @@ export default function MetaDashboardPage() {
     <AdminShell>
       <div className="space-y-6">
         {/* Header */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
+        <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5">
           <h1 className="text-xl font-bold text-gray-900">Meta Ads Manager</h1>
           <p className="mt-0.5 text-sm text-gray-500">
             Manage and monitor your Meta campaigns and ads

@@ -212,7 +212,7 @@ export default function BlogPage() {
 
                 {/* Popular Tags */}
                 {allTags.length > 0 && (
-                  <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-200 shadow-sm">
+                  <div className="hidden lg:block bg-white p-4 sm:p-5 rounded-2xl border border-gray-200 shadow-sm">
                     <button
                       type="button"
                       className="w-full flex items-center justify-between text-left"
@@ -239,7 +239,7 @@ export default function BlogPage() {
 
                 {/* Latest Posts */}
                 {latestPosts.length > 0 && (
-                  <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-200 shadow-sm">
+                  <div className="hidden lg:block bg-white p-4 sm:p-5 rounded-2xl border border-gray-200 shadow-sm">
                     <button
                       type="button"
                       className="w-full flex items-center justify-between text-left mb-3 sm:mb-4"
