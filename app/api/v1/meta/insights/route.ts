@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import {
   fetchAccountInsights,
   fetchCampaignInsights,
+  fetchSingleCampaignInsights,
   fetchDailySpend,
   fetchDemographics,
   type TimeRange,
@@ -27,6 +28,14 @@ export async function GET(req: Request) {
       }
       case 'campaigns': {
         const data = await fetchCampaignInsights(datePreset, undefined, accountId, timeRange);
+        return NextResponse.json({ success: true, data });
+      }
+      case 'single_campaign': {
+        const campaignId = searchParams.get('campaign_id');
+        if (!campaignId) {
+          return NextResponse.json({ success: false, error: 'campaign_id is required' }, { status: 400 });
+        }
+        const data = await fetchSingleCampaignInsights(campaignId, datePreset, timeRange);
         return NextResponse.json({ success: true, data });
       }
       case 'daily': {
