@@ -359,6 +359,32 @@ export function fetchCampaignInsights(
   }, CACHE_TTL);
 }
 
+/** Single Campaign Insights */
+export function fetchSingleCampaignInsights(
+  campaignId: string,
+  datePreset = 'maximum',
+  timeRange?: TimeRange,
+) {
+  const cacheKey = timeRange
+    ? `meta:single-C-insights:${campaignId}:${timeRange.since}:${timeRange.until}`
+    : `meta:single-C-insights:${campaignId}:${datePreset}`;
+
+  return cachedFetch(cacheKey, async () => {
+    const params: Record<string, string> = {
+      fields: [
+        'campaign_id', 'campaign_name',
+        'spend', 'impressions', 'clicks', 'cpc', 'cpm', 'ctr',
+        'reach', 'frequency', 'actions', 'cost_per_action_type',
+        'date_start', 'date_stop',
+      ].join(','),
+    };
+    if (timeRange) params.time_range = JSON.stringify(timeRange);
+    else params.date_preset = datePreset;
+
+    return metaFetchAll(`/${campaignId}/insights`, params);
+  }, CACHE_TTL);
+}
+
 /** Daily spend breakdown for charts */
 export function fetchDailySpend(datePreset = 'last_30d', accountId?: string, timeRange?: TimeRange) {
   const id = accountId || getDefaultAccountId();

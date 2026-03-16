@@ -55,6 +55,33 @@ interface CursorPaging {
   hasPrevious?: boolean;
 }
 
+function parseCampaignInsights(insight: any) {
+  if (!insight) return null;
+  const actions = insight.actions || [];
+  const costs = insight.cost_per_action_type || [];
+
+  const getAction = (type: string) =>
+    Number(actions.find((a: any) => a.action_type === type)?.value || 0);
+  const getCost = (type: string) =>
+    Number(costs.find((a: any) => a.action_type === type)?.value || 0);
+
+  return {
+    spend: Number(insight.spend || 0),
+    reach: Number(insight.reach || 0),
+    impressions: Number(insight.impressions || 0),
+    clicks: getAction('link_click'),
+    messages: getAction('onsite_conversion.messaging_conversation_started_7d'),
+    leads: getAction('lead'),
+    purchases: getAction('purchase') || getAction('onsite_web_purchase'),
+    cost_per_click: getCost('link_click'),
+    cost_per_message: getCost('onsite_conversion.messaging_conversation_started_7d'),
+    cost_per_lead: getCost('lead'),
+    cost_per_purchase: getCost('purchase') || getCost('onsite_web_purchase'),
+    cpc: Number(insight.cpc || 0),
+    ctr: Number(insight.ctr || 0)
+  };
+}
+
 const STATUS_STYLES: Record<string, string> = {
   ACTIVE:               'bg-green-50 text-green-700 border border-green-200',
   SCHEDULED:            'bg-blue-50 text-blue-700 border border-blue-200',
@@ -108,6 +135,10 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
   const [campaignAdsByAdSet, setCampaignAdsByAdSet] = useState<Record<string, CampaignAd[]>>({});
   const [modalLoading, setModalLoading] = useState(false);
   const [modalError, setModalError] = useState('');
+  const [insightDatePreset, setInsightDatePreset] = useState('maximum');
+  const [campaignInsights, setCampaignInsights] = useState<any>(null);
+  const [insightsLoading, setInsightsLoading] = useState(false);
+  const [insightsError, setInsightsError] = useState('');
   const [mounted, setMounted] = useState(false);
 
   // Assignment tracking: metaObjectId → { id, fullName, phone, username }
@@ -274,7 +305,30 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
     setCampaignAdsByAdSet({});
     setModalLoading(false);
     setModalError('');
+    setCampaignInsights(null);
+    setInsightsError('');
+    setInsightDatePreset('maximum');
   }, []);
+
+  const fetchInsights = async (campaignId: string, preset: string) => {
+    setInsightsLoading(true);
+    setInsightsError('');
+    try {
+      const res = await fetch(`/api/v1/meta/insights?type=single_campaign&campaign_id=${campaignId}&date_preset=${preset}`);
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+        setCampaignInsights(json.data[0]);
+      } else if (json.success && json.data?.data?.length > 0) {
+        setCampaignInsights(json.data.data[0]);
+      } else {
+        setCampaignInsights(null); // No data for this timeframe
+      }
+    } catch (e: any) {
+      setInsightsError('Failed to load insights.');
+    } finally {
+      setInsightsLoading(false);
+    }
+  };
 
   const openCampaignModal = useCallback(async (campaign: Campaign) => {
     setSelectedCampaign(campaign);
@@ -282,6 +336,10 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
     setCampaignAdsByAdSet({});
     setModalError('');
     setModalLoading(true);
+    setInsightDatePreset('maximum');
+
+    // Fetch initial insights using default preset
+    fetchInsights(campaign.id, 'maximum');
 
     try {
       const adSetQuery = new URLSearchParams({ campaign_id: campaign.id, limit: '12' });
@@ -613,6 +671,104 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
                   </div>
                 );
               })()}
+
+              <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                  <h4 className="text-sm font-semibold text-gray-900">Campaign Insights</h4>
+                  <div className="flex gap-1 rounded-lg bg-gray-100 p-1">
+                    {[
+                      { value: 'today', label: 'Today' },
+                      { value: 'last_7d', label: '7 Days' },
+                      { value: 'last_30d', label: '30 Days' },
+                      { value: 'maximum', label: 'Maximum' },
+                    ].map((tab) => (
+                      <button
+                        key={tab.value}
+                        type="button"
+                        onClick={() => {
+                          setInsightDatePreset(tab.value);
+                          fetchInsights(selectedCampaign.id, tab.value);
+                        }}
+                        className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                          insightDatePreset === tab.value
+                            ? 'bg-white text-gray-900 shadow-sm'
+                            : 'text-gray-500 hover:text-gray-700'
+                        }`}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {insightsLoading ? (
+                  <div className="flex items-center justify-center py-6 text-sm text-gray-500">
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Loading insights...
+                  </div>
+                ) : insightsError ? (
+                  <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-600">
+                    {insightsError}
+                  </div>
+                ) : !campaignInsights ? (
+                  <div className="rounded-lg border border-dashed border-gray-300 py-6 text-center text-xs text-gray-500">
+                    No insights data for this timeframe.
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    {(() => {
+                      const data = parseCampaignInsights(campaignInsights);
+                      if (!data) return null;
+                      return (
+                        <>
+                          <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                            <p className="text-[11px] font-medium uppercase tracking-wider text-gray-500">Spend</p>
+                            <p className="mt-1 text-lg font-bold text-gray-900">${data.spend.toFixed(2)}</p>
+                          </div>
+                          <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                            <p className="text-[11px] font-medium uppercase tracking-wider text-gray-500">Reach</p>
+                            <p className="mt-1 text-lg font-bold text-gray-900">{data.reach.toLocaleString()}</p>
+                          </div>
+                          <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                            <p className="text-[11px] font-medium uppercase tracking-wider text-gray-500">Impressions</p>
+                            <p className="mt-1 text-lg font-bold text-gray-900">{data.impressions.toLocaleString()}</p>
+                          </div>
+                          <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                            <p className="text-[11px] font-medium uppercase tracking-wider text-gray-500">Messages</p>
+                            <p className="mt-1 text-lg font-bold text-gray-900">{data.messages.toLocaleString()}</p>
+                            {data.cost_per_message > 0 && (
+                              <p className="mt-0.5 text-[10px] text-gray-500">${data.cost_per_message.toFixed(2)} / msg</p>
+                            )}
+                          </div>
+                          <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                            <p className="text-[11px] font-medium uppercase tracking-wider text-gray-500">Leads</p>
+                            <p className="mt-1 text-lg font-bold text-gray-900">{data.leads.toLocaleString()}</p>
+                            {data.cost_per_lead > 0 && (
+                              <p className="mt-0.5 text-[10px] text-gray-500">${data.cost_per_lead.toFixed(2)} / lead</p>
+                            )}
+                          </div>
+                          <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                            <p className="text-[11px] font-medium uppercase tracking-wider text-gray-500">Purchases</p>
+                            <p className="mt-1 text-lg font-bold text-gray-900">{data.purchases.toLocaleString()}</p>
+                            {data.cost_per_purchase > 0 && (
+                              <p className="mt-0.5 text-[10px] text-gray-500">${data.cost_per_purchase.toFixed(2)} / purchase</p>
+                            )}
+                          </div>
+                          <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                            <p className="text-[11px] font-medium uppercase tracking-wider text-gray-500">Clicks / CPC</p>
+                            <p className="mt-1 text-lg font-bold text-gray-900">{data.clicks.toLocaleString()}</p>
+                            <p className="mt-0.5 text-[10px] text-gray-500">${data.cpc.toFixed(2)} CPC</p>
+                          </div>
+                          <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                            <p className="text-[11px] font-medium uppercase tracking-wider text-gray-500">CTR</p>
+                            <p className="mt-1 text-lg font-bold text-gray-900">{data.ctr.toFixed(2)}%</p>
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </div>
+                )}
+              </div>
 
               <div className="rounded-2xl border border-gray-200 bg-gray-50/60 p-4">
                 <h4 className="text-sm font-semibold text-gray-900">Ad Sets & Ads</h4>
