@@ -9,8 +9,16 @@ const globalForPrisma = globalThis as unknown as {
 function buildDatasourceUrl() {
   const base = process.env.DATABASE_URL ?? '';
   if (!base) return base;
-  const sep = base.includes('?') ? '&' : '?';
-  return `${base}${sep}pgbouncer=true&connection_limit=1`;
+
+  // Defaults are safe for parallel page/API loads in development and production.
+  const connectionLimit = process.env.PRISMA_CONNECTION_LIMIT ?? '10';
+  const poolTimeout = process.env.PRISMA_POOL_TIMEOUT ?? '30';
+
+  const url = new URL(base);
+  url.searchParams.set('pgbouncer', 'true');
+  url.searchParams.set('connection_limit', connectionLimit);
+  url.searchParams.set('pool_timeout', poolTimeout);
+  return url.toString();
 }
 
 export const prisma =
