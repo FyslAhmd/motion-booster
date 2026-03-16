@@ -593,7 +593,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="flex w-full items-center gap-2 text-sm text-gray-400 sm:w-auto">
                   {totalSpendBDT !== null ? (
-                    <div className="flex w-full max-w-[260px] items-center gap-3 rounded-2xl bg-red-600 px-4 py-3 sm:w-auto sm:max-w-none sm:min-w-[250px] text-white shadow-lg shadow-red-500/25">
+                    <div className="flex w-full max-w-65 items-center gap-3 rounded-2xl bg-red-600 px-4 py-3 sm:w-auto sm:max-w-none sm:min-w-62.5 text-white shadow-lg shadow-red-500/25">
                       <TrendingUp className="h-4.5 w-4.5 shrink-0" />
                       <div className="min-w-0 flex-1">
                         <p className="mb-1 text-[10px] sm:text-[11px] font-semibold text-red-200 uppercase tracking-wide leading-none">

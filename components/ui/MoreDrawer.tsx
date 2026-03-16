@@ -28,6 +28,8 @@ const menuItems = [
 export const MoreDrawer = ({ open, onClose }: MoreDrawerProps) => {
   const { isAuthenticated, user, logout } = useAuth();
   const pathname = usePathname();
+  const userInitial = (user?.fullName || user?.username || user?.email || 'U').trim().charAt(0).toUpperCase();
+  const userAvatarUrl = user?.avatarUrl?.trim() || '';
 
   return (
     <>
@@ -54,9 +56,18 @@ export const MoreDrawer = ({ open, onClose }: MoreDrawerProps) => {
         {isAuthenticated && user ? (
           <div className="flex flex-col items-center pt-10 pb-5 border-b border-gray-100">
             <Link href="/dashboard/profile" onClick={onClose} className="flex flex-col items-center">
-              <div className="w-20 h-20 rounded-full bg-gray-100 border-2 border-red-400 flex items-center justify-center mb-3 hover:border-red-500 transition-colors">
-                <User className="w-10 h-10 text-gray-400" />
-              </div>
+              {userAvatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={userAvatarUrl}
+                  alt="Profile"
+                  className="w-20 h-20 rounded-full border-2 border-red-400 object-cover mb-3 hover:border-red-500 transition-colors"
+                />
+              ) : (
+                <div className="w-20 h-20 rounded-full bg-linear-to-br from-red-500 to-pink-500 border-2 border-red-400 flex items-center justify-center mb-3 hover:border-red-500 transition-colors">
+                  <span className="text-white font-bold text-xl">{userInitial}</span>
+                </div>
+              )}
               <h3 className="text-base font-bold text-gray-900">{user.fullName || user.username}</h3>
               <p className="text-sm text-gray-500">{user.email}</p>
             </Link>

@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Search, Filter, ChevronLeft, ChevronRight, X, Loader2 } from 'lucide-react';
 import AssignUserDropdown from './AssignUserDropdown';
-import { AdminSectionSkeleton } from '@/components/ui/AdminSectionSkeleton';
 import { toast } from 'sonner';
 import { createPortal } from 'react-dom';
 
@@ -125,6 +124,12 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      clearTimeout(searchTimerRef.current);
+    };
   }, []);
 
   useEffect(() => {
@@ -380,7 +385,33 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
 
       {/* Loading */}
       {loading && (
-        <AdminSectionSkeleton variant="tableEmbedded" />
+        <div className="grid grid-cols-1 gap-4 p-4 sm:p-5 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={`campaign-skeleton-${i}`} className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+              <div className="flex items-start gap-3">
+                <div className="skeleton-breathe h-12 w-12 shrink-0 rounded-lg bg-gray-200/80" />
+                <div className="min-w-0 flex-1 space-y-2">
+                  <div className="skeleton-breathe h-4 w-5/6 rounded-lg bg-gray-200/80" />
+                  <div className="flex items-center gap-2">
+                    <div className="skeleton-breathe h-5 w-16 rounded-full bg-gray-200/80" />
+                    <div className="skeleton-breathe h-3 w-24 rounded-lg bg-gray-200/80" />
+                  </div>
+                </div>
+              </div>
+              <div className="mt-3 space-y-2">
+                <div className="skeleton-breathe h-3.5 w-2/3 rounded-lg bg-gray-200/80" />
+                <div className="skeleton-breathe h-3.5 w-5/6 rounded-lg bg-gray-200/80" />
+                <div className="skeleton-breathe h-3.5 w-1/2 rounded-lg bg-gray-200/80" />
+              </div>
+              <div className="mt-4 border-t border-gray-100 pt-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="skeleton-breathe h-7 w-24 rounded-full bg-gray-200/80" />
+                  <div className="skeleton-breathe h-5 w-10 rounded-full bg-gray-200/80" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       )}
 
       {/* Error */}
@@ -449,7 +480,7 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
                     </div>
 
 	                    <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 pt-3">
-	                      <div className="min-w-[180px] flex-1" data-no-modal="true">
+	                      <div className="min-w-45 flex-1" data-no-modal="true">
 	                        {accountId ? (
 	                          <AssignUserDropdown
 	                            metaObjectId={c.id}
@@ -510,7 +541,7 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
 
       {mounted && selectedCampaign && createPortal(
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/55 p-3 sm:p-4"
+          className="fixed inset-0 z-100 flex items-center justify-center bg-black/55 p-3 sm:p-4"
           onClick={closeCampaignModal}
         >
           <div
@@ -528,7 +559,7 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
               </button>
             </div>
 
-            <div className="max-h-[calc(92vh-56px)] space-y-4 overflow-y-auto p-4 sm:p-5">
+            <div className="no-scrollbar max-h-[calc(92vh-56px)] space-y-4 overflow-y-auto p-4 sm:p-5">
               {(() => {
                 const derived = selectedCampaign.derived_status || {
                   label: selectedCampaign.effective_status?.replace(/_/g, ' ') || 'Unknown',

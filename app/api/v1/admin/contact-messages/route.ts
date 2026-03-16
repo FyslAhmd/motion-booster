@@ -42,7 +42,31 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    return NextResponse.json({ success: true, data: messages });
+    const uniqueEmails = Array.from(
+      new Set(
+        messages
+          .map((message) => message.email.trim().toLowerCase())
+          .filter(Boolean),
+      ),
+    );
+
+    const users = uniqueEmails.length
+      ? await prisma.user.findMany({
+          where: { email: { in: uniqueEmails } },
+          select: { email: true, avatarUrl: true },
+        })
+      : [];
+
+    const avatarByEmail = new Map(
+      users.map((user) => [user.email.trim().toLowerCase(), user.avatarUrl]),
+    );
+
+    const messagesWithAvatar = messages.map((message) => ({
+      ...message,
+      avatarUrl: avatarByEmail.get(message.email.trim().toLowerCase()) ?? null,
+    }));
+
+    return NextResponse.json({ success: true, data: messagesWithAvatar });
   } catch (err: any) {
     if (err?.code === 'P2021') {
       return NextResponse.json(

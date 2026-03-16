@@ -7,7 +7,6 @@ import AccountSwitcher from '../meta/_components/AccountSwitcher';
 import InsightsCards from '../meta/_components/InsightsCards';
 import SpendChart from '../meta/_components/SpendChart';
 import DatePresetSelector from '../meta/_components/DatePresetSelector';
-import { AdminSectionSkeleton } from '@/components/ui/AdminSectionSkeleton';
 import type { MetaAccount, InsightRow } from '../meta/_components/useMetaData';
 
 type DatePreset =
@@ -27,6 +26,66 @@ async function apiFetch<T>(url: string): Promise<T> {
   const json = await res.json();
   if (!json.success) throw new Error(json.error || 'Unknown error');
   return json.data as T;
+}
+
+function MetaOverviewCardsSkeleton() {
+  return (
+    <div className="space-y-5">
+      <div className="w-full min-w-0 overflow-hidden rounded-xl border border-gray-100 bg-gray-50 p-5">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div className="space-y-2">
+            <div className="skeleton-breathe h-4 w-44 rounded-lg bg-gray-200/80" />
+            <div className="skeleton-breathe h-3 w-28 rounded-lg bg-gray-200/80" />
+          </div>
+          <div className="skeleton-breathe h-6 w-20 rounded-full bg-gray-200/80" />
+        </div>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={`acc-skeleton-${i}`} className="space-y-1.5">
+              <div className="skeleton-breathe h-3 w-16 rounded-lg bg-gray-200/80" />
+              <div className="skeleton-breathe h-4 w-24 rounded-lg bg-gray-200/80" />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div key={`insight-skeleton-${i}`} className="rounded-xl border border-gray-100 bg-white p-4">
+            <div className="skeleton-breathe h-3 w-16 rounded-lg bg-gray-200/80" />
+            <div className="skeleton-breathe mt-2 h-4 w-20 rounded-lg bg-gray-200/80" />
+          </div>
+        ))}
+      </div>
+
+      <div className="rounded-xl border border-gray-100 bg-white overflow-hidden">
+        <div className="px-5 pt-5 pb-4 border-b border-gray-50">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <div className="skeleton-breathe h-9 w-9 rounded-lg bg-gray-200/80" />
+              <div className="space-y-1.5">
+                <div className="skeleton-breathe h-4 w-28 rounded-lg bg-gray-200/80" />
+                <div className="skeleton-breathe h-3 w-20 rounded-lg bg-gray-200/80" />
+              </div>
+            </div>
+            <div className="skeleton-breathe h-8 w-42 rounded-lg bg-gray-200/80" />
+          </div>
+
+          <div className="mt-4 grid grid-cols-3 gap-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={`sum-skeleton-${i}`} className="rounded-lg bg-gray-50 px-3 py-2.5">
+                <div className="skeleton-breathe h-3 w-14 rounded-lg bg-gray-200/80" />
+                <div className="skeleton-breathe mt-2 h-4 w-16 rounded-lg bg-gray-200/80" />
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="px-2 py-4">
+          <div className="skeleton-breathe mx-3 h-60 rounded-2xl bg-gray-200/80" />
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function MetaOverviewSection() {
@@ -137,7 +196,7 @@ export default function MetaOverviewSection() {
 
       {/* Content */}
       {loading ? (
-        <AdminSectionSkeleton variant="overview" />
+        <MetaOverviewCardsSkeleton />
       ) : (
         <div className="space-y-5">
           <AccountOverview account={account} lifetimeSpend={lifetimeSpend} />

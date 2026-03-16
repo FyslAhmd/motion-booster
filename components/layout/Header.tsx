@@ -88,6 +88,8 @@ export const Header = () => {
   ];
 
   const visibleNavItems = navItems;
+  const userInitial = (user?.fullName || user?.username || user?.email || 'U').trim().charAt(0).toUpperCase();
+  const userAvatarUrl = user?.avatarUrl?.trim() || '';
 
   return (
     <header className={`relative z-50 lg:fixed lg:top-0 lg:left-0 lg:right-0 transition-all duration-300 ${scrolled ? 'lg:bg-white lg:shadow-md' : 'lg:bg-transparent'}`}>
@@ -124,7 +126,12 @@ export const Header = () => {
             </button>
             <Link href={isAuthenticated ? "/dashboard/profile" : "/login"} className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors shadow-sm">
               {isAuthenticated ? (
-                <span className="text-gray-700 font-bold text-sm">{user?.email?.charAt(0).toUpperCase() || 'U'}</span>
+                userAvatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={userAvatarUrl} alt="Profile" className="h-9 w-9 rounded-full object-cover" />
+                ) : (
+                  <span className="text-gray-700 font-bold text-sm">{userInitial}</span>
+                )
               ) : (
                 <User className="w-5 h-5 text-gray-600" />
               )}
@@ -214,9 +221,14 @@ export const Header = () => {
                     onClick={() => setShowProfileMenu(!showProfileMenu)}
                     className="flex items-center gap-2 px-2 py-2 hover:bg-gray-50 rounded-lg transition-colors"
                   >
-                    <div className="w-9 h-9 bg-linear-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                      {user?.email?.charAt(0).toUpperCase() || 'U'}
-                    </div>
+                    {userAvatarUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={userAvatarUrl} alt="Profile" className="h-9 w-9 rounded-full object-cover" />
+                    ) : (
+                      <div className="w-9 h-9 bg-linear-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                        {userInitial}
+                      </div>
+                    )}
                   </button>
 
                   {/* Dropdown Menu */}
@@ -317,12 +329,12 @@ export const Header = () => {
       {/* Backdrop */}
       {showSearch && (
         <div
-          className="fixed inset-0 z-[90] bg-black/30 lg:hidden"
+          className="fixed inset-0 z-90 bg-black/30 lg:hidden"
           onClick={() => setShowSearch(false)}
         />
       )}
       <div
-        className={`fixed top-0 right-0 z-[91] h-full w-4/5 max-w-sm bg-white shadow-2xl flex flex-col lg:hidden
+        className={`fixed top-0 right-0 z-91 h-full w-4/5 max-w-sm bg-white shadow-2xl flex flex-col lg:hidden
           transition-transform duration-300 ease-in-out
           ${showSearch ? 'translate-x-0' : 'translate-x-full'}`}
       >
@@ -366,12 +378,12 @@ export const Header = () => {
       {/* ── Notification Panel (right → left slide) ── */}
       {showNotif && (
         <div
-          className="fixed inset-0 z-[90] bg-black/30 lg:hidden"
+          className="fixed inset-0 z-90 bg-black/30 lg:hidden"
           onClick={() => setShowNotif(false)}
         />
       )}
       <div
-        className={`fixed top-0 right-0 z-[91] h-full w-4/5 max-w-sm bg-white shadow-2xl flex flex-col lg:hidden
+        className={`fixed top-0 right-0 z-91 h-full w-4/5 max-w-sm bg-white shadow-2xl flex flex-col lg:hidden
           transition-transform duration-300 ease-in-out
           ${showNotif ? 'translate-x-0' : 'translate-x-full'}`}
       >

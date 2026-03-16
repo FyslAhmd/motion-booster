@@ -1,5 +1,10 @@
 import { AdminSectionSkeleton } from '@/components/ui/AdminSectionSkeleton';
+import DashboardLoadingShell from '@/app/dashboard/_components/DashboardLoadingShell';
 
 export default function Loading() {
-  return <AdminSectionSkeleton variant='list' />;
+  return (
+    <DashboardLoadingShell>
+      <AdminSectionSkeleton variant='list' />
+    </DashboardLoadingShell>
+  );
 }

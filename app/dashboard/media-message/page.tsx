@@ -2,12 +2,14 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import AdminShell from '../_components/AdminShell';
-import { Check, Copy, Loader2, Mail, Phone, Server } from 'lucide-react';
+import { Check, Mail, Phone, Search, X } from 'lucide-react';
+import { createPortal } from 'react-dom';
 
 interface ContactMessageRow {
   id: string;
   fullName: string;
   email: string;
+  avatarUrl?: string | null;
   companyName: string | null;
   mobile: string;
   queryDetails: string;
@@ -15,19 +17,6 @@ interface ContactMessageRow {
   isRead: boolean;
   createdAt: string;
 }
-
-const MAILBOX_SETUP_STEPS = [
-  'Open your email app and choose Add new account.',
-  'Enter your mailbox address.',
-  'Enter your mailbox password and sign in.',
-  'Enter your mail server settings from the table below.',
-];
-
-const MAILBOX_SERVER_SETTINGS = [
-  { protocol: 'Incoming server (IMAP)', hostname: 'imap.hostinger.com', port: '993', tls: 'Yes' },
-  { protocol: 'Outgoing server (SMTP)', hostname: 'smtp.hostinger.com', port: '465', tls: 'Yes' },
-  { protocol: 'Incoming server (POP3)', hostname: 'pop.hostinger.com', port: '995', tls: 'Yes' },
-];
 
 function formatDateTime(value: string) {
   try {
@@ -43,12 +32,26 @@ function formatDateTime(value: string) {
   }
 }
 
+function getInitials(name: string) {
+  return name
+    .split(' ')
+    .map((word) => word[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+}
+
 export default function MediaMessagePage() {
   const [messages, setMessages] = useState<ContactMessageRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
-  const [selectedMessageId, setSelectedMessageId] = useState('');
+  const [activeMessage, setActiveMessage] = useState<ContactMessageRow | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -69,9 +72,7 @@ export default function MediaMessagePage() {
         }
 
         if (!cancelled) {
-          const rows = json.data || [];
-          setMessages(rows);
-          setSelectedMessageId(rows[0]?.id || '');
+          setMessages(json.data || []);
         }
       } catch (e: any) {
         if (!cancelled) {
@@ -104,187 +105,176 @@ export default function MediaMessagePage() {
     });
   }, [messages, search]);
 
-  const selectedMessage = useMemo(() => {
-    if (filteredMessages.length === 0) return null;
-    return (
-      filteredMessages.find((msg) => msg.id === selectedMessageId) ||
-      filteredMessages[0]
-    );
-  }, [filteredMessages, selectedMessageId]);
-
   return (
     <AdminShell>
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Media Message</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Contact Us form theke asha message gulo ekhane inbox hisebe dekhabe.
+            Contact Us form theke asha message gulo card hisebe dekhabe. Card e click korle details modal open hobe.
           </p>
         </div>
 
-        <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5">
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 pb-3">
+        <div className="rounded-3xl border border-gray-100 bg-white/95 p-4 sm:p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 pb-3">
             <div className="flex items-center gap-2">
-              <span className="rounded-lg bg-red-100 p-1.5 text-red-600">
+              <span className="rounded-xl bg-linear-to-br from-red-50 to-rose-100 p-2 text-red-600">
                 <Mail className="h-4 w-4" />
               </span>
               <div>
                 <p className="text-sm font-semibold text-gray-900">Mailbox Inbox</p>
-                <p className="text-xs text-gray-500">Protocol: IMAP / SMTP / POP3</p>
+                <p className="text-xs text-gray-500">Contact message cards ({filteredMessages.length})</p>
               </div>
             </div>
-            <span className="inline-flex items-center gap-1 rounded-full border border-green-200 bg-green-50 px-2.5 py-1 text-[11px] font-semibold text-green-700">
-              <Check className="h-3.5 w-3.5" />
-              Active
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-[11px] font-semibold text-gray-600">
+                Total {messages.length}
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-full border border-green-200 bg-green-50 px-2.5 py-1 text-[11px] font-semibold text-green-700">
+                <Check className="h-3.5 w-3.5" />
+                Active
+              </span>
+            </div>
           </div>
 
-          <div className="mt-4 grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
-            <div className="rounded-xl border border-gray-200 bg-gray-50 p-3">
+          <div className="mt-4">
+            <div className="relative mb-4">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search name, email, mobile, message"
-                className="mb-3 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-red-400"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-10 pr-3 text-sm text-gray-800 placeholder:text-gray-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-red-400"
               />
+            </div>
 
-              {loading && (
-                <div className="flex items-center justify-center rounded-xl border border-dashed border-gray-200 bg-white px-3 py-8 text-sm text-gray-500">
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading messages...
-                </div>
-              )}
-
-              {!loading && error && (
-                <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-3 text-xs text-red-700">
-                  {error}
-                </div>
-              )}
-
-              {!loading && !error && filteredMessages.length === 0 && (
-                <div className="rounded-xl border border-dashed border-gray-200 bg-white px-3 py-8 text-center text-sm text-gray-500">
-                  No contact messages found.
-                </div>
-              )}
-
-              {!loading && !error && filteredMessages.length > 0 && (
-                <div className="space-y-2">
-                  {filteredMessages.map((msg) => {
-                    const isActive = selectedMessage?.id === msg.id;
-                    return (
-                      <button
-                        key={msg.id}
-                        type="button"
-                        onClick={() => setSelectedMessageId(msg.id)}
-                        className={`w-full rounded-xl border px-3 py-2.5 text-left transition-all ${isActive
-                          ? 'border-red-200 bg-white shadow-sm'
-                          : 'border-transparent bg-white/70 hover:border-gray-200 hover:bg-white'
-                          }`}
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="truncate text-sm font-semibold text-gray-800">{msg.fullName}</p>
-                          <span className="text-[11px] text-gray-400">{formatDateTime(msg.createdAt)}</span>
+            {loading && (
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="rounded-2xl border border-gray-100 bg-white p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex min-w-0 items-center gap-2.5">
+                        <span className="skeleton-breathe h-9 w-9 shrink-0 rounded-xl bg-gray-200/80" />
+                        <div className="min-w-0 space-y-2">
+                          <span className="skeleton-breathe block h-3.5 w-24 rounded-lg bg-gray-200/80" />
+                          <span className="skeleton-breathe block h-3 w-32 rounded-lg bg-gray-200/70" />
                         </div>
-                        <p className="mt-1 truncate text-xs text-gray-600">{msg.email}</p>
-                        <p className="mt-1 truncate text-xs text-gray-500">{msg.queryDetails}</p>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            <div className="rounded-xl border border-gray-200 bg-white p-4">
-              {selectedMessage ? (
-                <>
-                  <div className="border-b border-gray-100 pb-3">
-                    <p className="text-base font-semibold text-gray-900">{selectedMessage.fullName}</p>
-                    <p className="mt-1 text-xs text-gray-500">{formatDateTime(selectedMessage.createdAt)}</p>
-                  </div>
-
-                  <div className="mt-3 grid gap-2 text-xs sm:grid-cols-2">
-                    <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-gray-700">
-                      <span className="font-semibold">Email:</span> {selectedMessage.email}
-                    </div>
-                    <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-gray-700">
-                      <span className="font-semibold">Company:</span> {selectedMessage.companyName || 'N/A'}
-                    </div>
-                    <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-gray-700">
-                      <span className="font-semibold">Source:</span> {selectedMessage.source}
-                    </div>
-                    <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-gray-700 inline-flex items-center gap-1.5">
-                      <Phone className="h-3.5 w-3.5 text-gray-500" />
-                      <span className="font-semibold">Mobile:</span> {selectedMessage.mobile}
-                    </div>
-                  </div>
-
-                  <div className="mt-3 rounded-xl border border-gray-200 bg-gray-50 p-3">
-                    <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">Message</p>
-                    <p className="whitespace-pre-wrap text-sm text-gray-700">{selectedMessage.queryDetails}</p>
-                  </div>
-                </>
-              ) : (
-                <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-4 py-10 text-center text-sm text-gray-500">
-                  Select a message to view details.
-                </div>
-              )}
-
-              <div className="mt-4 space-y-4">
-                <div className="rounded-xl border border-gray-200 bg-white p-3">
-                  <div className="mb-2 flex items-center justify-between">
-                    <p className="text-sm font-semibold text-gray-900">Set up email on your device</p>
-                    <Server className="h-4 w-4 text-gray-400" />
-                  </div>
-                  <p className="text-xs text-gray-500">Add this mailbox to your email app using the steps below.</p>
-
-                  <div className="mt-3 space-y-2">
-                    {MAILBOX_SETUP_STEPS.map((step, idx) => (
-                      <div key={step} className="flex items-start gap-2 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2">
-                        <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-[11px] font-semibold text-gray-600">
-                          {idx + 1}
-                        </span>
-                        <p className="text-xs text-gray-700">{step}</p>
                       </div>
-                    ))}
+                      <span className="skeleton-breathe h-5 w-16 shrink-0 rounded-full bg-gray-200/70" />
+                    </div>
+                    <div className="mt-3 rounded-xl bg-gray-50 px-3 py-2">
+                      <span className="skeleton-breathe block h-3 w-full rounded-lg bg-gray-200/70" />
+                      <span className="skeleton-breathe mt-2 block h-3 w-4/5 rounded-lg bg-gray-200/70" />
+                    </div>
+                    <span className="skeleton-breathe mt-2 block h-3 w-28 rounded-lg bg-gray-200/70" />
                   </div>
-                </div>
-
-                <div className="overflow-x-auto rounded-xl border border-gray-200">
-                  <table className="min-w-full text-xs">
-                    <thead>
-                      <tr className="bg-gray-50 text-left text-gray-600">
-                        <th className="px-3 py-2 font-semibold">Protocol</th>
-                        <th className="px-3 py-2 font-semibold">Hostname</th>
-                        <th className="px-3 py-2 font-semibold">Port</th>
-                        <th className="px-3 py-2 font-semibold">TLS/SSL</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {MAILBOX_SERVER_SETTINGS.map((row) => (
-                        <tr key={row.protocol} className="border-t border-gray-100">
-                          <td className="px-3 py-2 text-gray-700">{row.protocol}</td>
-                          <td className="px-3 py-2 text-gray-700">
-                            <div className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-1">
-                              {row.hostname}
-                              <Copy className="h-3 w-3 text-gray-400" />
-                            </div>
-                          </td>
-                          <td className="px-3 py-2 text-gray-700">{row.port}</td>
-                          <td className="px-3 py-2 text-gray-700">
-                            <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-green-50 text-green-700">
-                              <Check className="h-3.5 w-3.5" />
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                ))}
               </div>
-            </div>
+            )}
+
+            {!loading && error && (
+              <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-3 text-xs text-red-700">
+                {error}
+              </div>
+            )}
+
+            {!loading && !error && filteredMessages.length === 0 && (
+              <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 px-3 py-10 text-center text-sm text-gray-500">
+                No contact messages found.
+              </div>
+            )}
+
+            {!loading && !error && filteredMessages.length > 0 && (
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+                {filteredMessages.map((msg) => (
+                  <button
+                    key={msg.id}
+                    type="button"
+                    onClick={() => setActiveMessage(msg)}
+                    className="rounded-2xl border border-gray-100 bg-white p-4 text-left transition-all hover:border-red-200 hover:bg-red-50/30"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex min-w-0 items-center gap-2.5">
+                        {msg.avatarUrl?.trim() ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={msg.avatarUrl} alt={msg.fullName} className="h-9 w-9 shrink-0 rounded-xl object-cover" />
+                        ) : (
+                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-red-500 to-pink-500 text-xs font-bold text-white">
+                            {getInitials(msg.fullName)}
+                          </span>
+                        )}
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-gray-900">{msg.fullName}</p>
+                          <p className="truncate text-xs text-gray-500">{msg.email}</p>
+                        </div>
+                      </div>
+                      <span className="shrink-0 rounded-full bg-gray-50 px-2 py-1 text-[10px] font-semibold text-gray-500">
+                        {msg.source.replace(/_/g, ' ')}
+                      </span>
+                    </div>
+                    <p className="mt-3 line-clamp-2 rounded-xl bg-gray-50 px-3 py-2 text-xs text-gray-600">{msg.queryDetails}</p>
+                    <p className="mt-2 text-[11px] text-gray-400">{formatDateTime(msg.createdAt)}</p>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
+
+      {mounted && activeMessage && createPortal(
+        <div className="fixed inset-0 z-100 flex items-center justify-center bg-white/75 p-4 backdrop-blur-[1px]" onClick={() => setActiveMessage(null)}>
+          <div className="w-full max-w-2xl rounded-3xl border border-gray-200 bg-linear-to-b from-white via-white to-rose-50/50 p-5" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start justify-between gap-3 border-b border-gray-100 pb-3">
+              <div className="flex min-w-0 items-center gap-2.5">
+                {activeMessage.avatarUrl?.trim() ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={activeMessage.avatarUrl} alt={activeMessage.fullName} className="h-10 w-10 shrink-0 rounded-xl object-cover" />
+                ) : (
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-red-500 to-pink-500 text-xs font-bold text-white">
+                    {getInitials(activeMessage.fullName)}
+                  </span>
+                )}
+                <div className="min-w-0">
+                  <p className="truncate text-lg font-semibold text-gray-900">{activeMessage.fullName}</p>
+                  <p className="mt-1 text-xs text-gray-500">{formatDateTime(activeMessage.createdAt)}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveMessage(null)}
+                className="rounded-full border border-gray-200 bg-white p-1.5 text-gray-500 hover:bg-gray-50"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="mt-4 grid gap-2 text-xs sm:grid-cols-2">
+              <div className="rounded-xl border border-sky-100 bg-linear-to-br from-sky-50 to-white px-3 py-2.5 text-gray-700">
+                <span className="font-semibold">Email:</span> {activeMessage.email}
+              </div>
+              <div className="rounded-xl border border-violet-100 bg-linear-to-br from-violet-50 to-white px-3 py-2.5 text-gray-700">
+                <span className="font-semibold">Company:</span> {activeMessage.companyName || 'N/A'}
+              </div>
+              <div className="rounded-xl border border-amber-100 bg-linear-to-br from-amber-50 to-white px-3 py-2.5 text-gray-700">
+                <span className="font-semibold">Source:</span> {activeMessage.source}
+              </div>
+              <div className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-100 bg-linear-to-br from-emerald-50 to-white px-3 py-2.5 text-gray-700">
+                <Phone className="h-3.5 w-3.5 text-emerald-600" />
+                <span className="font-semibold">Mobile:</span> {activeMessage.mobile}
+              </div>
+            </div>
+
+            <div className="mt-3 rounded-2xl border border-rose-100 bg-linear-to-br from-white to-rose-50 p-3.5">
+              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">Message</p>
+              <p className="whitespace-pre-wrap text-sm text-gray-700">{activeMessage.queryDetails}</p>
+            </div>
+
+          </div>
+        </div>,
+        document.body,
+      )}
     </AdminShell>
   );
 }

@@ -56,7 +56,7 @@ export const HeaderBanner = () => {
         transition={{ duration: 0.45, delay: 0.05, ease: 'easeOut' }}
       >
         <motion.div
-          className="relative w-full aspect-[16/10] min-h-[200px] rounded-2xl overflow-hidden shadow-lg"
+          className="relative w-full aspect-16/10 min-h-50 rounded-2xl overflow-hidden shadow-lg"
           initial={{ opacity: 0, scale: 0.985 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.45, delay: 0.08, ease: 'easeOut' }}
@@ -122,14 +122,13 @@ export const HeaderBanner = () => {
               ✓ Unleash Your Potential
             </div>
             <h1 className="text-5xl xl:text-6xl font-bold text-gray-900 leading-tight mb-4">
-              Become an IT Pro & Rule the{" "}
-              <span className="text-red-500">Digital World</span>
+              Grow your business identity with{" "}
+              <span className="text-red-500">Motion Booster</span>
             </h1>
             <p className="text-lg text-gray-600 mb-6 leading-relaxed">
-              With a vision to turn manpower into assets, Motion Booster is ready
-              to enhance your learning experience with skilled mentors and an
-              updated curriculum. Pick your desired course from more than 45
-              trendy options.
+              We provide a complete suite of digital solutions, including tailored digital
+              marketing, eye-catching graphic design, dynamic animation, as well as expert
+              web and app development - all designed to elevate your brand in the digital world.
             </p>
             <div className="flex gap-3 mb-3">
               <a

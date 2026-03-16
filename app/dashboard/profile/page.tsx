@@ -15,7 +15,6 @@ import {
   Edit2,
   Lock,
   Bell,
-  Shield,
   Eye,
   EyeOff,
   Loader2,
@@ -418,19 +417,6 @@ export default function ProfilePage() {
                     </button>
                   </div>
 
-                  <div className="pt-6 border-t border-gray-200">
-                    <h3 className="text-lg font-bold text-gray-900 mb-3">Two-Factor Authentication</h3>
-                    <div className="flex items-start justify-between p-4 bg-gray-50 rounded-lg">
-                      <div className="flex items-start gap-3">
-                        <Shield className="w-5 h-5 text-red-500 mt-0.5" />
-                        <div>
-                          <h4 className="font-medium text-gray-900">Not Enabled</h4>
-                          <p className="text-sm text-gray-600 mt-1">Add an extra layer of security to your account</p>
-                        </div>
-                      </div>
-                      <button className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 text-sm font-medium">Enable</button>
-                    </div>
-                  </div>
                 </div>
               )}
 

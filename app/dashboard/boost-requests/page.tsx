@@ -330,7 +330,7 @@ export default function BoostRequestsPage() {
                 className="w-full text-left bg-white rounded-2xl border border-gray-100 p-4 hover:shadow-md transition-shadow"
               >
                 <div className="flex items-center gap-3 mb-3">
-                  {item.user.avatarUrl ? (
+                  {item.user.avatarUrl?.trim() ? (
                     <img src={item.user.avatarUrl} alt="" className="w-10 h-10 rounded-full object-cover" />
                   ) : (
                     <div className="w-10 h-10 rounded-full bg-linear-to-br from-red-500 to-pink-500 flex items-center justify-center text-white text-xs font-bold">
@@ -405,14 +405,14 @@ export default function BoostRequestsPage() {
 
       {/* Detail Modal */}
       {mounted && selected && createPortal(
-        <div className="fixed inset-0 bg-black/50 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={() => setSelected(null)}>
-          <div className="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl w-full sm:max-w-3xl h-[92dvh] sm:h-auto sm:max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-100 flex items-end sm:items-center justify-center p-3 sm:p-4" onClick={() => setSelected(null)}>
+          <div className="bg-white rounded-3xl w-full max-w-[calc(100vw-1.5rem)] sm:max-w-3xl h-[92dvh] sm:h-auto sm:max-h-[90vh] overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden" onClick={e => e.stopPropagation()}>
             <div className="p-5 border-b border-gray-100 flex items-center justify-between">
-              <h2 className="font-bold text-gray-900">Boost Request Details</h2>
+              <h2 className="text-base sm:text-lg font-bold text-gray-900">Boost Request Details</h2>
               <button onClick={() => setSelected(null)} className="p-2 hover:bg-gray-100 rounded-lg"><span className="text-lg leading-none text-gray-400">×</span></button>
             </div>
 
-            <div className="p-4 sm:p-6 space-y-5 bg-linear-to-b from-white via-white to-slate-50/70">
+            <div className="p-4 sm:p-6 pb-8 sm:pb-8 space-y-5 bg-linear-to-b from-white via-white to-slate-50/70">
               {(() => {
                 const audienceProfile = buildAudienceProfile(selected.targetAudience);
                 const targetingChips = uniqueValues([
@@ -433,7 +433,7 @@ export default function BoostRequestsPage() {
                       <div className="absolute -bottom-12 left-10 h-28 w-28 rounded-full bg-amber-200/50 blur-3xl" />
 
                       <div className="relative flex items-start gap-4">
-                        {selected.user.avatarUrl ? (
+                        {selected.user.avatarUrl?.trim() ? (
                           <img src={selected.user.avatarUrl} alt="" className="h-14 w-14 rounded-2xl object-cover ring-1 ring-rose-100" />
                         ) : (
                           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-linear-to-br from-red-500 to-orange-500 text-sm font-bold text-white shadow-lg shadow-rose-200/80">
@@ -454,7 +454,7 @@ export default function BoostRequestsPage() {
                             </span>
                           </div>
 
-                          <p className="mt-3 text-lg font-semibold leading-snug text-gray-900 sm:text-xl">
+                          <p className="mt-3 text-base sm:text-xl font-semibold leading-snug text-gray-900">
                             {getCampaignName(selected)}
                           </p>
                           <p className="mt-1 truncate text-sm text-gray-600">{selected.user.email}</p>
@@ -472,22 +472,22 @@ export default function BoostRequestsPage() {
                         </div>
                       </div>
 
-                      <div className="relative mt-5 grid gap-3 sm:grid-cols-2">
+                      <div className="relative mt-5 grid grid-cols-2 gap-3">
                         <div className="rounded-2xl border border-white/80 bg-white/80 p-4 shadow-sm">
                           <p className="text-[11px] uppercase tracking-[0.18em] text-gray-500">Total budget</p>
-                          <p className="mt-2 text-2xl font-semibold text-gray-900">{selected.totalBudget}</p>
+                          <p className="mt-2 text-xl sm:text-2xl font-semibold text-gray-900">{selected.totalBudget}</p>
                           <p className="mt-1 text-xs text-gray-600">Planned campaign spend</p>
                         </div>
                         <div className="rounded-2xl border border-white/80 bg-white/80 p-4 shadow-sm">
                           <p className="text-[11px] uppercase tracking-[0.18em] text-gray-500">Daily budget</p>
-                          <p className="mt-2 text-2xl font-semibold text-gray-900">{selected.dailyBudget}</p>
+                          <p className="mt-2 text-xl sm:text-2xl font-semibold text-gray-900">{selected.dailyBudget}</p>
                           <p className="mt-1 text-xs text-gray-600">Average spend per day</p>
                         </div>
                       </div>
                     </div>
 
                     <div className="px-1">
-                      <h3 className="text-lg font-semibold text-gray-900">Campaign setup</h3>
+                      <h3 className="text-base sm:text-lg font-semibold text-gray-900">Campaign setup</h3>
                     </div>
 
                     <div className="grid gap-3 sm:grid-cols-2">
@@ -498,7 +498,7 @@ export default function BoostRequestsPage() {
                           </div>
                           <div className="min-w-0 flex-1">
                             <p className="text-sm font-medium text-gray-500">Budget plan</p>
-                            <p className="mt-1 text-base font-semibold text-gray-900">{selected.totalBudget}</p>
+                            <p className="mt-1 text-sm sm:text-base font-semibold text-gray-900">{selected.totalBudget}</p>
                             <p className="mt-1 text-xs text-gray-600">Daily spend target: {selected.dailyBudget}</p>
                           </div>
                         </div>
@@ -511,7 +511,7 @@ export default function BoostRequestsPage() {
                           </div>
                           <div className="min-w-0 flex-1">
                             <p className="text-sm font-medium text-gray-500">Submission time</p>
-                            <p className="mt-1 text-base font-semibold text-gray-900">{formatDate(selected.createdAt)}</p>
+                            <p className="mt-1 text-sm sm:text-base font-semibold text-gray-900">{formatDate(selected.createdAt)}</p>
                             <p className="mt-1 text-xs text-gray-600">Request entered into the queue</p>
                           </div>
                         </div>
@@ -524,7 +524,7 @@ export default function BoostRequestsPage() {
                           </div>
                           <div className="min-w-0 flex-1">
                             <p className="text-sm font-medium text-gray-500">Campaign title</p>
-                            <p className="mt-1 text-base font-semibold leading-snug text-gray-900 break-words">{getCampaignName(selected)}</p>
+                            <p className="mt-1 text-sm sm:text-base font-semibold leading-snug text-gray-900 wrap-break-word">{getCampaignName(selected)}</p>
                             <p className="mt-1 text-xs text-gray-600">Generated from the submitted post link</p>
                           </div>
                         </div>
@@ -537,7 +537,7 @@ export default function BoostRequestsPage() {
                           </div>
                           <div className="min-w-0 flex-1">
                             <p className="text-sm font-medium text-gray-500">Placements</p>
-                            <p className="mt-1 text-base font-semibold text-gray-900">{placementText}</p>
+                            <p className="mt-1 text-sm sm:text-base font-semibold text-gray-900">{placementText}</p>
                             <p className="mt-1 text-xs text-gray-600">Placement setup parsed from the audience brief</p>
                           </div>
                         </div>
@@ -553,15 +553,15 @@ export default function BoostRequestsPage() {
                           <div className="flex flex-wrap items-center justify-between gap-2">
                             <div>
                               <p className="text-sm font-medium text-gray-500">Audience setup</p>
-                              <p className="mt-1 text-base font-semibold text-gray-900">{audienceProfile.audienceType}</p>
-                              <p className="mt-1 text-sm text-gray-600">Facebook Ads style summary from the requester&apos;s note.</p>
+                              <p className="mt-1 text-sm sm:text-base font-semibold text-gray-900">{audienceProfile.audienceType}</p>
+                              <p className="mt-1 text-xs sm:text-sm text-gray-600">Facebook Ads style summary from the requester&apos;s note.</p>
                             </div>
                             <span className="rounded-full bg-white px-3 py-1 text-[11px] font-medium text-blue-700 shadow-sm">
                               {targetingChips.length} targeting signal{targetingChips.length === 1 ? '' : 's'}
                             </span>
                           </div>
 
-                          <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                          <div className="mt-4 grid grid-cols-2 gap-3 xl:grid-cols-4">
                             <div className="rounded-2xl border border-white/80 bg-white/90 p-3.5 shadow-sm">
                               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-gray-500">Location</p>
                               <p className="mt-2 text-sm font-semibold text-gray-900">
@@ -645,7 +645,7 @@ export default function BoostRequestsPage() {
 
                           <div className="mt-4 rounded-2xl border border-dashed border-blue-100 bg-white/70 px-4 py-3">
                             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-gray-500">Original audience note</p>
-                            <p className="mt-2 text-sm leading-6 text-gray-700 whitespace-pre-line break-words">{selected.targetAudience}</p>
+                            <p className="mt-2 text-sm leading-6 text-gray-700 whitespace-pre-line wrap-break-word">{selected.targetAudience}</p>
                           </div>
                         </div>
                       </div>
@@ -679,7 +679,7 @@ export default function BoostRequestsPage() {
                           </div>
                           <div className="min-w-0 flex-1">
                             <p className="text-sm font-medium text-gray-500">Requester</p>
-                            <p className="mt-1 text-base font-semibold text-gray-900">{selected.user.fullName}</p>
+                            <p className="mt-1 text-sm sm:text-base font-semibold text-gray-900">{selected.user.fullName}</p>
                             <div className="mt-3 space-y-2 text-sm text-gray-600">
                               <p className="break-all">{selected.user.email}</p>
                               <p>{selected.user.phone || 'N/A'}</p>

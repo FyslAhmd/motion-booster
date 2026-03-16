@@ -85,7 +85,7 @@ export const Slider: React.FC<SliderProps> = ({
   }, [autoPlay, autoPlayInterval, paginate]);
 
   return (
-    <div className={`relative w-full ${height} min-h-[200px] overflow-hidden rounded-xl border border-gray-200 bg-gray-900`}>
+    <div className={`relative w-full ${height} min-h-50 overflow-hidden rounded-xl border border-gray-200 bg-gray-900`}>
       <AnimatePresence initial={false} custom={direction}>
         <motion.div
           key={currentIndex}

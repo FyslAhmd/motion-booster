@@ -65,7 +65,11 @@ export default function MetaDashboardPage() {
                 Active
               </p>
               <p className="mt-1 text-lg font-bold leading-none text-green-700 sm:text-xl">
-                {activeCounts.campaigns ?? '...'}
+                {countsLoading ? (
+                  <span className="mx-auto inline-block h-5 w-10 rounded-lg bg-green-200/90 skeleton-breathe" />
+                ) : (
+                  activeCounts.campaigns
+                )}
               </p>
             </div>
           </div>
