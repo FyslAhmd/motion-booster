@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import { defaultHeroSlides } from '@/lib/admin/store';
+import { isRecoverableDbError } from '@/lib/server/db-error';
 
 const DEFAULT_SLIDES = [
   {
@@ -43,6 +45,16 @@ export async function GET() {
     return NextResponse.json(slides);
   } catch (error) {
     console.error('[CMS hero-slides GET]', error);
+
+    if (isRecoverableDbError(error)) {
+      const fallback = defaultHeroSlides.map((slide, index) => ({
+        ...slide,
+        customImage: null,
+        order: index,
+      }));
+      return NextResponse.json(fallback);
+    }
+
     return NextResponse.json({ error: 'Failed to load slides' }, { status: 500 });
   }
 }

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import { defaultPortfolio } from '@/lib/admin/store';
+import { isRecoverableDbError } from '@/lib/server/db-error';
 
 export async function GET() {
   try {
@@ -7,6 +9,11 @@ export async function GET() {
     return NextResponse.json(items);
   } catch (error) {
     console.error('GET /api/v1/cms/portfolio error:', error);
+
+    if (isRecoverableDbError(error)) {
+      return NextResponse.json(defaultPortfolio);
+    }
+
     return NextResponse.json({ error: 'Failed to fetch portfolio' }, { status: 500 });
   }
 }

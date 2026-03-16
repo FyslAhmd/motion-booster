@@ -5,22 +5,68 @@ import { ChevronRight, X } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
+const DEFAULT_MODAL_TITLE = 'Welcome to Motion Booster! 👋';
+const DEFAULT_MODAL_BODY = 'We help businesses grow with creative branding, motion graphics, web development & digital marketing.';
+const WELCOME_SETTINGS_CACHE_KEY = 'mb_welcome_modal_settings_v1';
+
+type WelcomeSettings = {
+  welcomeModalImage?: string | null;
+  welcomeModalExploreLink?: string | null;
+  welcomeModalTitle?: string | null;
+  welcomeModalBody?: string | null;
+};
+
 export const WelcomeModal = () => {
   const [visible, setVisible] = useState(false);
   const [countdown, setCountdown] = useState(8);
   const [modalImage, setModalImage] = useState('');
   const [exploreLink, setExploreLink] = useState('/service');
-  const [modalTitle, setModalTitle] = useState('Welcome to Motion Booster! 👋');
-  const [modalBody, setModalBody] = useState('We help businesses grow with creative branding, motion graphics, web development & digital marketing.');
+  const [modalTitle, setModalTitle] = useState(DEFAULT_MODAL_TITLE);
+  const [modalBody, setModalBody] = useState(DEFAULT_MODAL_BODY);
+  const [imageLoaded, setImageLoaded] = useState(false);
+
+  const applySettings = (data: WelcomeSettings) => {
+    setModalImage(data.welcomeModalImage || '');
+    setExploreLink(data.welcomeModalExploreLink || '/service');
+    setModalTitle(data.welcomeModalTitle || DEFAULT_MODAL_TITLE);
+    setModalBody(data.welcomeModalBody || DEFAULT_MODAL_BODY);
+  };
 
   useEffect(() => {
+    try {
+      const cached = localStorage.getItem(WELCOME_SETTINGS_CACHE_KEY);
+      if (cached) {
+        const parsed = JSON.parse(cached) as WelcomeSettings;
+        applySettings(parsed);
+      } else {
+        // Fallback for existing admin-local settings on the same browser.
+        const adminSettingsRaw = localStorage.getItem('mb_admin_settings');
+        if (adminSettingsRaw) {
+          const adminSettings = JSON.parse(adminSettingsRaw) as WelcomeSettings;
+          applySettings(adminSettings);
+        }
+      }
+    } catch {
+      // noop
+    }
+
     fetch('/api/v1/cms/site-settings')
-      .then(r => r.json())
+      .then((r) => r.json())
       .then((data) => {
-        setModalImage(data.welcomeModalImage || '');
-        setExploreLink(data.welcomeModalExploreLink || '/service');
-        setModalTitle(data.welcomeModalTitle || 'Welcome to Motion Booster! 👋');
-        setModalBody(data.welcomeModalBody || 'We help businesses grow with creative branding, motion graphics, web development & digital marketing.');
+        applySettings(data);
+        try {
+          localStorage.setItem(
+            WELCOME_SETTINGS_CACHE_KEY,
+            JSON.stringify({
+              welcomeModalImage: data.welcomeModalImage || '',
+              welcomeModalExploreLink: data.welcomeModalExploreLink || '/service',
+              welcomeModalTitle: data.welcomeModalTitle || DEFAULT_MODAL_TITLE,
+              welcomeModalBody: data.welcomeModalBody || DEFAULT_MODAL_BODY,
+            }),
+          );
+        } catch {
+          // noop
+        }
       })
       .catch(() => {});
 
@@ -30,6 +76,29 @@ export const WelcomeModal = () => {
       return () => clearTimeout(timer);
     }
   }, []);
+
+  useEffect(() => {
+    if (!modalImage) {
+      setImageLoaded(false);
+      return;
+    }
+
+    let done = false;
+    const preload = new window.Image();
+    preload.onload = () => {
+      if (done) return;
+      setImageLoaded(true);
+    };
+    preload.onerror = () => {
+      if (done) return;
+      setImageLoaded(true);
+    };
+    preload.src = modalImage;
+
+    return () => {
+      done = true;
+    };
+  }, [modalImage]);
 
   useEffect(() => {
     if (!visible) return;
@@ -66,11 +135,37 @@ export const WelcomeModal = () => {
         {/* Banner image / gradient */}
         {modalImage ? (
           <div className="relative w-full h-56">
+            <div
+              className={`absolute inset-0 flex items-center justify-center transition-opacity duration-200 ${imageLoaded ? 'opacity-0' : 'opacity-100'}`}
+              style={{ background: 'linear-gradient(214.38deg, #ff8079 -2.24%, #ff1e1e 59.38%)' }}
+            >
+              <div className="text-center px-4">
+                <div className="text-5xl mb-2">🚀</div>
+                <h2 className="text-white text-xl font-extrabold leading-tight">Motion Booster</h2>
+                <p className="text-white/80 text-xs mt-1">Your Digital Growth Partner</p>
+              </div>
+            </div>
             {modalImage.startsWith('data:') || modalImage.startsWith('/') ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={modalImage} alt="Promo" className="w-full h-full object-cover" />
+              <img
+                src={modalImage}
+                alt="Promo"
+                className={`w-full h-full object-cover transition-opacity duration-200 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+                loading="eager"
+                decoding="async"
+                fetchPriority="high"
+                onLoad={() => setImageLoaded(true)}
+              />
             ) : (
-              <Image src={modalImage} alt="Promo" fill className="object-cover" />
+              <Image
+                src={modalImage}
+                alt="Promo"
+                fill
+                sizes="(max-width: 640px) 100vw, 384px"
+                priority
+                className={`object-cover transition-opacity duration-200 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+                onLoad={() => setImageLoaded(true)}
+              />
             )}
           </div>
         ) : (

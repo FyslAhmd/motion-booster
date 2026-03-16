@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { Prisma } from '@/lib/generated/prisma';
+import { defaultServiceCategories } from '@/lib/admin/store';
+import { isRecoverableDbError } from '@/lib/server/db-error';
 
 const DEFAULT_CATEGORIES = [
   { title: 'Digital Marketing',     slug: 'digital-marketing',     iconType: 'trending-up', iconColor: 'text-green-600',  iconBg: 'bg-green-50',  order: 0 },
@@ -28,11 +30,8 @@ export async function GET() {
   } catch (error: unknown) {
     console.error('[CMS service-categories GET]', error);
 
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2022') {
-      return NextResponse.json(
-        { error: 'Database schema is out of date. Run Prisma migrations on this environment.' },
-        { status: 500 },
-      );
+    if (isRecoverableDbError(error)) {
+      return NextResponse.json(defaultServiceCategories);
     }
 
     return NextResponse.json({ error: 'Failed to load categories' }, { status: 500 });

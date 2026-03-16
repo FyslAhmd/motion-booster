@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { verifyAccessToken } from '@/lib/auth/tokens';
+import { isRecoverableDbError } from '@/lib/server/db-error';
 
 /**
  * GET /api/v1/auth/me
@@ -69,6 +70,14 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('[auth/me]', error);
+
+    if (isRecoverableDbError(error)) {
+      return NextResponse.json(
+        { success: false, error: 'Auth service temporarily unavailable' },
+        { status: 200 },
+      );
+    }
+
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

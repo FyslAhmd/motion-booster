@@ -56,7 +56,7 @@ export const HeaderBanner = () => {
         transition={{ duration: 0.45, delay: 0.05, ease: 'easeOut' }}
       >
         <motion.div
-          className="relative w-full aspect-16/10 rounded-2xl overflow-hidden shadow-lg"
+          className="relative w-full aspect-[16/10] min-h-[200px] rounded-2xl overflow-hidden shadow-lg"
           initial={{ opacity: 0, scale: 0.985 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.45, delay: 0.08, ease: 'easeOut' }}
@@ -65,6 +65,7 @@ export const HeaderBanner = () => {
             src={sliderImages[currentSlide].src}
             alt={sliderImages[currentSlide].alt}
             fill
+            sizes="100vw"
             className="object-cover"
             priority
           />
