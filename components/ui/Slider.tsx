@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Image from 'next/image';
 
@@ -37,24 +36,7 @@ export const Slider: React.FC<SliderProps> = ({
   const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
   const suppressTapRef = useRef(false);
 
-  const slideVariants = {
-    enter: (direction: number) => ({
-      x: direction > 0 ? 1000 : -1000,
-      opacity: 0,
-    }),
-    center: {
-      zIndex: 1,
-      x: 0,
-      opacity: 1,
-    },
-    exit: (direction: number) => ({
-      zIndex: 0,
-      x: direction < 0 ? 1000 : -1000,
-      opacity: 0,
-    }),
-  };
-
-  const swipeConfidenceThreshold = 10000;
+  const swipeConfidenceThreshold = 60;
   const swipePower = (offset: number, velocity: number) => {
     return Math.abs(offset) * velocity;
   };
@@ -86,22 +68,8 @@ export const Slider: React.FC<SliderProps> = ({
 
   return (
     <div className={`relative w-full ${height} min-h-50 overflow-hidden rounded-xl border border-gray-200 bg-gray-900`}>
-      <AnimatePresence initial={false} custom={direction}>
-        <motion.div
+      <div
           key={currentIndex}
-          custom={direction}
-          variants={slideVariants}
-          initial="enter"
-          animate="center"
-          exit="exit"
-          transition={{
-            x: { type: 'spring', stiffness: 300, damping: 30 },
-            opacity: { duration: 0.2 },
-          }}
-          drag="x"
-          dragDirectionLock
-          dragConstraints={{ left: 0, right: 0 }}
-          dragElastic={1}
           style={{ touchAction: 'pan-y' }}
           onPointerDown={(e) => {
             pointerStartRef.current = { x: e.clientX, y: e.clientY };
@@ -114,29 +82,28 @@ export const Slider: React.FC<SliderProps> = ({
             // If pointer has moved enough, treat as swipe/drag and suppress tap navigation.
             if (dx > 6 || dy > 6) suppressTapRef.current = true;
           }}
-          onDragStart={() => {
-            suppressTapRef.current = true;
-          }}
-          onDragEnd={(e, { offset, velocity }) => {
-            const swipe = swipePower(offset.x, velocity.x);
+          onPointerUp={(e) => {
+            if (!pointerStartRef.current) return;
+            const offsetX = e.clientX - pointerStartRef.current.x;
+            const offsetY = e.clientY - pointerStartRef.current.y;
+            const swipe = swipePower(offsetX, 1);
 
-            if (swipe < -swipeConfidenceThreshold) {
-              paginate(1);
-            } else if (swipe > swipeConfidenceThreshold) {
-              paginate(-1);
+            if (Math.abs(offsetY) < Math.abs(offsetX)) {
+              if (swipe < -swipeConfidenceThreshold) paginate(1);
+              if (swipe > swipeConfidenceThreshold) paginate(-1);
             }
 
-            // Keep tap suppressed briefly so mouse/touch release after drag doesn't trigger navigation.
+            pointerStartRef.current = null;
             window.setTimeout(() => {
               suppressTapRef.current = false;
             }, 140);
           }}
-          onTap={() => {
+          onClick={() => {
             if (suppressTapRef.current) return;
             const link = slides[currentIndex].ctaLink;
             if (link) window.location.href = link;
           }}
-          className={`absolute w-full h-full ${slides[currentIndex].ctaLink ? 'cursor-pointer' : ''}`}
+          className={`absolute w-full h-full transition-opacity duration-300 ${slides[currentIndex].ctaLink ? 'cursor-pointer' : ''}`}
         >
           {/* Slide Background Image */}
           <div className="relative w-full h-full">
@@ -164,51 +131,32 @@ export const Slider: React.FC<SliderProps> = ({
             <div className="max-w-7xl mx-auto px-6 lg:px-8 w-full">
               <div className="max-w-2xl">
                 {slides[currentIndex].badge && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-full text-sm font-semibold mb-4"
-                  >
+                  <div className="inline-flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-full text-sm font-semibold mb-4 page-reveal is-visible">
                     ✓ {slides[currentIndex].badge}
-                  </motion.div>
+                  </div>
                 )}
                 
-                <motion.h2
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                  className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight"
-                >
+                <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight text-wave is-visible">
                   {slides[currentIndex].title}
-                </motion.h2>
+                </h2>
 
-                <motion.p
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4 }}
-                  className="text-lg md:text-xl text-gray-200 mb-8 leading-relaxed"
-                >
+                <p className="text-lg md:text-xl text-gray-200 mb-8 leading-relaxed text-wave is-visible">
                   {slides[currentIndex].description}
-                </motion.p>
+                </p>
 
                 {slides[currentIndex].ctaText && slides[currentIndex].ctaLink && (
-                  <motion.a
+                  <a
                     href={slides[currentIndex].ctaLink}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5 }}
                     className="inline-flex items-center gap-2 px-8 py-4 bg-linear-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold rounded-lg transition-all shadow-lg hover:shadow-xl"
                   >
                     {slides[currentIndex].ctaText}
                     <ChevronRight className="w-5 h-5" />
-                  </motion.a>
+                  </a>
                 )}
               </div>
             </div>
           </div>
-        </motion.div>
-      </AnimatePresence>
+        </div>
 
       {/* Navigation Arrows */}
       {showControls && slides.length > 1 && (

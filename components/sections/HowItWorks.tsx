@@ -1,7 +1,5 @@
 'use client';
 
-import { motion } from 'framer-motion';
-
 export const HowItWorks = () => {
   const steps = [
     {
@@ -38,25 +36,13 @@ export const HowItWorks = () => {
   ];
 
   return (
-    <motion.section
-      className="py-20 lg:py-32 bg-white"
-      initial={{ opacity: 0, y: 22 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.2 }}
-      transition={{ duration: 0.6, ease: 'easeOut' }}
-    >
+    <section className="py-20 lg:py-32 bg-white page-reveal">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-16">
-          <motion.h2
-            className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4"
-            initial={{ opacity: 0, y: 28 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.4 }}
-            transition={{ duration: 0.65, ease: 'easeOut' }}
-          >
+          <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4 text-wave">
             Start Your IT Journey in 3 Simple Steps
-          </motion.h2>
+          </h2>
         </div>
 
         {/* Steps Grid */}
@@ -65,13 +51,10 @@ export const HowItWorks = () => {
           <div className="hidden md:block absolute top-24 left-0 right-0 h-0.5 bg-linear-to-r from-blue-200 via-blue-400 to-blue-200" style={{ top: '60px' }}></div>
 
           {steps.map((step, index) => (
-            <motion.div
+            <div
               key={index}
-              className="step-card relative"
-              initial={{ opacity: 0, y: 44 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.25 }}
-              transition={{ duration: 0.6, delay: index * 0.12, ease: 'easeOut' }}
+              className={`step-card relative ${index % 2 === 0 ? 'card-reveal-left' : 'card-reveal-right'}`}
+              style={{ animationDelay: `${index * 120}ms` }}
             >
               {/* Card */}
               <div className="bg-white rounded-2xl p-8 text-center shadow-lg hover:shadow-xl transition-shadow">
@@ -97,10 +80,10 @@ export const HowItWorks = () => {
                   {step.description}
                 </p>
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
       </div>
-    </motion.section>
+    </section>
   );
 };

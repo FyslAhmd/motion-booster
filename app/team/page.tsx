@@ -29,14 +29,14 @@ export default function TeamPage() {
   const rest = filtered.filter(m => m.id !== featured?.id);
 
   return (
-    <main className="min-h-screen bg-gray-50 pb-20 lg:pb-0 lg:pt-32">
+    <main className="min-h-screen bg-gray-50 pb-20 lg:pb-0 lg:pt-32 page-reveal">
       {/* Page Header */}
-      <div className="bg-white sticky top-0 z-30 shadow-sm">
+      <div className="bg-white sticky top-0 z-30 shadow-sm page-reveal page-delay-1">
         <div className="flex items-center gap-3 px-4 py-4">
           <Link href="/" className="text-gray-600 hover:text-red-500 transition-colors">
             <ChevronLeft className="w-6 h-6" />
           </Link>
-          <h1 className="text-xl font-bold text-gray-900">Our Team</h1>
+          <h1 className="text-xl font-bold text-gray-900 text-wave">Our Team</h1>
         </div>
 
         {/* Filter Tabs */}
@@ -57,14 +57,14 @@ export default function TeamPage() {
         </div>
       </div>
 
-      <div className="px-4 pt-4 space-y-4 max-w-2xl mx-auto lg:max-w-5xl">
+      <div className="px-4 pt-4 space-y-4 max-w-2xl mx-auto lg:max-w-5xl page-reveal page-delay-2">
         {loading ? (
           <TeamPageCardsSkeleton />
         ) : (
           <>
             {/* Featured Card */}
             {featured && (
-              <Link href={`/team/${featured.id}`} className="block bg-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+              <Link href={`/team/${featured.id}`} className="block bg-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow card-reveal-left">
                 <div className="flex items-center gap-4 p-4">
                   {/* Avatar */}
                   <div className="w-28 h-28 shrink-0 rounded-xl bg-gray-200 overflow-hidden flex items-center justify-center">
@@ -102,8 +102,13 @@ export default function TeamPage() {
 
             {/* Team Grid */}
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-              {rest.map(member => (
-                <Link key={member.id} href={`/team/${member.id}`} className="block bg-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+              {rest.map((member, index) => (
+                <Link
+                  key={member.id}
+                  href={`/team/${member.id}`}
+                  className={`block bg-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow ${index % 2 === 0 ? 'card-reveal-right' : 'card-reveal-left'}`}
+                  style={{ animationDelay: `${Math.min(index, 8) * 70}ms` }}
+                >
                   {/* Photo */}
                   <div
                     className="w-full aspect-square flex items-center justify-center overflow-hidden"

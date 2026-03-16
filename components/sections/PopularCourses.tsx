@@ -4,7 +4,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ChevronLeft, ChevronRight, Check, ArrowRight } from 'lucide-react';
-import { motion } from 'framer-motion';
 import { PopularServiceItem } from '@/lib/admin/store';
 
 export const PopularCourses = () => {
@@ -81,34 +80,16 @@ export const PopularCourses = () => {
   };
 
   return (
-    <motion.section
-      className="py-6 md:py-8 lg:py-9 bg-white"
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.2 }}
-      transition={{ duration: 0.55, ease: 'easeOut' }}
-    >
+    <section className="py-6 md:py-8 lg:py-9 bg-white page-reveal">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-8 md:mb-10">
-          <motion.h2
-            className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-3 md:mb-4"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.5 }}
-            transition={{ duration: 0.5, ease: 'easeOut' }}
-          >
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-3 md:mb-4 text-wave">
             Our Popular Services
-          </motion.h2>
-          <motion.p
-            className="text-sm sm:text-base text-gray-500 max-w-2xl mx-auto leading-relaxed px-4"
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.5 }}
-            transition={{ duration: 0.45, delay: 0.08, ease: 'easeOut' }}
-          >
+          </h2>
+          <p className="text-sm sm:text-base text-gray-500 max-w-2xl mx-auto leading-relaxed px-4 text-wave">
             We provide comprehensive digital solutions to help your business grow. Explore our wide range of services tailored to meet your specific needs.
-          </motion.p>
+          </p>
         </div>
 
         {/* Tabs */}
@@ -150,13 +131,10 @@ export const PopularCourses = () => {
               </div>
             ))}
             {!loading && filteredServices.map((service, index) => (
-              <motion.div
+              <div
                 key={service.id}
-                className="service-card shrink-0 w-72 sm:w-80 md:w-85 bg-white rounded-xl sm:rounded-2xl overflow-hidden shadow-sm hover:shadow-xl border border-gray-100 transition-all duration-300 group"
-                initial={{ opacity: 0, y: 26 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.35 }}
-                transition={{ duration: 0.45, delay: Math.min(index * 0.06, 0.3), ease: 'easeOut' }}
+                className={`service-card shrink-0 w-72 sm:w-80 md:w-85 bg-white rounded-xl sm:rounded-2xl overflow-hidden shadow-sm hover:shadow-xl border border-gray-100 transition-all duration-300 group ${index % 2 === 0 ? 'card-reveal-left' : 'card-reveal-right'}`}
+                style={{ animationDelay: `${Math.min(index * 60, 300)}ms` }}
               >
                 <div className="relative h-40 sm:h-48 w-full overflow-hidden">
                   {service.customImage ? (
@@ -184,7 +162,7 @@ export const PopularCourses = () => {
                     <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover/link:translate-x-1 transition-transform" />
                   </Link>
                 </div>
-              </motion.div>
+              </div>
             ))}
           </div>
 
@@ -193,6 +171,6 @@ export const PopularCourses = () => {
           </button>
         </div>
       </div>
-    </motion.section>
+    </section>
   );
 };

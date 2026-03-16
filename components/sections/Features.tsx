@@ -2,7 +2,6 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
 
 interface FeatureCardProps {
   icon: React.ReactNode;
@@ -14,12 +13,9 @@ interface FeatureCardProps {
 
 const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, description, iconColor, delay = 0 }) => {
   return (
-    <motion.div
+    <div
       className="feature-card bg-white border border-gray-100 rounded-2xl sm:rounded-3xl p-4 sm:p-8 flex flex-col items-start text-left h-full hover:shadow-xl transition-all duration-300 group min-h-0 sm:min-h-70 hover:border-red-100"
-      initial={{ opacity: 0, y: 26, scale: 0.98 }}
-      whileInView={{ opacity: 1, y: 0, scale: 1 }}
-      viewport={{ once: true, amount: 0.3 }}
-      transition={{ duration: 0.45, delay, ease: 'easeOut' }}
+      style={{ animationDelay: `${Math.round(delay * 1000)}ms` }}
     >
       {/* Icon */}
       <div className={`w-12 h-12 sm:w-16 sm:h-16 ${iconColor} rounded-xl sm:rounded-2xl flex items-center justify-center mb-3 sm:mb-6 transition-transform duration-300`}>
@@ -45,7 +41,7 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, description, ico
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
         </svg>
       </Link>
-    </motion.div>
+    </div>
   );
 };
 
@@ -94,36 +90,20 @@ export const Features = () => {
   ];
 
   return (
-    <motion.section
+    <section
       id="features"
-      className="py-4 sm:py-6 md:py-10 lg:py-10 bg-white mx-auto px-4 sm:px-6 lg:px-8"
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.2 }}
-      transition={{ duration: 0.55, ease: 'easeOut' }}
+      className="py-4 sm:py-6 md:py-10 lg:py-10 bg-white mx-auto px-4 sm:px-6 lg:px-8 page-reveal"
     >
       <div className="max-w-7xl mx-auto px-0 sm:px-4 md:px-6 lg:px-8">
         {/* Section Header */}
         <div className="mb-8 sm:mb-12 md:mb-16">
           <div className="max-w-4xl mx-auto text-center">
-            <motion.h2
-              className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 leading-tight mb-3 sm:mb-4"
-              initial={{ opacity: 0, y: 18 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.5 }}
-              transition={{ duration: 0.45, ease: 'easeOut' }}
-            >
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 leading-tight mb-3 sm:mb-4 text-wave">
               Why Choose Motion Booster
-            </motion.h2>
-            <motion.p
-              className="text-gray-600 text-sm sm:text-base leading-relaxed"
-              initial={{ opacity: 0, y: 14 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.5 }}
-              transition={{ duration: 0.4, delay: 0.08, ease: 'easeOut' }}
-            >
+            </h2>
+            <p className="text-gray-600 text-sm sm:text-base leading-relaxed text-wave">
               Everything you need for successful digital transformation and business growth
-            </motion.p>
+            </p>
           </div>
         </div>
 
@@ -132,6 +112,8 @@ export const Features = () => {
           {allFeatures.map((feature, index) => (
             <div 
               key={index}
+              className={index % 2 === 0 ? 'card-reveal-left' : 'card-reveal-right'}
+              style={{ animationDelay: `${Math.min(index * 80, 280)}ms` }}
             >
               <FeatureCard
                 icon={feature.icon}
@@ -144,6 +126,6 @@ export const Features = () => {
           ))}
         </div>
       </div>
-    </motion.section>
+    </section>
   );
 };

@@ -3,7 +3,6 @@
 import { usePathname } from 'next/navigation';
 import { Header } from './Header';
 import { Footer } from './Footer';
-import PageTransition from '@/components/ui/PageTransition';
 
 export const ConditionalLayout = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
@@ -18,7 +17,7 @@ export const ConditionalLayout = ({ children }: { children: React.ReactNode }) =
   const content = isHandledByAdminShell ? (
     children
   ) : (
-    <PageTransition variant="public">{children}</PageTransition>
+    <div key={pathname} className="page-reveal">{children}</div>
   );
 
   return (

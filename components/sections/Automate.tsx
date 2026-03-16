@@ -1,7 +1,5 @@
 'use client';
 
-import { motion } from 'framer-motion';
-
 export const Automate = () => {
   const benefits = [
     {
@@ -47,37 +45,22 @@ export const Automate = () => {
   ];
 
   return (
-    <motion.section
-      className="py-20 lg:py-32 bg-gray-50"
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.15 }}
-      transition={{ duration: 0.6, ease: 'easeOut' }}
-    >
+    <section className="py-20 lg:py-32 bg-gray-50 page-reveal">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-16">
-          <motion.h2
-            className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4"
-            initial={{ opacity: 0, y: 28 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.4 }}
-            transition={{ duration: 0.65, ease: 'easeOut' }}
-          >
+          <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4 text-wave">
             Why Agencies Love Our Platform
-          </motion.h2>
+          </h2>
         </div>
 
         {/* Benefits Grid */}
         <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
           {benefits.map((benefit, index) => (
-            <motion.div
+            <div
               key={index}
-              className="benefit-card bg-white rounded-2xl p-8 shadow-sm hover:shadow-lg transition-shadow"
-              initial={{ opacity: 0, y: 36 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.25 }}
-              transition={{ duration: 0.55, delay: index * 0.1, ease: 'easeOut' }}
+              className={`benefit-card bg-white rounded-2xl p-8 shadow-sm hover:shadow-lg transition-shadow ${index % 2 === 0 ? 'card-reveal-left' : 'card-reveal-right'}`}
+              style={{ animationDelay: `${index * 100}ms` }}
             >
               {/* Icon */}
               <div className={`inline-flex items-center justify-center w-16 h-16 ${benefit.iconColor} text-white rounded-2xl mb-6`}>
@@ -93,10 +76,10 @@ export const Automate = () => {
               <p className="text-gray-600 leading-relaxed">
                 {benefit.description}
               </p>
-            </motion.div>
+            </div>
           ))}
         </div>
       </div>
-    </motion.section>
+    </section>
   );
 };

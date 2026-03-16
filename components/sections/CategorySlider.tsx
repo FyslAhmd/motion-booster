@@ -2,7 +2,6 @@
 
 import React, { useRef, useState, useEffect } from 'react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
 import { ServiceCategoryItem } from '@/lib/admin/store';
 import { CategoryIcon } from '@/lib/admin/categoryIcons';
 
@@ -41,23 +40,11 @@ export const CategorySlider = () => {
   };
 
   return (
-    <motion.section
-      className="relative z-20 py-2 sm:py-3 lg:py-4 bg-white"
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.25 }}
-      transition={{ duration: 0.5, ease: 'easeOut' }}
-    >
+    <section className="relative z-20 py-2 sm:py-3 lg:py-4 bg-white page-reveal">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.h2
-          className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-6 sm:mb-8"
-          initial={{ opacity: 0, y: 18 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.6 }}
-          transition={{ duration: 0.45, ease: 'easeOut' }}
-        >
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-6 sm:mb-8 text-wave">
           Our Service
-        </motion.h2>
+        </h2>
 
         <div className="relative flex items-center">
           {loading ? (
@@ -91,12 +78,10 @@ export const CategorySlider = () => {
               onPointerLeave={() => setIsDragging(false)}
             >
               {categories.map((category, index) => (
-                <motion.div
+                <div
                   key={category.id}
-                  initial={{ opacity: 0, y: 20, scale: 0.97 }}
-                  whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                  viewport={{ once: true, amount: 0.35 }}
-                  transition={{ duration: 0.35, delay: Math.min(index * 0.04, 0.24), ease: 'easeOut' }}
+                  className={index % 2 === 0 ? 'card-reveal-left' : 'card-reveal-right'}
+                  style={{ animationDelay: `${Math.min(index * 40, 240)}ms` }}
                 >
                   <Link
                     href={`/category/${category.slug}`}
@@ -132,12 +117,12 @@ export const CategorySlider = () => {
                       {category.title}
                     </span>
                   </Link>
-                </motion.div>
+                </div>
               ))}
             </div>
           )}
         </div>
       </div>
-    </motion.section>
+    </section>
   );
 };

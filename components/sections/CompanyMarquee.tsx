@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
 
 interface CompanyItem {
   id: string;
@@ -13,7 +12,6 @@ export const CompanyMarquee = () => {
   const [companies, setCompanies] = useState<CompanyItem[]>([]);
   const [loading, setLoading] = useState(true);
   const marqueeRef = useRef<HTMLDivElement>(null);
-  const prefersReducedMotion = useReducedMotion();
 
   const [isDragging, setIsDragging] = useState(false);
   const isDraggingRef = useRef(false);
@@ -33,7 +31,7 @@ export const CompanyMarquee = () => {
 
   useEffect(() => {
     const el = marqueeRef.current;
-    if (!el || list.length === 0 || prefersReducedMotion) return;
+    if (!el || list.length === 0) return;
 
     let rafId = 0;
     let lastTs = 0;
@@ -59,7 +57,7 @@ export const CompanyMarquee = () => {
 
     rafId = window.requestAnimationFrame(tick);
     return () => window.cancelAnimationFrame(rafId);
-  }, [list.length, prefersReducedMotion]);
+  }, [list.length]);
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     const el = marqueeRef.current;
@@ -88,38 +86,23 @@ export const CompanyMarquee = () => {
   };
 
   return (
-    <motion.section
-      className="py-8 md:py-10 lg:py-8 bg-white border-y border-gray-100"
-      initial={{ opacity: 0, y: 18 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.25 }}
-      transition={{ duration: 0.5, ease: 'easeOut' }}
-    >
+    <section className="py-8 md:py-10 lg:py-8 bg-white border-y border-gray-100 page-reveal">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-6 md:mb-8">
-          <motion.h2
-            className="text-2xl font-bold text-gray-900 md:text-3xl lg:text-4xl"
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.5 }}
-            transition={{ duration: 0.45, ease: 'easeOut' }}
-          >
+          <h2 className="text-2xl font-bold text-gray-900 md:text-3xl lg:text-4xl text-wave">
             Trusted by Top Clients
-          </motion.h2>
+          </h2>
         </div>
 
         {/* Marquee Container */}
-        <motion.div
+        <div
           ref={marqueeRef}
           className={`relative overflow-x-auto overflow-y-hidden no-scrollbar select-none touch-pan-x ${
             isDragging ? 'cursor-grabbing' : 'cursor-grab'
           }`}
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-          initial={{ opacity: 0, y: 18 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.4 }}
-          transition={{ duration: 0.45, delay: 0.08, ease: 'easeOut' }}
+          data-marquee="company"
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={endDrag}
@@ -141,17 +124,10 @@ export const CompanyMarquee = () => {
             {!loading && Array.from({ length: REPEAT_SETS }).map((_, setIndex) => (
               <React.Fragment key={`set-${setIndex}`}>
                 {list.map((company, index) => (
-                  <motion.div
+                  <div
                     key={`set-${setIndex}-${company.id}`}
-                    className="company-logo-item shrink-0 mx-5 md:mx-8"
-                    initial={{ opacity: 0, y: 16 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, amount: 0.4 }}
-                    transition={{
-                      duration: 0.35,
-                      delay: setIndex === 0 ? Math.min(index * 0.05, 0.28) : 0,
-                      ease: 'easeOut',
-                    }}
+                    className={`company-logo-item shrink-0 mx-5 md:mx-8 ${index % 2 === 0 ? 'card-reveal-left' : 'card-reveal-right'}`}
+                    style={{ animationDelay: `${setIndex === 0 ? Math.min(index * 50, 280) : 0}ms` }}
                   >
                     <div className="flex items-center justify-center h-14 md:h-16">
                       {company.logoImage ? (
@@ -167,13 +143,13 @@ export const CompanyMarquee = () => {
                         </span>
                       )}
                     </div>
-                  </motion.div>
+                  </div>
                 ))}
               </React.Fragment>
             ))}
           </div>
-        </motion.div>
+        </div>
       </div>
-    </motion.section>
+    </section>
   );
 };

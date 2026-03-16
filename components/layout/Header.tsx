@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth/context';
-import { ChevronDown, LayoutDashboard, User, Phone, Mail, Search, Bell, Home, Briefcase, Users, Menu, X, ArrowRight, LogOut } from 'lucide-react';
+import { LayoutDashboard, User, Phone, Mail, Search, Bell, Home, Briefcase, Users, Menu, X, ArrowRight, LogOut } from 'lucide-react';
 import { MoreDrawer } from '@/components/ui/MoreDrawer';
 
 const DUMMY_NOTIFICATIONS = [
@@ -16,7 +16,6 @@ const DUMMY_NOTIFICATIONS = [
 ];
 
 export const Header = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [language, setLanguage] = useState('EN');
   const [scrolled, setScrolled] = useState(false);
@@ -55,6 +54,15 @@ export const Header = () => {
   }, [showSearch, showNotif, showMoreDrawer]);
 
   useEffect(() => {
+    document.documentElement.classList.add('public-page');
+    document.body.classList.add('public-page');
+    return () => {
+      document.documentElement.classList.remove('public-page');
+      document.body.classList.remove('public-page');
+    };
+  }, []);
+
+  useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') { setShowSearch(false); setShowNotif(false); }
     };
@@ -90,6 +98,7 @@ export const Header = () => {
   const visibleNavItems = navItems;
   const userInitial = (user?.fullName || user?.username || user?.email || 'U').trim().charAt(0).toUpperCase();
   const userAvatarUrl = user?.avatarUrl?.trim() || '';
+  const accountLabel = user?.role === 'ADMIN' ? 'Admin Account' : 'Client Account';
 
   return (
     <header className={`relative z-50 lg:fixed lg:top-0 lg:left-0 lg:right-0 transition-all duration-300 ${scrolled ? 'lg:bg-white lg:shadow-md' : 'lg:bg-transparent'}`}>
@@ -236,7 +245,7 @@ export const Header = () => {
                     <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
                       <div className="px-4 py-2 border-b border-gray-100">
                         <div className="font-medium text-gray-900 text-sm">{user?.email}</div>
-                        <div className="text-xs text-gray-500 mt-0.5">Client Account</div>
+                        <div className="text-xs text-gray-500 mt-0.5">{accountLabel}</div>
                       </div>
                       <Link href="/dashboard">
                         <button
@@ -334,9 +343,9 @@ export const Header = () => {
         />
       )}
       <div
-        className={`fixed top-0 right-0 z-91 h-full w-4/5 max-w-sm bg-white shadow-2xl flex flex-col lg:hidden
+        className={`fixed top-0 right-0 z-91 h-full w-4/5 max-w-sm bg-white flex flex-col lg:hidden
           transition-transform duration-300 ease-in-out
-          ${showSearch ? 'translate-x-0' : 'translate-x-full'}`}
+          ${showSearch ? 'translate-x-0 shadow-2xl pointer-events-auto' : 'translate-x-full shadow-none pointer-events-none'}`}
       >
         <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100">
           <span className="font-semibold text-gray-800 text-base">Search</span>
@@ -383,9 +392,9 @@ export const Header = () => {
         />
       )}
       <div
-        className={`fixed top-0 right-0 z-91 h-full w-4/5 max-w-sm bg-white shadow-2xl flex flex-col lg:hidden
+        className={`fixed top-0 right-0 z-91 h-full w-4/5 max-w-sm bg-white flex flex-col lg:hidden
           transition-transform duration-300 ease-in-out
-          ${showNotif ? 'translate-x-0' : 'translate-x-full'}`}
+          ${showNotif ? 'translate-x-0 shadow-2xl pointer-events-auto' : 'translate-x-full shadow-none pointer-events-none'}`}
       >
         <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100">
           <span className="font-semibold text-gray-800 text-base">Notifications</span>

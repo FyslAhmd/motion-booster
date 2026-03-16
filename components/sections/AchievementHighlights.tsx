@@ -1,7 +1,5 @@
 'use client';
 
-import { motion } from 'framer-motion';
-
 const HIGHLIGHTS = [
   {
     value: '50+',
@@ -35,31 +33,22 @@ const HIGHLIGHTS = [
 
 export const AchievementHighlights = () => {
   return (
-    <motion.section
-      className="bg-white pb-8 pt-2 sm:pb-10 lg:pb-12"
-      initial={{ opacity: 0, y: 16 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.2 }}
-      transition={{ duration: 0.45, ease: 'easeOut' }}
-    >
+    <section className="bg-white pb-8 pt-2 sm:pb-10 lg:pb-12 page-reveal">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 sm:gap-4">
           {HIGHLIGHTS.map((item, index) => (
-            <motion.div
+            <div
               key={item.title}
-              className={`rounded-3xl p-6 ${item.cardBg}`}
-              initial={{ opacity: 0, y: 18 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.35 }}
-              transition={{ duration: 0.4, delay: Math.min(index * 0.06, 0.24), ease: 'easeOut' }}
+              className={`rounded-3xl p-6 ${item.cardBg} ${index % 2 === 0 ? 'card-reveal-left' : 'card-reveal-right'}`}
+              style={{ animationDelay: `${Math.min(index * 60, 240)}ms` }}
             >
               <p className={`text-4xl sm:text-5xl font-extrabold tracking-tight ${item.valueColor}`}>{item.value}</p>
               <h3 className="mt-3 text-xl sm:text-3xl font-bold text-gray-900">{item.title}</h3>
               <p className="mt-3 text-base sm:text-lg leading-relaxed text-gray-600">{item.description}</p>
-            </motion.div>
+            </div>
           ))}
         </div>
       </div>
-    </motion.section>
+    </section>
   );
 };

@@ -1,25 +1,14 @@
 import React from 'react';
 import { Button } from '@/components/ui/Button';
 import Image from 'next/image';
-import { motion } from 'framer-motion';
 
 export const Hero = () => {
   return (
-    <motion.section
-      className="relative pt-24 pb-16 sm:pt-28 sm:pb-20 lg:pt-48 lg:pb-40 lg:min-h-screen lg:flex lg:items-center bg-linear-to-br from-green-50 via-white to-purple-50"
-      initial={{ opacity: 0, y: 24 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, ease: 'easeOut' }}
-    >
+    <section className="relative pt-24 pb-16 sm:pt-28 sm:pb-20 lg:pt-48 lg:pb-40 lg:min-h-screen lg:flex lg:items-center bg-linear-to-br from-green-50 via-white to-purple-50 page-reveal">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-2 gap-8 sm:gap-10 lg:gap-16 items-center">
           {/* Left Content */}
-          <motion.div
-            className="max-w-2xl text-center lg:text-left"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.55, delay: 0.1, ease: 'easeOut' }}
-          >
+          <div className="max-w-2xl text-center lg:text-left card-reveal-left">
             {/* Heading with Circular Gradient Background */}
             <div className="relative mb-6">
               {/* Circular Gradient Background */}
@@ -77,15 +66,10 @@ export const Hero = () => {
             <p className="text-xs sm:text-sm text-gray-500">
               No credit card required • 14-day free trial
             </p>
-          </motion.div>
+          </div>
 
           {/* Right Content - Image with Charts */}
-          <motion.div
-            className="relative lg:ml-auto w-full max-w-2xl mt-8 lg:mt-0"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.55, delay: 0.15, ease: 'easeOut' }}
-          >
+          <div className="relative lg:ml-auto w-full max-w-2xl mt-8 lg:mt-0 card-reveal-right page-delay-1">
             <div className="relative">
               {/* Main Image Container */}
               <div className="relative rounded-2xl overflow-hidden shadow-2xl z-10">
@@ -124,9 +108,9 @@ export const Hero = () => {
               {/* Decorative purple quarter circle - Top Right - Hidden on mobile */}
               <div className="hidden md:block absolute top-[-60] right-[-70] w-20 h-20 bg-[#936DFF] rounded-bl-full" style={{ transform: 'rotate(180deg)' }}></div>
             </div>
-          </motion.div>
+          </div>
         </div>
       </div>
-    </motion.section>
+    </section>
   );
 };

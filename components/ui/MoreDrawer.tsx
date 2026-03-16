@@ -41,7 +41,7 @@ export const MoreDrawer = ({ open, onClose }: MoreDrawerProps) => {
 
       {/* Drawer - slides in from left */}
       <div
-        className={`fixed top-0 left-0 bottom-0 z-50 bg-white shadow-2xl transition-transform duration-300 lg:hidden ${open ? 'translate-x-0' : '-translate-x-full'}`}
+        className={`fixed top-0 left-0 bottom-0 z-50 bg-white transition-transform duration-300 lg:hidden ${open ? 'translate-x-0 shadow-2xl pointer-events-auto' : '-translate-x-full shadow-none pointer-events-none'}`}
         style={{ width: '80vw', maxWidth: '320px', overflowY: 'auto' }}
       >
         {/* Close */}

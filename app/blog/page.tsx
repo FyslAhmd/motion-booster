@@ -72,11 +72,11 @@ export default function BlogPage() {
     <main className="min-h-screen bg-white pb-16 lg:pb-0">
       {/* Header Section */}
       <section className="pt-12 sm:pt-18 md:pt-22 lg:pt-26 pb-5 sm:pb-7 lg:pb-9 bg-linear-to-br from-red-50 via-white to-rose-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center page-reveal">
           <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-3 sm:mb-4 leading-tight">
             Latest Insights & <span className="text-red-600">Updates</span>
           </h1>
-          <p className="text-gray-600 max-w-2xl mx-auto text-sm sm:text-base">
+          <p className="text-gray-600 max-w-2xl mx-auto text-sm sm:text-base text-wave">
             Stay informed with our latest articles and updates, covering trends, tips, and insights to help you grow.
           </p>
         </div>
@@ -94,10 +94,11 @@ export default function BlogPage() {
 
                 {filteredPosts.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-                    {filteredPosts.map((post) => (
+                    {filteredPosts.map((post, index) => (
                       <article
                         key={post.id}
-                        className="bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow"
+                        className={`bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow ${index % 2 === 0 ? 'card-reveal-left' : 'card-reveal-right'}`}
+                        style={{ animationDelay: `${index * 70}ms` }}
                       >
                         <div className="relative h-44 sm:h-48 bg-red-50">
                           {post.coverImage ? (
@@ -174,7 +175,7 @@ export default function BlogPage() {
               {/* Sidebar */}
               <div className="order-1 lg:order-1 lg:col-span-1 space-y-3 sm:space-y-4 lg:space-y-5 lg:sticky lg:top-24 lg:self-start">
                 {/* Search Box */}
-                <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-200 shadow-sm">
+                <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-200 shadow-sm page-reveal page-delay-1">
                   <div className="relative">
                     <input
                       type="text"
@@ -189,7 +190,7 @@ export default function BlogPage() {
 
                 {/* Categories Dropdown */}
                 {categories.length > 1 && (
-                  <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-200 shadow-sm">
+                  <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-200 shadow-sm page-reveal page-delay-2">
                     <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4">Categories</h3>
                     <div className="relative">
                       <select
@@ -212,7 +213,7 @@ export default function BlogPage() {
 
                 {/* Popular Tags */}
                 {allTags.length > 0 && (
-                  <div className="hidden lg:block bg-white p-4 sm:p-5 rounded-2xl border border-gray-200 shadow-sm">
+                  <div className="hidden lg:block bg-white p-4 sm:p-5 rounded-2xl border border-gray-200 shadow-sm page-reveal page-delay-3">
                     <button
                       type="button"
                       className="w-full flex items-center justify-between text-left"
@@ -239,7 +240,7 @@ export default function BlogPage() {
 
                 {/* Latest Posts */}
                 {latestPosts.length > 0 && (
-                  <div className="hidden lg:block bg-white p-4 sm:p-5 rounded-2xl border border-gray-200 shadow-sm">
+                  <div className="hidden lg:block bg-white p-4 sm:p-5 rounded-2xl border border-gray-200 shadow-sm page-reveal page-delay-4">
                     <button
                       type="button"
                       className="w-full flex items-center justify-between text-left mb-3 sm:mb-4"

@@ -9,13 +9,13 @@ export const Footer = () => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer>
+    <footer className="page-reveal">
       {/* Main Footer */}
       <div style={{ background: '#000000' }}>
         <div className="max-w-7xl mx-auto px-6 lg:px-8 py-10 sm:py-12 lg:py-14">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-10">
             {/* Brand */}
-            <div className="sm:col-span-2 lg:col-span-1">
+            <div className="sm:col-span-2 lg:col-span-1 card-reveal-left">
               <Link href="/" className="inline-block mb-4">
                 <div className="relative w-44 h-11">
                   <Image
@@ -47,8 +47,8 @@ export const Footer = () => {
             </div>
 
             {/* Contact */}
-            <div>
-              <h3 className="text-white font-bold text-lg mb-6">Contact</h3>
+            <div className="card-reveal-right page-delay-1">
+              <h3 className="text-white font-bold text-lg mb-6 text-wave">Contact</h3>
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
                   <MapPin className="w-5 h-5 text-[#FF2525] shrink-0 mt-0.5" />
@@ -73,8 +73,8 @@ export const Footer = () => {
             </div>
 
             {/* Quick Links */}
-            <div>
-              <h3 className="text-white font-bold text-lg mb-6">Quick Links</h3>
+            <div className="card-reveal-left page-delay-1">
+              <h3 className="text-white font-bold text-lg mb-6 text-wave">Quick Links</h3>
               <ul className="space-y-3 text-sm">
                 <li><Link href="/" className="text-gray-400 hover:text-white transition-colors">Home</Link></li>
                 <li><Link href="/service" className="text-gray-400 hover:text-white transition-colors">Services</Link></li>
@@ -87,8 +87,8 @@ export const Footer = () => {
             </div>
 
             {/* Popular Services */}
-            <div>
-              <h3 className="text-white font-bold text-lg mb-6">Popular Services</h3>
+            <div className="card-reveal-right page-delay-2">
+              <h3 className="text-white font-bold text-lg mb-6 text-wave">Popular Services</h3>
               <ul className="space-y-3 text-sm">
                 <li><Link href="/category/web-development" className="text-gray-400 hover:text-white transition-colors">Web Development</Link></li>
                 <li><Link href="/category/graphics-design" className="text-gray-400 hover:text-white transition-colors">Graphics Design</Link></li>
@@ -101,8 +101,8 @@ export const Footer = () => {
             </div>
 
             {/* Others */}
-            <div>
-              <h3 className="text-white font-bold text-lg mb-6">Others</h3>
+            <div className="card-reveal-left page-delay-2">
+              <h3 className="text-white font-bold text-lg mb-6 text-wave">Others</h3>
               <ul className="space-y-3 text-sm">
                 <li><Link href="#" className="text-gray-400 hover:text-white transition-colors">Our Facility</Link></li>
                 <li><Link href="#" className="text-gray-400 hover:text-white transition-colors">Our Achievement</Link></li>
@@ -115,7 +115,7 @@ export const Footer = () => {
         </div>
 
         {/* Bottom Bar */}
-        <div className="border-t border-white/10" style={{ background: '#000000' }}>
+        <div className="border-t border-white/10 page-reveal page-delay-3" style={{ background: '#000000' }}>
           <div className="max-w-7xl mx-auto px-6 lg:px-8 py-6 flex flex-col sm:flex-row justify-between items-center gap-4">
             {/* Logo */}
             <Link href="/" className="flex items-center">

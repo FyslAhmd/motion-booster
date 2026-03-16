@@ -140,14 +140,14 @@ export default function AboutPage() {
       {/* Hero Section */}
       <section className="pt-10 sm:pt-14 lg:pt-32 pb-10 sm:pb-12 lg:pb-16 bg-linear-to-br from-red-50 via-white to-rose-50">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="text-center max-w-4xl mx-auto">
+          <div className="text-center max-w-4xl mx-auto page-reveal">
             <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 mb-6">
               We Build Software That
               <span className="block text-red-500">
                 Powers Modern Businesses
               </span>
             </h1>
-            <p className="text-xl text-gray-600 leading-relaxed mb-8">
+            <p className="text-xl text-gray-600 leading-relaxed mb-8 text-wave">
               A passionate software company crafting innovative solutions that help businesses grow and succeed in the digital age.
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
@@ -173,7 +173,7 @@ export default function AboutPage() {
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
             {stats.map((stat, index) => (
-              <div key={index} className="text-center">
+              <div key={index} className={index % 2 === 0 ? 'text-center card-reveal-left' : 'text-center card-reveal-right'} style={{ animationDelay: `${index * 90}ms` }}>
                 <div className="text-4xl lg:text-5xl font-bold text-white mb-2">{stat.number}</div>
                 <div className="text-gray-400">{stat.label}</div>
               </div>
@@ -186,8 +186,8 @@ export default function AboutPage() {
       <section className="py-10 lg:py-14">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
-            <div>
-              <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
+            <div className="page-reveal">
+              <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6 text-wave">
                 Our Story
               </h2>
               <div className="space-y-4 text-gray-600 leading-relaxed">
@@ -205,7 +205,7 @@ export default function AboutPage() {
                 </p>
               </div>
             </div>
-            <div className="bg-red-100 rounded-3xl p-12 flex items-center justify-center">
+            <div className="bg-red-100 rounded-3xl p-12 flex items-center justify-center page-reveal page-delay-1">
               <div className="text-center">
                 <div className="text-6xl mb-4">🚀</div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-2">Mission</h3>
@@ -221,22 +221,23 @@ export default function AboutPage() {
       {/* Values Section */}
       <section className="py-12 lg:py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="text-center mb-10">
+          <div className="text-center mb-10 page-reveal">
             <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
               What We Stand For
             </h2>
-            <p className="text-xl text-gray-600">
+              <p className="text-xl text-gray-600 text-wave">
               The values that guide everything we build
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {values.map((value, index) => (
-              <ValueCard
-                key={index}
-                icon={value.icon}
-                title={value.title}
-                description={value.description}
-              />
+              <div key={index} className={index % 2 === 0 ? 'card-reveal-left' : 'card-reveal-right'} style={{ animationDelay: `${index * 80}ms` }}>
+                <ValueCard
+                  icon={value.icon}
+                  title={value.title}
+                  description={value.description}
+                />
+              </div>
             ))}
           </div>
         </div>
@@ -245,7 +246,7 @@ export default function AboutPage() {
       {/* Team Section */}
       <section className="py-12 lg:py-16 bg-white">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="text-center mb-10">
+          <div className="text-center mb-10 page-reveal">
             <div className="inline-block mb-4">
               <span className="px-4 py-2 bg-red-100 text-red-600 rounded-full text-sm font-semibold">
                 Our Team
@@ -259,13 +260,15 @@ export default function AboutPage() {
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {team.map((member) => (
-              <TeamMember key={member.id} member={member} />
+            {team.map((member, index) => (
+              <div key={member.id} className={index % 2 === 0 ? 'card-reveal-left' : 'card-reveal-right'} style={{ animationDelay: `${index * 70}ms` }}>
+                <TeamMember member={member} />
+              </div>
             ))}
           </div>
           
           {/* Join Team CTA */}
-          <div className="mt-10 text-center">
+          <div className="mt-10 text-center page-reveal page-delay-2">
             <div className="inline-block bg-white rounded-2xl p-8 shadow-lg">
               <h3 className="text-2xl font-bold text-gray-900 mb-3">Want to join our team?</h3>
               <p className="text-gray-600 mb-6">We're always looking for talented people</p>

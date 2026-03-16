@@ -83,14 +83,14 @@ export default function ServicePage() {
       {/* Hero Section */}
       <section className="pt-8 pb-12 sm:py-16 lg:pt-28 lg:pb-14 bg-linear-to-br from-red-50 via-white to-rose-50">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="text-center max-w-4xl mx-auto">
+          <div className="text-center max-w-4xl mx-auto page-reveal">
             <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
               Complete Digital Solutions
               <span className="block text-red-600">
                 Under One Roof
               </span>
             </h1>
-            <p className="text-xl text-gray-600 leading-relaxed mb-8">
+            <p className="text-xl text-gray-600 leading-relaxed mb-8 text-wave">
               From strategy to execution - we build and grow your digital presence with end-to-end services tailored to your business needs.
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
@@ -114,7 +114,7 @@ export default function ServicePage() {
       {/* Services Section */}
       <section className="pt-10 pb-14 sm:py-16 lg:pt-12 lg:pb-16 bg-white">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="text-center mb-16">
+          <div className="text-center mb-16 page-reveal page-delay-1">
             <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
               Our Services
             </h2>
@@ -127,15 +127,16 @@ export default function ServicePage() {
             <ServiceCategoryListSkeleton />
           ) : (
             <div className="space-y-6">
-              {serviceCategories.map((category) => (
-                <ServiceCategory
-                  key={category.id}
-                  iconType={category.category}
-                  title={category.title}
-                  description={category.description}
-                  services={category.services}
-                  gradient={category.gradient}
-                />
+              {serviceCategories.map((category, index) => (
+                <div key={category.id} className={index % 2 === 0 ? 'card-reveal-left' : 'card-reveal-right'} style={{ animationDelay: `${index * 90}ms` }}>
+                  <ServiceCategory
+                    iconType={category.category}
+                    title={category.title}
+                    description={category.description}
+                    services={category.services}
+                    gradient={category.gradient}
+                  />
+                </div>
               ))}
             </div>
           )}
@@ -145,11 +146,11 @@ export default function ServicePage() {
       {/* Process Section */}
       <section className="pt-12 pb-16 lg:pt-12 lg:pb-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="text-center mb-16">
+          <div className="text-center mb-16 page-reveal page-delay-2">
             <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
               Our Process
             </h2>
-            <p className="text-xl text-gray-600">
+            <p className="text-xl text-gray-600 text-wave">
               How we deliver exceptional results
             </p>
           </div>
@@ -162,7 +163,7 @@ export default function ServicePage() {
               { step: '04', title: 'Launch', desc: 'Testing, deployment, and go-live support' },
               { step: '05', title: 'Support', desc: 'Ongoing maintenance and optimization' },
             ].map((item, index) => (
-              <div key={index} className="text-center">
+              <div key={index} className={index % 2 === 0 ? 'text-center card-reveal-left' : 'text-center card-reveal-right'} style={{ animationDelay: `${index * 80}ms` }}>
                 <div className="w-20 h-20 bg-red-500 text-white rounded-full mx-auto mb-4 flex items-center justify-center text-2xl font-bold">
                   {item.step}
                 </div>

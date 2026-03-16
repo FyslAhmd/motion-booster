@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ConditionalLayout } from "@/components/layout";
+import ScrollRevealInitializer from "@/components/ui/ScrollRevealInitializer";
 import { AuthProvider } from "@/lib/auth/context";
 import { SiteDataProvider } from "@/lib/admin/context";
 import { Toaster } from 'sonner';
@@ -20,6 +21,7 @@ export default function RootLayout({
       <body className="antialiased overflow-x-hidden" suppressHydrationWarning>
         <SiteDataProvider>
           <AuthProvider>
+            <ScrollRevealInitializer />
             <Toaster position="top-right" richColors />
             <ConditionalLayout>
               {children}

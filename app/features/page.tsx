@@ -251,7 +251,7 @@ export default function FeaturesPage() {
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
       <section className="pt-14 pb-10 lg:pt-28 lg:pb-14 bg-linear-to-br from-red-50 via-white to-rose-50">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 text-center">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 text-center page-reveal">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 rounded-full text-sm font-medium mb-6">
             <Rocket className="w-4 h-4" />
             Powerful Features for Growth
@@ -262,7 +262,7 @@ export default function FeaturesPage() {
               Supercharge Your Campaigns
             </span>
           </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8 text-wave">
             Powerful tools and features designed to help you manage, analyze, and optimize your marketing campaigns with ease.
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
@@ -283,7 +283,7 @@ export default function FeaturesPage() {
 
       {/* Category Filter */}
       <section className="pt-3 pb-6 px-4">
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-7xl mx-auto page-reveal page-delay-1">
           <div className="flex flex-wrap gap-3 justify-center">
             {categories.map((cat) => (
               <button
@@ -309,7 +309,8 @@ export default function FeaturesPage() {
             {filteredFeatures.map((feature, index) => (
               <div
                 key={index}
-                className="bg-white rounded-2xl p-8 hover:shadow-2xl transition-all duration-300 border border-gray-100 group"
+                className={`bg-white rounded-2xl p-8 hover:shadow-2xl transition-all duration-300 border border-gray-100 group ${index % 2 === 0 ? 'card-reveal-left' : 'card-reveal-right'}`}
+                style={{ animationDelay: `${index * 70}ms` }}
               >
                 <div className={`w-14 h-14 ${feature.bgColor} rounded-xl flex items-center justify-center mb-6`}>
                   <feature.icon className={`w-7 h-7 ${feature.color}`} />
@@ -337,11 +338,11 @@ export default function FeaturesPage() {
       {/* Platform Capabilities */}
       <section className="pt-10 pb-16 md:pt-12 md:pb-20 px-4 bg-white">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
+          <div className="text-center mb-12 page-reveal page-delay-2">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
               Platform Capabilities
             </h2>
-            <p className="text-xl text-gray-600">
+            <p className="text-xl text-gray-600 text-wave">
               Built for performance, designed for simplicity
             </p>
           </div>
@@ -349,7 +350,8 @@ export default function FeaturesPage() {
             {platformCapabilities.map((capability, index) => (
               <div
                 key={index}
-                className="bg-white/70 backdrop-blur-sm rounded-xl p-6 hover:bg-white transition-all border border-gray-100"
+                className={`bg-white/70 backdrop-blur-sm rounded-xl p-6 hover:bg-white transition-all border border-gray-100 ${index % 2 === 0 ? 'card-reveal-left' : 'card-reveal-right'}`}
+                style={{ animationDelay: `${index * 80}ms` }}
               >
                 <div className="w-12 h-12 bg-red-500 rounded-lg flex items-center justify-center mb-4">
                   <capability.icon className="w-6 h-6 text-white" />

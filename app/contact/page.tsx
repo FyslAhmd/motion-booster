@@ -57,17 +57,17 @@ export default function ContactPage() {
 
       {/* Hero */}
       <section className="py-20 lg:py-32 bg-linear-to-br from-red-50 via-white to-rose-50">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 text-center">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 text-center page-reveal">
           <span className="inline-block px-4 py-1.5 bg-red-100 text-red-600 rounded-full text-sm font-semibold mb-4">Contact Us</span>
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 text-wave">
             Get in Touch with Us
           </h1>
-          <p className="text-gray-600 mb-12 max-w-2xl mx-auto">
+          <p className="text-gray-600 mb-12 max-w-2xl mx-auto text-wave">
             Have questions or need support? Reach out to us and we&apos;ll be happy to assist you!
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-            <div className="bg-white p-7 rounded-2xl border border-gray-100 hover:shadow-lg hover:border-red-100 transition-all">
+            <div className="bg-white p-7 rounded-2xl border border-gray-100 hover:shadow-lg hover:border-red-100 transition-all card-reveal-left page-delay-1">
               <div className="w-14 h-14 bg-red-500 rounded-xl flex items-center justify-center mx-auto mb-5">
                 <Phone className="w-7 h-7 text-white" />
               </div>
@@ -78,7 +78,7 @@ export default function ContactPage() {
               </p>
             </div>
 
-            <div className="bg-white p-7 rounded-2xl border border-gray-100 hover:shadow-lg hover:border-red-100 transition-all">
+            <div className="bg-white p-7 rounded-2xl border border-gray-100 hover:shadow-lg hover:border-red-100 transition-all card-reveal-right page-delay-2">
               <div className="w-14 h-14 bg-red-500 rounded-xl flex items-center justify-center mx-auto mb-5">
                 <Mail className="w-7 h-7 text-white" />
               </div>
@@ -91,7 +91,7 @@ export default function ContactPage() {
               </p>
             </div>
 
-            <div className="bg-white p-7 rounded-2xl border border-gray-100 hover:shadow-lg hover:border-red-100 transition-all">
+            <div className="bg-white p-7 rounded-2xl border border-gray-100 hover:shadow-lg hover:border-red-100 transition-all card-reveal-left page-delay-3">
               <div className="w-14 h-14 bg-red-500 rounded-xl flex items-center justify-center mx-auto mb-5">
                 <MessageSquare className="w-7 h-7 text-white" />
               </div>
@@ -110,10 +110,10 @@ export default function ContactPage() {
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
 
           {/* Map Block */}
-          <div className="space-y-5">
+          <div className="space-y-5 page-reveal page-delay-1">
             <div>
               <p className="text-red-500 uppercase tracking-wider text-sm font-semibold mb-2">Our Location</p>
-              <h2 className="text-3xl font-bold text-gray-900 mb-3">Find Us on the Map</h2>
+              <h2 className="text-3xl font-bold text-gray-900 mb-3 text-wave">Find Us on the Map</h2>
               <p className="text-gray-500 text-sm">Visit our office at New Market, Dhaka. We&apos;re open Monday–Friday, 9 AM to 6 PM.</p>
             </div>
 
@@ -163,7 +163,7 @@ export default function ContactPage() {
           </div>
 
           {/* Form */}
-          <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-8">
+          <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-8 card-reveal-right page-delay-2">
             <h3 className="text-2xl font-bold text-gray-900 mb-1">Send a Message</h3>
             <p className="text-gray-500 text-sm mb-6">Fill out the form and we&apos;ll get back to you within 24 hours.</p>
             <form onSubmit={handleSubmit} className="space-y-5">

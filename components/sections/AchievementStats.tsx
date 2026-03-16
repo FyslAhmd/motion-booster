@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
 
 /* ── helpers ─────────────────────────────────────────────── */
 function parse(val: string): { num: number; suffix: string } | null {
@@ -50,16 +49,13 @@ function StatCard({ value, title, bgColor, valueColor, started, delay = 0 }: Sta
   const display = parsed ? `${count}${parsed.suffix}` : value;
 
   return (
-    <motion.div
+    <div
       className={`stat-card achievement-stat-card ${bgColor} cursor-default rounded-2xl p-5 sm:p-6 text-center transition-all hover:shadow-lg`}
-      initial={{ opacity: 0, y: 22, scale: 0.98 }}
-      whileInView={{ opacity: 1, y: 0, scale: 1 }}
-      viewport={{ once: true, amount: 0.4 }}
-      transition={{ duration: 0.45, delay, ease: 'easeOut' }}
+      style={{ animationDelay: `${Math.round(delay * 1000)}ms` }}
     >
       <div className={`mb-2 text-4xl sm:text-5xl font-extrabold tracking-tight ${valueColor}`}>{display}</div>
       <h3 className="text-xs sm:text-sm font-bold leading-snug text-gray-800">{title}</h3>
-    </motion.div>
+    </div>
   );
 }
 
@@ -107,35 +103,19 @@ export const AchievementStats = () => {
   }, [loaded]);
 
   return (
-    <motion.section
+    <section
       ref={sectionRef}
-      className="bg-white py-8 md:py-12 lg:py-10"
-      initial={{ opacity: 0, y: 22 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.2 }}
-      transition={{ duration: 0.55, ease: 'easeOut' }}
+      className="bg-white py-8 md:py-12 lg:py-10 page-reveal"
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-10 text-center md:mb-14">
-          <motion.h2
-            className="mb-3 text-2xl font-bold text-gray-900 md:text-3xl lg:text-4xl"
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.5 }}
-            transition={{ duration: 0.45, ease: 'easeOut' }}
-          >
+          <h2 className="mb-3 text-2xl font-bold text-gray-900 md:text-3xl lg:text-4xl text-wave">
             Our Achievements
-          </motion.h2>
-          <motion.p
-            className="text-sm text-gray-600 md:text-base"
-            initial={{ opacity: 0, y: 14 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.5 }}
-            transition={{ duration: 0.4, delay: 0.08, ease: 'easeOut' }}
-          >
+          </h2>
+          <p className="text-sm text-gray-600 md:text-base text-wave">
             Numbers that speak for our success and commitment to excellence
-          </motion.p>
+          </p>
         </div>
 
         {/* Grid */}
@@ -151,11 +131,13 @@ export const AchievementStats = () => {
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-5">
             {stats.map((stat, index) => (
-              <StatCard key={stat.id} {...stat} started={started} delay={Math.min(index * 0.06, 0.25)} />
+              <div key={stat.id} className={index % 2 === 0 ? 'card-reveal-left' : 'card-reveal-right'} style={{ animationDelay: `${Math.min(index * 60, 250)}ms` }}>
+                <StatCard {...stat} started={started} delay={Math.min(index * 0.06, 0.25)} />
+              </div>
             ))}
           </div>
         )}
       </div>
-    </motion.section>
+    </section>
   );
 };
