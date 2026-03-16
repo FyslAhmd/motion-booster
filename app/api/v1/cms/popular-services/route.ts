@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import { defaultPopularServices } from '@/lib/admin/store';
+import { isRecoverableDbError } from '@/lib/server/db-error';
 
 export async function GET() {
   try {
@@ -7,6 +9,11 @@ export async function GET() {
     return NextResponse.json(services);
   } catch (error) {
     console.error('[CMS popular-services GET]', error);
+
+    if (isRecoverableDbError(error)) {
+      return NextResponse.json(defaultPopularServices);
+    }
+
     return NextResponse.json({ error: 'Failed to load services' }, { status: 500 });
   }
 }

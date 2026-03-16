@@ -36,6 +36,7 @@ import {
   Rocket,
   BookOpen,
   DollarSign,
+  Inbox,
 } from 'lucide-react';
 interface NavItem {
   href: string;
@@ -59,6 +60,7 @@ const navItems: NavEntry[] = [
   { href: '/dashboard/meta', label: 'Ads Manager', icon: Megaphone, adminOnly: true },
   { href: '/dashboard/user-campaigns', label: 'Assign User', icon: UserCheck, adminOnly: true },
   { href: '/dashboard/chat', label: 'Chat Messages', icon: MessageCircle },
+  { href: '/dashboard/media-message', label: 'Media Message', icon: Inbox, adminOnly: true },
   { href: '/dashboard/boost-requests', label: 'Boost Requests', icon: Rocket, adminOnly: true },
   { href: '/dashboard/user-budget', label: 'User Budget', icon: DollarSign, adminOnly: true },
   { href: '/dashboard/clients', label: 'Clients', icon: Users, adminOnly: true },

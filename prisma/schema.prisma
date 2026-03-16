@@ -144,6 +144,25 @@ model Message {
   @@map("messages")
 }
 
+// ─── CONTACT MESSAGES ───────────────────────────────
+
+model ContactMessage {
+  id          String   @id @default(cuid())
+  fullName    String   @map("full_name")
+  email       String
+  companyName String?  @map("company_name")
+  mobile      String
+  queryDetails String  @map("query_details") @db.Text
+  source      String   @default("CONTACT_US")
+  isRead      Boolean  @default(false) @map("is_read")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([createdAt])
+  @@index([isRead])
+  @@map("contact_messages")
+}
+
 // ─── CMS: HERO SLIDES ────────────────────────────────
 
 model HeroSlide {

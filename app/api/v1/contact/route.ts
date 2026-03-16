@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
 import { z } from 'zod';
+import { prisma } from '@/lib/db/prisma';
 
 const contactSchema = z.object({
   fullName: z.string().trim().min(2, 'Full name is required').max(120),
@@ -19,6 +20,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: parsed.error.issues[0]?.message || 'Invalid request data' }, { status: 400 });
     }
 
+    const { fullName, email, companyName, mobile, queryDetails } = parsed.data;
+
+    await prisma.contactMessage.create({
+      data: {
+        fullName,
+        email,
+        companyName: companyName || null,
+        mobile,
+        queryDetails,
+        source: 'CONTACT_US',
+      },
+    });
+
     const smtpHost = process.env.SMTP_HOST;
     const smtpPort = Number(process.env.SMTP_PORT || 587);
     const smtpUser = process.env.SMTP_USER;
@@ -28,8 +42,8 @@ export async function POST(req: NextRequest) {
 
     if (!smtpHost || !smtpUser || !smtpPass) {
       return NextResponse.json(
-        { error: 'Email service is not configured on the server' },
-        { status: 500 }
+        { message: 'Your message has been received successfully.' },
+        { status: 200 }
       );
     }
 
@@ -42,8 +56,6 @@ export async function POST(req: NextRequest) {
         pass: smtpPass,
       },
     });
-
-    const { fullName, email, companyName, mobile, queryDetails } = parsed.data;
 
     await transporter.sendMail({
       from: fromEmail,

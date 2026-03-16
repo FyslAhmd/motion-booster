@@ -77,12 +77,13 @@ export default function WelcomeModalPage() {
     const ctx = canvas.getContext('2d')!;
     const img = new window.Image();
     img.onload = () => {
-      const maxW = 800;
-      const scale = img.width > maxW ? maxW / img.width : 1;
-      canvas.width = img.width * scale;
-      canvas.height = img.height * scale;
+      const maxW = 640;
+      const maxH = 360;
+      const scale = Math.min(maxW / img.width, maxH / img.height, 1);
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      const b64 = canvas.toDataURL('image/jpeg', 0.85);
+      const b64 = canvas.toDataURL('image/jpeg', 0.75);
       setSettings(prev => ({ ...prev, welcomeModalImage: b64 }));
       URL.revokeObjectURL(img.src);
     };

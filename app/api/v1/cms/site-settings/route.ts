@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import { isRecoverableDbError } from '@/lib/server/db-error';
 
 const DEFAULT_SETTINGS = {
   welcomeModalImage: '',
@@ -18,9 +19,23 @@ export async function GET() {
       });
     }
 
-    return NextResponse.json(record);
+    return NextResponse.json(record, {
+      headers: {
+        // Small browser cache to avoid repeated round-trips on fast reload/navigation.
+        'Cache-Control': 'public, max-age=60',
+      },
+    });
   } catch (error) {
     console.error('[CMS site-settings GET]', error);
+
+    if (isRecoverableDbError(error)) {
+      return NextResponse.json(DEFAULT_SETTINGS, {
+        headers: {
+          'Cache-Control': 'public, max-age=60',
+        },
+      });
+    }
+
     return NextResponse.json({ error: 'Failed to load settings' }, { status: 500 });
   }
 }

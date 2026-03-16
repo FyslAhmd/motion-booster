@@ -34,7 +34,7 @@ export const HeroSlider = () => {
         transition={{ duration: 0.45, ease: 'easeOut' }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="h-50 md:h-70 lg:h-80 rounded-xl bg-gray-200 animate-pulse" />
+          <div className="h-[200px] md:h-[280px] lg:h-[320px] rounded-xl bg-gray-200 animate-pulse" />
           <div className="mt-4 flex items-center gap-3">
             <div className="h-12 flex-1 rounded-xl bg-gray-200 animate-pulse" />
             <div className="h-12 flex-1 rounded-xl bg-gray-200 animate-pulse" />
@@ -60,20 +60,34 @@ export const HeroSlider = () => {
           transition={{ duration: 0.5, delay: 0.05, ease: 'easeOut' }}
         >
           <Slider
-          slides={slides}
-          autoPlay={true}
-          autoPlayInterval={5000}
-          showControls={false}
-          showIndicators={true}
-          height="h-[200px] md:h-[280px] lg:h-[320px]"
+            slides={slides}
+            autoPlay={true}
+            autoPlayInterval={5000}
+            showControls={false}
+            showIndicators={true}
+            height="h-[200px] md:h-[280px] lg:h-[320px]"
           />
+        </motion.div>
+
+        <motion.div
+          className="mt-4 space-y-2"
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, delay: 0.12, ease: 'easeOut' }}
+        >
+          <h2 className="text-xl font-bold leading-tight text-gray-900">
+            Grow your business identity with Motion Booster
+          </h2>
+          <p className="text-sm leading-relaxed text-gray-600">
+            We provide a complete suite of digital solutions, including tailored digital marketing, eye-catching graphic design, dynamic animation, as well as expert web and app development - all designed to elevate your brand in the digital world.
+          </p>
         </motion.div>
 
         <motion.div
           className="mt-4 grid grid-cols-2 gap-3"
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, delay: 0.15, ease: 'easeOut' }}
+          transition={{ duration: 0.45, delay: 0.18, ease: 'easeOut' }}
         >
           <a
             href="/service"
