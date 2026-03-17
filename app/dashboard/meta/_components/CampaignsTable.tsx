@@ -80,16 +80,133 @@ function parseCampaignInsights(insight: any) {
     spend: Number(insight.spend || 0),
     reach: Number(insight.reach || 0),
     impressions: Number(insight.impressions || 0),
-    clicks: getAction('link_click'),
-    messages: getAction('onsite_conversion.messaging_conversation_started_7d'),
-    leads: getAction('lead'),
-    purchases: getAction('purchase') || getAction('onsite_web_purchase'),
-    cost_per_click: getCost('link_click'),
-    cost_per_message: getCost('onsite_conversion.messaging_conversation_started_7d'),
-    cost_per_lead: getCost('lead'),
-    cost_per_purchase: getCost('purchase') || getCost('onsite_web_purchase'),
     cpc: Number(insight.cpc || 0),
-    ctr: Number(insight.ctr || 0)
+    ctr: Number(insight.ctr || 0),
+    getAction,
+    getCost,
+  };
+}
+
+const GOAL_TO_DYNAMIC_METRIC: Record<string, { metricLabel: string; costLabel: string; actionTypes: string[] }> = {
+  CONVERSATIONS: {
+    metricLabel: 'Messaging Connections',
+    costLabel: 'Cost / Connection',
+    actionTypes: [
+      'onsite_conversion.total_messaging_connection',
+      'onsite_conversion.messaging_conversation_started_7d',
+    ],
+  },
+  MESSAGING_PURCHASE_CONVERSION: {
+    metricLabel: 'Conversations',
+    costLabel: 'Cost / Conversation',
+    actionTypes: [
+      'onsite_conversion.messaging_conversation_started_7d',
+      'onsite_conversion.total_messaging_connection',
+    ],
+  },
+  PAGE_LIKES: {
+    metricLabel: 'Page Likes',
+    costLabel: 'Cost / Like',
+    actionTypes: ['like'],
+  },
+  LEAD_GENERATION: {
+    metricLabel: 'Leads',
+    costLabel: 'Cost / Lead',
+    actionTypes: ['lead', 'onsite_conversion.lead', 'onsite_web_lead'],
+  },
+  LINK_CLICKS: {
+    metricLabel: 'Link Clicks',
+    costLabel: 'Cost / Click',
+    actionTypes: ['link_click'],
+  },
+  LANDING_PAGE_VIEWS: {
+    metricLabel: 'Landing Page Views',
+    costLabel: 'Cost / LPV',
+    actionTypes: ['landing_page_view', 'link_click'],
+  },
+  OFFSITE_CONVERSIONS: {
+    metricLabel: 'Purchases',
+    costLabel: 'Cost / Purchase',
+    actionTypes: ['purchase', 'onsite_web_purchase'],
+  },
+  POST_ENGAGEMENT: {
+    metricLabel: 'Post Engagement',
+    costLabel: 'Cost / Engagement',
+    actionTypes: ['post_engagement', 'page_engagement'],
+  },
+  THRUPLAY: {
+    metricLabel: 'Video Views',
+    costLabel: 'Cost / View',
+    actionTypes: ['video_view', 'thruplay'],
+  },
+  QUALITY_CALL: {
+    metricLabel: 'Calls',
+    costLabel: 'Cost / Call',
+    actionTypes: [
+      'onsite_conversion.messaging_user_call_placed',
+      'onsite_conversion.messaging_60s_call_connect',
+      'onsite_conversion.messaging_20s_call_connect',
+    ],
+  },
+  REACH: {
+    metricLabel: 'Reach Results',
+    costLabel: 'Cost / Reach',
+    actionTypes: ['reach'],
+  },
+};
+
+function getDominantOptimizationGoal(adSets: CampaignAdSet[]): string | undefined {
+  if (!adSets.length) return undefined;
+  const countMap = new Map<string, number>();
+  for (const adSet of adSets) {
+    const key = adSet.optimization_goal || 'UNKNOWN';
+    countMap.set(key, (countMap.get(key) || 0) + 1);
+  }
+  return [...countMap.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+}
+
+function resolveDynamicInsightMetric(
+  data: ReturnType<typeof parseCampaignInsights>,
+  optimizationGoal?: string,
+) {
+  if (!data) return null;
+
+  const goal = optimizationGoal || 'LINK_CLICKS';
+  const config = GOAL_TO_DYNAMIC_METRIC[goal] || GOAL_TO_DYNAMIC_METRIC.LINK_CLICKS;
+
+  if (goal === 'REACH') {
+    return {
+      goal,
+      metricLabel: config.metricLabel,
+      costLabel: config.costLabel,
+      metricValue: data.reach,
+      costValue: data.reach > 0 ? data.spend / data.reach : 0,
+    };
+  }
+
+  let metricValue = 0;
+  let costValue = 0;
+  for (const actionType of config.actionTypes) {
+    const value = data.getAction(actionType);
+    if (value > 0) {
+      metricValue = value;
+      costValue = data.getCost(actionType);
+      break;
+    }
+  }
+
+  // Fallback: first mapped action, even if zero.
+  if (metricValue === 0 && config.actionTypes.length > 0) {
+    metricValue = data.getAction(config.actionTypes[0]);
+    costValue = data.getCost(config.actionTypes[0]);
+  }
+
+  return {
+    goal,
+    metricLabel: config.metricLabel,
+    costLabel: config.costLabel,
+    metricValue,
+    costValue,
   };
 }
 
@@ -794,10 +911,12 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
                     No insights data for this timeframe.
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                     {(() => {
                       const data = parseCampaignInsights(campaignInsights);
                       if (!data) return null;
+                      const dominantGoal = getDominantOptimizationGoal(campaignAdSets);
+                      const dynamicMetric = resolveDynamicInsightMetric(data, dominantGoal);
                       return (
                         <>
                           <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
@@ -812,26 +931,21 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
                             <p className="text-[11px] font-medium uppercase tracking-wider text-gray-500">Impressions</p>
                             <p className="mt-1 text-lg font-bold text-gray-900">{data.impressions.toLocaleString()}</p>
                           </div>
-                          <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
-                            <p className="text-[11px] font-medium uppercase tracking-wider text-gray-500">Messages</p>
-                            <p className="mt-1 text-lg font-bold text-gray-900">{data.messages.toLocaleString()}</p>
-                          </div>
-                          <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
-                            <p className="text-[11px] font-medium uppercase tracking-wider text-gray-500">Price / Msg</p>
-                            <p className="mt-1 text-lg font-bold text-gray-900">
-                              {data.cost_per_message > 0 ? `$${data.cost_per_message.toFixed(2)}` : '—'}
-                            </p>
-                          </div>
-                          <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
-                            <p className="text-[11px] font-medium uppercase tracking-wider text-gray-500">Leads</p>
-                            <p className="mt-1 text-lg font-bold text-gray-900">{data.leads.toLocaleString()}</p>
-                          </div>
-                          <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
-                            <p className="text-[11px] font-medium uppercase tracking-wider text-gray-500">Price / Lead</p>
-                            <p className="mt-1 text-lg font-bold text-gray-900">
-                              {data.cost_per_lead > 0 ? `$${data.cost_per_lead.toFixed(2)}` : '—'}
-                            </p>
-                          </div>
+                          {dynamicMetric && (
+                            <>
+                              <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                                <p className="text-[11px] font-medium uppercase tracking-wider text-gray-500">{dynamicMetric.metricLabel}</p>
+                                <p className="mt-1 text-lg font-bold text-gray-900">{dynamicMetric.metricValue.toLocaleString()}</p>
+                                <p className="mt-0.5 text-[10px] text-gray-400">Goal: {dynamicMetric.goal?.replace(/_/g, ' ') || '—'}</p>
+                              </div>
+                              <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                                <p className="text-[11px] font-medium uppercase tracking-wider text-gray-500">{dynamicMetric.costLabel}</p>
+                                <p className="mt-1 text-lg font-bold text-gray-900">
+                                  {dynamicMetric.costValue > 0 ? `$${dynamicMetric.costValue.toFixed(4)}` : '—'}
+                                </p>
+                              </div>
+                            </>
+                          )}
                           <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
                             <p className="text-[11px] font-medium uppercase tracking-wider text-gray-500">CTR</p>
                             <p className="mt-1 text-lg font-bold text-gray-900">{data.ctr.toFixed(2)}%</p>
