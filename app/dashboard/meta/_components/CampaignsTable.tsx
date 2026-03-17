@@ -97,16 +97,16 @@ function parseCampaignInsights(insight: any) {
 
 const GOAL_TO_DYNAMIC_METRIC: Record<string, { metricLabel: string; costLabel: string; actionTypes: string[] }> = {
   CONVERSATIONS: {
-    metricLabel: 'Messaging Connections',
-    costLabel: 'Cost / Connection',
+    metricLabel: 'Message',
+    costLabel: 'Cost / Message',
     actionTypes: [
       'onsite_conversion.total_messaging_connection',
       'onsite_conversion.messaging_conversation_started_7d',
     ],
   },
   MESSAGING_PURCHASE_CONVERSION: {
-    metricLabel: 'Conversations',
-    costLabel: 'Cost / Conversation',
+    metricLabel: 'Message',
+    costLabel: 'Cost / Message',
     actionTypes: [
       'onsite_conversion.messaging_conversation_started_7d',
       'onsite_conversion.total_messaging_connection',
