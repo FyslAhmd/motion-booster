@@ -406,7 +406,8 @@ export default function BoostRequestsPage() {
       {/* Detail Modal */}
       {mounted && selected && createPortal(
         <div className="fixed inset-0 z-100 flex items-end sm:items-center justify-center p-3 sm:p-4" onClick={() => setSelected(null)}>
-          <div className="bg-white rounded-3xl w-full max-w-[calc(100vw-1.5rem)] sm:max-w-3xl h-[92dvh] sm:h-auto sm:max-h-[90vh] overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden" onClick={e => e.stopPropagation()}>
+          <div className="absolute inset-0 bg-black/65 backdrop-blur-[1px]" aria-hidden="true" />
+          <div className="relative bg-white rounded-3xl w-full max-w-[calc(100vw-1.5rem)] sm:max-w-3xl h-[92dvh] sm:h-auto sm:max-h-[90vh] overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden border border-white/40 shadow-[0_35px_90px_-28px_rgba(0,0,0,0.65)]" onClick={e => e.stopPropagation()}>
             <div className="p-5 border-b border-gray-100 flex items-center justify-between">
               <h2 className="text-base sm:text-lg font-bold text-gray-900">Boost Request Details</h2>
               <button onClick={() => setSelected(null)} className="p-2 hover:bg-gray-100 rounded-lg"><span className="text-lg leading-none text-gray-400">×</span></button>

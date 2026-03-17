@@ -18,12 +18,37 @@ export const CompanyMarquee = () => {
   const dragStartXRef = useRef(0);
   const dragStartScrollRef = useRef(0);
 
-  useEffect(() => {
-    fetch('/api/v1/cms/companies')
+  const loadCompanies = () => {
+    fetch('/api/v1/cms/companies', { cache: 'no-store' })
       .then(r => r.json())
-      .then((data) => { if (Array.isArray(data)) setCompanies(data); })
+      .then((data) => {
+        if (Array.isArray(data)) setCompanies(data);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadCompanies();
+  }, []);
+
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'companies:lastUpdated') {
+        loadCompanies();
+      }
+    };
+
+    const onWindowFocus = () => {
+      loadCompanies();
+    };
+
+    window.addEventListener('storage', onStorage);
+    window.addEventListener('focus', onWindowFocus);
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener('focus', onWindowFocus);
+    };
   }, []);
 
   const list = companies;

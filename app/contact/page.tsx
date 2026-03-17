@@ -4,22 +4,98 @@ import React, { useState } from 'react';
 import { Phone, Mail, MessageSquare, MapPin, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 
+type ContactFormData = {
+  fullName: string;
+  email: string;
+  companyName: string;
+  mobile: string;
+  queryDetails: string;
+};
+
+type ContactFormErrors = Partial<Record<keyof ContactFormData, string>>;
+
 export default function ContactPage() {
   const [submitting, setSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<ContactFormData>({
     fullName: '',
     email: '',
     companyName: '',
     mobile: '',
     queryDetails: ''
   });
+  const [errors, setErrors] = useState<ContactFormErrors>({});
+
+  const validateField = (name: keyof ContactFormData, value: string): string => {
+    const trimmed = value.trim();
+
+    if (name === 'fullName') {
+      if (trimmed.length < 2) return 'Full name must be at least 2 characters.';
+      if (trimmed.length > 120) return 'Full name is too long.';
+      return '';
+    }
+
+    if (name === 'email') {
+      if (!trimmed) return 'Email is required.';
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailPattern.test(trimmed)) return 'Please enter a valid email address.';
+      if (trimmed.length > 255) return 'Email is too long.';
+      return '';
+    }
+
+    if (name === 'companyName') {
+      if (trimmed.length > 255) return 'Company name is too long.';
+      return '';
+    }
+
+    if (name === 'mobile') {
+      if (trimmed.length < 6) return 'Mobile number is required.';
+      if (trimmed.length > 40) return 'Mobile number is too long.';
+      return '';
+    }
+
+    if (name === 'queryDetails') {
+      if (trimmed.length < 10) return 'Message must be at least 10 characters.';
+      if (trimmed.length > 2000) return 'Message is too long.';
+      return '';
+    }
+
+    return '';
+  };
+
+  const validateForm = (): ContactFormErrors => {
+    const nextErrors: ContactFormErrors = {};
+    (Object.keys(formData) as Array<keyof ContactFormData>).forEach((key) => {
+      const fieldError = validateField(key, formData[key]);
+      if (fieldError) nextErrors[key] = fieldError;
+    });
+    return nextErrors;
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    const field = name as keyof ContactFormData;
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: validateField(field, value) || undefined }));
+    }
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const field = e.target.name as keyof ContactFormData;
+    const fieldError = validateField(field, e.target.value);
+    setErrors((prev) => ({ ...prev, [field]: fieldError || undefined }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const nextErrors = validateForm();
+    setErrors(nextErrors);
+
+    if (Object.keys(nextErrors).length > 0) {
+      toast.error('Please fix the highlighted fields and try again.');
+      return;
+    }
+
     setSubmitting(true);
 
     try {
@@ -171,45 +247,50 @@ export default function ContactPage() {
                 <div>
                   <label className="block text-gray-700 font-medium text-sm mb-1.5">Full Name*</label>
                   <input
-                    type="text" name="fullName" value={formData.fullName} onChange={handleChange} required
+                    type="text" name="fullName" value={formData.fullName} onChange={handleChange} onBlur={handleBlur} required
                     placeholder="John Doe"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-100 transition-all text-sm"
+                    className={`w-full px-4 py-3 rounded-xl border ${errors.fullName ? 'border-red-400 focus:border-red-500 focus:ring-red-100' : 'border-gray-200 focus:border-red-500 focus:ring-red-100'} focus:outline-none focus:ring-2 transition-all text-sm`}
                   />
+                  {errors.fullName && <p className="mt-1 text-xs text-red-600">{errors.fullName}</p>}
                 </div>
                 <div>
                   <label className="block text-gray-700 font-medium text-sm mb-1.5">Email*</label>
                   <input
-                    type="email" name="email" value={formData.email} onChange={handleChange} required
+                    type="email" name="email" value={formData.email} onChange={handleChange} onBlur={handleBlur} required
                     placeholder="you@example.com"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-100 transition-all text-sm"
+                    className={`w-full px-4 py-3 rounded-xl border ${errors.email ? 'border-red-400 focus:border-red-500 focus:ring-red-100' : 'border-gray-200 focus:border-red-500 focus:ring-red-100'} focus:outline-none focus:ring-2 transition-all text-sm`}
                   />
+                  {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email}</p>}
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
                   <label className="block text-gray-700 font-medium text-sm mb-1.5">Company Name</label>
                   <input
-                    type="text" name="companyName" value={formData.companyName} onChange={handleChange}
+                    type="text" name="companyName" value={formData.companyName} onChange={handleChange} onBlur={handleBlur}
                     placeholder="Your Company"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-100 transition-all text-sm"
+                    className={`w-full px-4 py-3 rounded-xl border ${errors.companyName ? 'border-red-400 focus:border-red-500 focus:ring-red-100' : 'border-gray-200 focus:border-red-500 focus:ring-red-100'} focus:outline-none focus:ring-2 transition-all text-sm`}
                   />
+                  {errors.companyName && <p className="mt-1 text-xs text-red-600">{errors.companyName}</p>}
                 </div>
                 <div>
                   <label className="block text-gray-700 font-medium text-sm mb-1.5">Mobile*</label>
                   <input
-                    type="tel" name="mobile" value={formData.mobile} onChange={handleChange} required
+                    type="tel" name="mobile" value={formData.mobile} onChange={handleChange} onBlur={handleBlur} required
                     placeholder="+880 1xxx-xxxxxx"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-100 transition-all text-sm"
+                    className={`w-full px-4 py-3 rounded-xl border ${errors.mobile ? 'border-red-400 focus:border-red-500 focus:ring-red-100' : 'border-gray-200 focus:border-red-500 focus:ring-red-100'} focus:outline-none focus:ring-2 transition-all text-sm`}
                   />
+                  {errors.mobile && <p className="mt-1 text-xs text-red-600">{errors.mobile}</p>}
                 </div>
               </div>
               <div>
                 <label className="block text-gray-700 font-medium text-sm mb-1.5">Message*</label>
                 <textarea
-                  name="queryDetails" value={formData.queryDetails} onChange={handleChange} required rows={5}
+                  name="queryDetails" value={formData.queryDetails} onChange={handleChange} onBlur={handleBlur} required rows={5}
                   placeholder="Tell us how we can help you..."
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-100 transition-all resize-none text-sm"
+                  className={`w-full px-4 py-3 rounded-xl border ${errors.queryDetails ? 'border-red-400 focus:border-red-500 focus:ring-red-100' : 'border-gray-200 focus:border-red-500 focus:ring-red-100'} focus:outline-none focus:ring-2 transition-all resize-none text-sm`}
                 />
+                {errors.queryDetails && <p className="mt-1 text-xs text-red-600">{errors.queryDetails}</p>}
               </div>
               <button
                 type="submit"

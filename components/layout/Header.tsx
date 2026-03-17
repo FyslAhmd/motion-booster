@@ -5,15 +5,9 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth/context';
-import { LayoutDashboard, User, Phone, Mail, Search, Bell, Home, Briefcase, Users, Menu, X, ArrowRight, LogOut } from 'lucide-react';
+import { LayoutDashboard, User, Phone, Mail, Search, Home, Briefcase, Users, Menu, X, ArrowRight, LogOut } from 'lucide-react';
 import { MoreDrawer } from '@/components/ui/MoreDrawer';
-
-const DUMMY_NOTIFICATIONS = [
-  { id: 1, title: 'New message received', desc: 'Rafiq Ahmed sent you a message', time: '2m ago', unread: true },
-  { id: 2, title: 'Project update', desc: 'Your web dev project is 80% complete', time: '1h ago', unread: true },
-  { id: 3, title: 'Invoice paid', desc: 'Invoice #1042 has been paid', time: '3h ago', unread: false },
-  { id: 4, title: 'New review', desc: 'Fatima Khatun left a 5-star review', time: 'Yesterday', unread: false },
-];
+import { toast } from 'sonner';
 
 export const Header = () => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -21,7 +15,6 @@ export const Header = () => {
   const [scrolled, setScrolled] = useState(false);
   const [showMoreDrawer, setShowMoreDrawer] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
-  const [showNotif, setShowNotif] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const { isAuthenticated, isLoading, user, logout } = useAuth();
   const profileMenuRef = useRef<HTMLDivElement>(null);
@@ -44,14 +37,14 @@ export const Header = () => {
   }, [showSearch]);
 
   useEffect(() => {
-    const shouldLockScroll = showSearch || showNotif || showMoreDrawer;
+    const shouldLockScroll = showSearch || showMoreDrawer;
     document.documentElement.style.overflow = shouldLockScroll ? 'hidden' : '';
     document.body.style.overflow = shouldLockScroll ? 'hidden' : '';
     return () => {
       document.documentElement.style.overflow = '';
       document.body.style.overflow = '';
     };
-  }, [showSearch, showNotif, showMoreDrawer]);
+  }, [showSearch, showMoreDrawer]);
 
   useEffect(() => {
     document.documentElement.classList.add('public-page');
@@ -64,7 +57,9 @@ export const Header = () => {
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { setShowSearch(false); setShowNotif(false); }
+      if (e.key === 'Escape') {
+        setShowSearch(false);
+      }
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
@@ -101,9 +96,9 @@ export const Header = () => {
   const accountLabel = user?.role === 'ADMIN' ? 'Admin Account' : 'Client Account';
 
   return (
-    <header className={`relative z-50 lg:fixed lg:top-0 lg:left-0 lg:right-0 transition-all duration-300 ${scrolled ? 'lg:bg-white lg:shadow-md' : 'lg:bg-transparent'}`}>
+    <header className={`relative z-120 lg:fixed lg:top-0 lg:left-0 lg:right-0 transition-all duration-300 ${scrolled ? 'lg:bg-white lg:shadow-md' : 'lg:bg-transparent'}`}>
       {/* Mobile Top Bar - Logo + Icons */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 py-3 px-4 bg-white/95 backdrop-blur-sm border-b border-gray-100">
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-130 py-3 px-4 bg-white/95 backdrop-blur-sm border-b border-gray-100">
         <div className="flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
@@ -118,20 +113,15 @@ export const Header = () => {
             </div>
           </Link>
 
-          {/* Icons: Search, Notification, Profile */}
+          {/* Icons: Search, Profile */}
           <div className="flex items-center gap-3">
             <button
-              onClick={() => { setShowSearch(true); setShowNotif(false); }}
+              onClick={() => {
+                setShowSearch(true);
+              }}
               className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
             >
               <Search className="w-5 h-5 text-gray-600" />
-            </button>
-            <button
-              onClick={() => { setShowNotif(true); setShowSearch(false); }}
-              className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors relative"
-            >
-              <Bell className="w-5 h-5 text-gray-600" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-yellow-400 rounded-full"></span>
             </button>
             <Link href={isAuthenticated ? "/dashboard/profile" : "/login"} className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors shadow-sm">
               {isAuthenticated ? (
@@ -267,7 +257,12 @@ export const Header = () => {
                       </Link>
                       <button
                         onClick={async () => {
-                          await logout();
+                          try {
+                            await logout();
+                            toast.success('Logged out successfully');
+                          } catch {
+                            toast.error('Failed to logout. Please try again.');
+                          }
                           setShowProfileMenu(false);
                         }}
                         className="w-full flex items-center gap-3 px-4 py-2 text-red-600 hover:bg-red-50 text-sm transition-colors border-t border-gray-100 mt-1"
@@ -295,7 +290,7 @@ export const Header = () => {
       </nav>
 
       {/* Bottom Navbar for Mobile */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 flex lg:hidden justify-around items-center px-2 pt-1 h-[calc(4rem+env(safe-area-inset-bottom))] pb-[env(safe-area-inset-bottom)] bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-lg">
+      <nav className="fixed bottom-0 left-0 right-0 z-130 flex lg:hidden justify-around items-center px-2 pt-1 h-[calc(4rem+env(safe-area-inset-bottom))] pb-[env(safe-area-inset-bottom)] bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-lg">
         <Link
           href="/"
           className={`flex flex-col items-center justify-center gap-1 px-3 py-2 transition-colors flex-1 min-w-0 ${
@@ -338,12 +333,12 @@ export const Header = () => {
       {/* Backdrop */}
       {showSearch && (
         <div
-          className="fixed inset-0 z-90 bg-black/30 lg:hidden"
+          className="fixed inset-0 z-140 bg-black/30 lg:hidden"
           onClick={() => setShowSearch(false)}
         />
       )}
       <div
-        className={`fixed top-0 right-0 z-91 h-full w-4/5 max-w-sm bg-white flex flex-col lg:hidden
+        className={`fixed top-0 right-0 z-150 h-full w-4/5 max-w-sm bg-white flex flex-col lg:hidden
           transition-transform duration-300 ease-in-out
           ${showSearch ? 'translate-x-0 shadow-2xl pointer-events-auto' : 'translate-x-full shadow-none pointer-events-none'}`}
       >
@@ -384,37 +379,6 @@ export const Header = () => {
         )}
       </div>
 
-      {/* ── Notification Panel (right → left slide) ── */}
-      {showNotif && (
-        <div
-          className="fixed inset-0 z-90 bg-black/30 lg:hidden"
-          onClick={() => setShowNotif(false)}
-        />
-      )}
-      <div
-        className={`fixed top-0 right-0 z-91 h-full w-4/5 max-w-sm bg-white flex flex-col lg:hidden
-          transition-transform duration-300 ease-in-out
-          ${showNotif ? 'translate-x-0 shadow-2xl pointer-events-auto' : 'translate-x-full shadow-none pointer-events-none'}`}
-      >
-        <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100">
-          <span className="font-semibold text-gray-800 text-base">Notifications</span>
-          <button onClick={() => setShowNotif(false)} className="p-1.5 rounded-full hover:bg-gray-100">
-            <X className="w-5 h-5 text-gray-500" />
-          </button>
-        </div>
-        <div className="flex-1 overflow-y-auto divide-y divide-gray-50">
-          {DUMMY_NOTIFICATIONS.map((n) => (
-            <div key={n.id} className={`px-4 py-3.5 flex gap-3 ${n.unread ? 'bg-red-50/50' : ''}`}>
-              <div className={`mt-0.5 w-2 h-2 rounded-full shrink-0 ${n.unread ? 'bg-red-500' : 'bg-gray-300'}`} />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900">{n.title}</p>
-                <p className="text-xs text-gray-500 mt-0.5 truncate">{n.desc}</p>
-                <p className="text-[10px] text-gray-400 mt-1">{n.time}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
     </header>
   );
 };

@@ -166,7 +166,7 @@ html {
 
 .animate-fade-in {
   animation: fadeIn 0.6s ease-out forwards;
-  opacity: 0;
+  opacity: 1;
 }
 
 /* Public page section reveal animation */
@@ -182,13 +182,13 @@ html {
 }
 
 .page-reveal {
-  opacity: 0;
-  transform: translateY(26px) scale(0.985);
-  will-change: opacity, transform;
+  opacity: 1;
+  transform: none;
+  will-change: auto;
 }
 
 .page-reveal.is-visible {
-  animation: pageRevealUp 0.65s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: none;
 }
 
 @keyframes cardRevealLeft {
@@ -215,24 +215,24 @@ html {
 
 .card-reveal-left,
 .card-reveal-right {
-  opacity: 0;
-  will-change: opacity, transform;
+  opacity: 1;
+  will-change: auto;
 }
 
 .card-reveal-left {
-  transform: translateX(-36px) translateY(8px);
+  transform: none;
 }
 
 .card-reveal-right {
-  transform: translateX(36px) translateY(8px);
+  transform: none;
 }
 
 .card-reveal-left.is-visible {
-  animation: cardRevealLeft 0.68s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: none;
 }
 
 .card-reveal-right.is-visible {
-  animation: cardRevealRight 0.68s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: none;
 }
 
 @keyframes waveCharUp {
@@ -252,34 +252,34 @@ html {
 
 .text-wave .wave-char {
   display: inline-block;
-  opacity: 0;
-  transform: translateY(14px);
-  animation-delay: calc(var(--char-index, 0) * 26ms);
+  opacity: 1;
+  transform: none;
+  animation-delay: 0ms;
 }
 
 .text-wave.is-visible .wave-char {
-  animation: waveCharUp 0.5s ease-out both;
-  animation-delay: calc(var(--char-index, 0) * 26ms);
+  animation: none;
+  animation-delay: 0ms;
 }
 
 .page-delay-1 {
-  animation-delay: 90ms;
+  animation-delay: 0ms;
 }
 
 .page-delay-2 {
-  animation-delay: 180ms;
+  animation-delay: 0ms;
 }
 
 .page-delay-3 {
-  animation-delay: 270ms;
+  animation-delay: 0ms;
 }
 
 .page-delay-4 {
-  animation-delay: 360ms;
+  animation-delay: 0ms;
 }
 
 .page-delay-5 {
-  animation-delay: 450ms;
+  animation-delay: 0ms;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -318,6 +318,7 @@ html.public-page,
 body.public-page {
   -ms-overflow-style: none;
   scrollbar-width: none;
+  scroll-behavior: auto !important;
 }
 
 html.public-page::-webkit-scrollbar,
@@ -345,3 +346,63 @@ body.public-page::-webkit-scrollbar {
   transform-origin: center;
   will-change: transform, opacity;
 }
+
+/* Public pages: keep only skeleton loading animation */
+html.public-page *,
+html.public-page *::before,
+html.public-page *::after,
+body.public-page *,
+body.public-page *::before,
+body.public-page *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+html.public-page .page-reveal,
+html.public-page .card-reveal-left,
+html.public-page .card-reveal-right,
+body.public-page .page-reveal,
+body.public-page .card-reveal-left,
+body.public-page .card-reveal-right {
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+html.public-page .text-wave .wave-char,
+body.public-page .text-wave .wave-char {
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+html.public-page .skeleton-breathe,
+html.public-page .skeleton-breathe::before,
+html.public-page .skeleton-breathe::after,
+body.public-page .skeleton-breathe,
+body.public-page .skeleton-breathe::before,
+body.public-page .skeleton-breathe::after {
+  animation: skeletonBreathe 0.95s cubic-bezier(0.4, 0, 0.2, 1) infinite !important;
+}
+
+html.public-page .animate-pulse,
+html.public-page .animate-pulse::before,
+html.public-page .animate-pulse::after,
+body.public-page .animate-pulse,
+body.public-page .animate-pulse::before,
+body.public-page .animate-pulse::after {
+  animation: var(--animate-pulse) !important;
+}
+
+html.public-page .animate-fade-in,
+body.public-page .animate-fade-in {
+  animation: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+html.public-page .home-page [data-hb-left],
+html.public-page .home-page [data-hb-right],
+body.public-page .home-page [data-hb-left],
+body.public-page .home-page [data-hb-right] {
+  opacity: 1;
+}
+

@@ -5,7 +5,7 @@ import { WelcomeModal } from '@/components/ui/WelcomeModal';
 
 export default function Home() {
   return (
-    <main className="min-h-screen pb-10 sm:pb-12 lg:pb-0">
+    <main className="home-page min-h-screen pb-10 sm:pb-12 lg:pb-0">
       <WelcomeModal />
       <FloatingSocialButtons />
       <FloatingCallButton />

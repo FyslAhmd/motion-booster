@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { ChevronRight, X } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { createPortal } from 'react-dom';
 
 const DEFAULT_MODAL_TITLE = 'Welcome to Motion Booster! 👋';
 const DEFAULT_MODAL_BODY = 'We help businesses grow with creative branding, motion graphics, web development & digital marketing.';
@@ -17,6 +18,7 @@ type WelcomeSettings = {
 };
 
 export const WelcomeModal = () => {
+  const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
   const [countdown, setCountdown] = useState(8);
   const [modalImage, setModalImage] = useState('');
@@ -31,6 +33,10 @@ export const WelcomeModal = () => {
     setModalTitle(data.welcomeModalTitle || DEFAULT_MODAL_TITLE);
     setModalBody(data.welcomeModalBody || DEFAULT_MODAL_BODY);
   };
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     try {
@@ -113,15 +119,15 @@ export const WelcomeModal = () => {
     sessionStorage.setItem('welcomeShown', '1');
   };
 
-  if (!visible) return null;
+  if (!mounted || !visible) return null;
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 bg-black/60 z-100 flex items-center justify-center px-4"
+      className="fixed inset-0 z-200 flex items-center justify-center bg-black/60 px-4"
       onClick={handleClose}
     >
       <div
-        className="relative bg-white rounded-2xl overflow-hidden shadow-2xl w-full max-w-sm"
+        className="relative z-10 w-full max-w-sm overflow-hidden rounded-2xl bg-white shadow-2xl"
         onClick={e => e.stopPropagation()}
       >
         {/* Close button */}
@@ -206,6 +212,7 @@ export const WelcomeModal = () => {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 };
