@@ -161,14 +161,6 @@ export const PopularCourses = () => {
                     Read More
                     <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover/link:translate-x-1 transition-transform" />
                   </Link>
-                  <a
-                    href="https://motionbooster.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="ml-4 inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors"
-                  >
-                    Live Preview
-                  </a>
                 </div>
               </div>
             ))}

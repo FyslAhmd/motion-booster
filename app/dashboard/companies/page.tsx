@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import AdminShell from '../_components/AdminShell';
 import { useConfirm } from '@/lib/admin/confirm';
-import { AdminStore, CompanyItem, defaultCompanies, generateId } from '@/lib/admin/store';
+import { CompanyItem, defaultCompanies, generateId } from '@/lib/admin/store';
 import ImageUpload from '@/components/ui/ImageUpload';
 import { Plus, Trash2, GripVertical, Check, RotateCcw, Building2, Image as ImageIcon, Type, NotebookPen } from 'lucide-react';
 import { toast } from 'sonner';
@@ -40,19 +40,68 @@ export default function AdminCompaniesPage() {
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    setCompanies(AdminStore.getCompanies());
-    setInitialLoading(false);
+    let cancelled = false;
+
+    const normalizeCompanies = (data: unknown): CompanyItem[] => {
+      if (!Array.isArray(data)) return [];
+      return data
+        .map((row: any) => ({
+          id: String(row?.id || generateId()),
+          name: String(row?.name || '').trim(),
+          logoImage: (row?.logoImage || row?.logo_image || '') as string,
+        }))
+        .filter((row: CompanyItem) => row.name.length > 0);
+    };
+
+    const load = async () => {
+      try {
+        const res = await fetch('/api/v1/cms/companies', { cache: 'no-store' });
+        const json = await res.json();
+        if (!cancelled) {
+          setCompanies(normalizeCompanies(json));
+        }
+      } catch {
+        if (!cancelled) {
+          toast.error('Failed to load companies');
+        }
+      } finally {
+        if (!cancelled) setInitialLoading(false);
+      }
+    };
+
+    load();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const { confirm } = useConfirm();
 
-  const save = (data: CompanyItem[]) => {
-    AdminStore.saveCompanies(data);
-    setCompanies(data);
-    window.dispatchEvent(new Event('storage'));
-    toast.success('Saved!');
+  const save = async (data: CompanyItem[]) => {
+    setSaving(true);
+    try {
+      const res = await fetch('/api/v1/cms/companies', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: data }),
+      });
+      const json = await res.json();
+
+      if (!res.ok) {
+        throw new Error(json?.error || 'Failed to save companies');
+      }
+
+      setCompanies(Array.isArray(json) ? json : data);
+      localStorage.setItem('companies:lastUpdated', String(Date.now()));
+      toast.success('Saved!');
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to save companies');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const addCompany = () => {
@@ -68,8 +117,8 @@ export default function AdminCompaniesPage() {
     setCompanies(prev => prev.filter(c => c.id !== id));
   };
 
-  const reset = () => {
-    save(defaultCompanies);
+  const reset = async () => {
+    await save(defaultCompanies);
     toast.success('Reset to defaults!');
   };
 
@@ -95,7 +144,7 @@ export default function AdminCompaniesPage() {
             <p className="text-sm text-gray-500 mb-6">All company logos will be replaced with the default data. This cannot be undone.</p>
             <div className="flex gap-3 justify-end">
               <button onClick={() => setShowResetConfirm(false)} className="px-4 py-2 text-sm rounded-xl border border-gray-200 hover:bg-gray-50">Cancel</button>
-              <button onClick={() => { reset(); setShowResetConfirm(false); }} className="px-4 py-2 text-sm rounded-xl bg-red-600 text-white hover:bg-red-700">Reset</button>
+              <button onClick={async () => { await reset(); setShowResetConfirm(false); }} className="px-4 py-2 text-sm rounded-xl bg-red-600 text-white hover:bg-red-700">Reset</button>
             </div>
           </div>
         </div>
@@ -121,8 +170,9 @@ export default function AdminCompaniesPage() {
               <RotateCcw className="w-4 h-4" /> Reset
             </button>
             <button
-              onClick={async () => { if (await confirm({ title: 'Save Changes', message: 'Are you sure you want to save?' })) save(companies); }}
-              className="flex items-center gap-1.5 px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-xl transition-all shadow-lg hover:shadow-xl"
+              onClick={async () => { if (await confirm({ title: 'Save Changes', message: 'Are you sure you want to save?' })) await save(companies); }}
+              disabled={saving}
+              className="flex items-center gap-1.5 px-6 py-2.5 bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-all shadow-lg hover:shadow-xl"
             >
               <Check className="w-4 h-4" /> Save All
             </button>
@@ -233,10 +283,11 @@ export default function AdminCompaniesPage() {
         </div>
 
         <button
-          onClick={async () => { if (await confirm({ title: 'Save Changes', message: 'Are you sure you want to save?' })) save(companies); }}
-          className="w-full py-3 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-xl transition-colors"
+          onClick={async () => { if (await confirm({ title: 'Save Changes', message: 'Are you sure you want to save?' })) await save(companies); }}
+          disabled={saving}
+          className="w-full py-3 bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-colors"
         >
-          Save Changes
+          {saving ? 'Saving...' : 'Save Changes'}
         </button>
       </div>
     </AdminShell>

@@ -108,7 +108,7 @@ export default function MediaMessagePage() {
 
   return (
     <AdminShell>
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Media Message</h1>
           <p className="mt-1 text-sm text-gray-500">
@@ -116,19 +116,19 @@ export default function MediaMessagePage() {
           </p>
         </div>
 
-        <div className="rounded-3xl border border-gray-100 bg-white/95 p-4 sm:p-5">
-          <div className="mb-4 grid grid-cols-3 gap-2">
+        <div className="rounded-3xl border border-gray-100 bg-white/95 p-2.5 sm:p-5">
+          <div className="mb-3 grid grid-cols-3 gap-1.5 sm:mb-4 sm:gap-2">
             <button
               type="button"
               onClick={() => setActiveChannel('mailbox')}
-              className={`rounded-2xl border px-3 py-3 text-left transition-colors ${
+              className={`rounded-xl border px-2 py-2.5 text-left transition-colors sm:rounded-2xl sm:px-3 sm:py-3 ${
                 activeChannel === 'mailbox'
                   ? 'border-red-200 bg-red-50'
                   : 'border-gray-200 bg-white hover:bg-gray-50'
               }`}
             >
               <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
-                <span className={`rounded-lg p-1.5 ${activeChannel === 'mailbox' ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-600'}`}>
+                <span className={`hidden rounded-lg p-1.5 sm:inline-flex ${activeChannel === 'mailbox' ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-600'}`}>
                   <Mail className="h-4 w-4" />
                 </span>
                 <div className="min-w-0">
@@ -140,14 +140,14 @@ export default function MediaMessagePage() {
             <button
               type="button"
               onClick={() => setActiveChannel('whatsapp')}
-              className={`rounded-2xl border px-3 py-3 text-left transition-colors ${
+              className={`rounded-xl border px-2 py-2.5 text-left transition-colors sm:rounded-2xl sm:px-3 sm:py-3 ${
                 activeChannel === 'whatsapp'
                   ? 'border-amber-200 bg-amber-50'
                   : 'border-gray-200 bg-white hover:bg-gray-50'
               }`}
             >
               <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
-                <span className={`rounded-lg p-1.5 ${activeChannel === 'whatsapp' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600'}`}>
+                <span className={`hidden rounded-lg p-1.5 sm:inline-flex ${activeChannel === 'whatsapp' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600'}`}>
                   <Phone className="h-4 w-4" />
                 </span>
                 <div className="min-w-0">
@@ -159,14 +159,14 @@ export default function MediaMessagePage() {
             <button
               type="button"
               onClick={() => setActiveChannel('messenger')}
-              className={`rounded-2xl border px-3 py-3 text-left transition-colors ${
+              className={`rounded-xl border px-2 py-2.5 text-left transition-colors sm:rounded-2xl sm:px-3 sm:py-3 ${
                 activeChannel === 'messenger'
                   ? 'border-sky-200 bg-sky-50'
                   : 'border-gray-200 bg-white hover:bg-gray-50'
               }`}
             >
               <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
-                <span className={`rounded-lg p-1.5 ${activeChannel === 'messenger' ? 'bg-sky-100 text-sky-700' : 'bg-gray-100 text-gray-600'}`}>
+                <span className={`hidden rounded-lg p-1.5 sm:inline-flex ${activeChannel === 'messenger' ? 'bg-sky-100 text-sky-700' : 'bg-gray-100 text-gray-600'}`}>
                   <MessageCircle className="h-4 w-4" />
                 </span>
                 <div className="min-w-0">
@@ -186,7 +186,7 @@ export default function MediaMessagePage() {
               </div>
             ) : (
               <>
-                <div className="relative mb-4">
+                <div className="relative mb-3 sm:mb-4">
                   <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                   <input
                     type="text"
@@ -240,7 +240,7 @@ export default function MediaMessagePage() {
                         key={msg.id}
                         type="button"
                         onClick={() => setActiveMessage(msg)}
-                        className="rounded-2xl border border-gray-100 bg-white p-4 text-left transition-all hover:border-red-200 hover:bg-red-50/30"
+                        className="rounded-2xl border border-gray-100 bg-white p-3 sm:p-4 text-left transition-all hover:border-red-200 hover:bg-red-50/30"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex min-w-0 items-center gap-2.5">

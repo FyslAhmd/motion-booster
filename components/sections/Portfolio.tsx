@@ -107,14 +107,16 @@ export const Portfolio = () => {
                       : 'opacity-0 group-hover:opacity-100'
                   }`}
                 >
-                  <Link
-                    href="/portfolio"
+                  <a
+                    href="https://motionbooster.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     onClick={(e) => e.stopPropagation()}
                     className="inline-flex items-center gap-2 bg-white text-gray-900 px-5 py-2.5 rounded-full font-semibold text-sm shadow-lg hover:bg-red-500 hover:text-white transition-all"
                   >
                     <ExternalLink className="w-4 h-4" />
                     Live Preview
-                  </Link>
+                  </a>
                 </div>
               </div>
 
