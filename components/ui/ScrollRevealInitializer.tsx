@@ -21,6 +21,7 @@ export default function ScrollRevealInitializer() {
 
     const prepareWaveText = (el: HTMLElement) => {
       if (el.dataset.waveReady === '1') return;
+      if (el.children.length > 0) return;
       const rawText = (el.textContent || '').trim();
       if (!rawText) return;
 

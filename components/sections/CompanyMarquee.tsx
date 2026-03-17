@@ -42,7 +42,6 @@ export const CompanyMarquee = () => {
       lastTs = ts;
 
       if (!isDraggingRef.current) {
-        // Slightly faster on desktop so movement is visible without being distracting.
         const speedPxPerSecond = window.innerWidth < 768 ? 40 : 56;
         const singleSetWidth = el.scrollWidth / REPEAT_SETS;
         el.scrollLeft += (speedPxPerSecond * dt) / 1000;

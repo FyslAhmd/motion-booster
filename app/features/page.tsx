@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { PublicPageLoadingSkeleton } from '@/components/ui/PublicPageLoadingSkeleton';
 import {
   BarChart3,
   Bell,
@@ -29,7 +30,17 @@ import {
 } from 'lucide-react';
 
 export default function FeaturesPage() {
+  const [pageLoading, setPageLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('all');
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setPageLoading(false), 300);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  if (pageLoading) {
+    return <PublicPageLoadingSkeleton variant='features' />;
+  }
 
   const categories = [
     { id: 'all', name: 'All Features' },

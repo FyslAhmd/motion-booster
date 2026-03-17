@@ -54,28 +54,13 @@ export const HeroSlider = () => {
           />
         </div>
 
-        <div className="mt-4 space-y-2 card-reveal-right page-delay-1">
+        <div className="mt-4 space-y-2 card-reveal-right page-delay-1 text-center">
           <h2 className="text-xl font-bold leading-tight text-gray-900 text-wave">
             Grow your business identity with Motion Booster
           </h2>
-          <p className="text-sm leading-relaxed text-gray-600 text-wave">
+          <p className="mx-auto max-w-3xl text-sm leading-relaxed text-gray-600 text-wave">
             We provide a complete suite of digital solutions, including tailored digital marketing, eye-catching graphic design, dynamic animation, as well as expert web and app development - all designed to elevate your brand in the digital world.
           </p>
-        </div>
-
-        <div className="mt-4 grid grid-cols-2 gap-3 card-reveal-left page-delay-2">
-          <a
-            href="/service"
-            className="inline-flex items-center justify-center rounded-xl bg-linear-to-r from-red-500 to-red-600 px-4 py-3 text-sm font-semibold text-white shadow-md transition-all hover:from-red-600 hover:to-red-700"
-          >
-            Browse Service
-          </a>
-          <a
-            href="/register"
-            className="inline-flex items-center justify-center rounded-xl border border-red-500 bg-white px-4 py-3 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50"
-          >
-            Get Started
-          </a>
         </div>
       </div>
     </section>

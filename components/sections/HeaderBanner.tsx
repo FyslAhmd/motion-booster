@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
+import gsap from 'gsap';
 
 const sliderImages = [
   {
@@ -26,14 +27,39 @@ const sliderImages = [
 
 export const HeaderBanner = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const bannerRef = useRef<HTMLElement | null>(null);
 
   // Auto-play slider
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % sliderImages.length);
-    }, 3000); // Change slide every 3 seconds
+    }, 3000);
 
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      const mm = gsap.matchMedia();
+      mm.add('(min-width: 1024px)', () => {
+        gsap.set('[data-hb-left]', { opacity: 0, x: -80 });
+        gsap.set('[data-hb-right]', { opacity: 0, x: 80 });
+
+        const tl = gsap.timeline({ defaults: { ease: 'power2.out' } });
+        tl.to('[data-hb-left]', { opacity: 1, x: 0, duration: 1.05 })
+          .to('[data-hb-right]', { opacity: 1, x: 0, duration: 1.05 }, '-=0.72');
+
+        return () => {
+          tl.kill();
+        };
+      });
+
+      return () => {
+        mm.revert();
+      };
+    }, bannerRef);
+
+    return () => ctx.revert();
   }, []);
 
   const goToSlide = (index: number) => {
@@ -41,9 +67,9 @@ export const HeaderBanner = () => {
   };
 
   return (
-    <section className="relative w-full border-b border-gray-100 overflow-hidden page-reveal">
+    <section ref={bannerRef} className="relative w-full border-b border-gray-100 overflow-hidden">
       {/* Mobile Slider View */}
-      <div className="lg:hidden pt-6 pb-5 px-4 card-reveal-left">
+      <div className="lg:hidden pt-6 pb-5 px-4">
         <div className="relative w-full aspect-16/10 min-h-50 rounded-2xl overflow-hidden shadow-lg">
           <Image
             src={sliderImages[currentSlide].src}
@@ -68,7 +94,7 @@ export const HeaderBanner = () => {
           </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-3 card-reveal-right page-delay-1">
+        <div className="mt-4 grid grid-cols-2 gap-3">
           <a
             href="/service"
             className="inline-flex items-center justify-center rounded-xl bg-linear-to-r from-red-500 to-red-600 px-4 py-3 text-sm font-semibold text-white shadow-md transition-all hover:from-red-600 hover:to-red-700"
@@ -91,15 +117,19 @@ export const HeaderBanner = () => {
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 mt-4 lg:grid-cols-5 items-center gap-10 relative z-10">
           {/* Left: Text & Badge */}
-          <div className="lg:col-span-2 w-full z-10 text-left flex flex-col justify-center md:items-start md:justify-center lg:min-h-90 xl:min-h-100 card-reveal-left">
+          <div data-hb-left className="lg:col-span-2 w-full z-10 text-left flex flex-col justify-center md:items-start md:justify-center lg:min-h-90 xl:min-h-100">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-full text-sm font-semibold mb-3">
               ✓ Unleash Your Potential
             </div>
-            <h1 className="text-5xl xl:text-6xl font-bold text-gray-900 leading-tight mb-4 text-wave">
-              Grow your business identity with{" "}
-              <span className="text-red-500">Motion Booster</span>
+            <h1 className="text-5xl xl:text-6xl font-bold text-gray-900 leading-tight mb-4">
+              <span className="inline-block align-baseline">
+                Grow your business identity with
+              </span>{' '}
+              <span className="inline-block align-baseline text-red-500">
+                Motion Booster
+              </span>
             </h1>
-            <p className="text-lg text-gray-600 mb-6 leading-relaxed text-wave">
+            <p className="text-lg text-gray-600 mb-6 leading-relaxed">
               We provide a complete suite of digital solutions, including tailored digital
               marketing, eye-catching graphic design, dynamic animation, as well as expert
               web and app development - all designed to elevate your brand in the digital world.
@@ -120,7 +150,7 @@ export const HeaderBanner = () => {
             </div>
           </div>
           {/* Right: Image */}
-          <div className="lg:col-span-3 relative w-full card-reveal-right page-delay-1">
+          <div data-hb-right className="lg:col-span-3 relative w-full">
             <div className="relative rounded-3xl overflow-hidden shadow-2xl border-4 border-white">
               <Image
                 src="/header1.jpeg"

@@ -3,6 +3,7 @@
 import React from 'react';
 
 type PublicPageSkeletonVariant =
+  | 'home'
   | 'about'
   | 'features'
   | 'service'
@@ -48,6 +49,98 @@ export function PublicPageLoadingSkeleton({
 }: {
   variant: PublicPageSkeletonVariant;
 }) {
+  if (variant === 'home') {
+    return (
+      <main className="min-h-screen bg-white pb-10 sm:pb-12 lg:pb-0">
+        <HeroSkeleton />
+
+        <section className="px-4 py-10">
+          <div className="mx-auto max-w-7xl">
+            <Pulse className="mx-auto h-8 w-52" />
+            <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="rounded-xl border border-gray-100 bg-white p-4">
+                  <Pulse className="h-5 w-16" />
+                  <Pulse className="mt-3 h-4 w-full" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="bg-gray-50 px-4 py-10">
+          <div className="mx-auto max-w-7xl">
+            <Pulse className="h-9 w-64" />
+            <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="rounded-2xl border border-gray-100 bg-white p-5">
+                  <Pulse className="h-40 w-full rounded-xl" />
+                  <Pulse className="mt-4 h-5 w-3/4" />
+                  <Pulse className="mt-2 h-4 w-full" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="px-4 py-10">
+          <div className="mx-auto max-w-7xl">
+            <Pulse className="mx-auto h-8 w-56" />
+            <div className="mt-6 flex gap-4 overflow-hidden">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <Pulse key={i} className="h-14 w-32 shrink-0" />
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="bg-white px-4 py-10">
+          <div className="mx-auto max-w-7xl">
+            <Pulse className="mx-auto h-8 w-60" />
+            <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="rounded-2xl bg-gray-100 p-5 sm:p-6">
+                  <Pulse className="mx-auto h-10 w-20" />
+                  <Pulse className="mx-auto mt-3 h-4 w-24" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="bg-gray-50 px-4 py-10">
+          <div className="mx-auto max-w-7xl">
+            <Pulse className="mx-auto h-8 w-56" />
+            <div className="mt-6 flex gap-4 overflow-hidden">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="w-80 shrink-0 rounded-2xl border border-gray-100 bg-white p-6">
+                  <Pulse className="h-5 w-32" />
+                  <Pulse className="mt-3 h-4 w-full" />
+                  <Pulse className="mt-2 h-4 w-10/12" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="px-4 py-10">
+          <div className="mx-auto max-w-7xl">
+            <Pulse className="h-9 w-56" />
+            <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="rounded-2xl border border-gray-100 bg-white p-6">
+                  <Pulse className="h-12 w-12" />
+                  <Pulse className="mt-4 h-5 w-2/3" />
+                  <Pulse className="mt-3 h-4 w-full" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
   if (variant === 'about') {
     return (
       <main className="min-h-screen bg-white">
@@ -283,7 +376,7 @@ export function PublicPageLoadingSkeleton({
             <div className="space-y-5">
               <Pulse className="h-8 w-64" />
               <Pulse className="h-4 w-full" />
-              <div className="h-[340px] overflow-hidden rounded-2xl border border-gray-100 bg-gray-50 p-5">
+              <div className="h-85 overflow-hidden rounded-2xl border border-gray-100 bg-gray-50 p-5">
                 <Pulse className="h-full w-full" />
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
