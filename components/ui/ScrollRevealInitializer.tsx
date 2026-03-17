@@ -4,6 +4,19 @@ import { useEffect } from 'react';
 
 export default function ScrollRevealInitializer() {
   useEffect(() => {
+    const revealAllNow = () => {
+      const elements = Array.from(
+        document.querySelectorAll<HTMLElement>('.page-reveal, .card-reveal-left, .card-reveal-right, .text-wave'),
+      );
+      elements.forEach((el) => el.classList.add('is-visible'));
+    };
+
+    // Mobile/webview safety fallback: if observer is missing, never keep content hidden.
+    if (typeof window === 'undefined' || !('IntersectionObserver' in window)) {
+      revealAllNow();
+      return;
+    }
+
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
@@ -66,7 +79,13 @@ export default function ScrollRevealInitializer() {
       subtree: true,
     });
 
+    // Extra safety: if something goes wrong in mobile browsers, reveal all after a short delay.
+    const safetyTimer = window.setTimeout(() => {
+      revealAllNow();
+    }, 1200);
+
     return () => {
+      window.clearTimeout(safetyTimer);
       mutationObserver.disconnect();
       observer.disconnect();
     };
