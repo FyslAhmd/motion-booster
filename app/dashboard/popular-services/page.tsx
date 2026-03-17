@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import AdminShell from '../_components/AdminShell';
 import { useConfirm } from '@/lib/admin/confirm';
 import { PopularServiceItem } from '@/lib/admin/store';
-import { Plus, Pencil, Trash2, X, Save, ChevronUp, ChevronDown, GripVertical } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Save, ChevronUp, ChevronDown, GripVertical, ExternalLink } from 'lucide-react';
 import Image from 'next/image';
 import ImageUpload from '@/components/ui/ImageUpload';
 import { toast } from 'sonner';
@@ -375,7 +375,12 @@ export default function PopularServicesPage() {
 
                 {/* Image thumb */}
                 <div className="relative w-12 h-9 sm:w-14 sm:h-10 rounded-lg overflow-hidden shrink-0">
-                  <Image src={item.image} alt={item.title} fill className="object-cover" />
+                  {item.customImage ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={item.customImage} alt={item.title} className="h-full w-full object-cover" />
+                  ) : (
+                    <Image src={item.image} alt={item.title} fill className="object-cover" />
+                  )}
                   <div className={`absolute inset-0 bg-linear-to-br ${item.gradient} opacity-40`} />
                 </div>
 
@@ -400,6 +405,16 @@ export default function PopularServicesPage() {
 
                 {/* Actions */}
                 <div className="flex gap-0.5 sm:gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0">
+                  <a
+                    href="https://motionbooster.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="p-1.5 sm:p-2 rounded-lg text-gray-400 hover:text-sky-600 hover:bg-sky-50 transition-colors"
+                    title="Live Preview"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
                   <button onClick={() => { setEditing({ ...item }); setIsNew(false); }} className="p-1.5 sm:p-2 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors">
                     <Pencil className="w-3.5 h-3.5" />
                   </button>

@@ -1,16 +1,14 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, use, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { createPortal } from 'react-dom';
 import AdminShell from '../../_components/AdminShell';
 import { useAuth } from '@/lib/auth/context';
 import { AdminSectionSkeleton } from '@/components/ui/AdminSectionSkeleton';
 import {
   ArrowLeft,
-  Megaphone,
-  LayoutGrid,
-  MonitorPlay,
   Phone,
   Mail,
 } from 'lucide-react';
@@ -102,13 +100,75 @@ function getStatusStyle(status: string) {
   return STATUS_STYLES[status] || { color: 'bg-gray-100 text-gray-500', label: status?.replace(/_/g, ' ') || 'Unknown' };
 }
 
-type Tab = 'campaigns' | 'adsets' | 'ads';
+function formatBudgetValue(daily?: string, lifetime?: string) {
+  if (daily) return `$${(parseInt(daily, 10) / 100).toFixed(2)}/day`;
+  if (lifetime) return `$${(parseInt(lifetime, 10) / 100).toFixed(2)} total`;
+  return '—';
+}
 
-const TABS: { id: Tab; label: string; icon: typeof Megaphone }[] = [
-  { id: 'campaigns', label: 'Campaigns', icon: Megaphone },
-  { id: 'adsets', label: 'Ad Sets', icon: LayoutGrid },
-  { id: 'ads', label: 'Ads', icon: MonitorPlay },
-];
+function formatShortRange(start?: string, end?: string) {
+  const s = start
+    ? new Date(start).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    : '';
+  const e = end
+    ? new Date(end).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    : 'Ongoing';
+  return s ? `${s} - ${e}` : '—';
+}
+
+function DetailModal({
+  title,
+  subtitle,
+  rows,
+  children,
+  onClose,
+}: {
+  title: string;
+  subtitle?: string;
+  rows: Array<{ label: string; value: string }>;
+  children?: ReactNode;
+  onClose: () => void;
+}) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-120 flex items-center justify-center bg-black/60 p-3 sm:p-4" onClick={onClose}>
+      <div
+        className="w-full max-w-[min(1100px,96vw)] max-h-[90vh] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-[0_28px_90px_-30px_rgba(0,0,0,0.65)]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="sticky top-0 z-10 border-b border-gray-100 bg-linear-to-r from-slate-50 via-white to-red-50/60 px-5 py-4 sm:px-6 sm:py-5">
+          <div className="flex items-start justify-between">
+            <div className="min-w-0 pr-4">
+              <h3 className="truncate text-base font-semibold text-gray-900 sm:text-lg">{title}</h3>
+              {subtitle && <p className="mt-1 text-xs text-gray-500">{subtitle}</p>}
+            </div>
+            <button onClick={onClose} className="rounded-lg px-2 py-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700">×</button>
+          </div>
+        </div>
+
+        <div className="max-h-[calc(90vh-88px)] overflow-y-auto">
+          <div className="grid grid-cols-1 gap-3 border-t border-gray-100 p-5 sm:grid-cols-2 sm:p-6">
+            {rows.map((row) => (
+              <div key={row.label} className="rounded-xl border border-gray-200 bg-white px-3 py-2.5 shadow-sm">
+                <p className="text-[11px] uppercase tracking-wide text-gray-500">{row.label}</p>
+                <p className="mt-1 wrap-break-word text-sm font-medium text-gray-900">{row.value || '—'}</p>
+              </div>
+            ))}
+          </div>
+          {children ? <div className="border-t border-gray-100 px-5 py-5 sm:px-6">{children}</div> : null}
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
+}
 
 /* ─── Main Page ───────────────────────────────────────────────── */
 
@@ -129,7 +189,6 @@ export default function UserCampaignDetailPage({
     }
   }, [authUser, isAdmin, userId, router]);
 
-  const [tab, setTab] = useState<Tab>('campaigns');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -143,8 +202,8 @@ export default function UserCampaignDetailPage({
   const [ads, setAds] = useState<Ad[]>([]);
 
   const [loadingCampaigns, setLoadingCampaigns] = useState(false);
-  const [loadingAdSets, setLoadingAdSets] = useState(false);
-  const [loadingAds, setLoadingAds] = useState(false);
+  const [loadingAdSetsInModal, setLoadingAdSetsInModal] = useState(false);
+  const [loadingAdsInModal, setLoadingAdsInModal] = useState(false);
 
   // Step 1: Fetch user assignment references
   useEffect(() => {
@@ -187,7 +246,7 @@ export default function UserCampaignDetailPage({
       setAdSets([]);
       return;
     }
-    setLoadingAdSets(true);
+    setLoadingAdSetsInModal(true);
     const ids = adSetRefs.map((r) => r.metaObjectId).join(',');
     fetch(`/api/v1/meta/by-ids?type=ADSET&ids=${ids}`)
       .then((r) => r.json())
@@ -195,7 +254,7 @@ export default function UserCampaignDetailPage({
         if (json.success) setAdSets(json.data);
       })
       .catch(() => {})
-      .finally(() => setLoadingAdSets(false));
+      .finally(() => setLoadingAdSetsInModal(false));
   }, [adSetRefs]);
 
   useEffect(() => {
@@ -203,7 +262,7 @@ export default function UserCampaignDetailPage({
       setAds([]);
       return;
     }
-    setLoadingAds(true);
+    setLoadingAdsInModal(true);
     const ids = adRefs.map((r) => r.metaObjectId).join(',');
     fetch(`/api/v1/meta/by-ids?type=AD&ids=${ids}`)
       .then((r) => r.json())
@@ -211,14 +270,8 @@ export default function UserCampaignDetailPage({
         if (json.success) setAds(json.data);
       })
       .catch(() => {})
-      .finally(() => setLoadingAds(false));
+      .finally(() => setLoadingAdsInModal(false));
   }, [adRefs]);
-
-  const tabCounts: Record<Tab, number> = {
-    campaigns: campaignRefs.length,
-    adsets: adSetRefs.length,
-    ads: adRefs.length,
-  };
 
   if (loading) {
     return (
@@ -291,55 +344,13 @@ export default function UserCampaignDetailPage({
           </div>
         )}
 
-        {/* Summary badges */}
-        <div className="grid grid-cols-3 gap-2 sm:gap-3">
-          <div className="rounded-xl border border-blue-100 bg-blue-50 px-2 py-2 sm:px-4 sm:py-3 text-center">
-            <p className="text-lg sm:text-2xl font-bold text-blue-700">{campaignRefs.length}</p>
-            <p className="text-[10px] sm:text-xs font-medium text-blue-400">Campaigns</p>
-          </div>
-          <div className="rounded-xl border border-purple-100 bg-purple-50 px-2 py-2 sm:px-4 sm:py-3 text-center">
-            <p className="text-lg sm:text-2xl font-bold text-purple-700">{adSetRefs.length}</p>
-            <p className="text-[10px] sm:text-xs font-medium text-purple-400">Ad Sets</p>
-          </div>
-          <div className="rounded-xl border border-emerald-100 bg-emerald-50 px-2 py-2 sm:px-4 sm:py-3 text-center">
-            <p className="text-lg sm:text-2xl font-bold text-emerald-700">{adRefs.length}</p>
-            <p className="text-[10px] sm:text-xs font-medium text-emerald-400">Ads</p>
-          </div>
-        </div>
-
-        {/* Tabs — all screen sizes */}
-        <div>
-          <div className="mb-4 flex flex-nowrap gap-1 rounded-xl border border-gray-200 bg-gray-50 p-1">
-            {TABS.map((t) => (
-              <button
-                key={t.id}
-                onClick={() => setTab(t.id)}
-                className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-xs font-medium transition-all sm:gap-2 sm:px-3 sm:text-sm ${
-                  tab === t.id
-                    ? 'bg-red-600 text-white shadow-sm shadow-red-500/20'
-                    : 'text-gray-500 hover:bg-white hover:text-gray-700'
-                }`}
-              >
-                <t.icon className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
-                <span className="truncate">{t.label}</span>
-                <span
-                  className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
-                    tab === t.id ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-600'
-                  }`}
-                >
-                  {tabCounts[t.id]}
-                </span>
-              </button>
-            ))}
-          </div>
-          {tab === 'campaigns' && (
-            <CampaignsSection campaigns={campaigns} loading={loadingCampaigns} />
-          )}
-          {tab === 'adsets' && (
-            <AdSetsSection adSets={adSets} loading={loadingAdSets} />
-          )}
-          {tab === 'ads' && <AdsSection ads={ads} loading={loadingAds} />}
-        </div>
+        <CampaignsSection
+          campaigns={campaigns}
+          adSets={adSets}
+          ads={ads}
+          loading={loadingCampaigns}
+          loadingRelated={loadingAdSetsInModal || loadingAdsInModal}
+        />
       </div>
     </AdminShell>
   );
@@ -350,7 +361,7 @@ export default function UserCampaignDetailPage({
    ═══════════════════════════════════════════════════════════════ */
 
 function Spinner() {
-  return <AdminSectionSkeleton variant="tableEmbedded" />;
+  return <AdminSectionSkeleton variant="grid" />;
 }
 
 function Empty({ label }: { label: string }) {
@@ -365,232 +376,242 @@ function Empty({ label }: { label: string }) {
 
 function CampaignsSection({
   campaigns,
+  adSets,
+  ads,
   loading,
+  loadingRelated,
 }: {
   campaigns: Campaign[];
+  adSets: AdSet[];
+  ads: Ad[];
   loading: boolean;
+  loadingRelated: boolean;
 }) {
+  const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
+
+  useEffect(() => {
+    if (!selectedCampaign) return;
+
+    const prevHtmlOverflow = document.documentElement.style.overflow;
+    const prevBodyOverflow = document.body.style.overflow;
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.documentElement.style.overflow = prevHtmlOverflow;
+      document.body.style.overflow = prevBodyOverflow;
+    };
+  }, [selectedCampaign]);
+
   if (loading) return <Spinner />;
   if (campaigns.length === 0) return <Empty label="campaigns" />;
 
   return (
-    <div className="rounded-xl border border-gray-100 bg-white">
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-gray-100 text-xs uppercase text-gray-500">
-              <th className="px-6 py-3 font-medium">Preview</th>
-              <th className="px-4 py-3 font-medium">Campaign Name</th>
-              <th className="px-4 py-3 font-medium">Status</th>
-              <th className="px-4 py-3 font-medium">Objective</th>
-              <th className="px-4 py-3 font-medium">Budget</th>
-              <th className="px-4 py-3 font-medium">Date Range</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
+    <>
+      <div className="rounded-2xl border border-gray-200 bg-white">
+        <div className="border-b border-gray-100 px-4 py-4 sm:px-5">
+          <h3 className="text-sm font-semibold text-gray-800">Campaigns</h3>
+        </div>
+
+        {campaigns.length === 0 ? (
+          <div className="px-6 py-10 text-center text-sm text-gray-500">No campaigns found.</div>
+        ) : (
+          <div className="grid gap-3 p-4 sm:grid-cols-2 sm:p-5 xl:grid-cols-2">
             {campaigns.map((c) => {
-              const st = getStatusStyle(c.effective_status);
-              const thumb = c.ads?.data?.[0]?.creative?.thumbnail_url;
-              const budget = c.daily_budget
-                ? `$${(parseInt(c.daily_budget) / 100).toFixed(2)}/day`
-                : c.lifetime_budget
-                  ? `$${(parseInt(c.lifetime_budget) / 100).toFixed(2)} total`
-                  : '—';
-              const start = c.start_time
-                ? new Date(c.start_time).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                  })
-                : '';
-              const end = c.stop_time
-                ? new Date(c.stop_time).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                  })
-                : 'Ongoing';
-              return (
-                <tr key={c.id} className="transition-colors hover:bg-gray-50">
-                  <td className="px-6 py-3">
-                    {thumb ? (
-                      <img
-                        src={thumb}
-                        alt={c.name}
-                        className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-gray-100 text-xs text-gray-400">
-                        N/A
+          const st = getStatusStyle(c.effective_status);
+          const thumb = c.ads?.data?.[0]?.creative?.thumbnail_url;
+          const budget = formatBudgetValue(c.daily_budget, c.lifetime_budget);
+          const dateRange = formatShortRange(c.start_time, c.stop_time);
+          const isActive = (c.effective_status || c.status || '').toUpperCase() === 'ACTIVE';
+
+          return (
+            <button
+              key={c.id}
+              type="button"
+              onClick={() => setSelectedCampaign(c)}
+              className="rounded-2xl border border-gray-200 bg-white p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
+            >
+              <div className="mb-3 flex items-start gap-3">
+                <div className="relative shrink-0">
+                  {thumb ? (
+                    <img src={thumb} alt={c.name} className="h-11 w-11 rounded-lg object-cover" />
+                  ) : (
+                    <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-gray-100 text-[10px] text-gray-400">N/A</div>
+                  )}
+                  <span
+                    className={`absolute -bottom-1 -right-1 h-3.5 w-3.5 rounded-full border-2 border-white ${isActive ? 'bg-green-500' : 'bg-gray-300'}`}
+                  />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-gray-900">{c.name}</p>
+                  <div className="mt-1 flex flex-wrap items-center gap-2">
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${st.color}`}>{st.label}</span>
+                    <p className="text-xs uppercase text-gray-500">{c.objective?.replace(/_/g, ' ') || 'No objective'}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-1 text-sm text-gray-700">
+                <p><span className="text-gray-500">Budget:</span> {budget}</p>
+                <p><span className="text-gray-500">Date Range:</span> {dateRange}</p>
+                <p>
+                  <span className="text-gray-500">Created:</span>{' '}
+                  {new Date(c.created_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                </p>
+              </div>
+
+              <div className="mt-3 flex items-center justify-between border-t border-gray-100 pt-3">
+                <span className="rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-xs text-gray-600">
+                  {adSets.filter((a) => a.campaign_id === c.id).length} ad sets
+                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-500">Active</span>
+                  <span className={`inline-flex h-5 w-9 items-center rounded-full ${isActive ? 'bg-green-500' : 'bg-gray-300'}`}>
+                    <span className={`h-3.5 w-3.5 rounded-full bg-white shadow transition-transform ${isActive ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                  </span>
+                </div>
+              </div>
+            </button>
+          );
+        })}
+          </div>
+        )}
+      </div>
+
+      {selectedCampaign && (() => {
+        const relatedAdSets = adSets.filter((a) => a.campaign_id === selectedCampaign.id);
+        const relatedAdSetIds = new Set(relatedAdSets.map((a) => a.id));
+        const relatedAds = ads.filter(
+          (ad) => ad.campaign_id === selectedCampaign.id || relatedAdSetIds.has(ad.adset_id),
+        );
+
+        return (
+          <DetailModal
+            title={selectedCampaign.name}
+            subtitle={`Campaign ID: ${selectedCampaign.id}`}
+            onClose={() => setSelectedCampaign(null)}
+            rows={[
+              { label: 'Status', value: getStatusStyle(selectedCampaign.effective_status).label },
+              { label: 'Objective', value: selectedCampaign.objective?.replace(/_/g, ' ').toLowerCase() || '—' },
+              { label: 'Budget', value: formatBudgetValue(selectedCampaign.daily_budget, selectedCampaign.lifetime_budget) },
+              { label: 'Date Range', value: formatShortRange(selectedCampaign.start_time, selectedCampaign.stop_time) },
+              { label: 'Created', value: new Date(selectedCampaign.created_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) },
+            ]}
+          >
+            <div className="space-y-4">
+              <div>
+                <h4 className="text-base font-semibold text-gray-900">Ad Sets & Ads</h4>
+                <p className="mt-1 text-xs text-gray-500">All ad sets under this campaign and their ads</p>
+                {loadingRelated ? (
+                  <p className="mt-2 text-xs text-gray-500">Loading ad sets...</p>
+                ) : relatedAdSets.length === 0 ? (
+                  <p className="mt-2 text-xs text-gray-500">No ad sets found for this campaign.</p>
+                ) : (
+                  <div className="mt-3 space-y-2">
+                    {relatedAdSets.map((adSet) => (
+                      <div key={adSet.id} className="rounded-xl border border-gray-200 bg-gray-50 p-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="text-sm font-semibold text-gray-900">{adSet.name}</p>
+                            <p className="mt-0.5 text-xs text-gray-500">
+                              Budget: {formatBudgetValue(adSet.daily_budget, adSet.lifetime_budget)}
+                            </p>
+                            <p className="mt-0.5 text-xs text-gray-500">
+                              Date: {formatShortRange(adSet.start_time, adSet.end_time)}
+                            </p>
+                          </div>
+                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${getStatusStyle(adSet.effective_status).color}`}>
+                            {getStatusStyle(adSet.effective_status).label}
+                          </span>
+                        </div>
+
+                        <div className="mt-3 space-y-2 border-t border-gray-200 pt-2.5">
+                          {relatedAds.filter((ad) => ad.adset_id === adSet.id).length === 0 ? (
+                            <p className="text-xs text-gray-500">No ads under this ad set.</p>
+                          ) : (
+                            relatedAds
+                              .filter((ad) => ad.adset_id === adSet.id)
+                              .map((ad) => (
+                                <div key={ad.id} className="flex items-start gap-2 rounded-lg border border-gray-200 bg-white px-2.5 py-2">
+                                  {ad.creative?.thumbnail_url ? (
+                                    <img src={ad.creative.thumbnail_url} alt={ad.name} className="h-8 w-8 rounded-md object-cover" />
+                                  ) : (
+                                    <div className="flex h-8 w-8 items-center justify-center rounded-md bg-gray-200 text-[10px] text-gray-500">N/A</div>
+                                  )}
+                                  <div className="min-w-0 flex-1">
+                                    <p className="truncate text-sm font-medium text-gray-900">{ad.name}</p>
+                                    <div className="mt-1 flex flex-wrap items-center gap-2">
+                                      <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${getStatusStyle(ad.effective_status).color}`}>
+                                        {getStatusStyle(ad.effective_status).label}
+                                      </span>
+                                      <span className="truncate text-xs text-gray-600">{ad.creative?.title || 'No creative title'}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                    {relatedAds.filter((ad) => !relatedAdSetIds.has(ad.adset_id)).length > 0 && (
+                      <div className="rounded-xl border border-gray-200 bg-gray-50 p-3">
+                        <p className="text-xs font-medium text-gray-500">Unlinked Ads</p>
+                        <div className="mt-2 space-y-2">
+                          {relatedAds
+                            .filter((ad) => !relatedAdSetIds.has(ad.adset_id))
+                            .map((ad) => (
+                              <div key={ad.id} className="flex items-start gap-2 rounded-lg border border-gray-200 bg-white px-2.5 py-2">
+                                {ad.creative?.thumbnail_url ? (
+                                  <img src={ad.creative.thumbnail_url} alt={ad.name} className="h-8 w-8 rounded-md object-cover" />
+                                ) : (
+                                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-gray-200 text-[10px] text-gray-500">N/A</div>
+                                )}
+                                <div className="min-w-0 flex-1">
+                                  <p className="truncate text-sm font-medium text-gray-900">{ad.name}</p>
+                                  <div className="mt-1 flex flex-wrap items-center gap-2">
+                                    <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${getStatusStyle(ad.effective_status).color}`}>
+                                      {getStatusStyle(ad.effective_status).label}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                        </div>
                       </div>
                     )}
-                  </td>
-                  <td className="max-w-50 truncate px-4 py-3 font-medium text-gray-900">
-                    {c.name}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${st.color}`}>
-                      {st.label}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-xs capitalize text-gray-500">
-                    {c.objective?.replace(/_/g, ' ').toLowerCase() || '—'}
-                  </td>
-                  <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">{budget}</td>
-                  <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">
-                    {start ? `${start} – ${end}` : '—'}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
-/* ─── Ad Sets Section ─────────────────────────────────────────── */
-
-function AdSetsSection({
-  adSets,
-  loading,
-}: {
-  adSets: AdSet[];
-  loading: boolean;
-}) {
-  if (loading) return <Spinner />;
-  if (adSets.length === 0) return <Empty label="ad sets" />;
-
-  return (
-    <div className="rounded-xl border border-gray-100 bg-white">
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-gray-100 text-xs uppercase text-gray-500">
-              <th className="px-6 py-3 font-medium">Ad Set Name</th>
-              <th className="px-4 py-3 font-medium">Status</th>
-              <th className="px-4 py-3 font-medium">Optimization</th>
-              <th className="px-4 py-3 font-medium">Budget</th>
-              <th className="px-4 py-3 font-medium">Schedule</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {adSets.map((a) => {
-              const st = getStatusStyle(a.effective_status);
-              const budget = a.daily_budget
-                ? `$${(parseInt(a.daily_budget) / 100).toFixed(2)}/day`
-                : a.lifetime_budget
-                  ? `$${(parseInt(a.lifetime_budget) / 100).toFixed(2)} total`
-                  : '—';
-              const start = a.start_time
-                ? new Date(a.start_time).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                  })
-                : '';
-              const end = a.end_time
-                ? new Date(a.end_time).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                  })
-                : 'Ongoing';
-              return (
-                <tr key={a.id} className="transition-colors hover:bg-gray-50">
-                  <td className="max-w-55 truncate px-6 py-3 font-medium text-gray-900">
-                    {a.name}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${st.color}`}>
-                      {st.label}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-xs capitalize text-gray-500">
-                    {a.optimization_goal?.replace(/_/g, ' ').toLowerCase() || '—'}
-                  </td>
-                  <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">{budget}</td>
-                  <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">
-                    {start ? `${start} – ${end}` : '—'}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
-/* ─── Ads Section ─────────────────────────────────────────────── */
-
-function AdsSection({
-  ads,
-  loading,
-}: {
-  ads: Ad[];
-  loading: boolean;
-}) {
-  if (loading) return <Spinner />;
-  if (ads.length === 0) return <Empty label="ads" />;
-
-  return (
-    <div className="rounded-xl border border-gray-100 bg-white">
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-gray-100 text-xs uppercase text-gray-500">
-              <th className="px-6 py-3 font-medium">Preview</th>
-              <th className="px-4 py-3 font-medium">Ad Name</th>
-              <th className="px-4 py-3 font-medium">Status</th>
-              <th className="px-4 py-3 font-medium">Creative Title</th>
-              <th className="px-4 py-3 font-medium">Body</th>
-              <th className="px-4 py-3 font-medium">Created</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {ads.map((ad) => {
-              const st = getStatusStyle(ad.effective_status);
-              return (
-                <tr key={ad.id} className="transition-colors hover:bg-gray-50">
-                  <td className="px-6 py-3">
-                    {ad.creative?.thumbnail_url ? (
-                      <img
-                        src={ad.creative.thumbnail_url}
-                        alt={ad.name}
-                        className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-gray-100 text-xs text-gray-400">
-                        N/A
+                    {relatedAdSets.length === 0 && relatedAds.length > 0 && (
+                      <div className="rounded-xl border border-gray-200 bg-gray-50 p-3">
+                        <div className="space-y-2">
+                          {relatedAds.map((ad) => (
+                            <div key={ad.id} className="flex items-start gap-2 rounded-lg border border-gray-200 bg-white px-2.5 py-2">
+                              {ad.creative?.thumbnail_url ? (
+                                <img src={ad.creative.thumbnail_url} alt={ad.name} className="h-8 w-8 rounded-md object-cover" />
+                              ) : (
+                                <div className="flex h-8 w-8 items-center justify-center rounded-md bg-gray-200 text-[10px] text-gray-500">N/A</div>
+                              )}
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-sm font-medium text-gray-900">{ad.name}</p>
+                                <div className="mt-1 flex flex-wrap items-center gap-2">
+                                  <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${getStatusStyle(ad.effective_status).color}`}>
+                                    {getStatusStyle(ad.effective_status).label}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
-                  </td>
-                  <td className="max-w-45 truncate px-4 py-3 font-medium text-gray-900">
-                    {ad.name}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${st.color}`}>
-                      {st.label}
-                    </span>
-                  </td>
-                  <td className="max-w-40 truncate px-4 py-3 text-gray-400">
-                    {ad.creative?.title || '—'}
-                  </td>
-                  <td className="max-w-50 truncate px-4 py-3 text-xs text-gray-500">
-                    {ad.creative?.body || '—'}
-                  </td>
-                  <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">
-                    {new Date(ad.created_time).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                    })}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </div>
+                    {relatedAdSets.length === 0 && relatedAds.length === 0 && (
+                      <p className="text-xs text-gray-500">No ads found for this campaign.</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </DetailModal>
+        );
+      })()}
+    </>
   );
 }

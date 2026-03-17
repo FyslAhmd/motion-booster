@@ -8,6 +8,7 @@ import { loginSchema, formatZodErrors } from '@/lib/validators/auth';
 import { useAuth } from '@/lib/auth/context';
 import { ZodError } from 'zod';
 import { COUNTRY_CODES, type CountryCode } from '@/lib/data/country-codes';
+import { toast } from 'sonner';
 
 interface FieldErrors {
   phone?: string;
@@ -115,26 +116,35 @@ export default function LoginPage() {
         body: JSON.stringify(formData),
       });
 
-      const data = await res.json();
+      let data: any = null;
+      try {
+        data = await res.json();
+      } catch {
+        data = null;
+      }
 
       if (!res.ok) {
-        if (data.error?.details?.fields) {
+        if (data?.error?.details?.fields) {
           setFieldErrors(data.error.details.fields as FieldErrors);
           return;
         }
         setServerError(
-          data.error?.message || 'Login failed. Please try again.'
+          data?.error?.message ||
+            data?.message ||
+            'Login failed. Please try again.'
         );
         return;
       }
 
       // Store auth state and redirect
-      if (data.data?.accessToken && data.data?.user) {
+      if (data?.data?.accessToken && data?.data?.user) {
         login(data.data.accessToken, data.data.user);
       }
 
+      toast.success('Login successful');
+
       // Redirect based on role
-      const role = data.data?.user?.role;
+      const role = data?.data?.user?.role;
       router.push(role === 'ADMIN' ? '/dashboard' : '/dashboard/chat');
     } catch {
       setServerError(
