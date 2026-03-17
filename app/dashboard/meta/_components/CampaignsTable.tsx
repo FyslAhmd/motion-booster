@@ -66,6 +66,14 @@ interface CursorPaging {
   hasPrevious?: boolean;
 }
 
+interface CampaignCardMetric {
+  spend: number;
+  metricLabel: string;
+  metricValue: number;
+  costLabel: string;
+  costValue: number;
+}
+
 function parseCampaignInsights(insight: any) {
   if (!insight) return null;
   const actions = insight.actions || [];
@@ -279,6 +287,7 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
   const [campaignInsights, setCampaignInsights] = useState<any>(null);
   const [insightsLoading, setInsightsLoading] = useState(false);
   const [insightsError, setInsightsError] = useState('');
+  const [campaignCardMetrics, setCampaignCardMetrics] = useState<Record<string, CampaignCardMetric>>({});
   const [mounted, setMounted] = useState(false);
 
   // Assignment tracking: metaObjectId → { id, fullName, phone, username }
@@ -352,6 +361,90 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
         }
       })
       .catch(() => {});
+  }, [data, accountId]);
+
+  // Fetch spend + dynamic metric cards for currently visible campaigns
+  useEffect(() => {
+    if (!data.length) {
+      setCampaignCardMetrics({});
+      return;
+    }
+
+    let isCancelled = false;
+
+    const loadCardMetrics = async () => {
+      const entries = await Promise.all(
+        data.map(async (campaign) => {
+          try {
+            const insightQuery = new URLSearchParams({
+              type: 'single_campaign',
+              campaign_id: campaign.id,
+              date_preset: 'maximum',
+            });
+            const adsetQuery = new URLSearchParams({
+              campaign_id: campaign.id,
+              limit: '100',
+            });
+            if (accountId) {
+              insightQuery.set('account_id', accountId);
+              adsetQuery.set('account_id', accountId);
+            }
+
+            const [insightRes, adsetRes] = await Promise.all([
+              fetch(`/api/v1/meta/insights?${insightQuery}`),
+              fetch(`/api/v1/meta/adsets?${adsetQuery}`),
+            ]);
+
+            const [insightJson, adsetJson] = await Promise.all([
+              insightRes.json(),
+              adsetRes.json(),
+            ]);
+
+            const insight = insightJson?.success
+              ? Array.isArray(insightJson.data) && insightJson.data.length > 0
+                ? insightJson.data[0]
+                : insightJson.data?.data?.[0]
+              : null;
+
+            const parsed = parseCampaignInsights(insight);
+            if (!parsed) return [campaign.id, null] as const;
+
+            const adSets = (adsetJson?.success ? adsetJson.data : []) as CampaignAdSet[];
+            const dominantGoal = getDominantOptimizationGoal(adSets);
+            const dynamicMetric = resolveDynamicInsightMetric(parsed, dominantGoal);
+
+            if (!dynamicMetric) return [campaign.id, null] as const;
+
+            return [
+              campaign.id,
+              {
+                spend: parsed.spend,
+                metricLabel: dynamicMetric.metricLabel,
+                metricValue: dynamicMetric.metricValue,
+                costLabel: dynamicMetric.costLabel,
+                costValue: dynamicMetric.costValue,
+              } satisfies CampaignCardMetric,
+            ] as const;
+          } catch {
+            return [campaign.id, null] as const;
+          }
+        }),
+      );
+
+      if (isCancelled) return;
+
+      const next: Record<string, CampaignCardMetric> = {};
+      for (const [campaignId, metric] of entries) {
+        if (metric) next[campaignId] = metric;
+      }
+      setCampaignCardMetrics(next);
+    };
+
+    loadCardMetrics();
+
+    return () => {
+      isCancelled = true;
+    };
   }, [data, accountId]);
 
   const goNext = () => {
@@ -686,6 +779,7 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
 	                const { color, label } = statusMeta(derived.key, derived.label);
 	                const thumb = c.ads?.data?.[0]?.creative?.thumbnail_url;
                   const isActiveCampaign = derived.key === 'ACTIVE';
+                  const cardMetric = campaignCardMetrics[c.id];
 	                const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
 	                  const target = e.target as HTMLElement;
 	                  if (target.closest('[data-no-modal="true"]')) return;
@@ -728,10 +822,34 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
                       </div>
                     </div>
 
+                    <div className="mt-3 grid grid-cols-3 gap-2">
+                      <div className="rounded-lg border border-gray-100 bg-gray-50 px-2 py-1.5">
+                        <p className="text-[10px] uppercase tracking-wide text-gray-500">Spend</p>
+                        <p className="mt-0.5 text-xs font-semibold text-gray-900">
+                          {cardMetric ? `$${cardMetric.spend.toFixed(2)}` : '—'}
+                        </p>
+                      </div>
+                      <div className="rounded-lg border border-gray-100 bg-gray-50 px-2 py-1.5">
+                        <p className="truncate text-[10px] uppercase tracking-wide text-gray-500" title={cardMetric?.metricLabel || 'Metric'}>
+                          {cardMetric?.metricLabel || 'Metric'}
+                        </p>
+                        <p className="mt-0.5 text-xs font-semibold text-gray-900">
+                          {cardMetric ? cardMetric.metricValue.toLocaleString() : '—'}
+                        </p>
+                      </div>
+                      <div className="rounded-lg border border-gray-100 bg-gray-50 px-2 py-1.5">
+                        <p className="truncate text-[10px] uppercase tracking-wide text-gray-500" title={cardMetric?.costLabel || 'Cost'}>
+                          {cardMetric?.costLabel || 'Cost'}
+                        </p>
+                        <p className="mt-0.5 text-xs font-semibold text-gray-900">
+                          {cardMetric ? (cardMetric.costValue > 0 ? `$${cardMetric.costValue.toFixed(4)}` : '—') : '—'}
+                        </p>
+                      </div>
+                    </div>
+
                     <div className="mt-3 space-y-1.5 text-sm text-gray-600">
                       <p>Budget: <span className="font-medium text-gray-800">{campaignBudgetLabel(c)}</span></p>
                       <p>Date Range: <span className="font-medium text-gray-800">{campaignDateRangeLabel(c)}</span></p>
-                      <p>Created: <span className="font-medium text-gray-800">{fmtDate(c.created_time)}</span></p>
                     </div>
 
 	                    <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 pt-3">
