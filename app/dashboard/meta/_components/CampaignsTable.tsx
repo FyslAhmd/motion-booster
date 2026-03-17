@@ -33,9 +33,12 @@ interface CampaignAdSet {
   effective_status: string;
   daily_budget?: string;
   lifetime_budget?: string;
+  budget_remaining?: string;
+  optimization_goal?: string;
   start_time?: string;
   end_time?: string;
   created_time: string;
+  targeting?: any;
   derived_status?: { label: string; key: string };
 }
 
@@ -45,7 +48,15 @@ interface CampaignAd {
   status: string;
   effective_status: string;
   adset_id: string;
+  campaign_id?: string;
   created_time: string;
+  creative?: {
+    id?: string;
+    name?: string;
+    thumbnail_url?: string;
+    body?: string;
+    title?: string;
+  };
   derived_status?: { label: string; key: string };
 }
 
@@ -112,6 +123,18 @@ function fmtBudget(val?: string) {
 function fmtDate(val?: string) {
   if (!val) return '—';
   return new Date(val).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function summarizeTargeting(t: any): string {
+  if (!t) return '—';
+  const parts: string[] = [];
+  if (t.age_min || t.age_max) parts.push(`Age ${t.age_min || '?'}-${t.age_max || '?'}`);
+  if (t.genders?.length) {
+    parts.push(t.genders.map((v: number) => (v === 1 ? 'M' : v === 2 ? 'F' : 'All')).join(', '));
+  }
+  if (t.geo_locations?.countries?.length) parts.push(t.geo_locations.countries.join(', '));
+  if (t.interests?.length) parts.push(`${t.interests.length} interest(s)`);
+  return parts.length ? parts.join(' • ') : '—';
 }
 
 interface CampaignsTableProps {
@@ -764,11 +787,23 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
                 )}
               </div>
 
-              <div className="rounded-2xl border border-gray-200 bg-gray-50/60 p-4">
-                <h4 className="text-sm font-semibold text-gray-900">Ad Sets & Ads</h4>
-                <p className="mt-0.5 text-xs text-gray-500">
-                  All ad sets under this campaign and their ads
-                </p>
+              <div className="rounded-2xl border border-gray-200 bg-linear-to-b from-white to-gray-50 p-4 shadow-sm">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-900">Ad Sets & Ads</h4>
+                    <p className="mt-0.5 text-xs text-gray-500">
+                      All ad sets under this campaign and their ads
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="rounded-full border border-gray-200 bg-white px-2.5 py-1 text-[11px] font-medium text-gray-600">
+                      {campaignAdSets.length} Ad Sets
+                    </span>
+                    <span className="rounded-full border border-gray-200 bg-white px-2.5 py-1 text-[11px] font-medium text-gray-600">
+                      {campaignAdSets.reduce((sum, s) => sum + (campaignAdsByAdSet[s.id]?.length || 0), 0)} Ads
+                    </span>
+                  </div>
+                </div>
 
                 {modalLoading ? (
                   <div className="mt-4 flex items-center gap-2 text-sm text-gray-500">
@@ -789,30 +824,75 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
                       const adSetStatus = statusMeta(adSet.derived_status?.key || adSet.effective_status, adSet.derived_status?.label);
                       const adList = campaignAdsByAdSet[adSet.id] || [];
                       return (
-                        <div key={adSet.id} className="rounded-xl border border-gray-200 bg-white p-3">
+                        <div key={adSet.id} className="rounded-xl border border-gray-200 bg-white p-3.5 shadow-sm">
                           <div className="flex flex-wrap items-center gap-2">
-                            <p className="min-w-0 flex-1 truncate text-sm font-medium text-gray-900">{adSet.name}</p>
+                            <p className="min-w-0 flex-1 truncate text-sm font-semibold text-gray-900">{adSet.name}</p>
                             <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${adSetStatus.color}`}>
                               {adSetStatus.label}
                             </span>
+                            <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] text-gray-600">
+                              {adList.length} Ads
+                            </span>
                           </div>
-                          <p className="mt-1 text-xs text-gray-500">
-                            Budget: {adSet.daily_budget ? `${fmtBudget(adSet.daily_budget)}/day` : adSet.lifetime_budget ? `${fmtBudget(adSet.lifetime_budget)} lifetime` : '—'}
-                          </p>
-                          <p className="mt-0.5 text-xs text-gray-500">
-                            Date: {`${fmtDate(adSet.start_time)}${adSet.end_time ? ` → ${fmtDate(adSet.end_time)}` : ' → Ongoing'}`}
-                          </p>
+                          <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                            <div className="rounded-lg border border-gray-100 bg-gray-50 px-2.5 py-2">
+                              <p className="text-[10px] uppercase tracking-wide text-gray-500">Budget</p>
+                              <p className="mt-0.5 text-xs font-medium text-gray-700">
+                                {adSet.daily_budget ? `${fmtBudget(adSet.daily_budget)}/day` : adSet.lifetime_budget ? `${fmtBudget(adSet.lifetime_budget)} lifetime` : '—'}
+                              </p>
+                              <p className="mt-0.5 text-[11px] text-gray-500">Remaining: {fmtBudget(adSet.budget_remaining)}</p>
+                            </div>
+                            <div className="rounded-lg border border-gray-100 bg-gray-50 px-2.5 py-2">
+                              <p className="text-[10px] uppercase tracking-wide text-gray-500">Schedule</p>
+                              <p className="mt-0.5 text-xs font-medium text-gray-700">
+                                {`${fmtDate(adSet.start_time)}${adSet.end_time ? ` → ${fmtDate(adSet.end_time)}` : ' → Ongoing'}`}
+                              </p>
+                              <p className="mt-0.5 text-[11px] text-gray-500">Created: {fmtDate(adSet.created_time)}</p>
+                            </div>
+                          </div>
+                          <div className="mt-2 rounded-lg border border-gray-100 bg-gray-50 px-2.5 py-2">
+                            <p className="text-[10px] uppercase tracking-wide text-gray-500">Optimization</p>
+                            <p className="mt-0.5 text-xs font-medium text-gray-700">{adSet.optimization_goal?.replace(/_/g, ' ') || '—'}</p>
+                            <p className="mt-1 truncate text-[11px] text-gray-500">Targeting: {summarizeTargeting(adSet.targeting)}</p>
+                          </div>
 
                           {adList.length > 0 ? (
-                            <div className="mt-2 space-y-1.5 border-t border-gray-100 pt-2">
+                            <div className="mt-3 space-y-2 border-t border-gray-100 pt-3">
                               {adList.map((ad) => {
                                 const adStatus = statusMeta(ad.derived_status?.key || ad.effective_status, ad.derived_status?.label);
                                 return (
-                                  <div key={ad.id} className="flex items-center justify-between gap-2 rounded-lg bg-gray-50 px-2.5 py-2">
-                                    <span className="min-w-0 flex-1 truncate text-xs font-medium text-gray-700">{ad.name}</span>
-                                    <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${adStatus.color}`}>
-                                      {adStatus.label}
-                                    </span>
+                                  <div key={ad.id} className="rounded-lg border border-gray-100 bg-white px-2.5 py-2.5">
+                                    <div className="flex items-center justify-between gap-2">
+                                      <div className="flex min-w-0 flex-1 items-center gap-2">
+                                        {ad.creative?.thumbnail_url ? (
+                                          <img
+                                            src={ad.creative.thumbnail_url}
+                                            alt={ad.name}
+                                            className="h-9 w-9 rounded-md object-cover"
+                                          />
+                                        ) : (
+                                          <div className="flex h-9 w-9 items-center justify-center rounded-md bg-gray-200 text-[10px] text-gray-500">
+                                            N/A
+                                          </div>
+                                        )}
+                                        <div className="min-w-0 flex-1">
+                                          <p className="truncate text-xs font-semibold text-gray-800">{ad.name}</p>
+                                          <p className="truncate text-[11px] text-gray-500">ID: {ad.id}</p>
+                                        </div>
+                                      </div>
+                                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${adStatus.color}`}>
+                                        {adStatus.label}
+                                      </span>
+                                    </div>
+                                    <p className="mt-1.5 truncate text-[11px] text-gray-600">
+                                      Title: {ad.creative?.title || '—'}
+                                    </p>
+                                    <p className="mt-0.5 line-clamp-2 text-[11px] text-gray-500">
+                                      {ad.creative?.body || '—'}
+                                    </p>
+                                    <p className="mt-1 text-[10px] text-gray-400">
+                                      Created: {fmtDate(ad.created_time)}
+                                    </p>
                                   </div>
                                 );
                               })}
