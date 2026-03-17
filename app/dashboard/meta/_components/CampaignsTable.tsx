@@ -736,28 +736,22 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
                           <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
                             <p className="text-[11px] font-medium uppercase tracking-wider text-gray-500">Messages</p>
                             <p className="mt-1 text-lg font-bold text-gray-900">{data.messages.toLocaleString()}</p>
-                            {data.cost_per_message > 0 && (
-                              <p className="mt-0.5 text-[10px] text-gray-500">${data.cost_per_message.toFixed(2)} / msg</p>
-                            )}
+                          </div>
+                          <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                            <p className="text-[11px] font-medium uppercase tracking-wider text-gray-500">Price / Msg</p>
+                            <p className="mt-1 text-lg font-bold text-gray-900">
+                              {data.cost_per_message > 0 ? `$${data.cost_per_message.toFixed(2)}` : '—'}
+                            </p>
                           </div>
                           <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
                             <p className="text-[11px] font-medium uppercase tracking-wider text-gray-500">Leads</p>
                             <p className="mt-1 text-lg font-bold text-gray-900">{data.leads.toLocaleString()}</p>
-                            {data.cost_per_lead > 0 && (
-                              <p className="mt-0.5 text-[10px] text-gray-500">${data.cost_per_lead.toFixed(2)} / lead</p>
-                            )}
                           </div>
                           <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
-                            <p className="text-[11px] font-medium uppercase tracking-wider text-gray-500">Purchases</p>
-                            <p className="mt-1 text-lg font-bold text-gray-900">{data.purchases.toLocaleString()}</p>
-                            {data.cost_per_purchase > 0 && (
-                              <p className="mt-0.5 text-[10px] text-gray-500">${data.cost_per_purchase.toFixed(2)} / purchase</p>
-                            )}
-                          </div>
-                          <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
-                            <p className="text-[11px] font-medium uppercase tracking-wider text-gray-500">Clicks / CPC</p>
-                            <p className="mt-1 text-lg font-bold text-gray-900">{data.clicks.toLocaleString()}</p>
-                            <p className="mt-0.5 text-[10px] text-gray-500">${data.cpc.toFixed(2)} CPC</p>
+                            <p className="text-[11px] font-medium uppercase tracking-wider text-gray-500">Price / Lead</p>
+                            <p className="mt-1 text-lg font-bold text-gray-900">
+                              {data.cost_per_lead > 0 ? `$${data.cost_per_lead.toFixed(2)}` : '—'}
+                            </p>
                           </div>
                           <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
                             <p className="text-[11px] font-medium uppercase tracking-wider text-gray-500">CTR</p>
