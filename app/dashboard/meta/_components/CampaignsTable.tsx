@@ -322,6 +322,53 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
     ['ACTIVE', 'PAUSED'].includes(c.status) &&
     !['DELETED', 'ARCHIVED'].includes(c.effective_status);
 
+  const canToggleMetaObject = (status: string, effectiveStatus: string) =>
+    ['ACTIVE', 'PAUSED'].includes(status) &&
+    !['DELETED', 'ARCHIVED'].includes(effectiveStatus);
+
+  const toggleMetaObjectStatus = async (id: string, currentStatus: string) => {
+    const newStatus = currentStatus === 'ACTIVE' ? 'PAUSED' : 'ACTIVE';
+    setTogglingId(id);
+    try {
+      const res = await fetch('/api/v1/meta/status', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status: newStatus }),
+      });
+      const json = await res.json();
+      if (!json.success) {
+        toast.error(`Failed: ${json.error}`);
+        return;
+      }
+
+      // Update ad sets in modal
+      setCampaignAdSets((prev) =>
+        prev.map((a) =>
+          a.id === id
+            ? { ...a, status: newStatus, effective_status: newStatus }
+            : a,
+        ),
+      );
+
+      // Update ads in modal
+      setCampaignAdsByAdSet((prev) => {
+        const next: Record<string, CampaignAd[]> = {};
+        for (const [adSetId, ads] of Object.entries(prev)) {
+          next[adSetId] = ads.map((ad) =>
+            ad.id === id
+              ? { ...ad, status: newStatus, effective_status: newStatus }
+              : ad,
+          );
+        }
+        return next;
+      });
+    } catch (e: any) {
+      toast.error(`Error: ${e.message}`);
+    } finally {
+      setTogglingId(null);
+    }
+  };
+
   const closeCampaignModal = useCallback(() => {
     setSelectedCampaign(null);
     setCampaignAdSets([]);
@@ -833,6 +880,22 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
                             <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] text-gray-600">
                               {adList.length} Ads
                             </span>
+                            {canToggleMetaObject(adSet.status, adSet.effective_status) && (
+                              <button
+                                onClick={() => toggleMetaObjectStatus(adSet.id, adSet.status)}
+                                disabled={togglingId === adSet.id}
+                                className={`relative ml-auto inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-1 ${
+                                  adSet.status === 'ACTIVE' ? 'bg-green-500' : 'bg-gray-300'
+                                } ${togglingId === adSet.id ? 'opacity-50' : ''}`}
+                                title={adSet.status === 'ACTIVE' ? 'Pause Ad Set' : 'Activate Ad Set'}
+                              >
+                                <span
+                                  className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
+                                    adSet.status === 'ACTIVE' ? 'translate-x-4' : 'translate-x-1'
+                                  }`}
+                                />
+                              </button>
+                            )}
                           </div>
                           <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
                             <div className="rounded-lg border border-gray-100 bg-gray-50 px-2.5 py-2">
@@ -883,6 +946,22 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
                                       <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${adStatus.color}`}>
                                         {adStatus.label}
                                       </span>
+                                      {canToggleMetaObject(ad.status, ad.effective_status) && (
+                                        <button
+                                          onClick={() => toggleMetaObjectStatus(ad.id, ad.status)}
+                                          disabled={togglingId === ad.id}
+                                          className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-1 ${
+                                            ad.status === 'ACTIVE' ? 'bg-green-500' : 'bg-gray-300'
+                                          } ${togglingId === ad.id ? 'opacity-50' : ''}`}
+                                          title={ad.status === 'ACTIVE' ? 'Pause Ad' : 'Activate Ad'}
+                                        >
+                                          <span
+                                            className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
+                                              ad.status === 'ACTIVE' ? 'translate-x-4' : 'translate-x-1'
+                                            }`}
+                                          />
+                                        </button>
+                                      )}
                                     </div>
                                     <p className="mt-1.5 truncate text-[11px] text-gray-600">
                                       Title: {ad.creative?.title || '—'}
