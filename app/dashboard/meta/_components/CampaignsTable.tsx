@@ -304,7 +304,16 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
         setData((prev) =>
           prev.map((c) =>
             c.id === campaign.id
-              ? { ...c, status: newStatus, effective_status: newStatus, configured_status: newStatus }
+              ? {
+                  ...c,
+                  status: newStatus,
+                  effective_status: newStatus,
+                  configured_status: newStatus,
+                  derived_status: {
+                    key: newStatus,
+                    label: newStatus === 'ACTIVE' ? 'Active' : 'Paused',
+                  },
+                }
               : c,
           ),
         );
@@ -313,6 +322,7 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
       }
     } catch (e: any) {
       toast.error(`Error: ${e.message}`);
+    } finally {
       setTogglingId(null);
     }
   };
@@ -558,7 +568,7 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
 	                const derived = c.derived_status || { label: c.effective_status?.replace(/_/g, ' ') || 'Unknown', key: c.effective_status || 'UNKNOWN' };
 	                const { color, label } = statusMeta(derived.key, derived.label);
 	                const thumb = c.ads?.data?.[0]?.creative?.thumbnail_url;
-	                const isActiveCampaign = c.status === 'ACTIVE' || derived.key === 'ACTIVE';
+                  const isActiveCampaign = derived.key === 'ACTIVE';
 	                const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
 	                  const target = e.target as HTMLElement;
 	                  if (target.closest('[data-no-modal="true"]')) return;
@@ -629,12 +639,12 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
 	                            disabled={togglingId === c.id}
 	                            data-no-modal="true"
 	                            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-1 ${
-	                              c.status === 'ACTIVE' ? 'bg-green-500' : 'bg-gray-300'
+                                isActiveCampaign ? 'bg-green-500' : 'bg-gray-300'
 	                            } ${togglingId === c.id ? 'opacity-50' : ''}`}
                           >
                             <span
                               className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
-                                c.status === 'ACTIVE' ? 'translate-x-4' : 'translate-x-1'
+                                  isActiveCampaign ? 'translate-x-4' : 'translate-x-1'
                               }`}
                             />
                           </button>
@@ -695,8 +705,7 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
                 };
                 const { color, label } = statusMeta(derived.key, derived.label);
                 const thumb = selectedCampaign.ads?.data?.[0]?.creative?.thumbnail_url;
-                const isActiveCampaign =
-                  selectedCampaign.status === 'ACTIVE' || derived.key === 'ACTIVE';
+                const isActiveCampaign = derived.key === 'ACTIVE';
                 return (
                   <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
                     <div className="flex items-start gap-3">
