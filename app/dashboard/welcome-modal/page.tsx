@@ -3,9 +3,24 @@
 import { useEffect, useRef, useState } from 'react';
 import AdminShell from '../_components/AdminShell';
 import { useConfirm } from '@/lib/admin/confirm';
-import { AdminStore, SiteSettings, defaultSettings } from '@/lib/admin/store';
 import { Check, ImagePlus, Save, Trash2, Eye, NotebookPen } from 'lucide-react';
 import { toast } from 'sonner';
+
+type WelcomeSettingsForm = {
+  welcomeModalImage: string;
+  welcomeModalExploreLink: string;
+  welcomeModalTitle: string;
+  welcomeModalBody: string;
+};
+
+const DEFAULT_WELCOME_SETTINGS: WelcomeSettingsForm = {
+  welcomeModalImage: '',
+  welcomeModalExploreLink: '/service',
+  welcomeModalTitle: 'Welcome to Motion Booster! 👋',
+  welcomeModalBody: 'We help businesses grow with creative branding, motion graphics, web development & digital marketing.',
+};
+
+const WELCOME_SETTINGS_CACHE_KEY = 'mb_welcome_modal_settings_v1';
 
 function WelcomeModalCardsSkeleton() {
   return (
@@ -47,18 +62,43 @@ function WelcomeModalCardsSkeleton() {
 }
 
 export default function WelcomeModalPage() {
-  const [settings, setSettings] = useState<SiteSettings>(defaultSettings);
+  const [settings, setSettings] = useState<WelcomeSettingsForm>(DEFAULT_WELCOME_SETTINGS);
   const [saved, setSaved] = useState(false);
   const [preview, setPreview] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    setSettings(AdminStore.getSettings());
-    setInitialLoading(false);
+    let cancelled = false;
+
+    const load = async () => {
+      try {
+        const res = await fetch('/api/v1/cms/site-settings', { cache: 'no-store' });
+        const data = await res.json();
+        if (cancelled) return;
+
+        setSettings({
+          welcomeModalImage: data?.welcomeModalImage || '',
+          welcomeModalExploreLink: data?.welcomeModalExploreLink || '/service',
+          welcomeModalTitle: data?.welcomeModalTitle || DEFAULT_WELCOME_SETTINGS.welcomeModalTitle,
+          welcomeModalBody: data?.welcomeModalBody || DEFAULT_WELCOME_SETTINGS.welcomeModalBody,
+        });
+      } catch {
+        if (!cancelled) {
+          toast.error('Failed to load welcome popup settings');
+        }
+      } finally {
+        if (!cancelled) setInitialLoading(false);
+      }
+    };
+
+    load();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const set = (key: keyof SiteSettings) => (value: string) => {
+  const set = (key: keyof WelcomeSettingsForm) => (value: string) => {
     setSettings(prev => ({ ...prev, [key]: value }));
   };
 
@@ -66,10 +106,44 @@ export default function WelcomeModalPage() {
 
   const handleSave = async () => {
     if (!await confirm({ title: 'Save Changes', message: 'Are you sure you want to save these changes?' })) return;
-    AdminStore.saveSettings(settings);
-    setSaved(true);
-    toast.success('Welcome popup settings saved successfully!');
-    setTimeout(() => setSaved(false), 2500);
+
+    try {
+      const res = await fetch('/api/v1/cms/site-settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          welcomeModalImage: settings.welcomeModalImage || null,
+          welcomeModalExploreLink: settings.welcomeModalExploreLink || '/service',
+          welcomeModalTitle: settings.welcomeModalTitle || DEFAULT_WELCOME_SETTINGS.welcomeModalTitle,
+          welcomeModalBody: settings.welcomeModalBody || DEFAULT_WELCOME_SETTINGS.welcomeModalBody,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.error || 'Failed to save settings');
+      }
+
+      const normalized = {
+        welcomeModalImage: data?.welcomeModalImage || '',
+        welcomeModalExploreLink: data?.welcomeModalExploreLink || '/service',
+        welcomeModalTitle: data?.welcomeModalTitle || DEFAULT_WELCOME_SETTINGS.welcomeModalTitle,
+        welcomeModalBody: data?.welcomeModalBody || DEFAULT_WELCOME_SETTINGS.welcomeModalBody,
+      };
+      setSettings(normalized);
+
+      try {
+        localStorage.setItem(WELCOME_SETTINGS_CACHE_KEY, JSON.stringify(normalized));
+      } catch {
+        // noop
+      }
+
+      setSaved(true);
+      toast.success('Welcome popup settings saved successfully!');
+      setTimeout(() => setSaved(false), 2500);
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to save settings');
+    }
   };
 
   const handleImageUpload = (file: File) => {

@@ -348,6 +348,7 @@ export default function UserCampaignDetailPage({
           campaigns={campaigns}
           adSets={adSets}
           ads={ads}
+          campaignAccountById={Object.fromEntries(campaignRefs.map((r) => [r.metaObjectId, r.metaAccountId]))}
           loading={loadingCampaigns}
           loadingRelated={loadingAdSetsInModal || loadingAdsInModal}
         />
@@ -378,16 +379,22 @@ function CampaignsSection({
   campaigns,
   adSets,
   ads,
+  campaignAccountById,
   loading,
   loadingRelated,
 }: {
   campaigns: Campaign[];
   adSets: AdSet[];
   ads: Ad[];
+  campaignAccountById: Record<string, string>;
   loading: boolean;
   loadingRelated: boolean;
 }) {
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
+  const [modalAdSets, setModalAdSets] = useState<AdSet[]>([]);
+  const [modalAdsByAdSet, setModalAdsByAdSet] = useState<Record<string, Ad[]>>({});
+  const [modalDetailsLoading, setModalDetailsLoading] = useState(false);
+  const [modalDetailsError, setModalDetailsError] = useState('');
 
   useEffect(() => {
     if (!selectedCampaign) return;
@@ -402,6 +409,71 @@ function CampaignsSection({
       document.body.style.overflow = prevBodyOverflow;
     };
   }, [selectedCampaign]);
+
+  useEffect(() => {
+    if (!selectedCampaign) return;
+
+    let cancelled = false;
+
+    const loadCampaignDetails = async () => {
+      setModalDetailsLoading(true);
+      setModalDetailsError('');
+      setModalAdSets([]);
+      setModalAdsByAdSet({});
+
+      try {
+        const adSetQuery = new URLSearchParams({ campaign_id: selectedCampaign.id, limit: '20' });
+        const accountId = campaignAccountById[selectedCampaign.id];
+        if (accountId) adSetQuery.set('account_id', accountId);
+
+        const adSetRes = await fetch(`/api/v1/meta/adsets?${adSetQuery.toString()}`);
+        const adSetJson = await adSetRes.json();
+
+        if (!adSetJson.success) throw new Error(adSetJson.error || 'Failed to load ad sets');
+
+        const loadedAdSets = (Array.isArray(adSetJson.data) ? adSetJson.data : []) as AdSet[];
+        if (cancelled) return;
+        setModalAdSets(loadedAdSets);
+
+        if (loadedAdSets.length === 0) {
+          setModalAdsByAdSet({});
+          return;
+        }
+
+        const adFetches = loadedAdSets.map(async (adSet) => {
+          const adsQuery = new URLSearchParams({ adset_id: adSet.id, limit: '12' });
+          if (accountId) adsQuery.set('account_id', accountId);
+          const adsRes = await fetch(`/api/v1/meta/ads?${adsQuery.toString()}`);
+          const adsJson = await adsRes.json();
+          return {
+            adSetId: adSet.id,
+            ads: (adsJson.success && Array.isArray(adsJson.data) ? adsJson.data : []) as Ad[],
+          };
+        });
+
+        const settled = await Promise.allSettled(adFetches);
+        if (cancelled) return;
+
+        const nextMap: Record<string, Ad[]> = {};
+        settled.forEach((result) => {
+          if (result.status === 'fulfilled') {
+            nextMap[result.value.adSetId] = result.value.ads;
+          }
+        });
+        setModalAdsByAdSet(nextMap);
+      } catch (e: any) {
+        if (!cancelled) setModalDetailsError(e?.message || 'Failed to load campaign details');
+      } finally {
+        if (!cancelled) setModalDetailsLoading(false);
+      }
+    };
+
+    loadCampaignDetails();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedCampaign, campaignAccountById]);
 
   if (loading) return <Spinner />;
   if (campaigns.length === 0) return <Empty label="campaigns" />;
@@ -429,14 +501,14 @@ function CampaignsSection({
               key={c.id}
               type="button"
               onClick={() => setSelectedCampaign(c)}
-              className="rounded-2xl border border-gray-200 bg-white p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
+              className="rounded-2xl border border-gray-200 bg-white p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md hover:border-gray-300"
             >
               <div className="mb-3 flex items-start gap-3">
                 <div className="relative shrink-0">
                   {thumb ? (
-                    <img src={thumb} alt={c.name} className="h-11 w-11 rounded-lg object-cover" />
+                    <img src={thumb} alt={c.name} className="h-12 w-12 rounded-lg object-cover" />
                   ) : (
-                    <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-gray-100 text-[10px] text-gray-400">N/A</div>
+                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gray-100 text-[10px] text-gray-400">N/A</div>
                   )}
                   <span
                     className={`absolute -bottom-1 -right-1 h-3.5 w-3.5 rounded-full border-2 border-white ${isActive ? 'bg-green-500' : 'bg-gray-300'}`}
@@ -479,11 +551,14 @@ function CampaignsSection({
       </div>
 
       {selectedCampaign && (() => {
-        const relatedAdSets = adSets.filter((a) => a.campaign_id === selectedCampaign.id);
+        const fallbackAdSets = adSets.filter((a) => a.campaign_id === selectedCampaign.id);
+        const relatedAdSets = modalAdSets.length > 0 ? modalAdSets : fallbackAdSets;
         const relatedAdSetIds = new Set(relatedAdSets.map((a) => a.id));
-        const relatedAds = ads.filter(
-          (ad) => ad.campaign_id === selectedCampaign.id || relatedAdSetIds.has(ad.adset_id),
-        );
+        const modalAds = Object.values(modalAdsByAdSet).flat();
+        const fallbackAds = ads.filter((ad) => ad.campaign_id === selectedCampaign.id || relatedAdSetIds.has(ad.adset_id));
+        const relatedAds = modalAds.length > 0 ? modalAds : fallbackAds;
+        const adSetCount = relatedAdSets.length;
+        const adCount = relatedAds.length;
 
         return (
           <DetailModal
@@ -502,7 +577,21 @@ function CampaignsSection({
               <div>
                 <h4 className="text-base font-semibold text-gray-900">Ad Sets & Ads</h4>
                 <p className="mt-1 text-xs text-gray-500">All ad sets under this campaign and their ads</p>
-                {loadingRelated ? (
+
+                <div className="mt-3 grid grid-cols-2 gap-2.5 sm:max-w-sm">
+                  <div className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5">
+                    <p className="text-[11px] font-medium uppercase tracking-wide text-gray-500">Ad Sets</p>
+                    <p className="mt-1 text-xl font-bold text-gray-900">{adSetCount}</p>
+                  </div>
+                  <div className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5">
+                    <p className="text-[11px] font-medium uppercase tracking-wide text-gray-500">Ads</p>
+                    <p className="mt-1 text-xl font-bold text-gray-900">{adCount}</p>
+                  </div>
+                </div>
+
+                {modalDetailsError ? (
+                  <p className="mt-2 text-xs text-red-500">{modalDetailsError}</p>
+                ) : (loadingRelated || modalDetailsLoading) ? (
                   <p className="mt-2 text-xs text-gray-500">Loading ad sets...</p>
                 ) : relatedAdSets.length === 0 ? (
                   <p className="mt-2 text-xs text-gray-500">No ad sets found for this campaign.</p>

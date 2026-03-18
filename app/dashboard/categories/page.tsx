@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect, useRef, type DragEvent } from 'react';
+import { useState, useEffect, useRef, type DragEvent, type PointerEvent as ReactPointerEvent } from 'react';
 import AdminShell from '../_components/AdminShell';
 import { useConfirm } from '@/lib/admin/confirm';
 import { ServiceCategoryItem } from '@/lib/admin/store';
 import { CategoryIcon, ICON_OPTIONS } from '@/lib/admin/categoryIcons';
-import { Plus, Pencil, Trash2, X, Save, GripVertical, ChevronUp, ChevronDown, Image as ImageIcon } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Save, ChevronUp, ChevronDown, Image as ImageIcon } from 'lucide-react';
 import ImageUpload from '@/components/ui/ImageUpload';
 import { toast } from 'sonner';
 
@@ -66,6 +66,9 @@ export default function CategoriesPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [dragReordered, setDragReordered] = useState(false);
+  const [isCoarsePointer, setIsCoarsePointer] = useState(false);
+  const [touchDragIdx, setTouchDragIdx] = useState<number | null>(null);
+  const touchStartYRef = useRef(0);
 
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
@@ -82,6 +85,15 @@ export default function CategoriesPage() {
   useEffect(() => {
     itemsRef.current = items;
   }, [items]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const media = window.matchMedia('(pointer: coarse)');
+    const update = () => setIsCoarsePointer(media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
 
   const { confirm } = useConfirm();
 
@@ -165,6 +177,47 @@ export default function CategoriesPage() {
     setDragIdx(null);
     setDragReordered(false);
     if (!shouldPersist) return;
+    await persistOrder(itemsRef.current);
+  };
+
+  const moveAt = (from: number, to: number) => {
+    setItems(prev => {
+      if (from < 0 || from >= prev.length || to < 0 || to >= prev.length || from === to) return prev;
+      const arr = [...prev];
+      const [moved] = arr.splice(from, 1);
+      arr.splice(to, 0, moved);
+      itemsRef.current = arr;
+      return arr;
+    });
+  };
+
+  const onHandlePointerDown = (e: ReactPointerEvent<HTMLButtonElement>, index: number) => {
+    if (!isCoarsePointer) return;
+    setTouchDragIdx(index);
+    touchStartYRef.current = e.clientY;
+  };
+
+  const onHandlePointerMove = (e: ReactPointerEvent<HTMLButtonElement>) => {
+    if (!isCoarsePointer || touchDragIdx === null) return;
+    const deltaY = e.clientY - touchStartYRef.current;
+    const threshold = 26;
+
+    if (deltaY > threshold && touchDragIdx < itemsRef.current.length - 1) {
+      const next = touchDragIdx + 1;
+      moveAt(touchDragIdx, next);
+      setTouchDragIdx(next);
+      touchStartYRef.current = e.clientY;
+    } else if (deltaY < -threshold && touchDragIdx > 0) {
+      const next = touchDragIdx - 1;
+      moveAt(touchDragIdx, next);
+      setTouchDragIdx(next);
+      touchStartYRef.current = e.clientY;
+    }
+  };
+
+  const onHandlePointerUp = async () => {
+    if (!isCoarsePointer || touchDragIdx === null) return;
+    setTouchDragIdx(null);
     await persistOrder(itemsRef.current);
   };
 
@@ -379,22 +432,32 @@ export default function CategoriesPage() {
             {items.map((item, index) => (
               <li
                 key={item.id}
-                draggable
+                draggable={!isCoarsePointer}
                 onDragStart={e => onDragStart(e, index)}
                 onDragOver={e => onDragOver(e, index)}
                 onDragEnd={onDragEnd}
                 className={`flex items-center gap-4 px-5 py-3.5 hover:bg-gray-50 transition-colors group ${
-                  dragIdx === index ? 'opacity-60 bg-gray-50' : ''
+                  dragIdx === index || touchDragIdx === index ? 'opacity-60 bg-gray-50' : ''
                 }`}
               >
                 {/* Grip */}
                 <button
                   type="button"
                   data-drag-handle="true"
-                  className="cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 shrink-0 p-0.5 rounded"
-                  title="Drag to reorder"
+                  onPointerDown={(e) => onHandlePointerDown(e, index)}
+                  onPointerMove={onHandlePointerMove}
+                  onPointerUp={onHandlePointerUp}
+                  onPointerCancel={onHandlePointerUp}
+                  onPointerLeave={onHandlePointerUp}
+                  className="cursor-grab active:cursor-grabbing shrink-0 p-1 rounded text-gray-300 hover:text-gray-500 hover:bg-gray-100"
+                  title={isCoarsePointer ? 'Drag up/down to reorder' : 'Drag to reorder'}
+                  aria-label="Drag to reorder"
                 >
-                  <GripVertical className="w-4 h-4 pointer-events-none" />
+                  <span className="pointer-events-none grid grid-cols-2 gap-0.5">
+                    {Array.from({ length: 6 }).map((_, dotIndex) => (
+                      <span key={dotIndex} className="h-0.5 w-0.5 rounded-full bg-current" />
+                    ))}
+                  </span>
                 </button>
 
                 {/* Icon preview */}
@@ -414,7 +477,7 @@ export default function CategoriesPage() {
                 </div>
 
                 {/* Reorder */}
-                <div className="flex flex-col gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="hidden sm:flex flex-col gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button onClick={() => move(index, -1)} disabled={index === 0} className="p-0.5 rounded hover:bg-gray-200 disabled:opacity-20">
                     <ChevronUp className="w-3.5 h-3.5 text-gray-500" />
                   </button>
@@ -424,11 +487,11 @@ export default function CategoriesPage() {
                 </div>
 
                 {/* Actions */}
-                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={() => openEdit(item)} className="p-2 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors">
+                <div className="flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                  <button onClick={() => openEdit(item)} className="relative z-10 p-2 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors">
                     <Pencil className="w-3.5 h-3.5" />
                   </button>
-                  <button onClick={() => setDeleteId(item.id)} className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors">
+                  <button onClick={() => setDeleteId(item.id)} className="relative z-10 p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors">
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>

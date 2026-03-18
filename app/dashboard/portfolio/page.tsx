@@ -218,7 +218,18 @@ export default function PortfolioPage() {
                 </div>
                 <div className="sm:col-span-2">
                   <label className="block text-xs font-medium text-gray-500 mb-1.5">Category</label>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="sm:hidden">
+                    <select
+                      value={editing.category}
+                      onChange={(e) => setEditing({ ...editing, category: e.target.value })}
+                      className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400"
+                    >
+                      {CATEGORIES.map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="hidden sm:flex sm:flex-wrap sm:gap-2">
                     {CATEGORIES.map(c => (
                       <button
                         key={c}
@@ -362,20 +373,38 @@ export default function PortfolioPage() {
       </div>
 
       {/* Filter tabs */}
-      <div className="flex gap-2 flex-wrap mb-6">
-        {['All', ...CATEGORIES].map(cat => (
-          <button
-            key={cat}
-            onClick={() => setFilterCat(cat)}
-            className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all ${
-              filterCat === cat
-                ? 'bg-gray-900 text-white'
-                : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-400'
-            }`}
+      <div className="mb-6">
+        <div className="sm:hidden">
+          <label htmlFor="portfolio-admin-filter" className="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-500">
+            Filter Category
+          </label>
+          <select
+            id="portfolio-admin-filter"
+            value={filterCat}
+            onChange={(e) => setFilterCat(e.target.value)}
+            className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400"
           >
-            {cat}
-          </button>
-        ))}
+            {['All', ...CATEGORIES].map((cat) => (
+              <option key={cat} value={cat}>{cat}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="hidden sm:flex sm:flex-wrap sm:gap-2">
+          {['All', ...CATEGORIES].map(cat => (
+            <button
+              key={cat}
+              onClick={() => setFilterCat(cat)}
+              className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all ${
+                filterCat === cat
+                  ? 'bg-gray-900 text-white'
+                  : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-400'
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
       </div>
 
       {loading ? (

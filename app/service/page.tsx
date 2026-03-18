@@ -20,32 +20,37 @@ interface ServiceCategoryProps {
   title: string;
   description: string;
   services: string[];
-  gradient: string;
+  tone: {
+    cardBg: string;
+    iconBg: string;
+    iconColor: string;
+    border: string;
+  };
 }
 
-const ServiceCategory: React.FC<ServiceCategoryProps> = ({ iconType, title, description, services, gradient }) => {
+const ServiceCategory: React.FC<ServiceCategoryProps> = ({ iconType, title, description, services, tone }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300">
+    <div className={`bg-white border rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 ${tone.border}`}>
       <div
-        className={`p-6 bg-linear-to-br ${gradient} cursor-pointer`}
+        className={`p-6 cursor-pointer ${tone.cardBg}`}
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-4 flex-1">
             <div className="shrink-0">
-              <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-md">
-                <CategoryIcon iconType={iconType} className="w-8 h-8 text-white" />
+              <div className={`w-14 h-14 rounded-xl flex items-center justify-center shadow-sm ${tone.iconBg}`}>
+                <CategoryIcon iconType={iconType} className={`w-8 h-8 ${tone.iconColor}`} />
               </div>
             </div>
             <div className="flex-1">
-              <h3 className="text-xl font-bold text-white mb-2">{title}</h3>
-              <p className="text-white/90 leading-relaxed text-sm">{description}</p>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">{title}</h3>
+              <p className="text-gray-600 leading-relaxed text-sm">{description}</p>
             </div>
           </div>
           <button className={`ml-4 mt-2 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
-            <ChevronDown className="w-6 h-6 text-white" />
+            <ChevronDown className="w-6 h-6 text-gray-500" />
           </button>
         </div>
       </div>
@@ -78,8 +83,16 @@ export default function ServicePage() {
       .finally(() => setServiceLoading(false));
   }, []);
 
+  const lightTones = [
+    { cardBg: 'bg-red-50', iconBg: 'bg-red-100', iconColor: 'text-red-600', border: 'border-red-100' },
+    { cardBg: 'bg-amber-50', iconBg: 'bg-amber-100', iconColor: 'text-amber-700', border: 'border-amber-100' },
+    { cardBg: 'bg-sky-50', iconBg: 'bg-sky-100', iconColor: 'text-sky-700', border: 'border-sky-100' },
+    { cardBg: 'bg-emerald-50', iconBg: 'bg-emerald-100', iconColor: 'text-emerald-700', border: 'border-emerald-100' },
+    { cardBg: 'bg-violet-50', iconBg: 'bg-violet-100', iconColor: 'text-violet-700', border: 'border-violet-100' },
+  ] as const;
+
   return (
-    <main className="min-h-screen pb-16 lg:pb-0">
+    <main className="min-h-screen bg-gray-50 pb-0">
       {/* Hero Section */}
       <section className="pt-8 pb-12 sm:py-16 lg:pt-28 lg:pb-14 bg-linear-to-br from-red-50 via-white to-rose-50">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
@@ -134,7 +147,7 @@ export default function ServicePage() {
                     title={category.title}
                     description={category.description}
                     services={category.services}
-                    gradient={category.gradient}
+                    tone={lightTones[index % lightTones.length]}
                   />
                 </div>
               ))}
@@ -144,7 +157,7 @@ export default function ServicePage() {
       </section>
 
       {/* Process Section */}
-      <section className="pt-12 pb-16 lg:pt-12 lg:pb-20 bg-gray-50">
+      <section className="pt-12 pb-[calc(3.75rem+env(safe-area-inset-bottom))] lg:pt-12 lg:pb-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="text-center mb-16 page-reveal page-delay-2">
             <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">

@@ -69,94 +69,102 @@ export const Slider: React.FC<SliderProps> = ({
   return (
     <div className={`relative w-full ${height} min-h-50 overflow-hidden rounded-xl border border-gray-200 bg-gray-900`}>
       <div
-          key={currentIndex}
-          style={{ touchAction: 'pan-y' }}
-          onPointerDown={(e) => {
-            pointerStartRef.current = { x: e.clientX, y: e.clientY };
+        style={{ touchAction: 'pan-y' }}
+        onPointerDown={(e) => {
+          pointerStartRef.current = { x: e.clientX, y: e.clientY };
+          suppressTapRef.current = false;
+        }}
+        onPointerMove={(e) => {
+          if (!pointerStartRef.current) return;
+          const dx = Math.abs(e.clientX - pointerStartRef.current.x);
+          const dy = Math.abs(e.clientY - pointerStartRef.current.y);
+          // If pointer has moved enough, treat as swipe/drag and suppress tap navigation.
+          if (dx > 6 || dy > 6) suppressTapRef.current = true;
+        }}
+        onPointerUp={(e) => {
+          if (!pointerStartRef.current) return;
+          const offsetX = e.clientX - pointerStartRef.current.x;
+          const offsetY = e.clientY - pointerStartRef.current.y;
+          const swipe = swipePower(offsetX, 1);
+
+          if (Math.abs(offsetY) < Math.abs(offsetX)) {
+            if (swipe < -swipeConfidenceThreshold) paginate(1);
+            if (swipe > swipeConfidenceThreshold) paginate(-1);
+          }
+
+          pointerStartRef.current = null;
+          window.setTimeout(() => {
             suppressTapRef.current = false;
+          }, 140);
+        }}
+        onClick={() => {
+          if (suppressTapRef.current) return;
+          const link = slides[currentIndex].ctaLink;
+          if (link) window.location.href = link;
+        }}
+        className={`absolute inset-0 ${slides[currentIndex].ctaLink ? 'cursor-pointer' : ''}`}
+      >
+        {/* Slide Background Image track with horizontal move animation */}
+        <div
+          className="flex h-full transition-transform duration-500 ease-out"
+          style={{
+            width: `${slides.length * 100}%`,
+            transform: `translateX(-${(currentIndex * 100) / slides.length}%)`,
           }}
-          onPointerMove={(e) => {
-            if (!pointerStartRef.current) return;
-            const dx = Math.abs(e.clientX - pointerStartRef.current.x);
-            const dy = Math.abs(e.clientY - pointerStartRef.current.y);
-            // If pointer has moved enough, treat as swipe/drag and suppress tap navigation.
-            if (dx > 6 || dy > 6) suppressTapRef.current = true;
-          }}
-          onPointerUp={(e) => {
-            if (!pointerStartRef.current) return;
-            const offsetX = e.clientX - pointerStartRef.current.x;
-            const offsetY = e.clientY - pointerStartRef.current.y;
-            const swipe = swipePower(offsetX, 1);
-
-            if (Math.abs(offsetY) < Math.abs(offsetX)) {
-              if (swipe < -swipeConfidenceThreshold) paginate(1);
-              if (swipe > swipeConfidenceThreshold) paginate(-1);
-            }
-
-            pointerStartRef.current = null;
-            window.setTimeout(() => {
-              suppressTapRef.current = false;
-            }, 140);
-          }}
-          onClick={() => {
-            if (suppressTapRef.current) return;
-            const link = slides[currentIndex].ctaLink;
-            if (link) window.location.href = link;
-          }}
-          className={`absolute w-full h-full transition-opacity duration-300 ${slides[currentIndex].ctaLink ? 'cursor-pointer' : ''}`}
         >
-          {/* Slide Background Image */}
-          <div className="relative w-full h-full">
-            {slides[currentIndex].image.startsWith('data:') ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={slides[currentIndex].image} alt={slides[currentIndex].title} className="w-full h-full object-cover" />
-            ) : (
-              <Image
-                src={slides[currentIndex].image}
-                alt={slides[currentIndex].title}
-                fill
-                sizes="100vw"
-                className="object-cover"
-                priority={currentIndex === 0}
-              />
-            )}
-            {/* Overlay — only shown when there's text content */}
-            {slides[currentIndex].title && (
-              <div className="absolute inset-0 bg-linear-to-r from-black/70 via-black/50 to-transparent" />
-            )}
-          </div>
+          {slides.map((slide, index) => (
+            <div key={slide.id ?? index} className="relative h-full" style={{ width: `${100 / slides.length}%` }}>
+              {slide.image.startsWith('data:') ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={slide.image} alt={slide.title} className="w-full h-full object-cover" />
+              ) : (
+                <Image
+                  src={slide.image}
+                  alt={slide.title}
+                  fill
+                  sizes="100vw"
+                  className="object-cover"
+                  priority={index === 0}
+                />
+              )}
+              {slide.title && (
+                <div className="absolute inset-0 bg-linear-to-r from-black/70 via-black/50 to-transparent" />
+              )}
+            </div>
+          ))}
+        </div>
 
-          {/* Slide Content */}
-          <div className="absolute inset-0 hidden md:flex items-center">
-            <div className="max-w-7xl mx-auto px-6 lg:px-8 w-full">
-              <div className="max-w-2xl">
-                {slides[currentIndex].badge && (
-                  <div className="inline-flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-full text-sm font-semibold mb-4 page-reveal is-visible">
-                    ✓ {slides[currentIndex].badge}
-                  </div>
-                )}
-                
-                <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight text-wave is-visible">
-                  {slides[currentIndex].title}
-                </h2>
+        {/* Slide Content */}
+        <div className="absolute inset-0 hidden md:flex items-center">
+          <div className="max-w-7xl mx-auto px-6 lg:px-8 w-full">
+            <div className="max-w-2xl">
+              {slides[currentIndex].badge && (
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-full text-sm font-semibold mb-4 page-reveal is-visible">
+                  ✓ {slides[currentIndex].badge}
+                </div>
+              )}
 
-                <p className="text-lg md:text-xl text-gray-200 mb-8 leading-relaxed text-wave is-visible">
-                  {slides[currentIndex].description}
-                </p>
+              <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight text-wave is-visible">
+                {slides[currentIndex].title}
+              </h2>
 
-                {slides[currentIndex].ctaText && slides[currentIndex].ctaLink && (
-                  <a
-                    href={slides[currentIndex].ctaLink}
-                    className="inline-flex items-center gap-2 px-8 py-4 bg-linear-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold rounded-lg transition-all shadow-lg hover:shadow-xl"
-                  >
-                    {slides[currentIndex].ctaText}
-                    <ChevronRight className="w-5 h-5" />
-                  </a>
-                )}
-              </div>
+              <p className="text-lg md:text-xl text-gray-200 mb-8 leading-relaxed text-wave is-visible">
+                {slides[currentIndex].description}
+              </p>
+
+              {slides[currentIndex].ctaText && slides[currentIndex].ctaLink && (
+                <a
+                  href={slides[currentIndex].ctaLink}
+                  className="inline-flex items-center gap-2 px-8 py-4 bg-linear-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold rounded-lg transition-all shadow-lg hover:shadow-xl"
+                >
+                  {slides[currentIndex].ctaText}
+                  <ChevronRight className="w-5 h-5" />
+                </a>
+              )}
             </div>
           </div>
         </div>
+      </div>
 
       {/* Navigation Arrows */}
       {showControls && slides.length > 1 && (

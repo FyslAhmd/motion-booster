@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
+import { motion } from 'framer-motion';
 
 /* ── helpers ─────────────────────────────────────────────── */
 function parse(val: string): { num: number; suffix: string } | null {
@@ -130,11 +131,25 @@ export const AchievementStats = () => {
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-5">
-            {stats.map((stat, index) => (
-              <div key={stat.id} className={index % 2 === 0 ? 'card-reveal-left' : 'card-reveal-right'} style={{ animationDelay: `${Math.min(index * 60, 250)}ms` }}>
-                <StatCard {...stat} started={started} delay={Math.min(index * 0.06, 0.25)} />
-              </div>
-            ))}
+            {stats.map((stat, index) => {
+              const isLeftCard = index % 2 === 0;
+              const delaySec = Math.min(index * 0.08, 0.32);
+
+              return (
+                <motion.div
+                  key={stat.id}
+                  initial={{ opacity: 0, x: isLeftCard ? -32 : 32 }}
+                  animate={
+                    started
+                      ? { opacity: 1, x: 0 }
+                      : { opacity: 0, x: isLeftCard ? -32 : 32 }
+                  }
+                  transition={{ duration: 0.65, ease: 'easeOut', delay: delaySec }}
+                >
+                  <StatCard {...stat} started={started} delay={Math.min(index * 0.06, 0.25)} />
+                </motion.div>
+              );
+            })}
           </div>
         )}
       </div>

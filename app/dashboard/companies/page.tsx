@@ -236,7 +236,7 @@ export default function AdminCompaniesPage() {
                     <div className="flex items-center gap-3">
                       {company.logoImage && (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={company.logoImage} alt={company.name} className="h-10 object-contain border border-gray-100 rounded-lg px-2 bg-gray-50" />
+                        <img src={company.logoImage} alt={company.name} className="h-10 w-auto object-contain border border-gray-100 rounded-lg bg-gray-50 p-1.5" />
                       )}
                       <div className="flex-1">
                         <ImageUpload

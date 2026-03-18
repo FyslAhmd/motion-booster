@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 
 interface FeatureCardProps {
   icon: React.ReactNode;
@@ -19,9 +20,13 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, description, ico
     >
       {/* Icon */}
       <div className={`w-12 h-12 sm:w-16 sm:h-16 ${iconColor} rounded-xl sm:rounded-2xl flex items-center justify-center mb-3 sm:mb-6 transition-transform duration-300`}>
-        <div className="group-hover:animate-flip-horizontal">
+        <motion.div
+          whileHover={{ rotateY: 180 }}
+          transition={{ duration: 0.5, ease: 'easeInOut' }}
+          style={{ transformStyle: 'preserve-3d' }}
+        >
           {icon}
-        </div>
+        </motion.div>
       </div>
       
       {/* Title */}

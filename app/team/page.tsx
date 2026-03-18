@@ -29,7 +29,7 @@ export default function TeamPage() {
   const rest = filtered.filter(m => m.id !== featured?.id);
 
   return (
-    <main className="min-h-screen bg-gray-50 pb-20 lg:pb-0 lg:pt-32 page-reveal">
+    <main className="min-h-screen bg-gray-50 pb-[calc(2.2rem+env(safe-area-inset-bottom))] lg:pb-0 lg:pt-32 page-reveal">
       {/* Page Header */}
       <div className="bg-white sticky top-0 z-30 shadow-sm page-reveal page-delay-1">
         <div className="flex items-center gap-3 px-4 py-4">

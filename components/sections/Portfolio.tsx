@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ExternalLink } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface PortfolioItem {
   id: string;
@@ -78,16 +79,19 @@ export const Portfolio = () => {
             </div>
           ))}
           {!loading && filteredItems.map((item, index) => (
-            <div
+            <motion.div
               key={item.id}
+              initial={{ opacity: 0, x: index % 2 === 0 ? -34 : 34 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, amount: 0.2 }}
+              transition={{ duration: 0.6, ease: 'easeOut', delay: Math.min(index * 0.08, 0.32) }}
               onClick={() => {
                 // Mobile: tap card to reveal Live Preview button.
                 if (typeof window !== 'undefined' && window.innerWidth < 768) {
                   setMobilePreviewId((prev) => (prev === item.id ? null : item.id));
                 }
               }}
-              className={`portfolio-card group relative bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 ${index % 2 === 0 ? 'card-reveal-left' : 'card-reveal-right'}`}
-              style={{ animationDelay: `${Math.min(index * 70, 300)}ms` }}
+              className="portfolio-card group relative bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300"
             >
               {/* Cover Image or Gradient */}
               <div className="relative h-48 md:h-56 overflow-hidden">
@@ -128,7 +132,7 @@ export const Portfolio = () => {
                 <h3 className="font-bold text-gray-900 mb-1">{item.title}</h3>
                 <p className="text-gray-600 text-sm line-clamp-2">{item.description}</p>
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
 

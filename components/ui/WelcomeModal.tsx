@@ -56,7 +56,7 @@ export const WelcomeModal = () => {
       // noop
     }
 
-    fetch('/api/v1/cms/site-settings')
+    fetch('/api/v1/cms/site-settings', { cache: 'no-store' })
       .then((r) => r.json())
       .then((data) => {
         applySettings(data);

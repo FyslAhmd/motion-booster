@@ -19,6 +19,18 @@ export default function Home() {
       <div className="home-block-categories page-reveal page-delay-1">
         <CategorySlider />
       </div>
+      <div className="lg:hidden mt-3 px-4 sm:px-6 pb-2 text-center page-reveal page-delay-1">
+        <h2 className="text-[24px] font-extrabold leading-[1.2] text-gray-900 text-wave">
+          Grow your business identity with
+          <br />
+          <span className="text-red-500">Motion Booster</span>
+        </h2>
+        <p className="mt-2.5 text-[13px] leading-relaxed text-gray-600 text-wave">
+          We provide a complete suite of digital solutions, including tailored digital marketing, eye-catching
+          graphic design, dynamic animation, as well as expert web and app development - all designed to
+          elevate your brand in the digital world.
+        </p>
+      </div>
       <div className="home-block-popular page-reveal page-delay-2">
         <PopularCourses />
       </div>

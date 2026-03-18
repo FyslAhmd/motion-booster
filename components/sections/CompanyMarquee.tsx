@@ -8,6 +8,13 @@ interface CompanyItem {
   logoImage?: string | null;
 }
 
+type RawCompanyItem = {
+  id?: string;
+  name?: string;
+  logoImage?: string | null;
+  logo_image?: string | null;
+};
+
 export const CompanyMarquee = () => {
   const [companies, setCompanies] = useState<CompanyItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -18,12 +25,21 @@ export const CompanyMarquee = () => {
   const dragStartXRef = useRef(0);
   const dragStartScrollRef = useRef(0);
 
+  const normalizeCompanies = (data: unknown): CompanyItem[] => {
+    if (!Array.isArray(data)) return [];
+    return data
+      .map((row: RawCompanyItem) => ({
+        id: String(row?.id || ''),
+        name: String(row?.name || '').trim(),
+        logoImage: (row?.logoImage || row?.logo_image || null) as string | null,
+      }))
+      .filter((row) => row.id && row.name);
+  };
+
   const loadCompanies = () => {
     fetch('/api/v1/cms/companies', { cache: 'no-store' })
       .then(r => r.json())
-      .then((data) => {
-        if (Array.isArray(data)) setCompanies(data);
-      })
+      .then((data) => setCompanies(normalizeCompanies(data)))
       .catch(() => {})
       .finally(() => setLoading(false));
   };
@@ -35,11 +51,13 @@ export const CompanyMarquee = () => {
   useEffect(() => {
     const onStorage = (e: StorageEvent) => {
       if (e.key === 'companies:lastUpdated') {
+        setLoading(true);
         loadCompanies();
       }
     };
 
     const onWindowFocus = () => {
+      setLoading(true);
       loadCompanies();
     };
 
@@ -160,7 +178,7 @@ export const CompanyMarquee = () => {
                         <img
                           src={company.logoImage}
                           alt={company.name}
-                          className="h-8 md:h-10 w-14 md:w-20 lg:w-24 object-cover rounded-sm transition-all"
+                          className="h-8 md:h-10 lg:h-11 w-auto object-contain rounded-sm transition-all"
                         />
                       ) : (
                         <span className="text-2xl md:text-3xl lg:text-4xl font-extrabold italic text-gray-900 hover:text-red-500 transition-colors whitespace-nowrap">

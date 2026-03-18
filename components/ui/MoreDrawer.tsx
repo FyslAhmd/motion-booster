@@ -18,11 +18,12 @@ const menuItems = [
   { label: 'About Us', icon: Info, href: '/about' },
   { label: 'Our Team', icon: Users, href: '/team' },
   { label: 'Our Services', icon: Briefcase, href: '/service' },
-  { label: 'Portfolio', icon: Image, href: '#' },
-  { label: 'FAQ', icon: HelpCircle, href: '#faq' },
+  { label: 'Blog', icon: FileText, href: '/blog' },
+  { label: 'Portfolio', icon: Image, href: '/portfolio' },
+  { label: 'FAQ', icon: HelpCircle, href: '/#faq' },
   { label: 'Contact Us', icon: Phone, href: '/contact' },
   { label: 'Privacy Policy', icon: FileText, href: '/privacy-policy' },
-  { label: 'Feedback & Suggestions', icon: MessageCircle, href: '#' },
+  { label: 'Feedback & Suggestions', icon: MessageCircle, href: '/contact?topic=feedback' },
 ];
 
 export const MoreDrawer = ({ open, onClose }: MoreDrawerProps) => {

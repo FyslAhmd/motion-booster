@@ -159,10 +159,14 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
   const [modalLoading, setModalLoading] = useState(false);
   const [modalError, setModalError] = useState('');
   const [insightDatePreset, setInsightDatePreset] = useState('maximum');
+  const [customSince, setCustomSince] = useState('');
+  const [customUntil, setCustomUntil] = useState('');
+  const [showCustomRange, setShowCustomRange] = useState(false);
   const [campaignInsights, setCampaignInsights] = useState<any>(null);
   const [insightsLoading, setInsightsLoading] = useState(false);
   const [insightsError, setInsightsError] = useState('');
   const [mounted, setMounted] = useState(false);
+  const customSinceRef = useRef<HTMLInputElement>(null);
 
   // Assignment tracking: metaObjectId → { id, fullName, phone, username }
   const [assignments, setAssignments] = useState<Record<string, { id: string; fullName: string; phone: string; username: string } | null>>({});
@@ -388,13 +392,26 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
     setCampaignInsights(null);
     setInsightsError('');
     setInsightDatePreset('maximum');
+    setCustomSince('');
+    setCustomUntil('');
+    setShowCustomRange(false);
   }, []);
 
-  const fetchInsights = async (campaignId: string, preset: string) => {
+  const fetchInsights = async (campaignId: string, preset: string, options?: { since?: string; until?: string }) => {
     setInsightsLoading(true);
     setInsightsError('');
     try {
-      const res = await fetch(`/api/v1/meta/insights?type=single_campaign&campaign_id=${campaignId}&date_preset=${preset}`);
+      const params = new URLSearchParams({
+        type: 'single_campaign',
+        campaign_id: campaignId,
+        date_preset: preset,
+      });
+      if (options?.since && options?.until) {
+        params.set('since', options.since);
+        params.set('until', options.until);
+      }
+
+      const res = await fetch(`/api/v1/meta/insights?${params.toString()}`);
       const json = await res.json();
       if (json.success && Array.isArray(json.data) && json.data.length > 0) {
         setCampaignInsights(json.data[0]);
@@ -760,11 +777,25 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
                       { value: 'last_7d', label: '7 Days' },
                       { value: 'last_30d', label: '30 Days' },
                       { value: 'maximum', label: 'Maximum' },
+                      { value: 'custom', label: 'Custom' },
                     ].map((tab) => (
                       <button
                         key={tab.value}
                         type="button"
                         onClick={() => {
+                          if (tab.value === 'custom') {
+                            setInsightDatePreset('custom');
+                            setShowCustomRange(true);
+                            requestAnimationFrame(() => {
+                              if (customSinceRef.current) {
+                                const picker = customSinceRef.current as HTMLInputElement & { showPicker?: () => void };
+                                if (typeof picker.showPicker === 'function') picker.showPicker();
+                                else picker.focus();
+                              }
+                            });
+                            return;
+                          }
+                          setShowCustomRange(false);
                           setInsightDatePreset(tab.value);
                           fetchInsights(selectedCampaign.id, tab.value);
                         }}
@@ -779,6 +810,59 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
                     ))}
                   </div>
                 </div>
+
+                {showCustomRange && (
+                  <div className="mb-4 rounded-xl border border-gray-200 bg-gray-50 p-3">
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      <label className="text-xs font-medium text-gray-600">
+                        From
+                        <input
+                          ref={customSinceRef}
+                          type="date"
+                          value={customSince}
+                          onChange={(e) => setCustomSince(e.target.value)}
+                          className="mt-1 block w-full rounded-lg border border-gray-200 bg-white px-2.5 py-2 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-red-300"
+                        />
+                      </label>
+                      <label className="text-xs font-medium text-gray-600">
+                        To
+                        <input
+                          type="date"
+                          value={customUntil}
+                          onChange={(e) => setCustomUntil(e.target.value)}
+                          className="mt-1 block w-full rounded-lg border border-gray-200 bg-white px-2.5 py-2 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-red-300"
+                        />
+                      </label>
+                    </div>
+                    <div className="mt-2 flex items-center justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowCustomRange(false);
+                          setInsightDatePreset('maximum');
+                        }}
+                        className="rounded-md px-2.5 py-1.5 text-xs font-medium text-gray-500 hover:bg-gray-100"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        disabled={!customSince || !customUntil}
+                        onClick={() => {
+                          if (!customSince || !customUntil) return;
+                          if (customSince > customUntil) {
+                            toast.error('From date cannot be after To date.');
+                            return;
+                          }
+                          fetchInsights(selectedCampaign.id, 'custom', { since: customSince, until: customUntil });
+                        }}
+                        className="rounded-md bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        Apply
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 {insightsLoading ? (
                   <div className="flex items-center justify-center py-6 text-sm text-gray-500">

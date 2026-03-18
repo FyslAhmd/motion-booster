@@ -5,23 +5,57 @@ import { use, useEffect, useState } from 'react';
 import { ChevronLeft, CheckCircle2, Building2 } from 'lucide-react';
 import { TeamMemberItem } from '@/lib/admin/store';
 
+type CompanyItem = {
+  name?: string;
+  logoImage?: string | null;
+  logo_image?: string | null;
+};
+
 export default function TeamMemberPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
   const [member, setMember] = useState<TeamMemberItem | null | undefined>(undefined);
+  const [companyLogoByName, setCompanyLogoByName] = useState<Record<string, string>>({});
+
+  const normalizeName = (value: string) => value.trim().toLowerCase().replace(/\s+/g, ' ');
 
   useEffect(() => {
     fetch(`/api/v1/cms/team/${id}`)
       .then(r => r.ok ? r.json() : null)
       .then(data => setMember(data ?? null))
       .catch(() => setMember(null));
+
+    fetch('/api/v1/cms/companies', { cache: 'no-store' })
+      .then(r => (r.ok ? r.json() : []))
+      .then((companies: CompanyItem[]) => {
+        if (!Array.isArray(companies)) {
+          setCompanyLogoByName({});
+          return;
+        }
+
+        const next: Record<string, string> = {};
+        companies.forEach((item) => {
+          const name = typeof item?.name === 'string' ? normalizeName(item.name) : '';
+          const logo =
+            typeof item?.logoImage === 'string' && item.logoImage.trim()
+              ? item.logoImage.trim()
+              : typeof item?.logo_image === 'string' && item.logo_image.trim()
+                ? item.logo_image.trim()
+                : '';
+
+          if (name && logo) next[name] = logo;
+        });
+
+        setCompanyLogoByName(next);
+      })
+      .catch(() => setCompanyLogoByName({}));
   }, [id]);
 
   if (member === undefined) return null; // loading
   if (member === null) return notFound();
 
   return (
-    <main className="min-h-screen bg-white pb-20 lg:pb-0 lg:pt-32">
+    <main className="min-h-screen bg-white pb-[calc(4rem+env(safe-area-inset-bottom))] lg:pb-0 lg:pt-32">
       {/* Header — mobile only */}
       <div className="lg:hidden bg-white sticky top-0 z-30 border-b border-gray-100">
         <div className="flex items-center gap-3 px-4 py-4">
@@ -35,7 +69,7 @@ export default function TeamMemberPage({ params }: { params: Promise<{ id: strin
         </div>
       </div>
 
-      <div className="px-4 pt-6 pb-10 max-w-xl mx-auto lg:max-w-3xl space-y-4">
+      <div className="px-4 pt-6 pb-4 max-w-xl mx-auto lg:max-w-3xl space-y-4">
         {/* Profile Card */}
         <div className="flex items-center gap-4">
           {/* Avatar */}
@@ -121,17 +155,25 @@ export default function TeamMemberPage({ params }: { params: Promise<{ id: strin
           <div className="bg-[#f5f4ef] rounded-2xl p-5">
             <h3 className="text-base font-bold text-gray-900 mb-4">Work Place</h3>
             <div className="grid grid-cols-2 gap-3">
-              {member.workPlaces.filter(Boolean).map((place, i) => (
+              {member.workPlaces.filter(Boolean).map((place, i) => {
+                const logoSrc = companyLogoByName[normalizeName(place)] || '';
+                return (
                 <div
                   key={i}
                   className="bg-white rounded-xl p-4 flex items-center gap-3 shadow-sm"
                 >
-                  <div className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
-                    <Building2 className="w-5 h-5 text-gray-400" />
-                  </div>
+                  {logoSrc ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={logoSrc} alt={place} className="h-6 w-auto max-w-18 object-contain shrink-0" />
+                  ) : (
+                    <div className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
+                      <Building2 className="w-5 h-5 text-gray-400" />
+                    </div>
+                  )}
                   <span className="text-gray-700 text-xs font-medium leading-tight">{place}</span>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}

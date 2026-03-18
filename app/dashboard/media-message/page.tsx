@@ -121,18 +121,18 @@ export default function MediaMessagePage() {
             <button
               type="button"
               onClick={() => setActiveChannel('mailbox')}
-              className={`rounded-xl border px-2 py-2.5 text-left transition-colors sm:rounded-2xl sm:px-3 sm:py-3 ${
+              className={`flex items-center justify-center rounded-xl border px-2 py-2.5 text-center transition-colors sm:rounded-2xl sm:px-3 sm:py-3 ${
                 activeChannel === 'mailbox'
                   ? 'border-red-200 bg-red-50'
                   : 'border-gray-200 bg-white hover:bg-gray-50'
               }`}
             >
-              <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
+              <div className="flex items-center justify-center gap-1.5 sm:gap-2">
                 <span className={`hidden rounded-lg p-1.5 sm:inline-flex ${activeChannel === 'mailbox' ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-600'}`}>
                   <Mail className="h-4 w-4" />
                 </span>
-                <div className="min-w-0">
-                  <p className="truncate text-xs font-semibold text-gray-900 sm:text-sm">Mailbox</p>
+                <div>
+                  <p className="text-center text-xs font-semibold text-gray-900 sm:text-sm">Mailbox</p>
                 </div>
               </div>
             </button>
@@ -140,18 +140,18 @@ export default function MediaMessagePage() {
             <button
               type="button"
               onClick={() => setActiveChannel('whatsapp')}
-              className={`rounded-xl border px-2 py-2.5 text-left transition-colors sm:rounded-2xl sm:px-3 sm:py-3 ${
+              className={`flex items-center justify-center rounded-xl border px-2 py-2.5 text-center transition-colors sm:rounded-2xl sm:px-3 sm:py-3 ${
                 activeChannel === 'whatsapp'
                   ? 'border-amber-200 bg-amber-50'
                   : 'border-gray-200 bg-white hover:bg-gray-50'
               }`}
             >
-              <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
+              <div className="flex items-center justify-center gap-1.5 sm:gap-2">
                 <span className={`hidden rounded-lg p-1.5 sm:inline-flex ${activeChannel === 'whatsapp' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600'}`}>
                   <Phone className="h-4 w-4" />
                 </span>
-                <div className="min-w-0">
-                  <p className="truncate text-xs font-semibold text-gray-900 sm:text-sm">WhatsApp</p>
+                <div>
+                  <p className="text-center text-xs font-semibold text-gray-900 sm:text-sm">WhatsApp</p>
                 </div>
               </div>
             </button>
@@ -159,18 +159,18 @@ export default function MediaMessagePage() {
             <button
               type="button"
               onClick={() => setActiveChannel('messenger')}
-              className={`rounded-xl border px-2 py-2.5 text-left transition-colors sm:rounded-2xl sm:px-3 sm:py-3 ${
+              className={`flex items-center justify-center rounded-xl border px-2 py-2.5 text-center transition-colors sm:rounded-2xl sm:px-3 sm:py-3 ${
                 activeChannel === 'messenger'
                   ? 'border-sky-200 bg-sky-50'
                   : 'border-gray-200 bg-white hover:bg-gray-50'
               }`}
             >
-              <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
+              <div className="flex items-center justify-center gap-1.5 sm:gap-2">
                 <span className={`hidden rounded-lg p-1.5 sm:inline-flex ${activeChannel === 'messenger' ? 'bg-sky-100 text-sky-700' : 'bg-gray-100 text-gray-600'}`}>
                   <MessageCircle className="h-4 w-4" />
                 </span>
-                <div className="min-w-0">
-                  <p className="truncate text-xs font-semibold text-gray-900 sm:text-sm">Messenger</p>
+                <div>
+                  <p className="text-center text-xs font-semibold text-gray-900 sm:text-sm">Messenger</p>
                 </div>
               </div>
             </button>

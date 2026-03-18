@@ -8,7 +8,6 @@ import {
   Layers,
   MessageCircle,
   UserCheck,
-  BellDot,
   TrendingUp,
   CalendarDays,
   Eye,
@@ -519,7 +518,7 @@ export default function DashboardPage() {
     {
       label: "Unseen Messages",
       value: unseenMessages ?? "—",
-      icon: BellDot,
+      icon: MessageCircle,
       color: unseenMessages ? "text-orange-600" : "text-gray-400",
       bg: unseenMessages ? "bg-orange-50" : "bg-gray-50",
       href: "/dashboard/chat",
@@ -545,7 +544,7 @@ export default function DashboardPage() {
     {
       label: "Unread Messages",
       value: clientUnread ?? "—",
-      icon: BellDot,
+      icon: MessageCircle,
       color: clientUnread ? "text-orange-600" : "text-gray-400",
       bg: clientUnread ? "bg-orange-50" : "bg-gray-50",
     },

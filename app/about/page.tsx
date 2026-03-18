@@ -183,14 +183,14 @@ export default function AboutPage() {
       </section>
 
       {/* Story Section */}
-      <section className="py-10 lg:py-14">
+      <section className="py-8 lg:py-14">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
+          <div className="grid lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-16 items-center">
             <div className="page-reveal">
-              <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6 text-wave">
+              <h2 className="text-3xl lg:text-5xl font-bold text-gray-900 mb-4 lg:mb-6 text-wave">
                 Our Story
               </h2>
-              <div className="space-y-4 text-gray-600 leading-relaxed">
+              <div className="space-y-3 text-gray-600 leading-relaxed">
                 <p>
                   Founded in 2020, we started as a small team of developers passionate about creating software that makes a real difference. What began in a small office has grown into a thriving software company.
                 </p>
@@ -205,11 +205,11 @@ export default function AboutPage() {
                 </p>
               </div>
             </div>
-            <div className="bg-red-100 rounded-3xl p-12 flex items-center justify-center page-reveal page-delay-1">
+            <div className="bg-red-100 rounded-2xl lg:rounded-3xl p-6 sm:p-8 lg:p-12 flex items-center justify-center page-reveal page-delay-1">
               <div className="text-center">
-                <div className="text-6xl mb-4">🚀</div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">Mission</h3>
-                <p className="text-gray-700 leading-relaxed">
+                <div className="text-5xl sm:text-6xl mb-3">🚀</div>
+                <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Mission</h3>
+                <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
                   Empower businesses with cutting-edge software solutions that drive innovation and growth.
                 </p>
               </div>

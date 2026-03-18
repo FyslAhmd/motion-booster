@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth/context';
-import { LayoutDashboard, User, Phone, Mail, Search, Home, Briefcase, Users, Menu, X, ArrowRight, LogOut } from 'lucide-react';
+import { LayoutDashboard, User, Phone, Mail, Search, Home, Briefcase, Users, Menu, X, ArrowRight, LogOut, Bell } from 'lucide-react';
 import { MoreDrawer } from '@/components/ui/MoreDrawer';
 import { toast } from 'sonner';
 
@@ -15,10 +15,12 @@ export const Header = () => {
   const [scrolled, setScrolled] = useState(false);
   const [showMoreDrawer, setShowMoreDrawer] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const { isAuthenticated, isLoading, user, logout } = useAuth();
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const notificationPanelRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
 
   useEffect(() => {
@@ -37,14 +39,14 @@ export const Header = () => {
   }, [showSearch]);
 
   useEffect(() => {
-    const shouldLockScroll = showSearch || showMoreDrawer;
+    const shouldLockScroll = showSearch || showMoreDrawer || showNotifications;
     document.documentElement.style.overflow = shouldLockScroll ? 'hidden' : '';
     document.body.style.overflow = shouldLockScroll ? 'hidden' : '';
     return () => {
       document.documentElement.style.overflow = '';
       document.body.style.overflow = '';
     };
-  }, [showSearch, showMoreDrawer]);
+  }, [showSearch, showMoreDrawer, showNotifications]);
 
   useEffect(() => {
     document.documentElement.classList.add('public-page');
@@ -59,11 +61,28 @@ export const Header = () => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setShowSearch(false);
+        setShowNotifications(false);
       }
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
   }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (notificationPanelRef.current && !notificationPanelRef.current.contains(event.target as Node)) {
+        setShowNotifications(false);
+      }
+    };
+
+    if (showNotifications) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showNotifications]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -113,17 +132,28 @@ export const Header = () => {
             </div>
           </Link>
 
-          {/* Icons: Search, Profile */}
+          {/* Icons: Search, Notifications, Profile */}
           <div className="flex items-center gap-3">
             <button
               onClick={() => {
+                setShowNotifications(false);
                 setShowSearch(true);
               }}
               className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
             >
               <Search className="w-5 h-5 text-gray-600" />
             </button>
-            <Link href={isAuthenticated ? "/dashboard/profile" : "/login"} className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors shadow-sm">
+            <button
+              onClick={() => {
+                setShowSearch(false);
+                setShowNotifications(prev => !prev);
+              }}
+              className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+              aria-label="Notifications"
+            >
+              <Bell className="w-5 h-5 text-gray-600" />
+            </button>
+            <Link href={isAuthenticated ? "/dashboard" : "/login"} className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors shadow-sm">
               {isAuthenticated ? (
                 userAvatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -290,11 +320,11 @@ export const Header = () => {
       </nav>
 
       {/* Bottom Navbar for Mobile */}
-      <nav className="fixed bottom-0 left-0 right-0 z-130 flex lg:hidden justify-around items-center px-2 pt-1 h-[calc(4rem+env(safe-area-inset-bottom))] pb-[env(safe-area-inset-bottom)] bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-lg">
+      <nav className="fixed bottom-0 left-0 right-0 z-130 flex lg:hidden justify-around items-center px-2 pt-1 h-[calc(4rem+env(safe-area-inset-bottom))] pb-[env(safe-area-inset-bottom)] bg-white border-t border-gray-200 shadow-lg">
         <Link
           href="/"
           className={`flex flex-col items-center justify-center gap-1 px-3 py-2 transition-colors flex-1 min-w-0 ${
-            pathname === '/' ? 'text-red-500' : 'text-gray-500 hover:text-red-500'
+            pathname === '/' ? 'text-red-500' : 'text-gray-500'
           }`}
         >
           <Home className="w-6 h-6" />
@@ -303,7 +333,7 @@ export const Header = () => {
         <Link
           href="/service"
           className={`flex flex-col items-center justify-center gap-1 px-3 py-2 transition-colors flex-1 min-w-0 ${
-            pathname === '/service' ? 'text-red-500' : 'text-gray-500 hover:text-red-500'
+            pathname === '/service' ? 'text-red-500' : 'text-gray-500'
           }`}
         >
           <Briefcase className="w-6 h-6" />
@@ -312,7 +342,7 @@ export const Header = () => {
         <Link
           href="/team"
           className={`flex flex-col items-center justify-center gap-1 px-3 py-2 transition-colors flex-1 min-w-0 ${
-            pathname === '/team' ? 'text-red-500' : 'text-gray-500 hover:text-red-500'
+            pathname === '/team' ? 'text-red-500' : 'text-gray-500'
           }`}
         >
           <Users className="w-6 h-6" />
@@ -320,7 +350,7 @@ export const Header = () => {
         </Link>
         <button
           onClick={() => setShowMoreDrawer(true)}
-          className="flex flex-col items-center justify-center gap-1 px-3 py-2 text-gray-500 hover:text-red-500 transition-colors flex-1 min-w-0"
+          className="flex flex-col items-center justify-center gap-1 px-3 py-2 text-gray-500 transition-colors flex-1 min-w-0"
         >
           <Menu className="w-6 h-6" />
           <span className="text-[10px] font-medium">More</span>
@@ -328,6 +358,51 @@ export const Header = () => {
       </nav>
 
       <MoreDrawer open={showMoreDrawer} onClose={() => setShowMoreDrawer(false)} />
+
+      {/* Mobile Notifications Panel */}
+      {showNotifications && (
+        <>
+          <div className="fixed inset-0 z-135 bg-black/30 lg:hidden" onClick={() => setShowNotifications(false)} />
+          <div ref={notificationPanelRef} className="fixed top-[4.6rem] left-3 right-3 z-140 rounded-2xl border border-gray-200 bg-white shadow-2xl lg:hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+              <h3 className="text-sm font-semibold text-gray-900">Notifications</h3>
+              <button onClick={() => setShowNotifications(false)} className="text-xs font-medium text-gray-500 hover:text-gray-700">Close</button>
+            </div>
+
+            {isAuthenticated ? (
+              <div className="max-h-[58vh] overflow-y-auto py-2">
+                {[
+                  { id: 'n1', title: 'New message received', text: 'You have a new chat message in dashboard inbox.', time: 'Just now' },
+                  { id: 'n2', title: 'Campaign update', text: 'One of your campaigns has a fresh status update.', time: '12m ago' },
+                  { id: 'n3', title: 'Support reply', text: 'Our team replied to your latest request.', time: '1h ago' },
+                ].map((item) => (
+                  <Link
+                    key={item.id}
+                    href="/dashboard/chat"
+                    onClick={() => setShowNotifications(false)}
+                    className="block px-4 py-3 hover:bg-gray-50 transition-colors"
+                  >
+                    <p className="text-sm font-medium text-gray-900">{item.title}</p>
+                    <p className="text-xs text-gray-600 mt-0.5">{item.text}</p>
+                    <p className="text-[11px] text-gray-400 mt-1">{item.time}</p>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="px-4 py-5">
+                <p className="text-sm text-gray-700 mb-3">Login করলে তোমার notification messages এখানে show হবে.</p>
+                <Link
+                  href="/login"
+                  onClick={() => setShowNotifications(false)}
+                  className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-3 py-2 text-xs font-semibold text-white hover:bg-red-700"
+                >
+                  Login to view
+                </Link>
+              </div>
+            )}
+          </div>
+        </>
+      )}
 
       {/* ── Search Panel (right → left slide) ── */}
       {/* Backdrop */}

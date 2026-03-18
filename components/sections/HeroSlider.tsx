@@ -53,15 +53,6 @@ export const HeroSlider = () => {
             height="h-[200px] md:h-[280px] lg:h-[320px]"
           />
         </div>
-
-        <div className="mt-4 space-y-2 card-reveal-right page-delay-1 text-center">
-          <h2 className="text-xl font-bold leading-tight text-gray-900 text-wave">
-            Grow your business identity with Motion Booster
-          </h2>
-          <p className="mx-auto max-w-3xl text-sm leading-relaxed text-gray-600 text-wave">
-            We provide a complete suite of digital solutions, including tailored digital marketing, eye-catching graphic design, dynamic animation, as well as expert web and app development - all designed to elevate your brand in the digital world.
-          </p>
-        </div>
       </div>
     </section>
   );

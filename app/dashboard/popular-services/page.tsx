@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, type DragEvent, type PointerEvent as ReactPointerEvent } from 'react';
 import AdminShell from '../_components/AdminShell';
 import { useConfirm } from '@/lib/admin/confirm';
 import { PopularServiceItem } from '@/lib/admin/store';
-import { Plus, Pencil, Trash2, X, Save, ChevronUp, ChevronDown, GripVertical, ExternalLink } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Save, ChevronUp, ChevronDown, ExternalLink } from 'lucide-react';
 import Image from 'next/image';
 import ImageUpload from '@/components/ui/ImageUpload';
 import { toast } from 'sonner';
@@ -82,6 +82,11 @@ export default function PopularServicesPage() {
   const [initialLoading, setInitialLoading] = useState(true);
   const [modalError, setModalError] = useState('');
   const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [dragReordered, setDragReordered] = useState(false);
+  const [isCoarsePointer, setIsCoarsePointer] = useState(false);
+  const [touchDragIdx, setTouchDragIdx] = useState<number | null>(null);
+  const touchStartYRef = useRef(0);
+  const itemsRef = useRef<PopularServiceItem[]>([]);
 
   useEffect(() => {
     fetch('/api/v1/cms/popular-services')
@@ -89,6 +94,19 @@ export default function PopularServicesPage() {
       .then((data) => { if (Array.isArray(data)) setItems(data); })
       .catch(() => toast.error('Failed to load services.'))
       .finally(() => setInitialLoading(false));
+  }, []);
+
+  useEffect(() => {
+    itemsRef.current = items;
+  }, [items]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const media = window.matchMedia('(pointer: coarse)');
+    const update = () => setIsCoarsePointer(media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
   }, []);
 
   const { confirm } = useConfirm();
@@ -146,6 +164,93 @@ export default function PopularServicesPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ids: arr.map(i => i.id) }),
     }).catch(() => toast.error('Reorder failed.'));
+  };
+
+  const persistOrder = async (orderedItems: PopularServiceItem[]) => {
+    await fetch('/api/v1/cms/popular-services/reorder', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: orderedItems.map(i => i.id) }),
+    }).catch(() => toast.error('Reorder failed.'));
+  };
+
+  const onDragStart = (e: DragEvent<HTMLLIElement>, index: number) => {
+    const fromHandle = (e.target as HTMLElement).closest('[data-drag-handle="true"]');
+    if (!fromHandle) {
+      e.preventDefault();
+      return;
+    }
+
+    setDragIdx(index);
+    setDragReordered(false);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', items[index]?.id || '');
+  };
+
+  const onDragOver = (e: DragEvent<HTMLLIElement>, overIndex: number) => {
+    e.preventDefault();
+    if (dragIdx === null || dragIdx === overIndex) return;
+
+    setItems(prev => {
+      const arr = [...prev];
+      const [moved] = arr.splice(dragIdx, 1);
+      arr.splice(overIndex, 0, moved);
+      itemsRef.current = arr;
+      return arr;
+    });
+
+    setDragIdx(overIndex);
+    setDragReordered(true);
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const onDragEnd = async () => {
+    const shouldPersist = dragReordered;
+    setDragIdx(null);
+    setDragReordered(false);
+    if (!shouldPersist) return;
+    await persistOrder(itemsRef.current);
+  };
+
+  const moveAt = (from: number, to: number) => {
+    setItems(prev => {
+      if (from < 0 || from >= prev.length || to < 0 || to >= prev.length || from === to) return prev;
+      const arr = [...prev];
+      const [moved] = arr.splice(from, 1);
+      arr.splice(to, 0, moved);
+      itemsRef.current = arr;
+      return arr;
+    });
+  };
+
+  const onHandlePointerDown = (e: ReactPointerEvent<HTMLButtonElement>, index: number) => {
+    if (!isCoarsePointer) return;
+    setTouchDragIdx(index);
+    touchStartYRef.current = e.clientY;
+  };
+
+  const onHandlePointerMove = (e: ReactPointerEvent<HTMLButtonElement>) => {
+    if (!isCoarsePointer || touchDragIdx === null) return;
+    const deltaY = e.clientY - touchStartYRef.current;
+    const threshold = 26;
+
+    if (deltaY > threshold && touchDragIdx < itemsRef.current.length - 1) {
+      const next = touchDragIdx + 1;
+      moveAt(touchDragIdx, next);
+      setTouchDragIdx(next);
+      touchStartYRef.current = e.clientY;
+    } else if (deltaY < -threshold && touchDragIdx > 0) {
+      const next = touchDragIdx - 1;
+      moveAt(touchDragIdx, next);
+      setTouchDragIdx(next);
+      touchStartYRef.current = e.clientY;
+    }
+  };
+
+  const onHandlePointerUp = async () => {
+    if (!isCoarsePointer || touchDragIdx === null) return;
+    setTouchDragIdx(null);
+    await persistOrder(itemsRef.current);
   };
 
   const updateFeature = (idx: number, val: string) => {
@@ -350,28 +455,32 @@ export default function PopularServicesPage() {
             {items.map((item, index) => (
               <li
                 key={item.id}
-                draggable
-                onDragStart={() => setDragIdx(index)}
-                onDragOver={e => e.preventDefault()}
-                onDrop={async () => {
-                  if (dragIdx === null || dragIdx === index) { setDragIdx(null); return; }
-                  const arr = [...items];
-                  const [moved] = arr.splice(dragIdx, 1);
-                  arr.splice(index, 0, moved);
-                  setItems(arr);
-                  setDragIdx(null);
-                  await fetch('/api/v1/cms/popular-services/reorder', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ ids: arr.map(i => i.id) }),
-                  }).catch(() => toast.error('Reorder failed.'));
-                }}
-                onDragEnd={() => setDragIdx(null)}
+                draggable={!isCoarsePointer}
+                onDragStart={(e) => onDragStart(e, index)}
+                onDragOver={(e) => onDragOver(e, index)}
+                onDragEnd={onDragEnd}
                 className={`flex items-center gap-2 sm:gap-4 px-3 sm:px-5 py-3 transition-colors group ${
-                  dragIdx === index ? 'opacity-40 bg-gray-50' : 'hover:bg-gray-50'
+                  dragIdx === index || touchDragIdx === index ? 'opacity-40 bg-gray-50' : 'hover:bg-gray-50'
                 }`}
               >
-                <GripVertical className="w-4 h-4 text-gray-300 shrink-0 cursor-grab active:cursor-grabbing" />
+                <button
+                  type="button"
+                  data-drag-handle="true"
+                  onPointerDown={(e) => onHandlePointerDown(e, index)}
+                  onPointerMove={onHandlePointerMove}
+                  onPointerUp={onHandlePointerUp}
+                  onPointerCancel={onHandlePointerUp}
+                  onPointerLeave={onHandlePointerUp}
+                  className="cursor-grab active:cursor-grabbing shrink-0 p-1 rounded text-gray-300 hover:text-gray-500 hover:bg-gray-100"
+                  title={isCoarsePointer ? 'Drag up/down to reorder' : 'Drag to reorder'}
+                  aria-label="Drag to reorder"
+                >
+                  <span className="pointer-events-none grid grid-cols-2 gap-0.5">
+                    {Array.from({ length: 6 }).map((_, dotIndex) => (
+                      <span key={dotIndex} className="h-0.5 w-0.5 rounded-full bg-current" />
+                    ))}
+                  </span>
+                </button>
 
                 {/* Image thumb */}
                 <div className="relative w-12 h-9 sm:w-14 sm:h-10 rounded-lg overflow-hidden shrink-0">

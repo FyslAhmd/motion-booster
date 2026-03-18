@@ -4,6 +4,7 @@ import AdminShell from '../_components/AdminShell';
 import { AdminSectionSkeleton } from '@/components/ui/AdminSectionSkeleton';
 import { useConfirm } from '@/lib/admin/confirm';
 import { useState, useRef, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth/context';
 import {
   ArrowLeft,
@@ -35,16 +36,16 @@ const DEFAULT_NOTIFICATIONS = {
 
 export default function ProfilePage() {
   const { user, updateUser } = useAuth();
-
-  if (!user) {
-    return (
-      <AdminShell>
-        <AdminSectionSkeleton variant="editor" />
-      </AdminShell>
-    );
-  }
+  const searchParams = useSearchParams();
 
   const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'notifications'>('profile');
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab === 'profile' || tab === 'security' || tab === 'notifications') {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
 
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -168,6 +169,14 @@ export default function ProfilePage() {
     { id: 'security', label: 'Security', icon: Lock },
     { id: 'notifications', label: 'Notifications', icon: Bell },
   ];
+
+  if (!user) {
+    return (
+      <AdminShell>
+        <AdminSectionSkeleton variant="editor" />
+      </AdminShell>
+    );
+  }
 
   const avatarSrc = user?.avatarUrl ?? null;
 
@@ -440,9 +449,13 @@ export default function ProfilePage() {
                         </div>
                         <button
                           onClick={() => setNotifications({ ...notifications, [key]: !value })}
-                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${value ? 'bg-red-500' : 'bg-gray-300'}`}
+                          className={`relative inline-flex h-7 w-12 items-center rounded-full border transition-all ${
+                            value
+                              ? 'border-red-600 bg-red-600 shadow-sm shadow-red-200'
+                              : 'border-gray-300 bg-gray-200'
+                          }`}
                         >
-                          <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${value ? 'translate-x-6' : 'translate-x-1'}`} />
+                          <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${value ? 'translate-x-6' : 'translate-x-1'}`} />
                         </button>
                       </div>
                     ))}
