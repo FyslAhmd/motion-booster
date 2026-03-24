@@ -20,10 +20,9 @@ export default function Home() {
         <CategorySlider />
       </div>
       <div className="lg:hidden mt-3 px-4 sm:px-6 pb-2 text-center page-reveal page-delay-1">
-        <h2 className="text-[24px] font-extrabold leading-[1.2] text-gray-900 text-wave">
-          Grow your business identity with
-          <br />
-          <span className="text-red-500">Motion Booster</span>
+        <h2 className="text-[18px] sm:text-[22px] font-extrabold leading-[1.2] text-gray-900 text-wave">
+          <span className="block whitespace-nowrap">Grow your business identity with</span>
+          <span className="mt-1 block text-red-500">Motion Booster</span>
         </h2>
         <p className="mt-2.5 text-[13px] leading-relaxed text-gray-600 text-wave">
           We provide a complete suite of digital solutions, including tailored digital marketing, eye-catching

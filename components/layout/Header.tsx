@@ -5,19 +5,20 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth/context';
+import { useLanguage } from '@/lib/lang/LanguageContext';
 import { LayoutDashboard, User, Phone, Mail, Search, Home, Briefcase, Users, Menu, X, ArrowRight, LogOut, Bell } from 'lucide-react';
 import { MoreDrawer } from '@/components/ui/MoreDrawer';
 import { toast } from 'sonner';
 
 export const Header = () => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [language, setLanguage] = useState('EN');
   const [scrolled, setScrolled] = useState(false);
   const [showMoreDrawer, setShowMoreDrawer] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const { isAuthenticated, isLoading, user, logout } = useAuth();
+  const { language, setLanguage, t } = useLanguage();
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const notificationPanelRef = useRef<HTMLDivElement>(null);
@@ -39,8 +40,10 @@ export const Header = () => {
   }, [showSearch]);
 
   useEffect(() => {
-    const shouldLockScroll = showSearch || showMoreDrawer || showNotifications;
-    document.documentElement.style.overflow = shouldLockScroll ? 'hidden' : '';
+    // Keep drawer scrolling reliable on mobile by not locking body for MoreDrawer.
+    // Search/notification panels still lock background scroll.
+    const shouldLockScroll = showSearch || showNotifications;
+    document.documentElement.style.overflow = '';
     document.body.style.overflow = shouldLockScroll ? 'hidden' : '';
     return () => {
       document.documentElement.style.overflow = '';
@@ -101,12 +104,12 @@ export const Header = () => {
   }, [showProfileMenu]);
 
   const navItems = [
-    { label: 'Home', href: '/' },
-    { label: 'About us', href: '/about' },
-    { label: 'Features', href: '/features' },
-    { label: 'Service', href: '/service' },
-    { label: 'Blog', href: '/blog' },
-    { label: 'Contact', href: '/contact' },
+    { label: t('nav_home'), href: '/' },
+    { label: t('nav_about'), href: '/about' },
+    { label: t('nav_features'), href: '/features' },
+    { label: t('nav_service'), href: '/service' },
+    { label: t('nav_blog'), href: '/blog' },
+    { label: t('nav_contact'), href: '/contact' },
   ];
 
   const visibleNavItems = navItems;

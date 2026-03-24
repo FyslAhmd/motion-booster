@@ -17,7 +17,7 @@ const STATUS_MAP: Record<number, { label: string; color: string }> = {
 };
 
 function formatMoney(cents: string | undefined, currency: string) {
-  if (!cents) return '—';
+  if (!cents) return '-';
   const amount = parseInt(cents, 10) / 100;
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
@@ -28,14 +28,19 @@ function formatMoney(cents: string | undefined, currency: string) {
 
 // Formats a value already in major currency units (as returned by the Insights API)
 function formatSpend(val: string | undefined, currency: string) {
-  if (!val) return '—';
+  if (!val) return '-';
   const amount = parseFloat(val);
-  if (isNaN(amount)) return '—';
+  if (isNaN(amount)) return '-';
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency,
     minimumFractionDigits: 2,
   }).format(amount);
+}
+
+function formatAccountId(accountId: string | undefined) {
+  if (!accountId) return '-';
+  return accountId.replace(/^act_/i, '');
 }
 
 interface Props {
@@ -58,8 +63,8 @@ export default function AccountOverview({ account, lifetimeSpend }: Props) {
   };
 
   const infoItems = [
-    { label: 'Account ID', value: account.id },
-    { label: 'Business Name', value: account.business_name || '—' },
+    { label: 'Account ID', value: formatAccountId(account.id) },
+    { label: 'Business Name', value: account.business_name || '-' },
     { label: 'Currency', value: account.currency },
     { label: 'Timezone', value: account.timezone_name },
     {
@@ -85,7 +90,7 @@ export default function AccountOverview({ account, lifetimeSpend }: Props) {
             month: 'short',
             day: 'numeric',
           })
-        : '—',
+        : '-',
     },
   ];
 

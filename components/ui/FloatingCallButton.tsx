@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useLanguage } from '@/lib/lang/LanguageContext';
 import { Phone, X, ArrowUp } from 'lucide-react';
 
 export const FloatingCallButton = () => {
+  const { t } = useLanguage();
   const [scrolled, setScrolled] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -34,7 +36,7 @@ export const FloatingCallButton = () => {
           <button
             onClick={() => setModalOpen(true)}
             className="flex h-12 w-12 items-center justify-center rounded-full bg-red-500 shadow-lg transition-colors hover:bg-red-600"
-            aria-label="Contact us"
+            aria-label={t('floating_call_phone_aria')}
           >
             <Phone className="h-5 w-5 text-white" />
           </button>
@@ -45,7 +47,7 @@ export const FloatingCallButton = () => {
             aria-label="Contact us"
           >
             <Phone className="h-4 w-4" />
-            <span>Contact Us</span>
+            <span>{t('floating_call_desc')}</span>
           </button>
         )}
       </div>
@@ -69,9 +71,9 @@ export const FloatingCallButton = () => {
               <X className="h-4 w-4" />
             </button>
 
-            <h3 className="mb-2 text-xl font-bold text-gray-900">Contact Us</h3>
+            <h3 className="mb-2 text-xl font-bold text-gray-900">{t('floating_call_title')}</h3>
             <p className="mb-4 text-sm text-gray-500 leading-relaxed">
-              You are welcome to visit our office for any information related to Service. You can also reach us through the hotline number or messenger.
+              {t('floating_call_desc')}
             </p>
 
             {/* Call icon image */}

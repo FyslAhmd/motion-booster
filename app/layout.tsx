@@ -3,6 +3,7 @@ import "./globals.css";
 import { ConditionalLayout } from "@/components/layout";
 import { AuthProvider } from "@/lib/auth/context";
 import { SiteDataProvider } from "@/lib/admin/context";
+import { LanguageProvider } from "@/lib/lang/LanguageContext";
 import { Toaster } from 'sonner';
 
 export const metadata: Metadata = {
@@ -18,14 +19,16 @@ export default function RootLayout({
   return (
     <html lang="en" data-scroll-behavior="smooth">
       <body className="antialiased overflow-x-hidden" suppressHydrationWarning>
-        <SiteDataProvider>
-          <AuthProvider>
-            <Toaster position="top-right" richColors />
-            <ConditionalLayout>
-              {children}
-            </ConditionalLayout>
-          </AuthProvider>
-        </SiteDataProvider>
+        <LanguageProvider>
+          <SiteDataProvider>
+            <AuthProvider>
+              <Toaster position="top-right" richColors />
+              <ConditionalLayout>
+                {children}
+              </ConditionalLayout>
+            </AuthProvider>
+          </SiteDataProvider>
+        </LanguageProvider>
       </body>
     </html>
   );

@@ -13,15 +13,15 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
   const { language, postLink, totalBudget, dailyBudget, targetAudience } = body;
 
-  if (!postLink?.trim() || !totalBudget?.trim() || !dailyBudget?.trim() || !targetAudience?.trim()) {
-    return NextResponse.json({ error: 'All fields are required' }, { status: 400 });
+  if (!totalBudget?.trim() || !dailyBudget?.trim() || !targetAudience?.trim()) {
+    return NextResponse.json({ error: 'Required fields are missing' }, { status: 400 });
   }
 
   const record = await prisma.boostRequest.create({
     data: {
       userId: user.id,
       language: language === 'bn' ? 'bn' : 'en',
-      postLink: postLink.trim(),
+      postLink: typeof postLink === 'string' ? postLink.trim() : '',
       totalBudget: totalBudget.trim(),
       dailyBudget: dailyBudget.trim(),
       targetAudience: targetAudience.trim(),

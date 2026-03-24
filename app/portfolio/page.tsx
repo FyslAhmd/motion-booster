@@ -26,7 +26,7 @@ export default function PortfolioPage() {
     fetch('/api/v1/cms/portfolio')
       .then(r => r.json())
       .then(data => setItems(Array.isArray(data) ? data : []))
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const categories = ['All', ...Array.from(new Set(items.map(i => i.category)))];
@@ -34,98 +34,97 @@ export default function PortfolioPage() {
 
   return (
     <main className="min-h-screen bg-gray-50">
-        {/* Hero banner */}
-        <div className="bg-linear-to-br from-red-50 via-white to-rose-50">
-          <div className="max-w-7xl mx-auto px-6 lg:px-8 py-20 lg:py-32">
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-3">Our Projects</h1>
-            <p className="text-gray-500 text-base md:text-lg max-w-2xl">
-              Explore our complete portfolio of work — from web development and mobile apps to digital marketing and brand design.
-            </p>
-            <p className="mt-3 text-sm text-gray-400">{items.length} projects across {categories.length - 1} categories</p>
-          </div>
+      {/* Hero banner */}
+      <div className="bg-linear-to-br from-red-50 via-white to-rose-50">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 pt-12 pb-8 md:pt-16 md:pb-10 lg:pt-22 lg:pb-14">
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-3">Our Projects</h1>
+          <p className="text-gray-500 text-base md:text-lg max-w-2xl">
+            Explore our complete portfolio of work — from web development and mobile apps to digital marketing and brand design.
+          </p>
+          <p className="mt-3 text-sm text-gray-400">{items.length} projects across {categories.length - 1} categories</p>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-8 md:pt-6 md:pb-12">
+        {/* Category Filters */}
+        <div className="flex flex-wrap gap-2 mb-8 md:mb-10">
+          {categories.map(cat => (
+            <button
+              key={cat}
+              onClick={() => setActiveCategory(cat)}
+              className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${activeCategory === cat
+                ? 'bg-red-500 text-white shadow-md shadow-red-200'
+                : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                }`}
+            >
+              {cat}
+              {cat !== 'All' && (
+                <span className={`ml-1.5 text-xs ${activeCategory === cat ? 'text-red-200' : 'text-gray-400'}`}>
+                  ({items.filter(i => i.category === cat).length})
+                </span>
+              )}
+            </button>
+          ))}
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
-          {/* Category Filters */}
-          <div className="flex flex-wrap gap-2 mb-8 md:mb-10">
-            {categories.map(cat => (
-              <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
-                  activeCategory === cat
-                    ? 'bg-red-500 text-white shadow-md shadow-red-200'
-                    : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
-                }`}
-              >
-                {cat}
-                {cat !== 'All' && (
-                  <span className={`ml-1.5 text-xs ${activeCategory === cat ? 'text-red-200' : 'text-gray-400'}`}>
-                    ({items.filter(i => i.category === cat).length})
+        {/* Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 md:gap-6">
+          {filtered.map(item => (
+            <button
+              key={item.id}
+              onClick={() => setSelected(item)}
+              className="group text-left bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-red-200 hover:shadow-xl transition-all duration-300"
+            >
+              {/* Cover */}
+              <div className="relative h-40 md:h-44 overflow-hidden">
+                {item.coverImage ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={item.coverImage} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                ) : (
+                  <div className={`w-full h-full bg-linear-to-br ${item.coverColor}`} />
+                )}
+                {item.featured && (
+                  <span className="absolute top-3 left-3 bg-white/90 text-red-600 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide">
+                    Featured
                   </span>
                 )}
-              </button>
-            ))}
-            </div>
-          </div>
+                <span className="absolute top-3 right-3 bg-black/40 backdrop-blur-sm text-white text-[10px] font-semibold px-2.5 py-1 rounded-full">
+                  {item.category}
+                </span>
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+              </div>
 
-          {/* Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 md:gap-6">
-            {filtered.map(item => (
-              <button
-                key={item.id}
-                onClick={() => setSelected(item)}
-                className="group text-left bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-red-200 hover:shadow-xl transition-all duration-300"
-              >
-                {/* Cover */}
-                <div className="relative h-40 md:h-44 overflow-hidden">
-                  {item.coverImage ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={item.coverImage} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                  ) : (
-                    <div className={`w-full h-full bg-linear-to-br ${item.coverColor}`} />
-                  )}
-                  {item.featured && (
-                    <span className="absolute top-3 left-3 bg-white/90 text-red-600 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide">
-                      Featured
+              {/* Content */}
+              <div className="p-4">
+                <h3 className="font-bold text-gray-900 text-sm md:text-base mb-1.5 leading-snug line-clamp-2 group-hover:text-red-600 transition-colors">
+                  {item.title}
+                </h3>
+                <p className="text-gray-500 text-xs leading-relaxed line-clamp-2 mb-3">
+                  {item.description}
+                </p>
+                {/* Tags */}
+                <div className="flex flex-wrap gap-1">
+                  {item.tags.slice(0, 3).map(tag => (
+                    <span key={tag} className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-medium">
+                      {tag}
                     </span>
+                  ))}
+                  {item.tags.length > 3 && (
+                    <span className="text-[10px] bg-gray-100 text-gray-400 px-2 py-0.5 rounded-full">+{item.tags.length - 3}</span>
                   )}
-                  <span className="absolute top-3 right-3 bg-black/40 backdrop-blur-sm text-white text-[10px] font-semibold px-2.5 py-1 rounded-full">
-                    {item.category}
-                  </span>
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
                 </div>
-
-                {/* Content */}
-                <div className="p-4">
-                  <h3 className="font-bold text-gray-900 text-sm md:text-base mb-1.5 leading-snug line-clamp-2 group-hover:text-red-600 transition-colors">
-                    {item.title}
-                  </h3>
-                  <p className="text-gray-500 text-xs leading-relaxed line-clamp-2 mb-3">
-                    {item.description}
-                  </p>
-                  {/* Tags */}
-                  <div className="flex flex-wrap gap-1">
-                    {item.tags.slice(0, 3).map(tag => (
-                      <span key={tag} className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-medium">
-                        {tag}
-                      </span>
-                    ))}
-                    {item.tags.length > 3 && (
-                      <span className="text-[10px] bg-gray-100 text-gray-400 px-2 py-0.5 rounded-full">+{item.tags.length - 3}</span>
-                    )}
-                  </div>
-                </div>
-              </button>
-            ))}
-          </div>
-
-          {filtered.length === 0 && (
-            <div className="text-center py-20 text-gray-400">
-              <p className="text-lg font-medium">No projects in this category yet.</p>
-            </div>
-          )}
+              </div>
+            </button>
+          ))}
         </div>
+
+        {filtered.length === 0 && (
+          <div className="text-center py-20 text-gray-400">
+            <p className="text-lg font-medium">No projects in this category yet.</p>
+          </div>
+        )}
+      </div>
+
       {/* Detail Modal */}
       {selected && (
         <div

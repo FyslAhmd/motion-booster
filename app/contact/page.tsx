@@ -129,21 +129,21 @@ export default function ContactPage() {
   };
 
   return (
-    <main className="min-h-screen bg-white pb-16 lg:pb-0">
+    <main className="min-h-screen bg-white pb-[calc(2.8rem+env(safe-area-inset-bottom))] lg:pb-0">
 
       {/* Hero */}
-      <section className="py-20 lg:py-32 bg-linear-to-br from-red-50 via-white to-rose-50">
+      <section className="pt-10 pb-8 md:pt-14 md:pb-12 lg:py-24 bg-linear-to-br from-red-50 via-white to-rose-50">
         <div className="max-w-7xl mx-auto px-6 lg:px-8 text-center page-reveal">
           <span className="inline-block px-4 py-1.5 bg-red-100 text-red-600 rounded-full text-sm font-semibold mb-4">Contact Us</span>
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 text-wave">
             Get in Touch with Us
           </h1>
-          <p className="text-gray-600 mb-12 max-w-2xl mx-auto text-wave">
+          <p className="text-gray-600 mb-6 md:mb-10 max-w-2xl mx-auto text-wave">
             Have questions or need support? Reach out to us and we&apos;ll be happy to assist you!
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-            <div className="bg-white p-7 rounded-2xl border border-gray-100 hover:shadow-lg hover:border-red-100 transition-all card-reveal-left page-delay-1">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 max-w-4xl mx-auto">
+            <div className="bg-white p-5 md:p-7 rounded-2xl border border-gray-100 hover:shadow-lg hover:border-red-100 transition-all card-reveal-left page-delay-1">
               <div className="w-14 h-14 bg-red-500 rounded-xl flex items-center justify-center mx-auto mb-5">
                 <Phone className="w-7 h-7 text-white" />
               </div>
@@ -154,7 +154,7 @@ export default function ContactPage() {
               </p>
             </div>
 
-            <div className="bg-white p-7 rounded-2xl border border-gray-100 hover:shadow-lg hover:border-red-100 transition-all card-reveal-right page-delay-2">
+            <div className="bg-white p-5 md:p-7 rounded-2xl border border-gray-100 hover:shadow-lg hover:border-red-100 transition-all card-reveal-right page-delay-2">
               <div className="w-14 h-14 bg-red-500 rounded-xl flex items-center justify-center mx-auto mb-5">
                 <Mail className="w-7 h-7 text-white" />
               </div>
@@ -167,7 +167,7 @@ export default function ContactPage() {
               </p>
             </div>
 
-            <div className="bg-white p-7 rounded-2xl border border-gray-100 hover:shadow-lg hover:border-red-100 transition-all card-reveal-left page-delay-3">
+            <div className="bg-white p-5 md:p-7 rounded-2xl border border-gray-100 hover:shadow-lg hover:border-red-100 transition-all card-reveal-left page-delay-3">
               <div className="w-14 h-14 bg-red-500 rounded-xl flex items-center justify-center mx-auto mb-5">
                 <MessageSquare className="w-7 h-7 text-white" />
               </div>
@@ -182,11 +182,11 @@ export default function ContactPage() {
       </section>
 
       {/* Map + Form */}
-      <section className="py-16 px-4 bg-white">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
+      <section className="pt-8 pb-2 md:pt-12 md:pb-10 px-4 bg-white">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-10 items-start">
 
           {/* Map Block */}
-          <div className="space-y-5 page-reveal page-delay-1">
+          <div className="space-y-4 page-reveal page-delay-1">
             <div>
               <p className="text-red-500 uppercase tracking-wider text-sm font-semibold mb-2">Our Location</p>
               <h2 className="text-3xl font-bold text-gray-900 mb-3 text-wave">Find Us on the Map</h2>
@@ -239,7 +239,7 @@ export default function ContactPage() {
           </div>
 
           {/* Form */}
-          <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-8 card-reveal-right page-delay-2">
+          <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-5 sm:p-6 md:p-8 card-reveal-right page-delay-2">
             <h3 className="text-2xl font-bold text-gray-900 mb-1">Send a Message</h3>
             <p className="text-gray-500 text-sm mb-6">Fill out the form and we&apos;ll get back to you within 24 hours.</p>
             <form onSubmit={handleSubmit} className="space-y-5">

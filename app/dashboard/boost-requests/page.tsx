@@ -3,26 +3,17 @@
 import { useState, useEffect, useCallback } from 'react';
 import AdminShell from '../_components/AdminShell';
 import { useAuth } from '@/lib/auth/context';
-import { Search, ChevronLeft, ChevronRight, ExternalLink, User, Calendar, Target, Wallet, Clock3, Megaphone, Users2, Monitor } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, Calendar, Target, Wallet, Clock3, Megaphone, Users2, Monitor } from 'lucide-react';
 import { AdminSectionSkeleton } from '@/components/ui/AdminSectionSkeleton';
 import { createPortal } from 'react-dom';
 
 interface BoostRequestItem {
   id: string;
   language: string;
-  postLink: string;
   totalBudget: string;
   dailyBudget: string;
   targetAudience: string;
   createdAt: string;
-  user: {
-    id: string;
-    fullName: string;
-    email: string;
-    phone: string;
-    username: string;
-    avatarUrl?: string | null;
-  };
 }
 
 interface PaginatedResponse {
@@ -94,7 +85,7 @@ export default function BoostRequestsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, debouncedSearch, accessToken]);
+  }, [page, debouncedSearch, accessToken, refreshSession]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -108,17 +99,10 @@ export default function BoostRequestsPage() {
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
   };
 
-  const getInitials = (name: string) => name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
-
   const getCampaignName = (item: BoostRequestItem) => {
-    try {
-      const u = new URL(item.postLink);
-      const host = u.hostname.replace(/^www\./, '');
-      const path = u.pathname.split('/').filter(Boolean).slice(0, 2).join(' / ');
-      return path ? `${host} - ${path}` : host;
-    } catch {
-      return item.user.fullName ? `${item.user.fullName}'s Boost Campaign` : 'Boost Campaign';
-    }
+    const match = item.targetAudience.match(/placement[s]?\s*[:\-]\s*([^\n]+)/i);
+    const placementFromAudience = match?.[1]?.trim();
+    return placementFromAudience ? `${placementFromAudience} Campaign` : 'Boost Campaign';
   };
 
   const uniqueValues = (values: string[]) =>
@@ -303,7 +287,7 @@ export default function BoostRequestsPage() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
         <input
           type="text"
-          placeholder="Search by name, email, phone, link..."
+          placeholder="Search by audience, placement, budget..."
           value={search}
           onChange={e => setSearch(e.target.value)}
           className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-400 focus:bg-white transition-all"
@@ -330,15 +314,11 @@ export default function BoostRequestsPage() {
                 className="w-full text-left bg-white rounded-2xl border border-gray-100 p-4 hover:shadow-md transition-shadow"
               >
                 <div className="flex items-center gap-3 mb-3">
-                  {item.user.avatarUrl?.trim() ? (
-                    <img src={item.user.avatarUrl} alt="" className="w-10 h-10 rounded-full object-cover" />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-linear-to-br from-red-500 to-pink-500 flex items-center justify-center text-white text-xs font-bold">
-                      {getInitials(item.user.fullName)}
-                    </div>
-                  )}
+                  <div className="w-10 h-10 rounded-full bg-linear-to-br from-red-500 to-pink-500 flex items-center justify-center text-white text-xs font-bold">
+                    BR
+                  </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-900 text-sm">{item.user.fullName}</p>
+                    <p className="font-semibold text-gray-900 text-sm">Boost Request</p>
                     <p className="text-xs text-gray-400">{formatDate(item.createdAt)}</p>
                   </div>
                   <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${item.language === 'bn' ? 'bg-green-50 text-green-700' : 'bg-blue-50 text-blue-700'}`}>
@@ -348,16 +328,6 @@ export default function BoostRequestsPage() {
                 <p className="text-sm font-medium text-gray-900 truncate mb-2">
                   {getCampaignName(item)}
                 </p>
-                <a
-                  href={item.postLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={e => e.stopPropagation()}
-                  className="text-blue-600 hover:text-blue-700 hover:underline text-xs inline-flex items-center gap-1 max-w-full truncate"
-                >
-                  {item.postLink.replace(/^https?:\/\/(www\.)?/, '').slice(0, 48)}
-                  <ExternalLink className="w-3 h-3 shrink-0" />
-                </a>
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div className="bg-gray-50 rounded-lg p-2 mt-3">
                     <span className="text-gray-400">Total</span>
@@ -434,13 +404,9 @@ export default function BoostRequestsPage() {
                       <div className="absolute -bottom-12 left-10 h-28 w-28 rounded-full bg-amber-200/50 blur-3xl" />
 
                       <div className="relative flex items-start gap-4">
-                        {selected.user.avatarUrl?.trim() ? (
-                          <img src={selected.user.avatarUrl} alt="" className="h-14 w-14 rounded-2xl object-cover ring-1 ring-rose-100" />
-                        ) : (
-                          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-linear-to-br from-red-500 to-orange-500 text-sm font-bold text-white shadow-lg shadow-rose-200/80">
-                            {getInitials(selected.user.fullName)}
-                          </div>
-                        )}
+                        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-linear-to-br from-red-500 to-orange-500 text-sm font-bold text-white shadow-lg shadow-rose-200/80">
+                          BR
+                        </div>
 
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-2">
@@ -458,7 +424,7 @@ export default function BoostRequestsPage() {
                           <p className="mt-3 text-base sm:text-xl font-semibold leading-snug text-gray-900">
                             {getCampaignName(selected)}
                           </p>
-                          <p className="mt-1 truncate text-sm text-gray-600">{selected.user.email}</p>
+                          <p className="mt-1 truncate text-sm text-gray-600">Requester identity hidden</p>
 
                           <div className="mt-4 flex flex-wrap gap-2 text-xs text-gray-700">
                             <span className="inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/80 px-3 py-1.5 shadow-sm">
@@ -467,7 +433,7 @@ export default function BoostRequestsPage() {
                             </span>
                             <span className="inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/80 px-3 py-1.5 shadow-sm">
                               <Target className="h-3.5 w-3.5" />
-                              {selected.user.fullName}
+                              Requester hidden
                             </span>
                           </div>
                         </div>
@@ -526,7 +492,7 @@ export default function BoostRequestsPage() {
                           <div className="min-w-0 flex-1">
                             <p className="text-sm font-medium text-gray-500">Campaign title</p>
                             <p className="mt-1 text-sm sm:text-base font-semibold leading-snug text-gray-900 wrap-break-word">{getCampaignName(selected)}</p>
-                            <p className="mt-1 text-xs text-gray-600">Generated from the submitted post link</p>
+                            <p className="mt-1 text-xs text-gray-600">Generated from selected audience setup</p>
                           </div>
                         </div>
                       </div>
@@ -652,43 +618,11 @@ export default function BoostRequestsPage() {
                       </div>
                     </div>
 
-                    <div className="grid gap-3 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,0.9fr)]">
-                      <div className="rounded-[26px] border border-blue-100 bg-linear-to-br from-blue-50 to-white p-4 shadow-sm">
-                        <div className="flex items-start gap-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-500/10 text-blue-700">
-                            <ExternalLink className="h-4 w-4" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm font-medium text-gray-500">Submitted post link</p>
-                            <a
-                              href={selected.postLink}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="mt-1 block text-sm font-semibold text-blue-700 break-all hover:underline"
-                            >
-                              {selected.postLink}
-                            </a>
-                            <p className="mt-2 text-xs text-gray-600">Open the original post in a new tab.</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="rounded-[26px] border border-gray-200 bg-white p-4 shadow-sm">
-                        <div className="flex items-start gap-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100 text-slate-700">
-                            <User className="h-4 w-4" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm font-medium text-gray-500">Requester</p>
-                            <p className="mt-1 text-sm sm:text-base font-semibold text-gray-900">{selected.user.fullName}</p>
-                            <div className="mt-3 space-y-2 text-sm text-gray-600">
-                              <p className="break-all">{selected.user.email}</p>
-                              <p>{selected.user.phone || 'N/A'}</p>
-                              <p>@{selected.user.username}</p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+                    <div className="rounded-[26px] border border-gray-200 bg-white p-4 shadow-sm">
+                      <p className="text-sm font-medium text-gray-500">Privacy</p>
+                      <p className="mt-1 text-sm text-gray-700">
+                        Facebook link and requester username are hidden on this page.
+                      </p>
                     </div>
                   </>
                 );

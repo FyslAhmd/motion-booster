@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
+import { useLanguage } from "@/lib/lang/LanguageContext";
 import gsap from 'gsap';
 
 const sliderImages = [
@@ -26,6 +27,7 @@ const sliderImages = [
 ];
 
 export const HeaderBanner = () => {
+  const { t } = useLanguage();
   const [currentSlide, setCurrentSlide] = useState(0);
   const bannerRef = useRef<HTMLElement | null>(null);
 
@@ -99,7 +101,7 @@ export const HeaderBanner = () => {
             href="/service"
             className="inline-flex items-center justify-center rounded-xl bg-linear-to-r from-red-500 to-red-600 px-4 py-3 text-sm font-semibold text-white shadow-md transition-all hover:from-red-600 hover:to-red-700"
           >
-            Browse Service
+            {t('header_banner_cta')}
           </a>
           <a
             href="/register"
@@ -123,23 +125,18 @@ export const HeaderBanner = () => {
             </div>
             <h1 className="text-5xl xl:text-6xl font-bold text-gray-900 leading-tight mb-4">
               <span className="inline-block align-baseline">
-                Grow your business identity with
-              </span>{' '}
-              <span className="inline-block align-baseline text-red-500">
-                Motion Booster
+                {t('header_banner_heading')}
               </span>
             </h1>
             <p className="text-lg text-gray-600 mb-6 leading-relaxed">
-              We provide a complete suite of digital solutions, including tailored digital
-              marketing, eye-catching graphic design, dynamic animation, as well as expert
-              web and app development - all designed to elevate your brand in the digital world.
+              {t('header_banner_desc')}
             </p>
             <div className="flex gap-3 mb-3">
               <a
                 href="/service"
                 className="inline-flex items-center gap-2 px-7 py-3 bg-linear-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold rounded-lg transition-all shadow-lg hover:shadow-xl"
               >
-                Browse Service
+                {t('header_banner_cta')}
               </a>
               <a
                 href="/register"

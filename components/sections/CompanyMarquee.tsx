@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useLanguage } from '@/lib/lang/LanguageContext';
 
 interface CompanyItem {
   id: string;
@@ -16,6 +17,7 @@ type RawCompanyItem = {
 };
 
 export const CompanyMarquee = () => {
+  const { t } = useLanguage();
   const [companies, setCompanies] = useState<CompanyItem[]>([]);
   const [loading, setLoading] = useState(true);
   const marqueeRef = useRef<HTMLDivElement>(null);
@@ -134,7 +136,7 @@ export const CompanyMarquee = () => {
         {/* Section Header */}
         <div className="text-center mb-6 md:mb-8">
           <h2 className="text-2xl font-bold text-gray-900 md:text-3xl lg:text-4xl text-wave">
-            Trusted by Top Clients
+            {t('companies_heading')}
           </h2>
         </div>
 

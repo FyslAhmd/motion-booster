@@ -2,6 +2,7 @@
 
 import React, { useRef, useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useLanguage } from '@/lib/lang/LanguageContext';
 import { ServiceCategoryItem } from '@/lib/admin/store';
 import { CategoryIcon } from '@/lib/admin/categoryIcons';
 
@@ -17,6 +18,7 @@ function SkeletonCard() {
 }
 
 export const CategorySlider = () => {
+  const { t } = useLanguage();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [categories, setCategories] = useState<ServiceCategoryItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -43,7 +45,7 @@ export const CategorySlider = () => {
     <section className="relative z-20 py-2 sm:py-3 lg:py-4 bg-white page-reveal">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-6 sm:mb-8 text-wave">
-          Our Service
+          {t('category_heading')}
         </h2>
 
         <div className="relative flex items-center">

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
+import { useLanguage } from '@/lib/lang/LanguageContext';
 import { motion } from 'framer-motion';
 
 /* ── helpers ─────────────────────────────────────────────── */
@@ -71,6 +72,7 @@ interface StatItem {
 
 /* ── section ──────────────────────────────────────────────── */
 export const AchievementStats = () => {
+  const { t } = useLanguage();
   const sectionRef = useRef<HTMLElement>(null);
   const [started, setStarted] = useState(false);
   const [stats, setStats] = useState<StatItem[]>([]);
@@ -112,10 +114,10 @@ export const AchievementStats = () => {
         {/* Header */}
         <div className="mb-10 text-center md:mb-14">
           <h2 className="mb-3 text-2xl font-bold text-gray-900 md:text-3xl lg:text-4xl text-wave">
-            Our Achievements
+            {t('achievement_heading')}
           </h2>
           <p className="text-sm text-gray-600 md:text-base text-wave">
-            Numbers that speak for our success and commitment to excellence
+            {t('achievement_subtext')}
           </p>
         </div>
 

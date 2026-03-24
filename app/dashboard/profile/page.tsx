@@ -34,6 +34,12 @@ const DEFAULT_NOTIFICATIONS = {
   newMessages: true,
 };
 
+const NOTIFICATION_TOGGLE_BASE =
+  'relative inline-flex h-8 w-14 items-center rounded-full border px-[2px] transition-all duration-300 ease-out focus:outline-none focus:ring-2 focus:ring-red-300';
+
+const NOTIFICATION_TOGGLE_KNOB =
+  'inline-block h-6 w-6 rounded-full bg-white shadow-[0_1px_2px_rgba(0,0,0,0.25)] transition-transform duration-300 ease-out';
+
 export default function ProfilePage() {
   const { user, updateUser } = useAuth();
   const searchParams = useSearchParams();
@@ -448,14 +454,20 @@ export default function ProfilePage() {
                           </p>
                         </div>
                         <button
+                          type="button"
                           onClick={() => setNotifications({ ...notifications, [key]: !value })}
-                          className={`relative inline-flex h-7 w-12 items-center rounded-full border transition-all ${
+                          aria-pressed={value}
+                          className={`${NOTIFICATION_TOGGLE_BASE} ${
                             value
-                              ? 'border-red-600 bg-red-600 shadow-sm shadow-red-200'
-                              : 'border-gray-300 bg-gray-200'
+                              ? 'border-red-600 bg-red-500 shadow-sm shadow-red-200'
+                              : 'border-gray-300 bg-gray-200 shadow-inner'
                           }`}
                         >
-                          <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${value ? 'translate-x-6' : 'translate-x-1'}`} />
+                          <span
+                            className={`${NOTIFICATION_TOGGLE_KNOB} ${
+                              value ? 'translate-x-[24px]' : 'translate-x-0'
+                            }`}
+                          />
                         </button>
                       </div>
                     ))}

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useLanguage } from '@/lib/lang/LanguageContext';
 import { Star } from 'lucide-react';
 
 interface StatItem {
@@ -25,6 +26,7 @@ interface TestimonialItem {
 }
 
 export const Testimonials = () => {
+  const { t } = useLanguage();
   const [reviews, setReviews] = useState<TestimonialItem[]>([]);
   const [stats, setStats] = useState<StatItem[]>([]);
   const [loadingReviews, setLoadingReviews] = useState(true);
@@ -171,10 +173,10 @@ export const Testimonials = () => {
         {/* Client Reviews Header */}
         <div className="text-center mb-8 sm:mb-10 md:mb-12">
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-3 sm:mb-4 text-wave">
-            What Our Clients Say
+            {t('testimonials_heading')}
           </h2>
           <p className="text-sm sm:text-base text-gray-500 max-w-2xl mx-auto px-4 text-wave">
-            Real feedback from our valued clients who trusted Motion Booster with their digital journey.
+            {t('testimonials_subtext')}
           </p>
         </div>
       </div>

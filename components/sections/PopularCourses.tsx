@@ -3,13 +3,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useLanguage } from '@/lib/lang/LanguageContext';
 import { ChevronLeft, ChevronRight, Check, ArrowRight } from 'lucide-react';
 import { PopularServiceItem } from '@/lib/admin/store';
 
 export const PopularCourses = () => {
+  const { t } = useLanguage();
   const [allServices, setAllServices] = useState<PopularServiceItem[]>([]);
   const [categoryLabels, setCategoryLabels] = useState<Record<string, string>>({});
-  const [activeTab, setActiveTab] = useState('All Services');
+  const [activeTab, setActiveTab] = useState('All');
   const [loading, setLoading] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const tabsScrollRef = useRef<HTMLDivElement>(null);
@@ -52,7 +54,7 @@ export const PopularCourses = () => {
     };
   }, []);
 
-  const tabs = ['All Services', ...Array.from(new Set(allServices.map(s => s.category).filter(Boolean)))];
+  const tabs = ['All', ...Array.from(new Set(allServices.map(s => s.category).filter(Boolean)))];
 
   const humanize = (value: string) =>
     value
@@ -64,7 +66,7 @@ export const PopularCourses = () => {
   const getTabLabel = (value: string) =>
     categoryLabels[value] || categoryLabels[value.toLowerCase()] || humanize(value);
 
-  const filteredServices = activeTab === 'All Services'
+  const filteredServices = activeTab === 'All'
     ? allServices
     : allServices.filter(s => s.category === activeTab);
 
@@ -80,15 +82,15 @@ export const PopularCourses = () => {
   };
 
   return (
-    <section className="py-6 md:py-8 lg:py-9 bg-white page-reveal">
+    <section className="pt-2 pb-6 md:py-8 lg:py-9 bg-white page-reveal">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-8 md:mb-10">
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-3 md:mb-4 text-wave">
-            Our Popular Services
+            {t('popular_heading')}
           </h2>
           <p className="text-sm sm:text-base text-gray-500 max-w-2xl mx-auto leading-relaxed px-4 text-wave">
-            We provide comprehensive digital solutions to help your business grow. Explore our wide range of services tailored to meet your specific needs.
+            {t('popular_subtext')}
           </p>
         </div>
 
@@ -105,7 +107,7 @@ export const PopularCourses = () => {
                   activeTab === tab ? 'text-red-500 border-b-2 border-red-500' : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
-                {tab === 'All Services' ? tab : getTabLabel(tab)}
+                {tab === 'All' ? t('popular_tab_all') : getTabLabel(tab)}
               </button>
             ))}
           </div>

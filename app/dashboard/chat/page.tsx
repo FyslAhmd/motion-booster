@@ -25,7 +25,6 @@ import {
   Download,
   Image as ImageIcon,
   Film,
-  Square,
   Rocket,
 } from 'lucide-react';
 
@@ -67,6 +66,39 @@ interface PendingFile {
   preview?: string; // data URL for image previews
   messageType: MessageType;
 }
+
+type BoostPlacement = 'facebook' | 'instagram' | 'whatsapp';
+type BoostLocation = 'all_country' | 'bangladesh';
+type BoostGender = 'male' | 'female';
+type BoostAudienceLanguage = 'en' | 'bn' | 'hindi';
+
+interface BoostFormData {
+  totalBudget: string;
+  dailyBudget: string;
+  placements: BoostPlacement[];
+  location: BoostLocation;
+  minAge: string;
+  gender: BoostGender;
+  audienceLanguages: BoostAudienceLanguage[];
+  notes: string;
+}
+
+const DEFAULT_BOOST_DATA: BoostFormData = {
+  totalBudget: '',
+  dailyBudget: '',
+  placements: ['facebook', 'instagram'],
+  location: 'bangladesh',
+  minAge: '18',
+  gender: 'male',
+  audienceLanguages: ['en', 'bn'],
+  notes: '',
+};
+
+const createDefaultBoostData = (): BoostFormData => ({
+  ...DEFAULT_BOOST_DATA,
+  placements: [...DEFAULT_BOOST_DATA.placements],
+  audienceLanguages: [...DEFAULT_BOOST_DATA.audienceLanguages],
+});
 
 // ─── Helpers ──────────────────────────────────────────
 
@@ -176,7 +208,7 @@ export default function MessagesPage() {
   const [showBoostForm, setShowBoostForm] = useState(false);
   const [boostStep, setBoostStep] = useState(0); // 0=lang, 1=form
   const [boostLang, setBoostLang] = useState<'en' | 'bn'>('en');
-  const [boostData, setBoostData] = useState({ postLink: '', totalBudget: '', dailyBudget: '', targetAudience: '' });
+  const [boostData, setBoostData] = useState<BoostFormData>(createDefaultBoostData);
   const [boostSubmitting, setBoostSubmitting] = useState(false);
   const [boostSuccess, setBoostSuccess] = useState(false);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -736,6 +768,9 @@ export default function MessagesPage() {
     ? `${Array.from(typingUsers.values()).join(', ')} is typing...`
     : null;
 
+  const isRoleAdmin = (role?: string | null) => (role || '').toUpperCase() === 'ADMIN';
+  const isUserShownOnline = (id: string, role?: string | null) => onlineUsers.has(id) || isRoleAdmin(role);
+
   // ─── Boost form helpers ────────────────────────────
   const boostLabels = boostLang === 'bn'
     ? {
@@ -775,23 +810,108 @@ export default function MessagesPage() {
         close: 'Close',
       };
 
+  const placementOptions: Array<{ value: BoostPlacement; label: string }> = [
+    { value: 'facebook', label: 'Facebook' },
+    { value: 'instagram', label: 'Instagram' },
+    { value: 'whatsapp', label: 'WhatsApp' },
+  ];
+
+  const locationOptions: Array<{ value: BoostLocation; label: string }> = [
+    { value: 'all_country', label: 'All Country' },
+    { value: 'bangladesh', label: 'Bangladesh (BD)' },
+  ];
+
+  const genderOptions: Array<{ value: BoostGender; label: string }> = [
+    { value: 'male', label: 'Male' },
+    { value: 'female', label: 'Female' },
+  ];
+
+  const audienceLanguageOptions: Array<{ value: BoostAudienceLanguage; label: string }> = [
+    { value: 'en', label: 'English' },
+    { value: 'bn', label: 'Bangla' },
+    { value: 'hindi', label: 'Hindi' },
+  ];
+
+  const boostFieldLabels = {
+    placement: boostLang === 'bn' ? 'প্লেসমেন্ট' : 'Placement',
+    location: boostLang === 'bn' ? 'লোকেশন' : 'Location',
+    minAge: boostLang === 'bn' ? 'সর্বনিম্ন বয়স' : 'Minimum Age',
+    gender: boostLang === 'bn' ? 'জেন্ডার' : 'Gender',
+    audienceLanguage: boostLang === 'bn' ? 'অডিয়েন্স ভাষা' : 'Audience Language',
+    notes: boostLang === 'bn' ? 'অতিরিক্ত নোট' : 'Additional Notes',
+    notesPlaceholder: boostLang === 'bn'
+      ? 'যদি কোনো অতিরিক্ত টার্গেট থাকে লিখুন...'
+      : 'Any extra targeting instruction...',
+  };
+
+  const togglePlacement = (placement: BoostPlacement) => {
+    setBoostData((prev) => ({
+      ...prev,
+      placements: prev.placements.includes(placement)
+        ? prev.placements.filter((item) => item !== placement)
+        : [...prev.placements, placement],
+    }));
+  };
+
+  const toggleAudienceLanguage = (lang: BoostAudienceLanguage) => {
+    setBoostData((prev) => ({
+      ...prev,
+      audienceLanguages: prev.audienceLanguages.includes(lang)
+        ? prev.audienceLanguages.filter((item) => item !== lang)
+        : [...prev.audienceLanguages, lang],
+    }));
+  };
+
+  const normalizedMinAge = Math.max(18, Number.parseInt(boostData.minAge || '18', 10) || 18);
+  const canSubmitBoost = Boolean(
+    boostData.totalBudget.trim() &&
+    boostData.dailyBudget.trim() &&
+    boostData.placements.length > 0 &&
+    boostData.audienceLanguages.length > 0,
+  );
+
   const openBoostForm = () => {
     setBoostStep(0);
     setBoostLang('en');
-    setBoostData({ postLink: '', totalBudget: '', dailyBudget: '', targetAudience: '' });
+    setBoostData(createDefaultBoostData());
     setBoostSuccess(false);
     setShowBoostForm(true);
     setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
   };
 
   const handleBoostSubmit = async () => {
-    if (!boostData.postLink.trim() || !boostData.totalBudget.trim() || !boostData.dailyBudget.trim() || !boostData.targetAudience.trim()) return;
+    if (!canSubmitBoost) return;
+
+    const selectedPlacementLabels = placementOptions
+      .filter((option) => boostData.placements.includes(option.value))
+      .map((option) => option.label);
+    const selectedLanguageLabels = audienceLanguageOptions
+      .filter((option) => boostData.audienceLanguages.includes(option.value))
+      .map((option) => option.label);
+    const selectedLocationLabel = locationOptions.find((option) => option.value === boostData.location)?.label || 'Bangladesh (BD)';
+    const selectedGenderLabel = genderOptions.find((option) => option.value === boostData.gender)?.label || 'Male';
+
+    const targetAudience = [
+      `Placements: ${selectedPlacementLabels.join(', ')}`,
+      `Location: ${selectedLocationLabel}`,
+      `Age: ${normalizedMinAge}+`,
+      `Gender: ${selectedGenderLabel}`,
+      `Language: ${selectedLanguageLabels.join(', ')}`,
+      boostData.notes.trim() ? `Notes: ${boostData.notes.trim()}` : '',
+    ].filter(Boolean).join('\n');
+
     setBoostSubmitting(true);
     try {
       const res = await authFetch('/api/v1/boost-requests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ language: boostLang, ...boostData }),
+        body: JSON.stringify({
+          language: boostLang,
+          postLink: '',
+          totalBudget: boostData.totalBudget,
+          dailyBudget: boostData.dailyBudget,
+          targetAudience,
+        }),
       });
       if (!res.ok) throw new Error();
       setBoostSuccess(true);
@@ -894,7 +1014,7 @@ export default function MessagesPage() {
                       <div className="text-sm font-medium text-gray-900">{u.fullName}</div>
                       <div className="text-xs text-gray-500">@{u.username}</div>
                     </div>
-                    {onlineUsers.has(u.id) && (
+                    {isUserShownOnline(u.id, u.role) && (
                       <Circle className="w-2.5 h-2.5 fill-green-500 text-green-500 ml-auto" />
                     )}
                   </button>
@@ -954,7 +1074,7 @@ export default function MessagesPage() {
                         {getInitials(conv.participant.fullName)}
                       </div>
                     )}
-                    {onlineUsers.has(conv.participant.id) && (
+                    {isUserShownOnline(conv.participant.id, conv.participant.role) && (
                       <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white" />
                     )}
                   </div>
@@ -1022,7 +1142,7 @@ export default function MessagesPage() {
                         {getInitials(selectedConversation.participant.fullName)}
                       </div>
                     )}
-                    {onlineUsers.has(selectedConversation.participant.id) && (
+                    {isUserShownOnline(selectedConversation.participant.id, selectedConversation.participant.role) && (
                       <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
                     )}
                   </div>
@@ -1033,7 +1153,7 @@ export default function MessagesPage() {
                     <p className="text-xs md:text-sm font-medium">
                       {typingText ? (
                         <span className="text-red-500 animate-pulse">{typingText}</span>
-                      ) : onlineUsers.has(selectedConversation.participant.id) ? (
+                      ) : isUserShownOnline(selectedConversation.participant.id, selectedConversation.participant.role) ? (
                         <span className="text-green-600">Active Now</span>
                       ) : (
                         <span className="text-gray-400">Offline</span>
@@ -1332,16 +1452,6 @@ export default function MessagesPage() {
                             </div>
                           </div>
                           <div className="p-5 space-y-3">
-                            <div>
-                              <label className="block text-xs font-medium text-gray-700 mb-1">{boostLabels.postLink} <span className="text-red-500">*</span></label>
-                              <input
-                                type="url"
-                                value={boostData.postLink}
-                                onChange={e => setBoostData(p => ({ ...p, postLink: e.target.value }))}
-                                placeholder={boostLabels.postLinkPlaceholder}
-                                className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent"
-                              />
-                            </div>
                             <div className="grid grid-cols-2 gap-2">
                               <div>
                                 <label className="block text-xs font-medium text-gray-700 mb-1">{boostLabels.totalBudget} <span className="text-red-500">*</span></label>
@@ -1364,12 +1474,97 @@ export default function MessagesPage() {
                                 />
                               </div>
                             </div>
+
                             <div>
-                              <label className="block text-xs font-medium text-gray-700 mb-1">{boostLabels.targetAudience} <span className="text-red-500">*</span></label>
+                              <label className="block text-xs font-medium text-gray-700 mb-1">{boostFieldLabels.placement} <span className="text-red-500">*</span></label>
+                              <div className="grid grid-cols-3 gap-2">
+                                {placementOptions.map((option) => {
+                                  const isSelected = boostData.placements.includes(option.value);
+                                  return (
+                                    <button
+                                      key={option.value}
+                                      type="button"
+                                      onClick={() => togglePlacement(option.value)}
+                                      className={`rounded-lg border px-2.5 py-2 text-xs font-medium transition-colors ${
+                                        isSelected
+                                          ? 'border-red-500 bg-red-50 text-red-700'
+                                          : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                                      }`}
+                                    >
+                                      {option.label}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <label className="block text-xs font-medium text-gray-700 mb-1">{boostFieldLabels.location} <span className="text-red-500">*</span></label>
+                                <select
+                                  value={boostData.location}
+                                  onChange={e => setBoostData(p => ({ ...p, location: e.target.value as BoostLocation }))}
+                                  className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent bg-white"
+                                >
+                                  {locationOptions.map((option) => (
+                                    <option key={option.value} value={option.value}>{option.label}</option>
+                                  ))}
+                                </select>
+                              </div>
+                              <div>
+                                <label className="block text-xs font-medium text-gray-700 mb-1">{boostFieldLabels.minAge} <span className="text-red-500">*</span></label>
+                                <input
+                                  type="number"
+                                  min={18}
+                                  value={boostData.minAge}
+                                  onChange={e => setBoostData(p => ({ ...p, minAge: e.target.value }))}
+                                  className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent"
+                                />
+                              </div>
+                            </div>
+
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-1">{boostFieldLabels.gender} <span className="text-red-500">*</span></label>
+                              <select
+                                value={boostData.gender}
+                                onChange={e => setBoostData(p => ({ ...p, gender: e.target.value as BoostGender }))}
+                                className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent bg-white"
+                              >
+                                {genderOptions.map((option) => (
+                                  <option key={option.value} value={option.value}>{option.label}</option>
+                                ))}
+                              </select>
+                            </div>
+
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-1">{boostFieldLabels.audienceLanguage} <span className="text-red-500">*</span></label>
+                              <div className="grid grid-cols-3 gap-2">
+                                {audienceLanguageOptions.map((option) => {
+                                  const isSelected = boostData.audienceLanguages.includes(option.value);
+                                  return (
+                                    <button
+                                      key={option.value}
+                                      type="button"
+                                      onClick={() => toggleAudienceLanguage(option.value)}
+                                      className={`rounded-lg border px-2.5 py-2 text-xs font-medium transition-colors ${
+                                        isSelected
+                                          ? 'border-red-500 bg-red-50 text-red-700'
+                                          : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                                      }`}
+                                    >
+                                      {option.label}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-1">{boostFieldLabels.notes}</label>
                               <textarea
-                                value={boostData.targetAudience}
-                                onChange={e => setBoostData(p => ({ ...p, targetAudience: e.target.value }))}
-                                placeholder={boostLabels.targetAudiencePlaceholder}
+                                value={boostData.notes}
+                                onChange={e => setBoostData(p => ({ ...p, notes: e.target.value }))}
+                                placeholder={boostFieldLabels.notesPlaceholder}
                                 rows={2}
                                 className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent resize-none"
                               />
@@ -1381,7 +1576,7 @@ export default function MessagesPage() {
                             </button>
                             <button
                               onClick={handleBoostSubmit}
-                              disabled={boostSubmitting || !boostData.postLink.trim() || !boostData.totalBudget.trim() || !boostData.dailyBudget.trim() || !boostData.targetAudience.trim()}
+                              disabled={boostSubmitting || !canSubmitBoost}
                               className="flex-1 py-2 bg-red-500 text-white rounded-xl text-xs font-semibold hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1.5"
                             >
                               {boostSubmitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
@@ -1407,7 +1602,7 @@ export default function MessagesPage() {
                   className="w-full mb-3 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-linear-to-r from-orange-500 via-red-500 to-pink-500 text-white text-sm font-semibold shadow-lg shadow-red-300/40 hover:shadow-red-400/50 hover:scale-[1.01] active:scale-[0.99] transition-all animate-pulse hover:animate-none"
                 >
                   <Rocket className="w-4 h-4" />
-                  Boost Your Facebook Post 🚀
+                  Boost Request 🚀
                 </button>
               )}
 

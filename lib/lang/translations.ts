@@ -158,8 +158,63 @@ export const translations = {
     portfolio_subtext:
       'A showcase of our best work across web development, design, marketing, and more.',
 
+    // ── HeaderBanner section ────────────────────────────────────────────
+    header_banner_heading: 'Grow Your Business Identity with Motion Booster',
+    header_banner_desc:
+      'We are a passionate team of digital experts committed to transforming your ideas into powerful digital solutions that drive real business results.',
+    header_banner_cta: 'Browse Service',
+    header_banner_trust: 'Trusted by 20,000+ Happy Clients',
+
+    // ── CategorySlider section ───────────────────────────────────────────
+    category_heading: 'Our Service',
+
+    // ── PopularCourses section ───────────────────────────────────────────
+    popular_heading: 'Popular Services',
+    popular_subtext: 'Explore our most requested professional services',
+    popular_tab_all: 'All',
+    popular_tab_featured: 'Featured',
+
+    // ── CompanyMarquee section ───────────────────────────────────────────
+    companies_heading: 'Trusted by Top Clients',
+
+    // ── AchievementStats section ────────────────────────────────────────
+    achievement_heading: 'Our Achievements',
+    achievement_subtext: 'Numbers that speak for our excellence and client satisfaction',
+
+    // ── Testimonials section ────────────────────────────────────────────
+    testimonials_heading: 'What Our Clients Say',
+    testimonials_subtext: 'Real feedback from businesses we have worked with',
+
+    // ── Floating Call Button ────────────────────────────────────────────
+    floating_call_title: 'Need Help?',
+    floating_call_desc: 'Chat with our support team',
+    floating_call_close: 'Close',
+    floating_call_message: 'Send Message',
+    floating_call_whatsapp_aria: 'Chat on WhatsApp',
+    floating_call_phone_aria: 'Call us',
+    floating_call_email_aria: 'Email us',
+
+    // ── Floating Social Buttons ────────────────────────────────────────
+    social_facebook_aria: 'Follow us on Facebook',
+    social_twitter_aria: 'Follow us on Twitter',
+    social_linkedin_aria: 'Connect on LinkedIn',
+    social_youtube_aria: 'Subscribe on YouTube',
+    social_instagram_aria: 'Follow us on Instagram',
+    social_tiktok_aria: 'Follow us on TikTok',
+
     // ── Team page ─────────────────────────────────────────────────────────
     team_heading: 'Our Team',
+
+    // ── Menu / Drawer ──────────────────────────────────────────────────────
+    menu_about: 'About Us',
+    menu_team: 'Our Team',
+    menu_services: 'Our Services',
+    menu_blog: 'Blog',
+    menu_portfolio: 'Portfolio',
+    menu_faq: 'FAQ',
+    menu_contact: 'Contact Us',
+    menu_privacy: 'Privacy Policy',
+    menu_feedback: 'Feedback & Suggestions',
   },
 
   BN: {
@@ -322,8 +377,63 @@ export const translations = {
     portfolio_subtext:
       'ওয়েব ডেভেলপমেন্ট, ডিজাইন, মার্কেটিং ও আরও বিভাগে আমাদের সেরা কাজের প্রদর্শনী।',
 
+    // ── HeaderBanner section ────────────────────────────────────────────
+    header_banner_heading: 'মোশন বুস্টারের সাথে আপনার ব্যবসায়িক পরিচয় বৃদ্ধি করুন',
+    header_banner_desc:
+      'আমরা একটি উৎসাহী ডিজিটাল বিশেষজ্ঞ দল — আপনার ধারণাকে শক্তিশালী ডিজিটাল সমাধানে রূপান্তর করতে প্রতিশ্রুতিবদ্ধ যা প্রকৃত ব্যবসায়িক ফলাফল অর্জন করে।',
+    header_banner_cta: 'সেবা দেখুন',
+    header_banner_trust: '২০,০০০+ সন্তুষ্ট ক্লায়েন্ট দ্বারা বিশ্বস্ত',
+
+    // ── CategorySlider section ───────────────────────────────────────────
+    category_heading: 'আমাদের সেবা',
+
+    // ── PopularCourses section ───────────────────────────────────────────
+    popular_heading: 'জনপ্রিয় সেবা',
+    popular_subtext: 'আমাদের সবচেয়ে জনপ্রিয় পেশাদার সেবা অন্বেষণ করুন',
+    popular_tab_all: 'সব',
+    popular_tab_featured: 'বৈশিষ্ট্যযুক্ত',
+
+    // ── CompanyMarquee section ───────────────────────────────────────────
+    companies_heading: 'শীর্ষ ক্লায়েন্টদের দ্বারা বিশ্বস্ত',
+
+    // ── AchievementStats section ────────────────────────────────────────
+    achievement_heading: 'আমাদের অর্জন',
+    achievement_subtext: 'সংখ্যা যা আমাদের শ্রেষ্ঠত্ব এবং ক্লায়েন্ট সন্তুষ্টির কথা বলে',
+
+    // ── Testimonials section ────────────────────────────────────────────
+    testimonials_heading: 'আমাদের ক্লায়েন্টরা যা বলেন',
+    testimonials_subtext: 'যে ব্যবসাগুলির সাথে আমরা কাজ করেছি তাদের থেকে প্রকৃত প্রতিক্রিয়া',
+
+    // ── Floating Call Button ────────────────────────────────────────────
+    floating_call_title: 'সাহায্যের প্রয়োজন?',
+    floating_call_desc: 'আমাদের সাপোর্ট টিমের সাথে চ্যাট করুন',
+    floating_call_close: 'বন্ধ করুন',
+    floating_call_message: 'বার্তা পাঠান',
+    floating_call_whatsapp_aria: 'WhatsApp এ চ্যাট করুন',
+    floating_call_phone_aria: 'আমাদের কল করুন',
+    floating_call_email_aria: 'আমাদের ইমেইল করুন',
+
+    // ── Floating Social Buttons ────────────────────────────────────────
+    social_facebook_aria: 'Facebook এ আমাদের অনুসরণ করুন',
+    social_twitter_aria: 'Twitter এ আমাদের অনুসরণ করুন',
+    social_linkedin_aria: 'LinkedIn এ আমাদের সাথে সংযোগ করুন',
+    social_youtube_aria: 'YouTube এ সাবস্ক্রাইব করুন',
+    social_instagram_aria: 'Instagram এ আমাদের অনুসরণ করুন',
+    social_tiktok_aria: 'TikTok এ আমাদের অনুসরণ করুন',
+
     // ── Team page ─────────────────────────────────────────────────────────
     team_heading: 'আমাদের দল',
+
+    // ── Menu / Drawer ──────────────────────────────────────────────────────
+    menu_about: 'আমাদের সম্পর্কে',
+    menu_team: 'আমাদের দল',
+    menu_services: 'আমাদের সেবাসমূহ',
+    menu_blog: 'ব্লগ',
+    menu_portfolio: 'পোর্টফোলিও',
+    menu_faq: 'সাধারণ প্রশ্ন',
+    menu_contact: 'আমাদের সাথে যোগাযোগ করুন',
+    menu_privacy: 'গোপনীয়তা নীতি',
+    menu_feedback: 'মতামত ও পরামর্শ',
   },
 } as const;
 

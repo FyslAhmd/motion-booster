@@ -1,8 +1,12 @@
+'use client';
+
 import React from 'react';
 import { Button } from '@/components/ui/Button';
+import { useLanguage } from '@/lib/lang/LanguageContext';
 import Image from 'next/image';
 
 export const Hero = () => {
+  const { t } = useLanguage();
   return (
     <section className="relative pt-24 pb-16 sm:pt-28 sm:pb-20 lg:pt-48 lg:pb-40 lg:min-h-screen lg:flex lg:items-center bg-linear-to-br from-green-50 via-white to-purple-50 page-reveal">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -27,9 +31,9 @@ export const Hero = () => {
               
               {/* Text Content */}
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-gray-900 leading-tight">
-                Manage Your Clients&apos; Meta Ads in{' '}
+                {t('hero_heading')}{' '}
                 <span className="relative inline-block">
-                  One Place
+                  {t('hero_highlight')}
                   <svg
                     className="absolute -bottom-2 left-0 w-full"
                     height="12"
@@ -49,22 +53,22 @@ export const Hero = () => {
             </div>
             
             <p className="text-base sm:text-lg lg:text-xl text-gray-600 mb-8 sm:mb-10 leading-relaxed">
-              The all-in-one platform for agencies to track ad spending, communicate with clients, and share reports - all in one beautiful dashboard
+              {t('hero_subtext')}
             </p>
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 mb-6 justify-center lg:justify-start">
               <Button variant="primary" href="/register">
-                Get Started Free
+                {t('hero_cta_primary')}
               </Button>
               <Button variant="outline" href="#demo">
-                Watch Demo
+                {t('hero_cta_secondary')}
               </Button>
             </div>
 
             {/* Trust Badge */}
             <p className="text-xs sm:text-sm text-gray-500">
-              No credit card required • 14-day free trial
+              {t('hero_trust')}
             </p>
           </div>
 

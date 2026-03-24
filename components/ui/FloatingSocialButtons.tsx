@@ -1,16 +1,18 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useLanguage } from '@/lib/lang/LanguageContext';
 import { Linkedin, Facebook, Youtube, Instagram, MessageCircle, X, ArrowUp } from 'lucide-react';
 
 const socials = [
-  { icon: Linkedin, label: 'LinkedIn', href: '#' },
-  { icon: Facebook, label: 'Facebook', href: '#' },
-  { icon: Youtube, label: 'YouTube', href: '#' },
-  { icon: Instagram, label: 'Instagram', href: '#' },
+  { icon: Linkedin, label: 'linkedin', href: '#' },
+  { icon: Facebook, label: 'facebook', href: '#' },
+  { icon: Youtube, label: 'youtube', href: '#' },
+  { icon: Instagram, label: 'instagram', href: '#' },
 ];
 
 export const FloatingSocialButtons = () => {
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -33,7 +35,7 @@ export const FloatingSocialButtons = () => {
             href={href}
             target="_blank"
             rel="noopener noreferrer"
-            aria-label={label}
+            aria-label={t(`social_${label}_aria`)}
             style={{
               transitionDelay: open ? `${i * 60}ms` : `${(socials.length - 1 - i) * 40}ms`,
               transform: open ? 'translateY(0) scale(1)' : 'translateY(20px) scale(0.6)',
