@@ -150,7 +150,13 @@ export const PopularCourses = () => {
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={service.customImage} alt={title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                   ) : (
-                    <Image src={service.image} alt={title} fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
+                    <Image
+                      src={service.image}
+                      alt={title}
+                      fill
+                      sizes="(max-width: 640px) 288px, (max-width: 768px) 320px, 340px"
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
                   )}
                 </div>
                 <div className="p-4 sm:p-5">

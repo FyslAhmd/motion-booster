@@ -81,7 +81,7 @@ export const Slider: React.FC<SliderProps> = ({
                   src={slide.image}
                   alt={slide.title || `Slide ${index + 1}`}
                   fill
-                  sizes="100vw"
+                  sizes="(max-width: 640px) calc(100vw - 2rem), (max-width: 1024px) calc(100vw - 3rem), 1280px"
                   className="object-cover"
                   priority={index === 0}
                 />
