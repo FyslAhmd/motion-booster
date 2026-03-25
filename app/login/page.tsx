@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { loginSchema, formatZodErrors } from '@/lib/validators/auth';
 import { useAuth } from '@/lib/auth/context';
+import { useLanguage } from '@/lib/lang/LanguageContext';
 import { ZodError } from 'zod';
 import { COUNTRY_CODES, type CountryCode } from '@/lib/data/country-codes';
 import { toast } from 'sonner';
@@ -18,6 +19,8 @@ interface FieldErrors {
 export default function LoginPage() {
   const router = useRouter();
   const { login, isAuthenticated, isLoading } = useAuth();
+  const { language } = useLanguage();
+  const isBN = language === 'BN';
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
@@ -74,7 +77,7 @@ export default function LoginPage() {
       if (value && !/^\+?[0-9\s\-()]+$/.test(value))
         setFieldErrors((p) => ({
           ...p,
-          phone: 'Please enter a valid phone number',
+          phone: isBN ? 'সঠিক ফোন নম্বর লিখুন' : 'Please enter a valid phone number',
         }));
     }
 
@@ -82,10 +85,10 @@ export default function LoginPage() {
       if (!value)
         setFieldErrors((p) => ({
           ...p,
-          password: 'Password is required',
+          password: isBN ? 'পাসওয়ার্ড দেওয়া বাধ্যতামূলক' : 'Password is required',
         }));
     }
-  }, []);
+  }, [isBN]);
 
   // ─── Submit handler ─────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
@@ -131,7 +134,7 @@ export default function LoginPage() {
         setServerError(
           data?.error?.message ||
             data?.message ||
-            'Login failed. Please try again.'
+            (isBN ? 'লগইন ব্যর্থ হয়েছে। আবার চেষ্টা করুন।' : 'Login failed. Please try again.')
         );
         return;
       }
@@ -141,14 +144,16 @@ export default function LoginPage() {
         login(data.data.accessToken, data.data.user);
       }
 
-      toast.success('Login successful');
+      toast.success(isBN ? 'লগইন সফল হয়েছে' : 'Login successful');
 
       // Redirect based on role
       const role = data?.data?.user?.role;
       router.push(role === 'ADMIN' ? '/dashboard' : '/dashboard/chat');
     } catch {
       setServerError(
-        'Network error. Please check your connection and try again.'
+        isBN
+          ? 'নেটওয়ার্ক সমস্যা হয়েছে। সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।'
+          : 'Network error. Please check your connection and try again.'
       );
     } finally {
       setIsSubmitting(false);
@@ -162,10 +167,10 @@ export default function LoginPage() {
           {/* Header */}
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Login into account
+              {isBN ? 'অ্যাকাউন্টে লগইন করুন' : 'Login into account'}
             </h1>
             <p className="text-gray-500 text-sm">
-              Use your phone number and password to sign in
+              {isBN ? 'সাইন ইন করতে আপনার ফোন নম্বর ও পাসওয়ার্ড দিন' : 'Use your phone number and password to sign in'}
             </p>
           </div>
 
@@ -229,7 +234,7 @@ export default function LoginPage() {
                         type="text"
                         value={countrySearch}
                         onChange={(e) => setCountrySearch(e.target.value)}
-                        placeholder="Search country..."
+                        placeholder={isBN ? 'দেশ খুঁজুন...' : 'Search country...'}
                         className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-red-400"
                         autoFocus
                       />
@@ -237,7 +242,9 @@ export default function LoginPage() {
                     {/* Country List */}
                     <div className="max-h-48 overflow-y-auto">
                       {filteredCountries.length === 0 ? (
-                        <div className="px-4 py-3 text-sm text-gray-400 text-center">No countries found</div>
+                        <div className="px-4 py-3 text-sm text-gray-400 text-center">
+                          {isBN ? 'কোনো দেশ পাওয়া যায়নি' : 'No countries found'}
+                        </div>
                       ) : (
                         filteredCountries.map((country) => (
                           <button
@@ -279,7 +286,7 @@ export default function LoginPage() {
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     onBlur={() => validateField('phone', phone)}
-                    placeholder="Phone Number"
+                    placeholder={isBN ? 'ফোন নম্বর' : 'Phone Number'}
                     className={`w-full pl-4 pr-4 py-3.5 border-y border-r ${
                       fieldErrors.phone
                         ? 'border-red-400 focus:border-red-500 focus:ring-red-200'
@@ -334,7 +341,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   onBlur={() => validateField('password', password)}
-                  placeholder="Password"
+                  placeholder={isBN ? 'পাসওয়ার্ড' : 'Password'}
                   className={`w-full pl-12 pr-12 py-3.5 border ${
                     fieldErrors.password
                       ? 'border-red-400 focus:border-red-500 focus:ring-red-200'
@@ -399,13 +406,13 @@ export default function LoginPage() {
                   onChange={(e) => setRememberMe(e.target.checked)}
                   className="w-4 h-4 text-red-500 border-gray-300 rounded focus:ring-red-500"
                 />
-                <span className="ml-2 text-gray-600">Remember me</span>
+                <span className="ml-2 text-gray-600">{isBN ? 'আমাকে মনে রাখুন' : 'Remember me'}</span>
               </label>
               <Link
                 href="/forgot-password"
                 className="text-red-500 hover:text-red-600 font-medium transition-colors"
               >
-                Forgot Password?
+                {isBN ? 'পাসওয়ার্ড ভুলে গেছেন?' : 'Forgot Password?'}
               </Link>
             </div>
 
@@ -437,22 +444,22 @@ export default function LoginPage() {
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                     />
                   </svg>
-                  Signing In...
+                  {isBN ? 'লগইন হচ্ছে...' : 'Signing In...'}
                 </>
               ) : (
-                'Login Now'
+                isBN ? 'এখনই লগইন' : 'Login Now'
               )}
             </button>
           </form>
 
           {/* Register Link */}
           <p className="mt-8 text-center text-gray-600 text-sm">
-            Don&apos;t have an account?{' '}
+            {isBN ? 'অ্যাকাউন্ট নেই?' : "Don't have an account?"}{' '}
             <Link
               href="/register"
               className="text-red-500 hover:text-red-600 font-semibold transition-colors"
             >
-              Register here
+              {isBN ? 'রেজিস্টার করুন' : 'Register here'}
             </Link>
           </p>
         </div>

@@ -13,12 +13,17 @@ import { toast } from 'sonner';
 interface BlogPostItem {
   id: string;
   title: string;
+  titleBn?: string;
   slug: string;
   excerpt: string;
+  excerptBn?: string;
   content: string;
+  contentBn?: string;
   coverImage: string | null;
   category: string;
+  categoryBn?: string;
   tags: string[];
+  tagsBn?: string[];
   author: string;
   status: 'DRAFT' | 'PUBLISHED';
   order: number;
@@ -26,12 +31,17 @@ interface BlogPostItem {
 
 const BLANK: Omit<BlogPostItem, 'id' | 'order'> = {
   title: '',
+  titleBn: '',
   slug: '',
   excerpt: '',
+  excerptBn: '',
   content: '',
+  contentBn: '',
   coverImage: null,
   category: '',
+  categoryBn: '',
   tags: [],
+  tagsBn: [],
   author: 'Motion Booster',
   status: 'PUBLISHED',
 };
@@ -52,6 +62,7 @@ export default function AdminBlogPage() {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [tagInput, setTagInput] = useState('');
+  const [tagInputBn, setTagInputBn] = useState('');
   const [draftConfirm, setDraftConfirm] = useState(false);
 
   useEffect(() => {
@@ -89,12 +100,14 @@ export default function AdminBlogPage() {
     setEditing({ id: '', order: 0, ...BLANK });
     setIsNew(true);
     setTagInput('');
+    setTagInputBn('');
   };
 
   const openEdit = (post: BlogPostItem) => {
     setEditing({ ...post });
     setIsNew(false);
     setTagInput('');
+    setTagInputBn('');
   };
 
   const handleSave = async (overrideStatus?: 'DRAFT' | 'PUBLISHED') => {
@@ -165,6 +178,7 @@ export default function AdminBlogPage() {
       setEditing(null);
       setIsNew(false);
       setDraftConfirm(false);
+      setTagInputBn('');
     } catch (error: any) {
       console.error('Save error:', error);
       toast.error(error.message || 'Failed to save blog post');
@@ -206,6 +220,20 @@ export default function AdminBlogPage() {
   const removeTag = (tag: string) => {
     if (!editing) return;
     setEditing({ ...editing, tags: editing.tags.filter(t => t !== tag) });
+  };
+  const addTagBn = () => {
+    const tag = tagInputBn.trim();
+    if (!tag || !editing) return;
+    const current = editing.tagsBn || [];
+    if (!current.includes(tag)) {
+      setEditing({ ...editing, tagsBn: [...current, tag] });
+    }
+    setTagInputBn('');
+  };
+
+  const removeTagBn = (tag: string) => {
+    if (!editing) return;
+    setEditing({ ...editing, tagsBn: (editing.tagsBn || []).filter(t => t !== tag) });
   };
 
   return (
@@ -335,6 +363,17 @@ export default function AdminBlogPage() {
                 />
               </div>
 
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Title (Bangla)</label>
+                <input
+                  type="text"
+                  value={editing.titleBn || ''}
+                  onChange={e => setEditing({ ...editing, titleBn: e.target.value })}
+                  placeholder="বাংলা শিরোনাম"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
+                />
+              </div>
+
               {/* Slug */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Slug</label>
@@ -356,6 +395,16 @@ export default function AdminBlogPage() {
                     value={editing.category}
                     onChange={e => setEditing({ ...editing, category: e.target.value })}
                     placeholder="e.g. SEO, Marketing"
+                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Category (Bangla)</label>
+                  <input
+                    type="text"
+                    value={editing.categoryBn || ''}
+                    onChange={e => setEditing({ ...editing, categoryBn: e.target.value })}
+                    placeholder="e.g. মার্কেটিং"
                     className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
                   />
                 </div>
@@ -383,6 +432,17 @@ export default function AdminBlogPage() {
                 />
               </div>
 
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Excerpt (Bangla)</label>
+                <textarea
+                  value={editing.excerptBn || ''}
+                  onChange={e => setEditing({ ...editing, excerptBn: e.target.value })}
+                  placeholder="ব্লগ তালিকার জন্য বাংলা সংক্ষিপ্ত বর্ণনা"
+                  rows={2}
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 resize-none"
+                />
+              </div>
+
               {/* Content */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Content *</label>
@@ -390,6 +450,17 @@ export default function AdminBlogPage() {
                   value={editing.content}
                   onChange={e => setEditing({ ...editing, content: e.target.value })}
                   placeholder="Full blog post content"
+                  rows={8}
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 resize-y font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Content (Bangla)</label>
+                <textarea
+                  value={editing.contentBn || ''}
+                  onChange={e => setEditing({ ...editing, contentBn: e.target.value })}
+                  placeholder="পূর্ণ বাংলা কনটেন্ট"
                   rows={8}
                   className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 resize-y font-mono"
                 />
@@ -417,6 +488,35 @@ export default function AdminBlogPage() {
                       <span key={tag} className="flex items-center gap-1 bg-red-50 text-red-700 text-xs px-2.5 py-1 rounded-full">
                         {tag}
                         <button onClick={() => removeTag(tag)} className="hover:text-red-900">
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <Tag className="w-3.5 h-3.5 inline mr-1" />Tags (Bangla)
+                </label>
+                <div className="flex gap-2 mb-2">
+                  <input
+                    type="text"
+                    value={tagInputBn}
+                    onChange={e => setTagInputBn(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTagBn(); } }}
+                    placeholder="বাংলা ট্যাগ লিখে Enter চাপুন"
+                    className="flex-1 border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
+                  />
+                  <button onClick={addTagBn} className="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-xl text-sm">Add</button>
+                </div>
+                {(editing.tagsBn || []).length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {(editing.tagsBn || []).map(tag => (
+                      <span key={`bn-${tag}`} className="flex items-center gap-1 bg-red-50 text-red-700 text-xs px-2.5 py-1 rounded-full">
+                        {tag}
+                        <button onClick={() => removeTagBn(tag)} className="hover:text-red-900">
                           <X className="w-3 h-3" />
                         </button>
                       </span>

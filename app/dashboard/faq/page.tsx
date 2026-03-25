@@ -9,11 +9,13 @@ import { toast } from 'sonner';
 interface FAQItem {
   id: string;
   question: string;
+  questionBn?: string;
   answer: string;
+  answerBn?: string;
   order: number;
 }
 
-const BLANK: Omit<FAQItem, 'id' | 'order'> = { question: '', answer: '' };
+const BLANK: Omit<FAQItem, 'id' | 'order'> = { question: '', questionBn: '', answer: '', answerBn: '' };
 
 export default function AdminFAQPage() {
   const [faqs, setFAQs] = useState<FAQItem[]>([]);
@@ -197,11 +199,31 @@ export default function AdminFAQPage() {
                 />
               </div>
               <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Question (Bangla)</label>
+                <input
+                  type="text"
+                  value={editing.questionBn || ''}
+                  onChange={e => setEditing({ ...editing, questionBn: e.target.value })}
+                  placeholder="বাংলা প্রশ্ন লিখুন (optional)"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
+                />
+              </div>
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Answer *</label>
                 <textarea
                   value={editing.answer}
                   onChange={e => setEditing({ ...editing, answer: e.target.value })}
                   placeholder="Provide a clear and helpful answer"
+                  rows={5}
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 resize-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Answer (Bangla)</label>
+                <textarea
+                  value={editing.answerBn || ''}
+                  onChange={e => setEditing({ ...editing, answerBn: e.target.value })}
+                  placeholder="বাংলা উত্তর লিখুন (optional)"
                   rows={5}
                   className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 resize-none"
                 />

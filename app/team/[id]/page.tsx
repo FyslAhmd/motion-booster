@@ -4,6 +4,8 @@ import { notFound, useRouter } from 'next/navigation';
 import { use, useEffect, useState } from 'react';
 import { ChevronLeft, CheckCircle2, Building2 } from 'lucide-react';
 import { TeamMemberItem } from '@/lib/admin/store';
+import { useLanguage } from '@/lib/lang/LanguageContext';
+import { pickLocalizedList, pickLocalizedText } from '@/lib/lang/localize';
 
 type CompanyItem = {
   name?: string;
@@ -14,6 +16,8 @@ type CompanyItem = {
 export default function TeamMemberPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
+  const { language } = useLanguage();
+  const isBN = language === 'BN';
   const [member, setMember] = useState<TeamMemberItem | null | undefined>(undefined);
   const [companyLogoByName, setCompanyLogoByName] = useState<Record<string, string>>({});
 
@@ -54,6 +58,12 @@ export default function TeamMemberPage({ params }: { params: Promise<{ id: strin
   if (member === undefined) return null; // loading
   if (member === null) return notFound();
 
+  const localizedWorkExperience = pickLocalizedList(language, member.workExperience, member.workExperienceBn).filter(Boolean);
+  const localizedSpecializedArea = pickLocalizedList(language, member.specializedArea, member.specializedAreaBn).filter(Boolean);
+  const localizedEducation = pickLocalizedList(language, member.education, member.educationBn).filter(Boolean);
+  const localizedWorkPlaces = pickLocalizedList(language, member.workPlaces, member.workPlacesBn).filter(Boolean);
+  const canonicalWorkPlaces = (member.workPlaces || []).filter(Boolean);
+
   return (
     <main className="min-h-screen bg-white pb-[calc(1.25rem+env(safe-area-inset-bottom))] lg:pb-0 lg:pt-32">
       {/* Header — mobile only */}
@@ -65,7 +75,7 @@ export default function TeamMemberPage({ params }: { params: Promise<{ id: strin
           >
             <ChevronLeft className="w-6 h-6" />
           </button>
-          <h1 className="text-lg font-bold text-gray-900">Team Member</h1>
+          <h1 className="text-lg font-bold text-gray-900">{isBN ? 'টিম সদস্য' : 'Team Member'}</h1>
         </div>
       </div>
 
@@ -89,28 +99,28 @@ export default function TeamMemberPage({ params }: { params: Promise<{ id: strin
 
           <div>
             <h2 className="text-xl font-bold text-gray-900 leading-tight">{member.name}</h2>
-            <p className="text-gray-500 text-sm mt-0.5">{member.role}</p>
+            <p className="text-gray-500 text-sm mt-0.5">{pickLocalizedText(language, member.role, member.roleBn)}</p>
           </div>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-[#f5f4ef] rounded-xl p-4">
-            <p className="text-gray-500 text-xs mb-1">Experience</p>
-            <p className="text-red-500 font-bold text-xl">{member.experience}</p>
+            <p className="text-gray-500 text-xs mb-1">{isBN ? 'অভিজ্ঞতা' : 'Experience'}</p>
+            <p className="text-red-500 font-bold text-xl">{pickLocalizedText(language, member.experience, member.experienceBn)}</p>
           </div>
           <div className="bg-[#f5f4ef] rounded-xl p-4">
-            <p className="text-gray-500 text-xs mb-1">Projects Done</p>
-            <p className="text-red-500 font-bold text-xl">{member.projects}</p>
+            <p className="text-gray-500 text-xs mb-1">{isBN ? 'সম্পন্ন প্রজেক্ট' : 'Completed Projects'}</p>
+            <p className="text-red-500 font-bold text-xl">{pickLocalizedText(language, member.projects, member.projectsBn)}</p>
           </div>
         </div>
 
         {/* Work Experience */}
-        {member.workExperience?.filter(Boolean).length > 0 && (
+        {localizedWorkExperience.length > 0 && (
           <div className="bg-[#f5f4ef] rounded-2xl p-5">
-            <h3 className="text-base font-bold text-gray-900 mb-4">Work Experience</h3>
+            <h3 className="text-base font-bold text-gray-900 mb-4">{isBN ? 'কর্ম অভিজ্ঞতা' : 'Work Experience'}</h3>
             <div className="space-y-3">
-              {member.workExperience.filter(Boolean).map((item, i) => (
+              {localizedWorkExperience.map((item, i) => (
                 <div key={i} className="flex items-start gap-3">
                   <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 shrink-0" />
                   <span className="text-gray-700 text-sm">{item}</span>
@@ -121,11 +131,11 @@ export default function TeamMemberPage({ params }: { params: Promise<{ id: strin
         )}
 
         {/* Specialized Area */}
-        {member.specializedArea?.filter(Boolean).length > 0 && (
+        {localizedSpecializedArea.length > 0 && (
           <div className="bg-[#f5f4ef] rounded-2xl p-5">
-            <h3 className="text-base font-bold text-gray-900 mb-4">Specialized Area</h3>
+            <h3 className="text-base font-bold text-gray-900 mb-4">{isBN ? 'বিশেষ দক্ষতার ক্ষেত্র' : 'Specialized Areas'}</h3>
             <div className="space-y-3">
-              {member.specializedArea.filter(Boolean).map((item, i) => (
+              {localizedSpecializedArea.map((item, i) => (
                 <div key={i} className="flex items-start gap-3">
                   <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 shrink-0" />
                   <span className="text-gray-700 text-sm">{item}</span>
@@ -136,11 +146,11 @@ export default function TeamMemberPage({ params }: { params: Promise<{ id: strin
         )}
 
         {/* Education */}
-        {member.education?.filter(Boolean).length > 0 && (
+        {localizedEducation.length > 0 && (
           <div className="bg-[#f5f4ef] rounded-2xl p-5">
-            <h3 className="text-base font-bold text-gray-900 mb-4">Education Qualification</h3>
+            <h3 className="text-base font-bold text-gray-900 mb-4">{isBN ? 'শিক্ষাগত যোগ্যতা' : 'Education'}</h3>
             <div className="space-y-3">
-              {member.education.filter(Boolean).map((item, i) => (
+              {localizedEducation.map((item, i) => (
                 <div key={i} className="flex items-start gap-3">
                   <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 shrink-0" />
                   <span className="text-gray-700 text-sm">{item}</span>
@@ -151,12 +161,13 @@ export default function TeamMemberPage({ params }: { params: Promise<{ id: strin
         )}
 
         {/* Work Places */}
-        {member.workPlaces?.filter(Boolean).length > 0 && (
+        {localizedWorkPlaces.length > 0 && (
           <div className="bg-[#f5f4ef] rounded-2xl p-5">
-            <h3 className="text-base font-bold text-gray-900 mb-4">Work Place</h3>
+            <h3 className="text-base font-bold text-gray-900 mb-4">{isBN ? 'কর্মস্থল' : 'Work Places'}</h3>
             <div className="grid grid-cols-2 gap-3">
-              {member.workPlaces.filter(Boolean).map((place, i) => {
-                const logoSrc = companyLogoByName[normalizeName(place)] || '';
+              {localizedWorkPlaces.map((place, i) => {
+                const canonicalName = canonicalWorkPlaces[i] || place;
+                const logoSrc = companyLogoByName[normalizeName(canonicalName)] || '';
                 return (
                 <div
                   key={i}

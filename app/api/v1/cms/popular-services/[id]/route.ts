@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 
@@ -8,7 +9,20 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await req.json();
-    const { title, description, gradient, category, slug, image, customImage, services } = body;
+    const {
+      title,
+      titleBn,
+      description,
+      descriptionBn,
+      gradient,
+      category,
+      categoryBn,
+      slug,
+      image,
+      customImage,
+      services,
+      servicesBn,
+    } = body;
 
     if (!title?.trim()) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 });
@@ -20,13 +34,17 @@ export async function PUT(
       where: { id },
       data: {
         title: title.trim(),
+        titleBn: titleBn?.trim() || null,
         description: description || '',
+        descriptionBn: descriptionBn?.trim() || null,
         gradient: gradient || 'from-green-700 via-green-600 to-emerald-500',
         category: category || '',
+        categoryBn: categoryBn?.trim() || null,
         slug: finalSlug,
         image: image || '/service-digital-marketing.jpg',
         customImage: customImage || null,
         services: Array.isArray(services) ? services.filter((s: string) => s.trim()) : [],
+        servicesBn: Array.isArray(servicesBn) ? servicesBn.filter((s: string) => s.trim()) : [],
       },
     });
 

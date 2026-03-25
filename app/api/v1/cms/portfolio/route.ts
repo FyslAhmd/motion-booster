@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { defaultPortfolio } from '@/lib/admin/store';
@@ -25,11 +26,17 @@ export async function POST(req: NextRequest) {
     const item = await prisma.portfolioItem.create({
       data: {
         title: body.title,
+        titleBn: body.titleBn?.trim() || null,
         category: body.category,
+        categoryBn: body.categoryBn?.trim() || null,
         description: body.description ?? '',
+        descriptionBn: body.descriptionBn?.trim() || null,
         client: body.client ?? '',
+        clientBn: body.clientBn?.trim() || null,
         result: body.result ?? '',
+        resultBn: body.resultBn?.trim() || null,
         tags: body.tags ?? [],
+        tagsBn: body.tagsBn ?? [],
         coverColor: body.coverColor,
         coverImage: body.coverImage ?? null,
         featured: body.featured ?? false,

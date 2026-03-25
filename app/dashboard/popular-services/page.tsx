@@ -39,13 +39,17 @@ const toSlug = (t: string) => t.toLowerCase().replace(/[^a-z0-9]+/g, '-').replac
 
 const emptyItem: Omit<PopularServiceItem, 'id'> = {
   title: '',
+  titleBn: '',
   description: '',
+  descriptionBn: '',
   gradient: GRADIENT_OPTIONS[0].value,
   category: '',
+  categoryBn: '',
   slug: '',
   image: IMAGE_OPTIONS[0],
   customImage: '',
   services: [''],
+  servicesBn: [''],
 };
 
 function PopularServicesListSkeleton() {
@@ -120,6 +124,7 @@ export default function PopularServicesPage() {
       ...editing,
       slug: editing.slug.trim() || toSlug(editing.title),
       services: editing.services.filter(s => s.trim()),
+      servicesBn: (editing.servicesBn || []).filter(s => s.trim()),
     };
     setLoading(true);
     try {
@@ -261,10 +266,21 @@ export default function PopularServicesPage() {
   };
 
   const addFeature = () => editing && setEditing({ ...editing, services: [...editing.services, ''] });
+  const addFeatureBn = () => editing && setEditing({ ...editing, servicesBn: [...(editing.servicesBn || []), ''] });
 
   const removeFeature = (idx: number) => {
     if (!editing) return;
     setEditing({ ...editing, services: editing.services.filter((_, i) => i !== idx) });
+  };
+  const updateFeatureBn = (idx: number, val: string) => {
+    if (!editing) return;
+    const s = [...(editing.servicesBn || [])];
+    s[idx] = val;
+    setEditing({ ...editing, servicesBn: s });
+  };
+  const removeFeatureBn = (idx: number) => {
+    if (!editing) return;
+    setEditing({ ...editing, servicesBn: (editing.servicesBn || []).filter((_, i) => i !== idx) });
   };
 
   return (
@@ -305,6 +321,16 @@ export default function PopularServicesPage() {
                 />
               </div>
 
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Card Title (Bangla)</label>
+                <input
+                  value={editing.titleBn || ''}
+                  onChange={e => setEditing({ ...editing, titleBn: e.target.value })}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400"
+                  placeholder="e.g. ডিজিটাল মার্কেটিং সার্ভিস"
+                />
+              </div>
+
               {/* Description */}
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1.5">Description</label>
@@ -317,6 +343,17 @@ export default function PopularServicesPage() {
                 />
               </div>
 
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Description (Bangla)</label>
+                <textarea
+                  value={editing.descriptionBn || ''}
+                  onChange={e => setEditing({ ...editing, descriptionBn: e.target.value })}
+                  rows={2}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400 resize-none"
+                  placeholder="বাংলা বর্ণনা..."
+                />
+              </div>
+
               {/* Category + Slug */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -326,6 +363,15 @@ export default function PopularServicesPage() {
                     onChange={e => setEditing({ ...editing, category: e.target.value })}
                     className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400"
                     placeholder="e.g. Digital Marketing"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">Category (Bangla)</label>
+                  <input
+                    value={editing.categoryBn || ''}
+                    onChange={e => setEditing({ ...editing, categoryBn: e.target.value })}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400"
+                    placeholder="e.g. ডিজিটাল মার্কেটিং"
                   />
                 </div>
                 <div>
@@ -400,6 +446,31 @@ export default function PopularServicesPage() {
                         placeholder="e.g. SEO Optimization & Link Building"
                       />
                       <button onClick={() => removeFeature(idx)} className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors">
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-medium text-gray-500">Feature / Services List (Bangla)</label>
+                  <button onClick={addFeatureBn} className="text-xs text-red-600 hover:text-red-700 font-medium flex items-center gap-1">
+                    <Plus className="w-3 h-3" /> Add item
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  {(editing.servicesBn || []).map((feat, idx) => (
+                    <div key={`bn-${idx}`} className="flex items-center gap-2">
+                      <span className="text-gray-300 text-xs w-4 shrink-0">{idx + 1}.</span>
+                      <input
+                        value={feat}
+                        onChange={e => updateFeatureBn(idx, e.target.value)}
+                        className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400"
+                        placeholder="e.g. এসইও অপটিমাইজেশন"
+                      />
+                      <button onClick={() => removeFeatureBn(idx)} className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors">
                         <X className="w-3.5 h-3.5" />
                       </button>
                     </div>

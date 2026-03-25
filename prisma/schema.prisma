@@ -170,9 +170,13 @@ model HeroSlide {
   image       String
   customImage String?  @map("custom_image") @db.Text
   title       String
+  titleBn     String?  @map("title_bn")
   description String
+  descriptionBn String? @map("description_bn")
   badge       String?
+  badgeBn     String?  @map("badge_bn")
   ctaText     String?  @map("cta_text")
+  ctaTextBn   String?  @map("cta_text_bn")
   ctaLink     String?  @map("cta_link")
   order       Int      @default(0)
   createdAt   DateTime @default(now()) @map("created_at")
@@ -186,6 +190,7 @@ model HeroSlide {
 model ServiceCategory {
   id        String   @id @default(cuid())
   title     String
+  titleBn   String?  @map("title_bn")
   slug      String   @unique
   iconType  String   @map("icon_type")
   iconColor String   @map("icon_color")
@@ -216,13 +221,17 @@ model SiteSettings {
 model PopularService {
   id          String   @id @default(cuid())
   title       String
+  titleBn     String?  @map("title_bn")
   description String
+  descriptionBn String? @map("description_bn")
   gradient    String
   category    String
+  categoryBn  String?  @map("category_bn")
   slug        String   @unique
   image       String
   customImage String?  @map("custom_image") @db.Text
   services    String[]
+  servicesBn  String[] @default([]) @map("services_bn")
   order       Int      @default(0)
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
@@ -236,7 +245,9 @@ model Stat {
   id          String   @id @default(cuid())
   value       String
   title       String
+  titleBn     String?  @map("title_bn")
   description String   @db.Text
+  descriptionBn String? @map("description_bn") @db.Text
   bgColor     String   @map("bg_color")
   valueColor  String   @map("value_color")
   order       Int      @default(0)
@@ -251,11 +262,17 @@ model Stat {
 model PortfolioItem {
   id          String   @id @default(cuid())
   title       String
+  titleBn     String?  @map("title_bn")
   category    String
+  categoryBn  String?  @map("category_bn")
   description String   @db.Text
+  descriptionBn String? @map("description_bn") @db.Text
   client      String
+  clientBn    String?  @map("client_bn")
   result      String
+  resultBn    String?  @map("result_bn")
   tags        String[]
+  tagsBn      String[] @default([]) @map("tags_bn")
   coverColor  String   @map("cover_color")
   coverImage  String?  @map("cover_image") @db.Text
   featured    Boolean  @default(false)
@@ -272,12 +289,15 @@ model Testimonial {
   id          String   @id @default(cuid())
   name        String
   role        String
+  roleBn      String?  @map("role_bn")
   avatar      String
   avatarBg    String   @map("avatar_bg")
   avatarImage String?  @map("avatar_image") @db.Text
   rating      Int      @default(5)
   review      String   @db.Text
+  reviewBn    String?  @map("review_bn") @db.Text
   service     String
+  serviceBn   String?  @map("service_bn")
   order       Int      @default(0)
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
@@ -291,17 +311,25 @@ model TeamMember {
   id              String   @id @default(cuid())
   name            String
   role            String
+  roleBn          String?  @map("role_bn")
   experience      String
+  experienceBn    String?  @map("experience_bn")
   projects        String
+  projectsBn      String?  @map("projects_bn")
   department      String
+  departmentBn    String?  @map("department_bn")
   featured        Boolean  @default(false)
   avatar          String
   avatarColor     String   @map("avatar_color")
   avatarImage     String?  @map("avatar_image") @db.Text
   workExperience  String[] @map("work_experience")
+  workExperienceBn String[] @default([]) @map("work_experience_bn")
   specializedArea String[] @map("specialized_area")
+  specializedAreaBn String[] @default([]) @map("specialized_area_bn")
   education       String[]
+  educationBn     String[] @default([]) @map("education_bn")
   workPlaces      String[] @map("work_places")
+  workPlacesBn    String[] @default([]) @map("work_places_bn")
   order           Int      @default(0)
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
@@ -329,7 +357,9 @@ model Service {
 model FAQ {
   id        String   @id @default(cuid())
   question  String
+  questionBn String? @map("question_bn")
   answer    String   @db.Text
+  answerBn  String?  @map("answer_bn") @db.Text
   order     Int      @default(0)
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -360,12 +390,17 @@ enum BlogStatus {
 model BlogPost {
   id          String     @id @default(cuid())
   title       String
+  titleBn     String?    @map("title_bn")
   slug        String     @unique
   excerpt     String     @db.Text
+  excerptBn   String?    @map("excerpt_bn") @db.Text
   content     String     @db.Text
+  contentBn   String?    @map("content_bn") @db.Text
   coverImage  String?    @map("cover_image") @db.Text
   category    String
+  categoryBn  String?    @map("category_bn")
   tags        String[]
+  tagsBn      String[]   @default([]) @map("tags_bn")
   author      String     @default("Motion Booster")
   status      BlogStatus @default(DRAFT)
   order       Int        @default(0)

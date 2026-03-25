@@ -3,12 +3,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLanguage } from '@/lib/lang/LanguageContext';
 import { Star } from 'lucide-react';
+import { pickLocalizedText } from '@/lib/lang/localize';
 
 interface StatItem {
   id: string;
   value: string;
   title: string;
+  titleBn?: string | null;
   description: string;
+  descriptionBn?: string | null;
   bgColor: string;
   valueColor: string;
 }
@@ -17,16 +20,19 @@ interface TestimonialItem {
   id: string;
   name: string;
   role: string;
+  roleBn?: string | null;
   avatar: string;
   avatarBg: string;
   avatarImage?: string | null;
   rating: number;
   review: string;
+  reviewBn?: string | null;
   service: string;
+  serviceBn?: string | null;
 }
 
 export const Testimonials = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [reviews, setReviews] = useState<TestimonialItem[]>([]);
   const [stats, setStats] = useState<StatItem[]>([]);
   const [loadingReviews, setLoadingReviews] = useState(true);
@@ -38,18 +44,18 @@ export const Testimonials = () => {
   const [dragStartScroll, setDragStartScroll] = useState(0);
 
   useEffect(() => {
-    fetch('/api/v1/cms/testimonials')
+    fetch('/api/v1/cms/testimonials', { cache: 'no-store' })
       .then(r => r.json())
       .then(data => setReviews(Array.isArray(data) ? data : []))
       .catch(() => {})
       .finally(() => setLoadingReviews(false));
 
-    fetch('/api/v1/cms/stats')
+    fetch('/api/v1/cms/stats', { cache: 'no-store' })
       .then(r => r.json())
       .then(data => setStats(Array.isArray(data) ? data : []))
       .catch(() => {})
       .finally(() => setLoadingStats(false));
-  }, []);
+  }, [language]);
 
   useEffect(() => {
     const statsEl = statsRef.current;
@@ -74,43 +80,49 @@ export const Testimonials = () => {
     };
   }, [draggingTarget]);
 
-  const ReviewCard = ({ review, delay = 0 }: { review: TestimonialItem; delay?: number }) => (
-    <div
-      className="testimonial-review-card card-reveal-right shrink-0 w-80 sm:w-90 md:w-100 bg-white border border-gray-100 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm hover:shadow-lg transition-shadow cursor-default"
-      style={{ animationDelay: `${Math.round(delay * 1000)}ms` }}
-    >
-      <div className="flex items-start gap-3 sm:gap-4">
-        {/* Avatar on left */}
-        {review.avatarImage ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={review.avatarImage} alt={review.name} className="shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover shadow-md" />
-        ) : (
-          <div className={`shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-linear-to-br ${review.avatarBg} flex items-center justify-center text-white font-bold text-base sm:text-lg shadow-md`}>
-            {review.avatar || review.name.slice(0, 2).toUpperCase()}
+  const ReviewCard = ({ review, delay = 0 }: { review: TestimonialItem; delay?: number }) => {
+    const role = pickLocalizedText(language, review.role, review.roleBn);
+    const service = pickLocalizedText(language, review.service, review.serviceBn);
+    const reviewText = pickLocalizedText(language, review.review, review.reviewBn);
+
+    return (
+      <div
+        className="testimonial-review-card card-reveal-right shrink-0 w-80 sm:w-90 md:w-100 bg-white border border-gray-100 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm hover:shadow-lg transition-shadow cursor-default"
+        style={{ animationDelay: `${Math.round(delay * 1000)}ms` }}
+      >
+        <div className="flex items-start gap-3 sm:gap-4">
+          {/* Avatar on left */}
+          {review.avatarImage ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={review.avatarImage} alt={review.name} className="shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover shadow-md" />
+          ) : (
+            <div className={`shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-linear-to-br ${review.avatarBg} flex items-center justify-center text-white font-bold text-base sm:text-lg shadow-md`}>
+              {review.avatar || review.name.slice(0, 2).toUpperCase()}
+            </div>
+          )}
+
+          <div className="flex-1 min-w-0">
+            <h4 className="font-bold text-gray-900 text-sm sm:text-base">{review.name}</h4>
+            <p className="text-gray-500 text-xs mb-1">{role}</p>
+
+            <span className="inline-block text-xs font-semibold text-red-500 bg-red-50 px-2 py-0.5 rounded-full mb-2">
+              {service}
+            </span>
+
+            <div className="flex gap-0.5 mb-2">
+              {Array.from({ length: review.rating }).map((_, i) => (
+                <Star key={i} className="w-3 h-3 sm:w-3.5 sm:h-3.5 fill-orange-400 text-orange-400" />
+              ))}
+            </div>
+
+            <p className="text-gray-600 text-xs sm:text-sm leading-relaxed line-clamp-3">
+              {reviewText}
+            </p>
           </div>
-        )}
-
-        <div className="flex-1 min-w-0">
-          <h4 className="font-bold text-gray-900 text-sm sm:text-base">{review.name}</h4>
-          <p className="text-gray-500 text-xs mb-1">{review.role}</p>
-
-          <span className="inline-block text-xs font-semibold text-red-500 bg-red-50 px-2 py-0.5 rounded-full mb-2">
-            {review.service}
-          </span>
-
-          <div className="flex gap-0.5 mb-2">
-            {Array.from({ length: review.rating }).map((_, i) => (
-              <Star key={i} className="w-3 h-3 sm:w-3.5 sm:h-3.5 fill-orange-400 text-orange-400" />
-            ))}
-          </div>
-
-          <p className="text-gray-600 text-xs sm:text-sm leading-relaxed line-clamp-3">
-            {review.review}
-          </p>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <section className="py-12 md:py-16 lg:py-14 bg-white overflow-hidden page-reveal">
@@ -154,19 +166,23 @@ export const Testimonials = () => {
                 <div className="h-3 w-full bg-gray-200 rounded animate-pulse" />
               </div>
             ))}
-            {!loadingStats && [...stats, ...stats].map((stat, index) => (
-              <div
-                key={index}
-                className={`shrink-0 w-64 sm:w-72 md:w-75 lg:w-85 ${stat.bgColor} rounded-xl sm:rounded-2xl p-5 sm:p-6 md:p-8 transition-all hover:shadow-lg ${index % 2 === 0 ? 'card-reveal-left' : 'card-reveal-right'}`}
-                style={{ animationDelay: `${Math.min(index * 40, 240)}ms` }}
-              >
-                <div className={`text-3xl sm:text-4xl md:text-5xl font-bold ${stat.valueColor} mb-2 sm:mb-3`}>
-                  {stat.value}
+            {!loadingStats && [...stats, ...stats].map((stat, index) => {
+              const title = pickLocalizedText(language, stat.title, stat.titleBn);
+              const description = pickLocalizedText(language, stat.description, stat.descriptionBn);
+              return (
+                <div
+                  key={index}
+                  className={`shrink-0 w-64 sm:w-72 md:w-75 lg:w-85 ${stat.bgColor} rounded-xl sm:rounded-2xl p-5 sm:p-6 md:p-8 transition-all hover:shadow-lg ${index % 2 === 0 ? 'card-reveal-left' : 'card-reveal-right'}`}
+                  style={{ animationDelay: `${Math.min(index * 40, 240)}ms` }}
+                >
+                  <div className={`text-3xl sm:text-4xl md:text-5xl font-bold ${stat.valueColor} mb-2 sm:mb-3`}>
+                    {stat.value}
+                  </div>
+                  <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-2 sm:mb-3 md:mb-4">{title}</h3>
+                  <p className="text-gray-600 text-xs sm:text-sm leading-relaxed">{description}</p>
                 </div>
-                <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-2 sm:mb-3 md:mb-4">{stat.title}</h3>
-                <p className="text-gray-600 text-xs sm:text-sm leading-relaxed">{stat.description}</p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 

@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { defaultTestimonials } from '@/lib/admin/store';
@@ -26,12 +27,15 @@ export async function POST(req: NextRequest) {
       data: {
         name: body.name,
         role: body.role,
+        roleBn: body.roleBn?.trim() || null,
         avatar: body.avatar,
         avatarBg: body.avatarBg,
         avatarImage: body.avatarImage ?? null,
         rating: body.rating ?? 5,
         review: body.review,
+        reviewBn: body.reviewBn?.trim() || null,
         service: body.service,
+        serviceBn: body.serviceBn?.trim() || null,
         order: count,
       },
     });

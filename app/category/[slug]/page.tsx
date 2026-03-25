@@ -1,5 +1,6 @@
 import { categoryData } from '@/lib/courseData';
 import { notFound } from 'next/navigation';
+import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { Check, ArrowRight, ChevronRight } from 'lucide-react';
 
@@ -21,6 +22,8 @@ interface PageProps {
 }
 
 export default async function CategoryPage({ params }: PageProps) {
+  const cookieStore = await cookies();
+  const isBN = cookieStore.get('language')?.value === 'BN';
   const { slug } = await params;
   const category = categoryData.find((c) => c.slug === slug);
 
@@ -55,9 +58,9 @@ export default async function CategoryPage({ params }: PageProps) {
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-sm mb-4">
-            <Link href="/" className="text-gray-500 hover:text-red-500 transition-colors">Home</Link>
+            <Link href="/" className="text-gray-500 hover:text-red-500 transition-colors">{isBN ? 'হোম' : 'Home'}</Link>
             <ChevronRight className="w-4 h-4 text-gray-400" />
-            <Link href="/service" className="text-gray-500 hover:text-red-500 transition-colors">Services</Link>
+            <Link href="/service" className="text-gray-500 hover:text-red-500 transition-colors">{isBN ? 'সেবাসমূহ' : 'Services'}</Link>
             <ChevronRight className="w-4 h-4 text-gray-400" />
             <span className="text-red-500 font-semibold">{category.title}</span>
           </div>
@@ -68,7 +71,7 @@ export default async function CategoryPage({ params }: PageProps) {
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-white text-sm font-semibold mb-4"
               style={{ background: 'linear-gradient(214.38deg, #ff8079 -2.24%, #ff1e1e 59.38%)' }}
             >
-              ✓ Our Services
+              ✓ {isBN ? 'আমাদের সেবাসমূহ' : 'Our Services'}
             </div>
 
             {/* Title */}
@@ -85,17 +88,17 @@ export default async function CategoryPage({ params }: PageProps) {
             <div className="flex flex-wrap gap-6">
               <div>
                 <div className="text-3xl font-bold text-gray-900">{category.services.length}+</div>
-                <div className="text-sm text-gray-500 font-medium">Services Offered</div>
+                <div className="text-sm text-gray-500 font-medium">{isBN ? 'প্রদত্ত সেবা' : 'Services Offered'}</div>
               </div>
               <div className="w-px bg-gray-300" />
               <div>
                 <div className="text-3xl font-bold text-gray-900">500+</div>
-                <div className="text-sm text-gray-500 font-medium">Projects Completed</div>
+                <div className="text-sm text-gray-500 font-medium">{isBN ? 'সম্পন্ন প্রজেক্ট' : 'Completed Projects'}</div>
               </div>
               <div className="w-px bg-gray-300" />
               <div>
                 <div className="text-3xl font-bold text-gray-900">98%</div>
-                <div className="text-sm text-gray-500 font-medium">Client Satisfaction</div>
+                <div className="text-sm text-gray-500 font-medium">{isBN ? 'ক্লায়েন্ট সন্তুষ্টি' : 'Client Satisfaction'}</div>
               </div>
             </div>
           </div>
@@ -113,8 +116,10 @@ export default async function CategoryPage({ params }: PageProps) {
       <section className="pt-10 pb-14 md:py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8 md:mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">What We Offer</h2>
-            <p className="text-gray-600 text-lg">Everything you need under {category.title}</p>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">{isBN ? 'আমরা যা দিচ্ছি' : 'What We Offer'}</h2>
+            <p className="text-gray-600 text-lg">
+              {isBN ? `${category.title} এর অধীনে আপনার প্রয়োজনীয় সবকিছু` : `Everything you need under ${category.title}`}
+            </p>
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -139,10 +144,12 @@ export default async function CategoryPage({ params }: PageProps) {
       <section className="py-16" style={{ background: 'linear-gradient(135deg, #fef6f3 0%, #fde8e4 50%, #fbd5d0 100%)' }}>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Ready to Get Started?
+            {isBN ? 'শুরু করতে প্রস্তুত?' : 'Ready to get started?'}
           </h2>
           <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
-            Interested in our {category.title} services? Contact us today for a free consultation and quote.
+            {isBN
+              ? `আমাদের ${category.title} সেবায় আগ্রহী? ফ্রি কনসালটেশন ও কোটেশনের জন্য আজই যোগাযোগ করুন।`
+              : `Interested in our ${category.title} service? Contact us today for a free consultation and quotation.`}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
@@ -150,14 +157,14 @@ export default async function CategoryPage({ params }: PageProps) {
               className="inline-flex items-center justify-center gap-2 px-8 py-4 text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-xl text-lg"
               style={{ background: 'linear-gradient(214.38deg, #ff8079 -2.24%, #ff1e1e 59.38%)' }}
             >
-              Get a Free Quote
+              {isBN ? 'ফ্রি কোটেশন নিন' : 'Get Free Quotation'}
               <ArrowRight className="w-5 h-5" />
             </Link>
             <Link
               href="/service"
               className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-gray-800 font-semibold rounded-xl border-2 border-gray-200 hover:border-red-200 transition-all shadow-sm hover:shadow-md text-lg"
             >
-              View All Services
+              {isBN ? 'সব সেবা দেখুন' : 'View All Services'}
             </Link>
           </div>
         </div>

@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { Prisma } from '@/lib/generated/prisma';
@@ -9,7 +10,7 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await req.json();
-    const { title, slug, iconType, iconColor, iconBg, logoImage } = body;
+    const { title, titleBn, slug, iconType, iconColor, iconBg, logoImage } = body;
 
     if (!title?.trim()) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 });
@@ -36,6 +37,7 @@ export async function PUT(
       where: { id },
       data: {
         title: title.trim(),
+        titleBn: titleBn?.trim() || null,
         slug: finalSlug,
         iconType: iconType || 'layers',
         iconColor: iconColor || 'text-blue-600',

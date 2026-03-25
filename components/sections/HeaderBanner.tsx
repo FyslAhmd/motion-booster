@@ -27,7 +27,8 @@ const sliderImages = [
 ];
 
 export const HeaderBanner = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const isBN = language === 'BN';
   const [currentSlide, setCurrentSlide] = useState(0);
   const bannerRef = useRef<HTMLElement | null>(null);
 
@@ -107,7 +108,7 @@ export const HeaderBanner = () => {
             href="/register"
             className="inline-flex items-center justify-center rounded-xl border border-red-500 bg-white px-4 py-3 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50"
           >
-            Get Started
+            {isBN ? 'শুরু করুন' : 'Get Started'}
           </a>
         </div>
       </div>
@@ -142,7 +143,7 @@ export const HeaderBanner = () => {
                 href="/register"
                 className="inline-flex items-center gap-2 px-7 py-3 bg-white border border-red-500 text-red-600 font-semibold rounded-lg transition-all shadow hover:bg-red-50"
               >
-                Get Started
+                {isBN ? 'শুরু করুন' : 'Get Started'}
               </a>
             </div>
           </div>

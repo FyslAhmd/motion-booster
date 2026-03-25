@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 
@@ -19,17 +20,25 @@ export async function POST(req: NextRequest) {
       data: {
         name: body.name,
         role: body.role,
+        roleBn: body.roleBn?.trim() || null,
         experience: body.experience ?? '',
+        experienceBn: body.experienceBn?.trim() || null,
         projects: body.projects ?? '',
+        projectsBn: body.projectsBn?.trim() || null,
         department: body.department ?? '',
+        departmentBn: body.departmentBn?.trim() || null,
         featured: body.featured ?? false,
         avatar: body.avatar ?? '',
         avatarColor: body.avatarColor ?? 'bg-blue-500',
         avatarImage: body.avatarImage ?? null,
         workExperience: body.workExperience ?? [],
+        workExperienceBn: body.workExperienceBn ?? [],
         specializedArea: body.specializedArea ?? [],
+        specializedAreaBn: body.specializedAreaBn ?? [],
         education: body.education ?? [],
+        educationBn: body.educationBn ?? [],
         workPlaces: body.workPlaces ?? [],
+        workPlacesBn: body.workPlacesBn ?? [],
         order: count,
       },
     });

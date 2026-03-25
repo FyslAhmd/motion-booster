@@ -19,6 +19,7 @@ export const Header = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const { isAuthenticated, isLoading, user, logout } = useAuth();
   const { language, setLanguage, t } = useLanguage();
+  const isBN = language === 'BN';
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const notificationPanelRef = useRef<HTMLDivElement>(null);
@@ -115,7 +116,14 @@ export const Header = () => {
   const visibleNavItems = navItems;
   const userInitial = (user?.fullName || user?.username || user?.email || 'U').trim().charAt(0).toUpperCase();
   const userAvatarUrl = user?.avatarUrl?.trim() || '';
-  const accountLabel = user?.role === 'ADMIN' ? 'Admin Account' : 'Client Account';
+  const accountLabel =
+    user?.role === 'ADMIN'
+      ? isBN
+        ? 'অ্যাডমিন অ্যাকাউন্ট'
+        : 'Admin Account'
+      : isBN
+        ? 'ক্লায়েন্ট অ্যাকাউন্ট'
+        : 'Client Account';
 
   return (
     <header className={`relative z-120 lg:fixed lg:top-0 lg:left-0 lg:right-0 transition-all duration-300 ${scrolled ? 'lg:bg-white lg:shadow-md' : 'lg:bg-transparent'}`}>
@@ -276,7 +284,7 @@ export const Header = () => {
                           className="w-full flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50 text-sm transition-colors"
                         >
                           <LayoutDashboard className="w-4 h-4" />
-                          Dashboard
+                          {isBN ? 'ড্যাশবোর্ড' : 'Dashboard'}
                         </button>
                       </Link>
                       <Link href="/dashboard/profile">
@@ -285,7 +293,7 @@ export const Header = () => {
                           className="w-full flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50 text-sm transition-colors"
                         >
                           <User className="w-4 h-4" />
-                          Profile
+                          {isBN ? 'প্রোফাইল' : 'Profile'}
                         </button>
                       </Link>
                       <button
@@ -301,7 +309,7 @@ export const Header = () => {
                         className="w-full flex items-center gap-3 px-4 py-2 text-red-600 hover:bg-red-50 text-sm transition-colors border-t border-gray-100 mt-1"
                       >
                         <LogOut className="w-4 h-4" />
-                        Logout
+                        {isBN ? 'লগআউট' : 'Logout'}
                       </button>
                     </div>
                   )}
@@ -312,7 +320,7 @@ export const Header = () => {
                     href="/login"
                     className="flex items-center gap-2 px-6 py-3 bg-linear-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold rounded-lg transition-all shadow-md hover:shadow-lg text-sm"
                   >
-                    Login
+                    {isBN ? 'লগইন' : 'Login'}
                   </Link>
                 </div>
               )}
@@ -331,7 +339,7 @@ export const Header = () => {
           }`}
         >
           <Home className="w-6 h-6" />
-          <span className="text-[10px] font-medium">Home</span>
+          <span className="text-[10px] font-medium">{t('nav_home')}</span>
         </Link>
         <Link
           href="/service"
@@ -340,7 +348,7 @@ export const Header = () => {
           }`}
         >
           <Briefcase className="w-6 h-6" />
-          <span className="text-[10px] font-medium">Service</span>
+          <span className="text-[10px] font-medium">{t('nav_service')}</span>
         </Link>
         <Link
           href="/team"
@@ -349,14 +357,14 @@ export const Header = () => {
           }`}
         >
           <Users className="w-6 h-6" />
-          <span className="text-[10px] font-medium">Team</span>
+          <span className="text-[10px] font-medium">{t('nav_team')}</span>
         </Link>
         <button
           onClick={() => setShowMoreDrawer(true)}
           className="flex flex-col items-center justify-center gap-1 px-3 py-2 text-gray-500 transition-colors flex-1 min-w-0"
         >
           <Menu className="w-6 h-6" />
-          <span className="text-[10px] font-medium">More</span>
+          <span className="text-[10px] font-medium">{t('nav_more')}</span>
         </button>
       </nav>
 
@@ -368,16 +376,37 @@ export const Header = () => {
           <div className="fixed inset-0 z-135 bg-black/30 lg:hidden" onClick={() => setShowNotifications(false)} />
           <div ref={notificationPanelRef} className="fixed top-[4.6rem] left-3 right-3 z-140 rounded-2xl border border-gray-200 bg-white shadow-2xl lg:hidden">
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-              <h3 className="text-sm font-semibold text-gray-900">Notifications</h3>
-              <button onClick={() => setShowNotifications(false)} className="text-xs font-medium text-gray-500 hover:text-gray-700">Close</button>
+              <h3 className="text-sm font-semibold text-gray-900">{t('notifications')}</h3>
+              <button onClick={() => setShowNotifications(false)} className="text-xs font-medium text-gray-500 hover:text-gray-700">{t('floating_call_close')}</button>
             </div>
 
             {isAuthenticated ? (
               <div className="max-h-[58vh] overflow-y-auto py-2">
                 {[
-                  { id: 'n1', title: 'New message received', text: 'You have a new chat message in dashboard inbox.', time: 'Just now' },
-                  { id: 'n2', title: 'Campaign update', text: 'One of your campaigns has a fresh status update.', time: '12m ago' },
-                  { id: 'n3', title: 'Support reply', text: 'Our team replied to your latest request.', time: '1h ago' },
+                  {
+                    id: 'n1',
+                    title: isBN ? 'নতুন মেসেজ এসেছে' : 'New message received',
+                    text: isBN
+                      ? 'ড্যাশবোর্ড ইনবক্সে আপনার নতুন একটি চ্যাট মেসেজ আছে।'
+                      : 'You have a new chat message in dashboard inbox.',
+                    time: isBN ? 'এইমাত্র' : 'Just now',
+                  },
+                  {
+                    id: 'n2',
+                    title: isBN ? 'ক্যাম্পেইন আপডেট' : 'Campaign update',
+                    text: isBN
+                      ? 'আপনার একটি ক্যাম্পেইনের নতুন স্ট্যাটাস আপডেট হয়েছে।'
+                      : 'One of your campaigns has a fresh status update.',
+                    time: isBN ? '১২ মিনিট আগে' : '12m ago',
+                  },
+                  {
+                    id: 'n3',
+                    title: isBN ? 'সাপোর্ট রিপ্লাই' : 'Support reply',
+                    text: isBN
+                      ? 'আপনার সর্বশেষ অনুরোধের জবাব দিয়েছে আমাদের টিম।'
+                      : 'Our team replied to your latest request.',
+                    time: isBN ? '১ ঘণ্টা আগে' : '1h ago',
+                  },
                 ].map((item) => (
                   <Link
                     key={item.id}
@@ -393,13 +422,17 @@ export const Header = () => {
               </div>
             ) : (
               <div className="px-4 py-5">
-                <p className="text-sm text-gray-700 mb-3">Login করলে তোমার notification messages এখানে show হবে.</p>
+                <p className="text-sm text-gray-700 mb-3">
+                  {isBN
+                    ? 'লগইন করলে তোমার নোটিফিকেশন মেসেজগুলো এখানে দেখাবে।'
+                    : 'Login to see your notification messages here.'}
+                </p>
                 <Link
                   href="/login"
                   onClick={() => setShowNotifications(false)}
                   className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-3 py-2 text-xs font-semibold text-white hover:bg-red-700"
                 >
-                  Login to view
+                  {isBN ? 'দেখতে লগইন করুন' : 'Login to view'}
                 </Link>
               </div>
             )}
@@ -421,7 +454,7 @@ export const Header = () => {
           ${showSearch ? 'translate-x-0 shadow-2xl pointer-events-auto' : 'translate-x-full shadow-none pointer-events-none'}`}
       >
         <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100">
-          <span className="font-semibold text-gray-800 text-base">Search</span>
+          <span className="font-semibold text-gray-800 text-base">{t('search_title')}</span>
           <button onClick={() => setShowSearch(false)} className="p-1.5 rounded-full hover:bg-gray-100">
             <X className="w-5 h-5 text-gray-500" />
           </button>
@@ -434,14 +467,17 @@ export const Header = () => {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search services, blogs..."
+              placeholder={isBN ? 'সার্ভিস, ব্লগ সার্চ করুন...' : 'Search services, blogs...'}
               className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-400"
             />
           </div>
         </div>
         {searchQuery.trim() && (
           <div className="px-4 mt-3 flex-1 overflow-y-auto">
-            <p className="text-xs text-gray-400 mb-2">Press Enter to search for <span className="font-semibold text-gray-600">&ldquo;{searchQuery}&rdquo;</span></p>
+            <p className="text-xs text-gray-400 mb-2">
+              {isBN ? 'সার্চ করতে এন্টার চাপুন' : 'Press Enter to search for'}{' '}
+              <span className="font-semibold text-gray-600">&ldquo;{searchQuery}&rdquo;</span>
+            </p>
             {['/service', '/blog', '/about', '/contact'].map((href) => (
               <Link
                 key={href}

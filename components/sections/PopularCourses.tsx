@@ -6,9 +6,11 @@ import Image from 'next/image';
 import { useLanguage } from '@/lib/lang/LanguageContext';
 import { ChevronLeft, ChevronRight, Check, ArrowRight } from 'lucide-react';
 import { PopularServiceItem } from '@/lib/admin/store';
+import { pickLocalizedList, pickLocalizedText } from '@/lib/lang/localize';
 
 export const PopularCourses = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const isBN = language === 'BN';
   const [allServices, setAllServices] = useState<PopularServiceItem[]>([]);
   const [categoryLabels, setCategoryLabels] = useState<Record<string, string>>({});
   const [activeTab, setActiveTab] = useState('All');
@@ -18,11 +20,12 @@ export const PopularCourses = () => {
 
   useEffect(() => {
     let cancelled = false;
+    setLoading(true);
 
     const load = async () => {
       const [servicesResult, categoriesResult] = await Promise.allSettled([
-        fetch('/api/v1/cms/popular-services').then((r) => r.json()),
-        fetch('/api/v1/cms/service-categories').then((r) => r.json()),
+        fetch('/api/v1/cms/popular-services', { cache: 'no-store' }).then((r) => r.json()),
+        fetch('/api/v1/cms/service-categories', { cache: 'no-store' }).then((r) => r.json()),
       ]);
 
       if (!cancelled && servicesResult.status === 'fulfilled' && Array.isArray(servicesResult.value)) {
@@ -31,8 +34,8 @@ export const PopularCourses = () => {
 
       if (!cancelled && categoriesResult.status === 'fulfilled' && Array.isArray(categoriesResult.value)) {
         const nextMap: Record<string, string> = {};
-        categoriesResult.value.forEach((cat: { title?: string; slug?: string; iconType?: string }) => {
-          const title = cat.title?.trim();
+        categoriesResult.value.forEach((cat: { title?: string; titleBn?: string; slug?: string; iconType?: string }) => {
+          const title = pickLocalizedText(language, cat.title, cat.titleBn);
           if (!title) return;
           [cat.slug, cat.iconType, cat.title].forEach((key) => {
             if (!key?.trim()) return;
@@ -52,7 +55,7 @@ export const PopularCourses = () => {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [language]);
 
   const tabs = ['All', ...Array.from(new Set(allServices.map(s => s.category).filter(Boolean)))];
 
@@ -132,7 +135,11 @@ export const PopularCourses = () => {
                 </div>
               </div>
             ))}
-            {!loading && filteredServices.map((service, index) => (
+            {!loading && filteredServices.map((service, index) => {
+              const title = pickLocalizedText(language, service.title, service.titleBn);
+              const description = pickLocalizedText(language, service.description, service.descriptionBn);
+              const serviceItems = pickLocalizedList(language, service.services, service.servicesBn);
+              return (
               <div
                 key={service.id}
                 className={`service-card shrink-0 w-72 sm:w-80 md:w-85 bg-white rounded-xl sm:rounded-2xl overflow-hidden shadow-sm hover:shadow-xl border border-gray-100 transition-all duration-300 group ${index % 2 === 0 ? 'card-reveal-left' : 'card-reveal-right'}`}
@@ -141,16 +148,16 @@ export const PopularCourses = () => {
                 <div className="relative h-40 sm:h-48 w-full overflow-hidden">
                   {service.customImage ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={service.customImage} alt={service.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                    <img src={service.customImage} alt={title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                   ) : (
-                    <Image src={service.image} alt={service.title} fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
+                    <Image src={service.image} alt={title} fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
                   )}
                 </div>
                 <div className="p-4 sm:p-5">
-                  <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-2">{service.title}</h3>
-                  <p className="text-gray-600 text-xs sm:text-sm leading-relaxed mb-4">{service.description}</p>
+                  <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-2">{title}</h3>
+                  <p className="text-gray-600 text-xs sm:text-sm leading-relaxed mb-4">{description}</p>
                   <div className="space-y-2 sm:space-y-2.5 mb-4 sm:mb-5">
-                    {service.services.map((item, i) => (
+                    {serviceItems.map((item, i) => (
                       <div key={i} className="flex items-center gap-2 sm:gap-2.5">
                         <div className="shrink-0 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-green-100 flex items-center justify-center">
                           <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-green-600" />
@@ -160,12 +167,13 @@ export const PopularCourses = () => {
                     ))}
                   </div>
                   <Link href={`/category/${service.slug}`} className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-red-500 hover:text-red-600 transition-colors group/link">
-                    Read More
+                    {isBN ? 'আরও জানুন' : 'Read More'}
                     <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover/link:translate-x-1 transition-transform" />
                   </Link>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
 
           <button onClick={() => scroll('right')} className="hidden sm:flex absolute -right-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full border-2 border-red-200 bg-white text-red-400 hover:bg-red-50 hover:border-red-400 hover:text-red-500 items-center justify-center transition-all shadow-lg">

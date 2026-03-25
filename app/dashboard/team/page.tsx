@@ -24,34 +24,50 @@ interface TeamMemberItem {
   id: string;
   name: string;
   role: string;
+  roleBn?: string;
   experience: string;
+  experienceBn?: string;
   projects: string;
+  projectsBn?: string;
   department: string;
+  departmentBn?: string;
   featured: boolean;
   avatar: string;
   avatarColor: string;
   avatarImage?: string | null;
   workExperience: string[];
+  workExperienceBn?: string[];
   specializedArea: string[];
+  specializedAreaBn?: string[];
   education: string[];
+  educationBn?: string[];
   workPlaces: string[];
+  workPlacesBn?: string[];
   order: number;
 }
 
 const BLANK: Omit<TeamMemberItem, 'id' | 'order'> = {
   name: '',
   role: '',
+  roleBn: '',
   experience: '',
+  experienceBn: '',
   projects: '',
+  projectsBn: '',
   department: 'Creative',
+  departmentBn: '',
   featured: false,
   avatar: '',
   avatarColor: 'from-red-500 to-red-700',
   avatarImage: '',
   workExperience: [''],
+  workExperienceBn: [''],
   specializedArea: [''],
+  specializedAreaBn: [''],
   education: [''],
+  educationBn: [''],
   workPlaces: [''],
+  workPlacesBn: [''],
 };
 
 function EditableList({ label, items, onChange }: { label: string; items: string[]; onChange: (v: string[]) => void }) {
@@ -101,10 +117,18 @@ export default function AdminTeamPage() {
     const clean = {
       ...editing,
       avatar: editing.avatar.trim() || editing.name.slice(0, 2).toUpperCase(),
+      roleBn: editing.roleBn?.trim() || '',
+      experienceBn: editing.experienceBn?.trim() || '',
+      projectsBn: editing.projectsBn?.trim() || '',
+      departmentBn: editing.departmentBn?.trim() || '',
       workExperience: editing.workExperience.filter(v => v.trim()),
+      workExperienceBn: (editing.workExperienceBn || []).filter(v => v.trim()),
       specializedArea: editing.specializedArea.filter(v => v.trim()),
+      specializedAreaBn: (editing.specializedAreaBn || []).filter(v => v.trim()),
       education: editing.education.filter(v => v.trim()),
+      educationBn: (editing.educationBn || []).filter(v => v.trim()),
       workPlaces: editing.workPlaces.filter(v => v.trim()),
+      workPlacesBn: (editing.workPlacesBn || []).filter(v => v.trim()),
     };
     setSaving(true);
     try {
@@ -237,16 +261,32 @@ export default function AdminTeamPage() {
                   <input type="text" value={editing.role} onChange={e => setEditing({ ...editing, role: e.target.value })} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400" placeholder="e.g. Lead Designer" />
                 </div>
                 <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">Role / Position (Bangla)</label>
+                  <input type="text" value={editing.roleBn || ''} onChange={e => setEditing({ ...editing, roleBn: e.target.value })} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400" placeholder="e.g. লিড ডিজাইনার" />
+                </div>
+                <div>
                   <label className="block text-xs font-medium text-gray-500 mb-1.5">Experience</label>
                   <input type="text" value={editing.experience} onChange={e => setEditing({ ...editing, experience: e.target.value })} placeholder="e.g. 5 years+" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">Experience (Bangla)</label>
+                  <input type="text" value={editing.experienceBn || ''} onChange={e => setEditing({ ...editing, experienceBn: e.target.value })} placeholder="e.g. ৫+ বছর" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400" />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-500 mb-1.5">Projects Completed</label>
                   <input type="text" value={editing.projects} onChange={e => setEditing({ ...editing, projects: e.target.value })} placeholder="e.g. 200+" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400" />
                 </div>
                 <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">Projects Completed (Bangla)</label>
+                  <input type="text" value={editing.projectsBn || ''} onChange={e => setEditing({ ...editing, projectsBn: e.target.value })} placeholder="e.g. ২০০+" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400" />
+                </div>
+                <div>
                   <label className="block text-xs font-medium text-gray-500 mb-1.5">Avatar Initials</label>
                   <input type="text" value={editing.avatar} onChange={e => setEditing({ ...editing, avatar: e.target.value.slice(0, 3).toUpperCase() })} placeholder="e.g. RH" maxLength={3} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">Department (Bangla)</label>
+                  <input type="text" value={editing.departmentBn || ''} onChange={e => setEditing({ ...editing, departmentBn: e.target.value })} placeholder="e.g. ক্রিয়েটিভ" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400" />
                 </div>
               </div>
 
@@ -286,9 +326,13 @@ export default function AdminTeamPage() {
               <hr className="border-gray-100" />
 
               <EditableList label="Work Experience" items={editing.workExperience.length ? editing.workExperience : ['']} onChange={v => setEditing({ ...editing, workExperience: v })} />
+              <EditableList label="Work Experience (Bangla)" items={(editing.workExperienceBn || []).length ? (editing.workExperienceBn || []) : ['']} onChange={v => setEditing({ ...editing, workExperienceBn: v })} />
               <EditableList label="Specialized Area" items={editing.specializedArea.length ? editing.specializedArea : ['']} onChange={v => setEditing({ ...editing, specializedArea: v })} />
+              <EditableList label="Specialized Area (Bangla)" items={(editing.specializedAreaBn || []).length ? (editing.specializedAreaBn || []) : ['']} onChange={v => setEditing({ ...editing, specializedAreaBn: v })} />
               <EditableList label="Education" items={editing.education.length ? editing.education : ['']} onChange={v => setEditing({ ...editing, education: v })} />
+              <EditableList label="Education (Bangla)" items={(editing.educationBn || []).length ? (editing.educationBn || []) : ['']} onChange={v => setEditing({ ...editing, educationBn: v })} />
               <EditableList label="Work Places" items={editing.workPlaces.length ? editing.workPlaces : ['']} onChange={v => setEditing({ ...editing, workPlaces: v })} />
+              <EditableList label="Work Places (Bangla)" items={(editing.workPlacesBn || []).length ? (editing.workPlacesBn || []) : ['']} onChange={v => setEditing({ ...editing, workPlacesBn: v })} />
             </div>
 
             <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">

@@ -5,14 +5,20 @@ import Link from 'next/link';
 import { Check, ChevronDown } from 'lucide-react';
 import { CategoryIcon } from '@/lib/admin/categoryIcons';
 import { ServiceCategoryListSkeleton } from '@/components/ui/PublicPageLoadingSkeleton';
+import { useLanguage } from '@/lib/lang/LanguageContext';
+import { pickLocalizedList, pickLocalizedText } from '@/lib/lang/localize';
 
 interface PopularServiceItem {
   id: string;
   title: string;
+  titleBn?: string | null;
   description: string;
+  descriptionBn?: string | null;
   gradient: string;
   category: string;
+  categoryBn?: string | null;
   services: string[];
+  servicesBn?: string[];
 }
 
 interface ServiceCategoryProps {
@@ -72,16 +78,18 @@ const ServiceCategory: React.FC<ServiceCategoryProps> = ({ iconType, title, desc
 };
 
 export default function ServicePage() {
+  const { language } = useLanguage();
+  const isBN = language === 'BN';
   const [serviceCategories, setServiceCategories] = useState<PopularServiceItem[]>([]);
   const [serviceLoading, setServiceLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/v1/cms/popular-services')
+    fetch('/api/v1/cms/popular-services', { cache: 'no-store' })
       .then(r => r.json())
       .then(data => setServiceCategories(Array.isArray(data) ? data : []))
       .catch(() => {})
       .finally(() => setServiceLoading(false));
-  }, []);
+  }, [language]);
 
   const lightTones = [
     { cardBg: 'bg-red-50', iconBg: 'bg-red-100', iconColor: 'text-red-600', border: 'border-red-100' },
@@ -91,6 +99,22 @@ export default function ServicePage() {
     { cardBg: 'bg-violet-50', iconBg: 'bg-violet-100', iconColor: 'text-violet-700', border: 'border-violet-100' },
   ] as const;
 
+  const processSteps = isBN
+    ? [
+        { step: '০১', title: 'ডিসকভারি', desc: 'আপনার লক্ষ্য ও চাহিদা বোঝা' },
+        { step: '০২', title: 'প্ল্যানিং', desc: 'স্ট্র্যাটেজি তৈরি ও রোডম্যাপ নির্ধারণ' },
+        { step: '০৩', title: 'প্রোডাকশন', desc: 'নিয়মিত আপডেটসহ এজাইল ডেভেলপমেন্ট' },
+        { step: '০৪', title: 'লঞ্চ', desc: 'টেস্টিং, ডিপ্লয়মেন্ট ও লাইভ সাপোর্ট' },
+        { step: '০৫', title: 'সাপোর্ট', desc: 'নিরবচ্ছিন্ন রক্ষণাবেক্ষণ ও অপ্টিমাইজেশন' },
+      ]
+    : [
+        { step: '01', title: 'Discovery', desc: 'Understanding your goals and requirements' },
+        { step: '02', title: 'Planning', desc: 'Building strategy and delivery roadmap' },
+        { step: '03', title: 'Production', desc: 'Agile development with regular updates' },
+        { step: '04', title: 'Launch', desc: 'Testing, deployment and live support' },
+        { step: '05', title: 'Support', desc: 'Ongoing maintenance and optimization' },
+      ];
+
   return (
     <main className="min-h-screen bg-gray-50 pb-0">
       {/* Hero Section */}
@@ -98,26 +122,28 @@ export default function ServicePage() {
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="text-center max-w-4xl mx-auto page-reveal">
             <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
-              Complete Digital Solutions
+              {isBN ? 'সম্পূর্ণ ডিজিটাল সমাধান' : 'Complete Digital Solutions'}
               <span className="block text-red-600">
-                Under One Roof
+                {isBN ? 'এক ছাদের নিচে' : 'Under one roof'}
               </span>
             </h1>
             <p className="text-xl text-gray-600 leading-relaxed mb-8 text-wave">
-              From strategy to execution - we build and grow your digital presence with end-to-end services tailored to your business needs.
+              {isBN
+                ? 'স্ট্র্যাটেজি থেকে এক্সিকিউশন পর্যন্ত, আপনার ব্যবসার জন্য কাস্টমাইজড এন্ড-টু-এন্ড সার্ভিসে আমরা ডিজিটাল উপস্থিতি গড়ে তুলি ও সম্প্রসারণ করি।'
+                : 'From strategy to execution, we build and scale your digital presence with tailored end-to-end services.'}
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
               <Link
                 href="/contact"
                 className="px-8 py-4 bg-red-500 text-white rounded-full font-semibold hover:bg-red-600 transition-colors shadow-lg"
               >
-                Get Started
+                {isBN ? 'শুরু করুন' : 'Get Started'}
               </Link>
               <Link
                 href="/about"
                 className="px-8 py-4 bg-white text-gray-900 rounded-full font-semibold border-2 border-gray-200 hover:border-red-500 hover:text-red-600 transition-colors"
               >
-                Learn More
+                {isBN ? 'আরও জানুন' : 'Learn More'}
               </Link>
             </div>
           </div>
@@ -129,10 +155,12 @@ export default function ServicePage() {
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="text-center mb-16 page-reveal page-delay-1">
             <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
-              Our Services
+              {isBN ? 'আমাদের সেবাসমূহ' : 'Our Services'}
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Click on any service category to explore what we offer
+              {isBN
+                ? 'আমরা কী কী সেবা দিই তা দেখতে যেকোনো ক্যাটাগরিতে ক্লিক করুন'
+                : 'Click any category to explore what we offer'}
             </p>
           </div>
 
@@ -144,9 +172,9 @@ export default function ServicePage() {
                 <div key={category.id} className={index % 2 === 0 ? 'card-reveal-left' : 'card-reveal-right'} style={{ animationDelay: `${index * 90}ms` }}>
                   <ServiceCategory
                     iconType={category.category}
-                    title={category.title}
-                    description={category.description}
-                    services={category.services}
+                    title={pickLocalizedText(language, category.title, category.titleBn)}
+                    description={pickLocalizedText(language, category.description, category.descriptionBn)}
+                    services={pickLocalizedList(language, category.services, category.servicesBn)}
                     tone={lightTones[index % lightTones.length]}
                   />
                 </div>
@@ -161,21 +189,15 @@ export default function ServicePage() {
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="text-center mb-16 page-reveal page-delay-2">
             <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
-              Our Process
+              {isBN ? 'আমাদের প্রক্রিয়া' : 'Our Process'}
             </h2>
             <p className="text-xl text-gray-600 text-wave">
-              How we deliver exceptional results
+              {isBN ? 'যেভাবে আমরা সেরা ফলাফল দিই' : 'How we deliver the best outcomes'}
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-8">
-            {[
-              { step: '01', title: 'Discovery', desc: 'Understanding your goals and requirements' },
-              { step: '02', title: 'Planning', desc: 'Strategy development and roadmap creation' },
-              { step: '03', title: 'Production', desc: 'Agile development with regular updates' },
-              { step: '04', title: 'Launch', desc: 'Testing, deployment, and go-live support' },
-              { step: '05', title: 'Support', desc: 'Ongoing maintenance and optimization' },
-            ].map((item, index) => (
+            {processSteps.map((item, index) => (
               <div key={index} className={index % 2 === 0 ? 'text-center card-reveal-left' : 'text-center card-reveal-right'} style={{ animationDelay: `${index * 80}ms` }}>
                 <div className="w-20 h-20 bg-red-500 text-white rounded-full mx-auto mb-4 flex items-center justify-center text-2xl font-bold">
                   {item.step}

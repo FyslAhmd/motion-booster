@@ -14,7 +14,9 @@ interface StatItem {
   id: string;
   value: string;
   title: string;
+  titleBn?: string;
   description: string;
+  descriptionBn?: string;
   bgColor: string;
   valueColor: string;
   order: number;
@@ -23,7 +25,9 @@ interface StatItem {
 const BLANK: Omit<StatItem, 'id' | 'order'> = {
   value: '',
   title: '',
+  titleBn: '',
   description: '',
+  descriptionBn: '',
   bgColor: 'bg-blue-50',
   valueColor: 'text-teal-500',
 };
@@ -160,8 +164,28 @@ export default function AdminStatsPage() {
                 </div>
               </div>
               <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Title (Bangla)</label>
+                <input
+                  type="text"
+                  value={editing.titleBn || ''}
+                  onChange={e => setEditing({ ...editing, titleBn: e.target.value })}
+                  placeholder="বাংলা টাইটেল (optional)"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
+                />
+              </div>
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                 <textarea value={editing.description} onChange={e => setEditing({ ...editing, description: e.target.value })} rows={3} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 resize-none" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description (Bangla)</label>
+                <textarea
+                  value={editing.descriptionBn || ''}
+                  onChange={e => setEditing({ ...editing, descriptionBn: e.target.value })}
+                  rows={3}
+                  placeholder="বাংলা বর্ণনা (optional)"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 resize-none"
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Card Background</label>

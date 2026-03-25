@@ -2,27 +2,33 @@
 
 import React, { useState, useEffect } from 'react';
 import { Slider, SlideData } from '@/components/ui';
+import { useLanguage } from '@/lib/lang/LanguageContext';
+import { pickLocalizedText } from '@/lib/lang/localize';
 
 export const HeroSlider = () => {
+  const { language } = useLanguage();
   const [slides, setSlides] = useState<SlideData[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/v1/cms/hero-slides')
+    setLoading(true);
+    fetch('/api/v1/cms/hero-slides', { cache: 'no-store' })
       .then(r => r.json())
       .then((data) => {
         if (!Array.isArray(data)) return;
         setSlides(data.map((s, i) => ({
           id: i + 1,
           image: s.customImage || s.image,
-          title: '',
-          description: '',
+          title: pickLocalizedText(language, s.title, s.titleBn),
+          description: pickLocalizedText(language, s.description, s.descriptionBn),
+          badge: pickLocalizedText(language, s.badge, s.badgeBn),
+          ctaText: pickLocalizedText(language, s.ctaText, s.ctaTextBn),
           ctaLink: s.ctaLink,
         })));
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }, [language]);
 
   if (loading) {
     return (

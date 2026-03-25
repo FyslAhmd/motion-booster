@@ -2,10 +2,13 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useLanguage } from '@/lib/lang/LanguageContext';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const { language } = useLanguage();
+  const isBN = language === 'BN';
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,10 +27,10 @@ export default function ForgotPasswordPage() {
               {/* Header */}
               <div className="text-center mb-8">
                 <h1 className="text-3xl font-bold text-gray-900 mb-3">
-                  Reset Password
+                  {isBN ? 'পাসওয়ার্ড রিসেট' : 'Reset Password'}
                 </h1>
                 <p className="text-gray-500 text-sm">
-                  Enter your email to receive a password reset link.
+                  {isBN ? 'পাসওয়ার্ড রিসেট লিংক পেতে আপনার ইমেইল দিন।' : 'Enter your email to receive a password reset link.'}
                 </p>
               </div>
 
@@ -57,7 +60,7 @@ export default function ForgotPasswordPage() {
                     autoComplete="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Email Address"
+                    placeholder={isBN ? 'ইমেইল ঠিকানা' : 'Email address'}
                     className="w-full pl-12 pr-4 py-3.5 border border-gray-300 rounded-full focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all"
                     required
                   />
@@ -68,7 +71,7 @@ export default function ForgotPasswordPage() {
                   type="submit"
                   className="w-full py-3.5 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-full transition-all focus:outline-none focus:ring-4 focus:ring-purple-200"
                 >
-                  Reset Password
+                  {isBN ? 'পাসওয়ার্ড রিসেট করুন' : 'Reset Password'}
                 </button>
               </form>
 
@@ -91,7 +94,7 @@ export default function ForgotPasswordPage() {
                       d="M10 19l-7-7m0 0l7-7m-7 7h18"
                     />
                   </svg>
-                  Back to Login
+                  {isBN ? 'লগইনে ফিরে যান' : 'Back to login'}
                 </Link>
               </div>
             </>
@@ -115,25 +118,29 @@ export default function ForgotPasswordPage() {
                   </svg>
                 </div>
                 <h2 className="text-2xl font-bold text-gray-900 mb-3">
-                  Check Your Email
+                  {isBN ? 'আপনার ইমেইল চেক করুন' : 'Check your email'}
                 </h2>
                 <p className="text-gray-500 text-sm mb-6">
-                  We&apos;ve sent a password reset link to <strong>{email}</strong>
+                  {isBN ? (
+                    <>আমরা <strong>{email}</strong> ঠিকানায় পাসওয়ার্ড রিসেট লিংক পাঠিয়েছি</>
+                  ) : (
+                    <>We sent a password reset link to <strong>{email}</strong></>
+                  )}
                 </p>
                 <p className="text-gray-500 text-sm mb-8">
-                  Didn&apos;t receive the email? Check your spam folder or{' '}
+                  {isBN ? 'ইমেইল পাননি? স্প্যাম ফোল্ডার দেখুন অথবা ' : "Didn't get the email? Check spam or "}
                   <button
                     onClick={() => setIsSubmitted(false)}
                     className="text-purple-600 hover:text-purple-700 font-medium"
                   >
-                    try again
+                    {isBN ? 'আবার চেষ্টা করুন' : 'try again'}
                   </button>
                 </p>
                 <Link
                   href="/login"
                   className="inline-block px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-full transition-colors"
                 >
-                  Back to Login
+                  {isBN ? 'লগইনে ফিরে যান' : 'Back to login'}
                 </Link>
               </div>
             </>

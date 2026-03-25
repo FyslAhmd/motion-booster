@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useLanguage } from '@/lib/lang/LanguageContext';
 import { ServiceCategoryItem } from '@/lib/admin/store';
 import { CategoryIcon } from '@/lib/admin/categoryIcons';
+import { pickLocalizedText } from '@/lib/lang/localize';
 
 function SkeletonCard() {
   return (
@@ -18,7 +19,7 @@ function SkeletonCard() {
 }
 
 export const CategorySlider = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [categories, setCategories] = useState<ServiceCategoryItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,12 +29,12 @@ export const CategorySlider = () => {
   const dragMovedRef = useRef(false);
 
   useEffect(() => {
-    fetch('/api/v1/cms/service-categories')
+    fetch('/api/v1/cms/service-categories', { cache: 'no-store' })
       .then(r => r.json())
       .then((data) => { if (Array.isArray(data)) setCategories(data); })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }, [language]);
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollRef.current) {
@@ -79,7 +80,9 @@ export const CategorySlider = () => {
               onPointerUp={() => setIsDragging(false)}
               onPointerLeave={() => setIsDragging(false)}
             >
-              {categories.map((category, index) => (
+              {categories.map((category, index) => {
+                const title = pickLocalizedText(language, category.title, category.titleBn);
+                return (
                 <div
                   key={category.id}
                   className={index % 2 === 0 ? 'card-reveal-left' : 'card-reveal-right'}
@@ -105,7 +108,7 @@ export const CategorySlider = () => {
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
                           src={category.logoImage}
-                          alt={`${category.title} logo`}
+                          alt={`${title} logo`}
                           className="w-5 h-5 sm:w-6 sm:h-6 object-contain"
                         />
                       ) : (
@@ -116,11 +119,12 @@ export const CategorySlider = () => {
                       )}
                     </div>
                     <span className="text-xs sm:text-sm font-bold text-gray-800 group-hover:text-red-500 text-center leading-tight transition-colors">
-                      {category.title}
+                      {title}
                     </span>
                   </Link>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

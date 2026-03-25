@@ -19,9 +19,13 @@ const emptySlide: Omit<HeroSlideItem, 'id'> = {
   image: PRESET_IMAGES[0],
   customImage: '',
   title: '',
+  titleBn: '',
   description: '',
+  descriptionBn: '',
   badge: '',
+  badgeBn: '',
   ctaText: '',
+  ctaTextBn: '',
   ctaLink: '',
 };
 
@@ -206,6 +210,92 @@ export default function HeroSliderPage() {
                   className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400"
                   placeholder="e.g. /service or https://example.com"
                 />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">Title</label>
+                  <input
+                    value={editing.title || ''}
+                    onChange={e => setEditing({ ...editing, title: e.target.value })}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400"
+                    placeholder="Slide title"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">Title (Bangla)</label>
+                  <input
+                    value={editing.titleBn || ''}
+                    onChange={e => setEditing({ ...editing, titleBn: e.target.value })}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400"
+                    placeholder="বাংলা শিরোনাম"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">Description</label>
+                  <textarea
+                    value={editing.description || ''}
+                    onChange={e => setEditing({ ...editing, description: e.target.value })}
+                    rows={3}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400 resize-none"
+                    placeholder="Slide description"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">Description (Bangla)</label>
+                  <textarea
+                    value={editing.descriptionBn || ''}
+                    onChange={e => setEditing({ ...editing, descriptionBn: e.target.value })}
+                    rows={3}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400 resize-none"
+                    placeholder="বাংলা বর্ণনা"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">Badge</label>
+                  <input
+                    value={editing.badge || ''}
+                    onChange={e => setEditing({ ...editing, badge: e.target.value })}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400"
+                    placeholder="Badge text"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">Badge (Bangla)</label>
+                  <input
+                    value={editing.badgeBn || ''}
+                    onChange={e => setEditing({ ...editing, badgeBn: e.target.value })}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400"
+                    placeholder="বাংলা ব্যাজ টেক্সট"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">CTA Text</label>
+                  <input
+                    value={editing.ctaText || ''}
+                    onChange={e => setEditing({ ...editing, ctaText: e.target.value })}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400"
+                    placeholder="e.g. Explore Courses"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">CTA Text (Bangla)</label>
+                  <input
+                    value={editing.ctaTextBn || ''}
+                    onChange={e => setEditing({ ...editing, ctaTextBn: e.target.value })}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400"
+                    placeholder="e.g. কোর্স দেখুন"
+                  />
+                </div>
               </div>
             </div>
 

@@ -1,9 +1,15 @@
+'use client';
+
 import { CategorySlider, PopularCourses, AchievementStats, Portfolio, CompanyMarquee, Features, Testimonials, FAQ, HeroSlider, HeaderBanner } from '@/components/sections';
 import { FloatingSocialButtons } from '@/components/ui/FloatingSocialButtons';
 import { FloatingCallButton } from '@/components/ui/FloatingCallButton';
 import { WelcomeModal } from '@/components/ui/WelcomeModal';
+import { useLanguage } from '@/lib/lang/LanguageContext';
 
 export default function Home() {
+  const { language } = useLanguage();
+  const isBN = language === 'BN';
+
   return (
     <main className="home-page min-h-screen pb-10 sm:pb-12 lg:pb-0">
       <WelcomeModal />
@@ -21,13 +27,15 @@ export default function Home() {
       </div>
       <div className="lg:hidden mt-3 px-4 sm:px-6 pb-2 text-center page-reveal page-delay-1">
         <h2 className="text-[18px] sm:text-[22px] font-extrabold leading-[1.2] text-gray-900 text-wave">
-          <span className="block whitespace-nowrap">Grow your business identity with</span>
+          <span className="block whitespace-nowrap">
+            {isBN ? 'আপনার ব্যবসার পরিচিতি বৃদ্ধি করুন' : 'Grow your business identity with'}
+          </span>
           <span className="mt-1 block text-red-500">Motion Booster</span>
         </h2>
         <p className="mt-2.5 text-[13px] leading-relaxed text-gray-600 text-wave">
-          We provide a complete suite of digital solutions, including tailored digital marketing, eye-catching
-          graphic design, dynamic animation, as well as expert web and app development - all designed to
-          elevate your brand in the digital world.
+          {isBN
+            ? 'আমরা কাস্টমাইজড ডিজিটাল মার্কেটিং, আকর্ষণীয় গ্রাফিক ডিজাইন, ডায়নামিক অ্যানিমেশন, দক্ষ ওয়েব ও অ্যাপ ডেভেলপমেন্টসহ সম্পূর্ণ ডিজিটাল সমাধান প্রদান করি, যাতে আপনার ব্র্যান্ড ডিজিটাল জগতে আরও শক্তিশালীভাবে এগিয়ে যেতে পারে।'
+            : 'We provide a complete suite of digital solutions, including tailored digital marketing, eye-catching graphic design, dynamic animation, as well as expert web and app development - all designed to elevate your brand in the digital world.'}
         </p>
       </div>
       <div className="home-block-popular page-reveal page-delay-2">

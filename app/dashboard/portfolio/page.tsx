@@ -37,11 +37,17 @@ const GRADIENTS = [
 interface PortfolioItem {
   id: string;
   title: string;
+  titleBn?: string;
   category: string;
+  categoryBn?: string;
   description: string;
+  descriptionBn?: string;
   client: string;
+  clientBn?: string;
   result: string;
+  resultBn?: string;
   tags: string[];
+  tagsBn?: string[];
   coverColor: string;
   coverImage?: string | null;
   featured: boolean;
@@ -50,11 +56,17 @@ interface PortfolioItem {
 
 const empty: Omit<PortfolioItem, 'id' | 'order'> = {
   title: '',
+  titleBn: '',
   category: CATEGORIES[0],
+  categoryBn: '',
   description: '',
+  descriptionBn: '',
   client: '',
+  clientBn: '',
   result: '',
+  resultBn: '',
   tags: [],
+  tagsBn: [],
   coverColor: GRADIENTS[0].value,
   featured: false,
 };
@@ -64,6 +76,7 @@ export default function PortfolioPage() {
   const [editing, setEditing] = useState<PortfolioItem | null>(null);
   const [isNew, setIsNew] = useState(false);
   const [tagInput, setTagInput] = useState('');
+  const [tagInputBn, setTagInputBn] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [filterCat, setFilterCat] = useState('All');
   const [loading, setLoading] = useState(true);
@@ -106,6 +119,7 @@ export default function PortfolioPage() {
       setEditing(null);
       setIsNew(false);
       setTagInput('');
+      setTagInputBn('');
       toast.success(isNew ? 'Project added successfully!' : 'Project updated successfully!');
     } catch {
       toast.error('Failed to save portfolio item.');
@@ -142,12 +156,14 @@ export default function PortfolioPage() {
     setEditing({ ...empty, id: '', order: 0 });
     setIsNew(true);
     setTagInput('');
+    setTagInputBn('');
   };
 
   const openEdit = (item: PortfolioItem) => {
     setEditing({ ...item });
     setIsNew(false);
     setTagInput('');
+    setTagInputBn('');
   };
 
   const addTag = () => {
@@ -162,6 +178,20 @@ export default function PortfolioPage() {
   const removeTag = (tag: string) => {
     if (!editing) return;
     setEditing({ ...editing, tags: editing.tags.filter(t => t !== tag) });
+  };
+  const addTagBn = () => {
+    const t = tagInputBn.trim();
+    if (!t || !editing) return;
+    const list = editing.tagsBn || [];
+    if (!list.includes(t)) {
+      setEditing({ ...editing, tagsBn: [...list, t] });
+    }
+    setTagInputBn('');
+  };
+
+  const removeTagBn = (tag: string) => {
+    if (!editing) return;
+    setEditing({ ...editing, tagsBn: (editing.tagsBn || []).filter(t => t !== tag) });
   };
 
   const displayed = filterCat === 'All' ? items : items.filter(i => i.category === filterCat);
@@ -206,6 +236,16 @@ export default function PortfolioPage() {
                 />
               </div>
 
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Project Title (Bangla)</label>
+                <input
+                  value={editing.titleBn || ''}
+                  onChange={e => setEditing({ ...editing, titleBn: e.target.value })}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400"
+                  placeholder="e.g. টেকভেঞ্চার ই-কমার্স প্ল্যাটফর্ম"
+                />
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-gray-500 mb-1.5">Client Name *</label>
@@ -214,6 +254,15 @@ export default function PortfolioPage() {
                     onChange={e => setEditing({ ...editing, client: e.target.value })}
                     className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400"
                     placeholder="e.g. TechVenture BD"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">Client Name (Bangla)</label>
+                  <input
+                    value={editing.clientBn || ''}
+                    onChange={e => setEditing({ ...editing, clientBn: e.target.value })}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400"
+                    placeholder="e.g. টেকভেঞ্চার বিডি"
                   />
                 </div>
                 <div className="sm:col-span-2">
@@ -246,6 +295,15 @@ export default function PortfolioPage() {
                     ))}
                   </div>
                 </div>
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">Category (Bangla)</label>
+                  <input
+                    value={editing.categoryBn || ''}
+                    onChange={e => setEditing({ ...editing, categoryBn: e.target.value })}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400"
+                    placeholder="e.g. ওয়েব ডেভেলপমেন্ট"
+                  />
+                </div>
               </div>
 
               <div>
@@ -260,12 +318,33 @@ export default function PortfolioPage() {
               </div>
 
               <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Description (Bangla)</label>
+                <textarea
+                  value={editing.descriptionBn || ''}
+                  onChange={e => setEditing({ ...editing, descriptionBn: e.target.value })}
+                  rows={3}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400 resize-none"
+                  placeholder="বাংলা প্রজেক্ট বিবরণ..."
+                />
+              </div>
+
+              <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1.5">Result / Impact</label>
                 <input
                   value={editing.result}
                   onChange={e => setEditing({ ...editing, result: e.target.value })}
                   className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400"
                   placeholder="e.g. 200% increase in online sales"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Result / Impact (Bangla)</label>
+                <input
+                  value={editing.resultBn || ''}
+                  onChange={e => setEditing({ ...editing, resultBn: e.target.value })}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400"
+                  placeholder="e.g. অনলাইন সেল ২০০% বৃদ্ধি"
                 />
               </div>
 
@@ -287,6 +366,32 @@ export default function PortfolioPage() {
                       <span key={tag} className="flex items-center gap-1 bg-gray-100 text-gray-700 text-xs px-2.5 py-1 rounded-full">
                         {tag}
                         <button onClick={() => removeTag(tag)} className="text-gray-400 hover:text-red-500 ml-0.5">
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Tags / Tech Stack (Bangla)</label>
+                <div className="flex gap-2 mb-2">
+                  <input
+                    value={tagInputBn}
+                    onChange={e => setTagInputBn(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTagBn(); } }}
+                    className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400"
+                    placeholder="বাংলা ট্যাগ লিখে Enter চাপুন"
+                  />
+                  <button onClick={addTagBn} className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-sm font-medium transition-colors">Add</button>
+                </div>
+                {(editing.tagsBn || []).length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {(editing.tagsBn || []).map(tag => (
+                      <span key={`bn-${tag}`} className="flex items-center gap-1 bg-gray-100 text-gray-700 text-xs px-2.5 py-1 rounded-full">
+                        {tag}
+                        <button onClick={() => removeTagBn(tag)} className="text-gray-400 hover:text-red-500 ml-0.5">
                           <X className="w-3 h-3" />
                         </button>
                       </span>

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { registerSchema, formatZodErrors } from '@/lib/validators/auth';
+import { useLanguage } from '@/lib/lang/LanguageContext';
 import { ZodError } from 'zod';
 import { COUNTRY_CODES, type CountryCode } from '@/lib/data/country-codes';
 
@@ -127,6 +128,8 @@ interface FieldErrors {
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { language } = useLanguage();
+  const isBN = language === 'BN';
 
   // ─── Country code state ─────────────────────────────
   const [selectedCountry, setSelectedCountry] = useState<CountryCode>(
@@ -195,10 +198,10 @@ export default function RegisterPage() {
     if (/[0-9]/.test(pw)) score++;
     if (/[^A-Za-z0-9]/.test(pw)) score++;
 
-    if (score <= 2) return { level: 1, label: 'Weak', color: 'bg-red-500' };
-    if (score <= 4) return { level: 2, label: 'Fair', color: 'bg-yellow-500' };
-    if (score <= 5) return { level: 3, label: 'Good', color: 'bg-red-400' };
-    return { level: 4, label: 'Strong', color: 'bg-red-600' };
+    if (score <= 2) return { level: 1, label: isBN ? 'দুর্বল' : 'Weak', color: 'bg-red-500' };
+    if (score <= 4) return { level: 2, label: isBN ? 'মাঝারি' : 'Medium', color: 'bg-yellow-500' };
+    if (score <= 5) return { level: 3, label: isBN ? 'ভালো' : 'Good', color: 'bg-red-400' };
+    return { level: 4, label: isBN ? 'শক্তিশালী' : 'Strong', color: 'bg-red-600' };
   };
 
   const passwordStrength = getPasswordStrength(password);
@@ -216,13 +219,14 @@ export default function RegisterPage() {
       if (v && v.length < 3)
         setFieldErrors((p) => ({
           ...p,
-          username: 'Username must be at least 3 characters',
+          username: isBN ? 'ইউজারনেম কমপক্ষে ৩ অক্ষরের হতে হবে' : 'Username must be at least 3 characters',
         }));
       else if (v && !/^[a-zA-Z0-9_]+$/.test(v))
         setFieldErrors((p) => ({
           ...p,
-          username:
-            'Username can only contain letters, numbers, and underscores',
+          username: isBN
+            ? 'ইউজারনেমে শুধু অক্ষর, সংখ্যা এবং আন্ডারস্কোর ব্যবহার করা যাবে'
+            : 'Username can only contain letters, numbers, and underscore',
         }));
     }
 
@@ -231,12 +235,14 @@ export default function RegisterPage() {
       if (v && v.length < 2)
         setFieldErrors((p) => ({
           ...p,
-          fullName: 'Name must be at least 2 characters',
+          fullName: isBN ? 'নাম কমপক্ষে ২ অক্ষরের হতে হবে' : 'Name must be at least 2 characters',
         }));
       else if (v && !/^[a-zA-Z\s'-]+$/.test(v))
         setFieldErrors((p) => ({
           ...p,
-          fullName: 'Name can only contain letters, spaces, hyphens, and apostrophes',
+          fullName: isBN
+            ? 'নামে শুধু অক্ষর, স্পেস, হাইফেন ও অ্যাপোস্ট্রফি ব্যবহার করা যাবে'
+            : 'Name can only contain letters, spaces, hyphen, and apostrophe',
         }));
     }
 
@@ -245,7 +251,7 @@ export default function RegisterPage() {
       if (v && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v))
         setFieldErrors((p) => ({
           ...p,
-          email: 'Please enter a valid email address',
+          email: isBN ? 'সঠিক ইমেইল ঠিকানা লিখুন' : 'Please enter a valid email address',
         }));
     }
 
@@ -254,12 +260,12 @@ export default function RegisterPage() {
       if (v && !/^\+?[0-9\s\-()]+$/.test(v))
         setFieldErrors((p) => ({
           ...p,
-          phone: 'Please enter a valid phone number',
+          phone: isBN ? 'সঠিক ফোন নম্বর লিখুন' : 'Please enter a valid phone number',
         }));
       else if (v && v.replace(/\D/g, '').length < 7)
         setFieldErrors((p) => ({
           ...p,
-          phone: 'Phone number must be at least 7 digits',
+          phone: isBN ? 'ফোন নম্বর কমপক্ষে ৭ ডিজিটের হতে হবে' : 'Phone number must be at least 7 digits',
         }));
     }
 
@@ -268,12 +274,12 @@ export default function RegisterPage() {
       if (v && v.length < 8)
         setFieldErrors((p) => ({
           ...p,
-          password: 'Password must be at least 8 characters',
+          password: isBN ? 'পাসওয়ার্ড কমপক্ষে ৮ অক্ষরের হতে হবে' : 'Password must be at least 8 characters',
         }));
       if (confirmPassword && v !== confirmPassword) {
         setFieldErrors((p) => ({
           ...p,
-          confirmPassword: 'Passwords do not match',
+          confirmPassword: isBN ? 'পাসওয়ার্ড মিলেনি' : 'Passwords do not match',
         }));
       } else if (confirmPassword) {
         setFieldErrors((p) => {
@@ -289,10 +295,10 @@ export default function RegisterPage() {
       if (v && v !== password)
         setFieldErrors((p) => ({
           ...p,
-          confirmPassword: 'Passwords do not match',
+          confirmPassword: isBN ? 'পাসওয়ার্ড মিলেনি' : 'Passwords do not match',
         }));
     }
-  }, [password, confirmPassword]);
+  }, [password, confirmPassword, isBN]);
 
   // ─── Submit handler ─────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
@@ -339,16 +345,20 @@ export default function RegisterPage() {
           setFieldErrors(data.error.details.fields as FieldErrors);
           return;
         }
-        setServerError(data.error?.message || 'Registration failed. Please try again.');
+        setServerError(data.error?.message || (isBN ? 'রেজিস্ট্রেশন ব্যর্থ হয়েছে। আবার চেষ্টা করুন।' : 'Registration failed. Please try again.'));
         return;
       }
 
-      setSuccessMessage(data.message || 'Account created successfully!');
+      setSuccessMessage(data.message || (isBN ? 'অ্যাকাউন্ট সফলভাবে তৈরি হয়েছে!' : 'Account created successfully!'));
       setTimeout(() => {
         router.push('/login');
       }, 2000);
     } catch {
-      setServerError('Network error. Please check your connection and try again.');
+      setServerError(
+        isBN
+          ? 'নেটওয়ার্ক সমস্যা হয়েছে। সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।'
+          : 'Network error. Please check your connection and try again.'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -361,10 +371,10 @@ export default function RegisterPage() {
           {/* Header */}
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Create an account
+              {isBN ? 'অ্যাকাউন্ট তৈরি করুন' : 'Create account'}
             </h1>
             <p className="text-gray-500 text-sm">
-              Fill in your details to get started
+              {isBN ? 'শুরু করতে আপনার তথ্য পূরণ করুন' : 'Fill in your details to get started'}
             </p>
           </div>
 
@@ -398,7 +408,7 @@ export default function RegisterPage() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               onBlur={() => validateField('username', username)}
-              placeholder="Username"
+              placeholder={isBN ? 'ইউজারনেম' : 'Username'}
               error={fieldErrors.username}
             />
 
@@ -410,7 +420,7 @@ export default function RegisterPage() {
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               onBlur={() => validateField('fullName', fullName)}
-              placeholder="Full Name"
+              placeholder={isBN ? 'পূর্ণ নাম' : 'Full name'}
               error={fieldErrors.fullName}
             />
 
@@ -423,7 +433,7 @@ export default function RegisterPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               onBlur={() => validateField('email', email)}
-              placeholder="Email Address"
+              placeholder={isBN ? 'ইমেইল ঠিকানা' : 'Email address'}
               error={fieldErrors.email}
             />
 
@@ -465,7 +475,7 @@ export default function RegisterPage() {
                         type="text"
                         value={countrySearch}
                         onChange={(e) => setCountrySearch(e.target.value)}
-                        placeholder="Search country..."
+                        placeholder={isBN ? 'দেশ খুঁজুন...' : 'Search country...'}
                         className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-red-400"
                         autoFocus
                       />
@@ -473,7 +483,9 @@ export default function RegisterPage() {
                     {/* Country List */}
                     <div className="max-h-48 overflow-y-auto">
                       {filteredCountries.length === 0 ? (
-                        <div className="px-4 py-3 text-sm text-gray-400 text-center">No countries found</div>
+                        <div className="px-4 py-3 text-sm text-gray-400 text-center">
+                          {isBN ? 'কোনো দেশ পাওয়া যায়নি' : 'No countries found'}
+                        </div>
                       ) : (
                         filteredCountries.map((country) => (
                           <button
@@ -515,7 +527,7 @@ export default function RegisterPage() {
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     onBlur={() => validateField('phone', phone)}
-                    placeholder="Phone Number"
+                    placeholder={isBN ? 'ফোন নম্বর' : 'Phone Number'}
                     className={`w-full pl-4 pr-4 py-3.5 border-y border-r ${
                       fieldErrors.phone
                         ? 'border-red-400 focus:border-red-500 focus:ring-red-200'
@@ -543,7 +555,7 @@ export default function RegisterPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               onBlur={() => validateField('password', password)}
-              placeholder="Password"
+              placeholder={isBN ? 'পাসওয়ার্ড' : 'Password'}
               error={fieldErrors.password}
               rightElement={<EyeToggleButton show={showPassword} onToggle={toggleShowPassword} />}
             />
@@ -588,7 +600,7 @@ export default function RegisterPage() {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               onBlur={() => validateField('confirmPassword', confirmPassword)}
-              placeholder="Confirm Password"
+              placeholder={isBN ? 'পাসওয়ার্ড নিশ্চিত করুন' : 'Confirm password'}
               error={fieldErrors.confirmPassword}
               rightElement={<EyeToggleButton show={showConfirmPassword} onToggle={toggleShowConfirmPassword} />}
             />
@@ -613,12 +625,12 @@ export default function RegisterPage() {
                     className="w-4 h-4 text-red-500 border-gray-300 rounded focus:ring-red-500"
                   />
                   <span className="ml-2 text-gray-600">
-                    I accept the{' '}
+                    {isBN ? 'আমি গ্রহণ করছি ' : 'I accept the '}
                     <Link
                       href="/terms"
                       className="text-red-500 hover:text-red-600 font-medium transition-colors"
                     >
-                      Terms & Conditions
+                      {isBN ? 'শর্তাবলি' : 'Terms & Conditions'}
                     </Link>
                   </span>
                 </label>
@@ -650,22 +662,22 @@ export default function RegisterPage() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
-                  Creating Account...
+                  {isBN ? 'অ্যাকাউন্ট তৈরি হচ্ছে...' : 'Creating account...'}
                 </>
               ) : (
-                'Register Now'
+                isBN ? 'এখনই রেজিস্টার করুন' : 'Register Now'
               )}
             </button>
           </form>
 
           {/* Login Link */}
           <p className="mt-8 text-center text-gray-600 text-sm">
-            Already have an account?{' '}
+            {isBN ? 'ইতোমধ্যে অ্যাকাউন্ট আছে?' : 'Already have an account?'}{' '}
             <Link
               href="/login"
               className="text-red-500 hover:text-red-600 font-semibold transition-colors"
             >
-              Login here
+              {isBN ? 'লগইন করুন' : 'Login'}
             </Link>
           </p>
         </div>

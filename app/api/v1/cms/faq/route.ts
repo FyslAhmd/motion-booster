@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { defaultFAQs } from '@/lib/admin/store';
@@ -25,7 +26,9 @@ export async function POST(req: NextRequest) {
     const faq = await prisma.fAQ.create({
       data: {
         question: body.question,
+        questionBn: body.questionBn?.trim() || null,
         answer: body.answer,
+        answerBn: body.answerBn?.trim() || null,
         order: count,
       },
     });

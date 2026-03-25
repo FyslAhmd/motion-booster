@@ -29,6 +29,7 @@ const toSlug = (title: string) =>
 
 const emptyItem: Omit<ServiceCategoryItem, 'id'> = {
   title: '',
+  titleBn: '',
   slug: '',
   iconType: 'layers',
   iconColor: 'text-blue-600',
@@ -109,7 +110,7 @@ export default function CategoriesPage() {
     if (!editing) return;
     if (!editing.title.trim()) { toast.error('Title is required.'); return; }
     if (!await confirm({ title: 'Save Changes', message: 'Are you sure you want to save these changes?' })) return;
-    const withSlug = { ...editing, slug: editing.slug.trim() || toSlug(editing.title) };
+    const withSlug = { ...editing, titleBn: editing.titleBn?.trim() || '', slug: editing.slug.trim() || toSlug(editing.title) };
     setLoading(true);
     try {
       const url = isNew ? '/api/v1/cms/service-categories' : `/api/v1/cms/service-categories/${editing.id}`;
@@ -296,6 +297,16 @@ export default function CategoriesPage() {
                   onChange={e => setEditing({ ...editing, title: e.target.value, slug: toSlug(e.target.value) })}
                   className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400"
                   placeholder="e.g. Digital Marketing"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Category Title (Bangla)</label>
+                <input
+                  value={editing.titleBn || ''}
+                  onChange={e => setEditing({ ...editing, titleBn: e.target.value })}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400"
+                  placeholder="e.g. ডিজিটাল মার্কেটিং"
                 />
               </div>
 

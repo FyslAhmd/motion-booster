@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 
@@ -9,7 +10,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       where: { id },
       data: {
         question: body.question,
+        questionBn: body.questionBn?.trim() || null,
         answer: body.answer,
+        answerBn: body.answerBn?.trim() || null,
         order: body.order,
       },
     });

@@ -5,23 +5,31 @@ import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
 import { TeamMemberItem } from '@/lib/admin/store';
 import { TeamPageCardsSkeleton } from '@/components/ui/PublicPageLoadingSkeleton';
+import { useLanguage } from '@/lib/lang/LanguageContext';
+import { pickLocalizedText } from '@/lib/lang/localize';
 
 export default function TeamPage() {
+  const { language } = useLanguage();
+  const isBN = language === 'BN';
   const [team, setTeam] = useState<TeamMemberItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('All');
+  const [activeTab, setActiveTab] = useState('all');
 
   useEffect(() => {
-    fetch('/api/v1/cms/team')
+    fetch('/api/v1/cms/team', { cache: 'no-store' })
       .then(r => r.json())
       .then(data => setTeam(Array.isArray(data) ? data : []))
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }, [language]);
 
-  const departments = ['All', ...Array.from(new Set(team.map(m => m.department).filter(Boolean)))];
+  const departments = ['all', ...Array.from(new Set(team.map(m => m.department).filter(Boolean)))];
+  const getDepartmentLabel = (key: string) => {
+    const match = team.find((item) => item.department === key);
+    return pickLocalizedText(language, match?.department || key, match?.departmentBn);
+  };
 
-  const filtered = activeTab === 'All'
+  const filtered = activeTab === 'all'
     ? team
     : team.filter(m => m.department === activeTab);
 
@@ -36,7 +44,7 @@ export default function TeamPage() {
           <Link href="/" className="text-gray-600 hover:text-red-500 transition-colors">
             <ChevronLeft className="w-6 h-6" />
           </Link>
-          <h1 className="text-xl font-bold text-gray-900 text-wave">Our Team</h1>
+          <h1 className="text-xl font-bold text-gray-900 text-wave">{isBN ? 'আমাদের টিম' : 'Our Team'}</h1>
         </div>
 
         {/* Filter Tabs */}
@@ -51,7 +59,7 @@ export default function TeamPage() {
                   : 'text-gray-500 border-gray-200 bg-white hover:border-red-300'
               }`}
             >
-              {dep}
+              {dep === 'all' ? (isBN ? 'সব' : 'All') : getDepartmentLabel(dep)}
             </button>
           ))}
         </div>
@@ -83,16 +91,16 @@ export default function TeamPage() {
 
                   <div className="flex-1 min-w-0">
                     <h2 className="text-lg font-bold text-gray-900 truncate">{featured.name}</h2>
-                    <p className="text-gray-500 text-sm mb-3">{featured.role}</p>
+                    <p className="text-gray-500 text-sm mb-3">{pickLocalizedText(language, featured.role, featured.roleBn)}</p>
                     <div className="flex items-center gap-4">
                       <div>
-                        <p className="text-red-500 font-bold text-base">{featured.experience}</p>
-                        <p className="text-gray-500 text-xs">Experience</p>
+                        <p className="text-red-500 font-bold text-base">{pickLocalizedText(language, featured.experience, featured.experienceBn)}</p>
+                        <p className="text-gray-500 text-xs">{isBN ? 'অভিজ্ঞতা' : 'Experience'}</p>
                       </div>
                       <div className="w-px h-8 bg-gray-300" />
                       <div>
-                        <p className="text-red-500 font-bold text-base">{featured.projects}</p>
-                        <p className="text-gray-500 text-xs">Projects</p>
+                        <p className="text-red-500 font-bold text-base">{pickLocalizedText(language, featured.projects, featured.projectsBn)}</p>
+                        <p className="text-gray-500 text-xs">{isBN ? 'প্রজেক্ট' : 'Projects'}</p>
                       </div>
                     </div>
                   </div>
@@ -129,16 +137,16 @@ export default function TeamPage() {
 
                   <div className="p-3">
                     <h3 className="font-bold text-gray-900 text-sm leading-tight">{member.name}</h3>
-                    <p className="text-gray-500 text-xs mb-2">{member.role}</p>
+                    <p className="text-gray-500 text-xs mb-2">{pickLocalizedText(language, member.role, member.roleBn)}</p>
                     <div className="flex items-center gap-3">
                       <div>
-                        <p className="text-red-500 font-bold text-sm">{member.experience}</p>
-                        <p className="text-gray-400 text-xs">Experience</p>
+                        <p className="text-red-500 font-bold text-sm">{pickLocalizedText(language, member.experience, member.experienceBn)}</p>
+                        <p className="text-gray-400 text-xs">{isBN ? 'অভিজ্ঞতা' : 'Experience'}</p>
                       </div>
                       <div className="w-px h-6 bg-gray-300" />
                       <div>
-                        <p className="text-red-500 font-bold text-sm">{member.projects}</p>
-                        <p className="text-gray-400 text-xs">Projects</p>
+                        <p className="text-red-500 font-bold text-sm">{pickLocalizedText(language, member.projects, member.projectsBn)}</p>
+                        <p className="text-gray-400 text-xs">{isBN ? 'প্রজেক্ট' : 'Projects'}</p>
                       </div>
                     </div>
                   </div>

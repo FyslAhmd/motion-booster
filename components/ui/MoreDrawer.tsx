@@ -18,6 +18,7 @@ interface MoreDrawerProps {
 export const MoreDrawer = ({ open, onClose }: MoreDrawerProps) => {
   const { isAuthenticated, user, logout } = useAuth();
   const { language, setLanguage, t } = useLanguage();
+  const isBN = language === 'BN';
   const pathname = usePathname();
 
   const menuItems = [
@@ -93,13 +94,13 @@ export const MoreDrawer = ({ open, onClose }: MoreDrawerProps) => {
                   onClick={onClose}
                   className="px-4 py-1.5 bg-red-500 text-white rounded-full text-xs font-semibold"
                 >
-                  Dashboard
+                  {isBN ? 'ড্যাশবোর্ড' : 'Dashboard'}
                 </Link>
                 <button
                   onClick={async () => { await logout(); onClose(); }}
                   className="px-4 py-1.5 border border-gray-300 text-gray-600 rounded-full text-xs font-semibold"
                 >
-                  Logout
+                  {isBN ? 'লগআউট' : 'Logout'}
                 </button>
               </div>
             </div>
@@ -108,15 +109,17 @@ export const MoreDrawer = ({ open, onClose }: MoreDrawerProps) => {
               <div className="w-20 h-20 rounded-full bg-gray-100 border-2 border-gray-200 flex items-center justify-center mb-3">
                 <User className="w-10 h-10 text-gray-300" />
               </div>
-              <h3 className="text-base font-bold text-gray-900 mb-1">Guest User</h3>
-              <p className="text-xs text-gray-400 text-center mb-4">Login to access your profile and more features</p>
+              <h3 className="text-base font-bold text-gray-900 mb-1">{isBN ? 'গেস্ট ইউজার' : 'Guest User'}</h3>
+              <p className="text-xs text-gray-400 text-center mb-4">
+                {isBN ? 'প্রোফাইল ও আরও ফিচার পেতে লগইন করুন' : 'Login to access your profile and more features'}
+              </p>
               <Link
                 href="/login"
                 onClick={onClose}
                 className="flex items-center gap-2 w-full justify-center bg-red-500 hover:bg-red-600 text-white px-5 py-2.5 rounded-full font-semibold text-sm transition-colors"
               >
                 <LogIn className="w-4 h-4" />
-                Login / Register
+                {isBN ? 'লগইন / রেজিস্টার' : 'Login / Register'}
               </Link>
             </div>
           )}
@@ -128,7 +131,7 @@ export const MoreDrawer = ({ open, onClose }: MoreDrawerProps) => {
                 <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center">
                   <Globe className="w-5 h-5 text-red-500" />
                 </div>
-                <span className="font-semibold text-gray-800">Language</span>
+                <span className="font-semibold text-gray-800">{isBN ? 'ভাষা' : 'Language'}</span>
               </div>
               <div className="flex items-center bg-gray-100 rounded-full p-1 text-xs font-bold">
                 <button

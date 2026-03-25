@@ -24,24 +24,30 @@ interface TestimonialItem {
   id: string;
   name: string;
   role: string;
+  roleBn?: string;
   avatar: string;
   avatarBg: string;
   avatarImage?: string | null;
   rating: number;
   review: string;
+  reviewBn?: string;
   service: string;
+  serviceBn?: string;
   order: number;
 }
 
 const BLANK: Omit<TestimonialItem, 'id' | 'order'> = {
   name: '',
   role: '',
+  roleBn: '',
   avatar: '',
   avatarBg: 'from-blue-500 to-indigo-600',
   avatarImage: '',
   rating: 5,
   review: '',
+  reviewBn: '',
   service: 'Web Development',
+  serviceBn: '',
 };
 
 export default function AdminTestimonialsPage() {
@@ -198,6 +204,16 @@ export default function AdminTestimonialsPage() {
                   <input type="text" value={editing.role} onChange={e => setEditing({ ...editing, role: e.target.value })} placeholder="e.g. CEO, Company Name" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
                 </div>
                 <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Role / Company (Bangla)</label>
+                  <input
+                    type="text"
+                    value={editing.roleBn || ''}
+                    onChange={e => setEditing({ ...editing, roleBn: e.target.value })}
+                    placeholder="e.g. সিইও, কোম্পানি নাম"
+                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
+                  />
+                </div>
+                <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Avatar Initials</label>
                   <input type="text" value={editing.avatar} onChange={e => setEditing({ ...editing, avatar: e.target.value.slice(0, 3).toUpperCase() })} maxLength={3} placeholder="e.g. RA" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
                 </div>
@@ -206,6 +222,16 @@ export default function AdminTestimonialsPage() {
                   <select value={editing.service} onChange={e => setEditing({ ...editing, service: e.target.value })} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400">
                     {SERVICE_OPTIONS.map(s => <option key={s}>{s}</option>)}
                   </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Service Used (Bangla)</label>
+                  <input
+                    type="text"
+                    value={editing.serviceBn || ''}
+                    onChange={e => setEditing({ ...editing, serviceBn: e.target.value })}
+                    placeholder="e.g. ওয়েব ডেভেলপমেন্ট"
+                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
+                  />
                 </div>
               </div>
               <div>
@@ -235,6 +261,16 @@ export default function AdminTestimonialsPage() {
                   value={editing.review}
                   onChange={e => setEditing({ ...editing, review: e.target.value })}
                   placeholder="Client's testimonial review..."
+                  rows={4}
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 resize-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Review (Bangla)</label>
+                <textarea
+                  value={editing.reviewBn || ''}
+                  onChange={e => setEditing({ ...editing, reviewBn: e.target.value })}
+                  placeholder="বাংলা testimonial review (optional)"
                   rows={4}
                   className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 resize-none"
                 />

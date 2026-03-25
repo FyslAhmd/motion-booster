@@ -12,42 +12,57 @@ export interface TeamMemberItem {
   id: string;
   name: string;
   role: string;
+  roleBn?: string;
   experience: string;
+  experienceBn?: string;
   projects: string;
+  projectsBn?: string;
   department: string;
+  departmentBn?: string;
   featured?: boolean;
   avatar: string; // initials
   avatarColor: string;
   avatarImage?: string; // base64 uploaded photo
   workExperience: string[];
+  workExperienceBn?: string[];
   specializedArea: string[];
+  specializedAreaBn?: string[];
   education: string[];
+  educationBn?: string[];
   workPlaces: string[];
+  workPlacesBn?: string[];
 }
 
 export interface FAQItem {
   id: string;
   question: string;
+  questionBn?: string;
   answer: string;
+  answerBn?: string;
 }
 
 export interface TestimonialItem {
   id: string;
   name: string;
   role: string;
+  roleBn?: string;
   avatar: string;
   avatarBg: string;
   avatarImage?: string; // base64 uploaded photo
   rating: number;
   review: string;
+  reviewBn?: string;
   service: string;
+  serviceBn?: string;
 }
 
 export interface StatItem {
   id: string;
   value: string;
   title: string;
+  titleBn?: string;
   description: string;
+  descriptionBn?: string;
   bgColor: string;
   valueColor: string;
 }
@@ -74,11 +89,17 @@ export interface SiteSettings {
 export interface PortfolioItem {
   id: string;
   title: string;
+  titleBn?: string;
   category: string;
+  categoryBn?: string;
   description: string;
+  descriptionBn?: string;
   client: string;
+  clientBn?: string;
   result: string;
+  resultBn?: string;
   tags: string[];
+  tagsBn?: string[];
   coverColor: string; // Tailwind gradient e.g. 'from-blue-500 to-indigo-600'
   coverImage?: string;  // base64 uploaded cover photo
   featured: boolean;
@@ -87,18 +108,23 @@ export interface PortfolioItem {
 export interface PopularServiceItem {
   id: string;
   title: string;
+  titleBn?: string;
   description: string;
+  descriptionBn?: string;
   gradient: string;   // Tailwind gradient e.g. 'from-green-700 via-green-600 to-emerald-500'
   category: string;   // used for tab filter
+  categoryBn?: string;
   slug: string;       // href: /category/{slug}
   image: string;       // path from /public/
   customImage?: string; // base64 uploaded image (overrides image)
   services: string[];  // feature bullet list
+  servicesBn?: string[];  // feature bullet list (BN)
 }
 
 export interface ServiceCategoryItem {
   id: string;
   title: string;
+  titleBn?: string;
   slug: string;       // used in href: /category/{slug}
   iconType: string;   // lucide icon key: 'trending-up' | 'palette' | 'code' | 'globe' | 'smartphone' | 'layers' | 'sparkles' | 'video' | 'briefcase' | 'zap' | 'star' | 'rocket' | 'shield' | 'settings'
   iconColor: string;  // Tailwind text color e.g. 'text-green-600'
@@ -111,9 +137,13 @@ export interface HeroSlideItem {
   image: string;       // path from /public/
   customImage?: string; // base64 uploaded image (overrides image)
   title: string;
+  titleBn?: string;
   description: string;
+  descriptionBn?: string;
   badge?: string;
+  badgeBn?: string;
   ctaText?: string;
+  ctaTextBn?: string;
   ctaLink?: string;
 }
 

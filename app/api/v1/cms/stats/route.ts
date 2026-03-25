@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { defaultStats } from '@/lib/admin/store';
@@ -26,7 +27,9 @@ export async function POST(req: NextRequest) {
       data: {
         value: body.value,
         title: body.title,
+        titleBn: body.titleBn?.trim() || null,
         description: body.description ?? '',
+        descriptionBn: body.descriptionBn?.trim() || null,
         bgColor: body.bgColor,
         valueColor: body.valueColor,
         order: count,

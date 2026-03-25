@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useLanguage } from '@/lib/lang/LanguageContext';
 import { motion } from 'framer-motion';
+import { pickLocalizedText } from '@/lib/lang/localize';
 
 /* ── helpers ─────────────────────────────────────────────── */
 function parse(val: string): { num: number; suffix: string } | null {
@@ -66,27 +67,28 @@ interface StatItem {
   id: string;
   value: string;
   title: string;
+  titleBn?: string | null;
   bgColor: string;
   valueColor: string;
 }
 
 /* ── section ──────────────────────────────────────────────── */
 export const AchievementStats = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const sectionRef = useRef<HTMLElement>(null);
   const [started, setStarted] = useState(false);
   const [stats, setStats] = useState<StatItem[]>([]);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    fetch('/api/v1/cms/stats')
+    fetch('/api/v1/cms/stats', { cache: 'no-store' })
       .then(r => r.json())
       .then(data => {
         setStats(Array.isArray(data) ? data : []);
         setLoaded(true);
       })
       .catch(() => setLoaded(true));
-  }, []);
+  }, [language]);
 
   useEffect(() => {
     if (!loaded) return;
@@ -148,7 +150,12 @@ export const AchievementStats = () => {
                   }
                   transition={{ duration: 0.65, ease: 'easeOut', delay: delaySec }}
                 >
-                  <StatCard {...stat} started={started} delay={Math.min(index * 0.06, 0.25)} />
+                  <StatCard
+                    {...stat}
+                    title={pickLocalizedText(language, stat.title, stat.titleBn)}
+                    started={started}
+                    delay={Math.min(index * 0.06, 0.25)}
+                  />
                 </motion.div>
               );
             })}

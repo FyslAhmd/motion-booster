@@ -1,11 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useLanguage } from '@/lib/lang/LanguageContext';
+import { pickLocalizedText } from '@/lib/lang/localize';
 
 interface FAQItem {
   id: string;
   question: string;
+  questionBn?: string | null;
   answer: string;
+  answerBn?: string | null;
 }
 
 // Question line widths to mimic varying real question lengths
@@ -32,17 +36,19 @@ function SkeletonFAQ() {
 }
 
 export const FAQ = () => {
+  const { language } = useLanguage();
+  const isBN = language === 'BN';
   const [openId, setOpenId] = useState<string | null>(null);
   const [faqs, setFAQs] = useState<FAQItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/v1/cms/faq')
+    fetch('/api/v1/cms/faq', { cache: 'no-store' })
       .then(r => r.json())
       .then(data => setFAQs(Array.isArray(data) ? data : []))
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }, [language]);
 
   const toggleFAQ = (id: string) => {
     setOpenId(prev => (prev === id ? null : id));
@@ -52,7 +58,7 @@ export const FAQ = () => {
     <section className="pt-0 pb-1 sm:pb-2 md:pb-4 lg:pb-4 bg-white page-reveal">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 text-center mb-8 sm:mb-10 md:mb-12 px-4 text-wave">
-          Answers to Your Frequently Asked Questions
+          {isBN ? 'আপনার সাধারণ প্রশ্নগুলোর উত্তর' : 'Answers to Your Frequently Asked Questions'}
         </h2>
 
         {loading ? (
@@ -72,7 +78,7 @@ export const FAQ = () => {
                     className="w-full flex items-start justify-between gap-4 sm:gap-5 text-left"
                   >
                     <span className="font-semibold text-gray-900 text-base sm:text-lg md:text-xl flex-1 leading-relaxed">
-                      {faq.question}
+                      {pickLocalizedText(language, faq.question, faq.questionBn)}
                     </span>
                     <span
                       className="text-2xl sm:text-3xl text-red-500 shrink-0 transition-transform duration-300 font-light"
@@ -86,7 +92,7 @@ export const FAQ = () => {
                     style={{ maxHeight: isOpen ? '250px' : '0px', opacity: isOpen ? 1 : 0 }}
                   >
                     <p className="text-gray-600 text-sm sm:text-base md:text-lg mt-4 sm:mt-5 leading-loose">
-                      {faq.answer}
+                      {pickLocalizedText(language, faq.answer, faq.answerBn)}
                     </p>
                   </div>
                 </div>
