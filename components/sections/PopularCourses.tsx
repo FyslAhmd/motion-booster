@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { motion } from 'framer-motion';
 import { useLanguage } from '@/lib/lang/LanguageContext';
 import { ChevronLeft, ChevronRight, Check, ArrowRight } from 'lucide-react';
 import { PopularServiceItem } from '@/lib/admin/store';
@@ -45,6 +46,8 @@ export const PopularCourses = () => {
   const [allServices, setAllServices] = useState<PopularServiceItem[]>([]);
   const [categoryLabels, setCategoryLabels] = useState<Record<string, string>>({});
   const [activeTab, setActiveTab] = useState('All');
+  const [mobileIndex, setMobileIndex] = useState(0);
+  const [mobileDirection, setMobileDirection] = useState<1 | -1>(1);
   const [loading, setLoading] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const tabsScrollRef = useRef<HTMLDivElement>(null);
@@ -104,6 +107,27 @@ export const PopularCourses = () => {
     ? allServices
     : allServices.filter(s => s.category === activeTab);
 
+  useEffect(() => {
+    setMobileIndex(0);
+    setMobileDirection(1);
+  }, [activeTab, filteredServices.length]);
+
+  const goToMobilePrev = () => {
+    if (filteredServices.length <= 1) return;
+    setMobileDirection(-1);
+    setMobileIndex((prev) => (prev - 1 + filteredServices.length) % filteredServices.length);
+  };
+
+  const goToMobileNext = () => {
+    if (filteredServices.length <= 1) return;
+    setMobileDirection(1);
+    setMobileIndex((prev) => (prev + 1) % filteredServices.length);
+  };
+
+  const currentMobileService = filteredServices[mobileIndex] || null;
+  const nextMobileService =
+    filteredServices.length > 1 ? filteredServices[(mobileIndex + 1) % filteredServices.length] : null;
+
   const scroll = (direction: 'left' | 'right') => {
     if (scrollRef.current) {
       scrollRef.current.scrollBy({ left: direction === 'left' ? -400 : 400, behavior: 'smooth' });
@@ -148,8 +172,144 @@ export const PopularCourses = () => {
         </div>
         )}
 
-        {/* Cards + Arrows */}
-        <div className="relative px-0 sm:px-8">
+        {/* Cards + Arrows (Mobile) */}
+        <div className="sm:hidden relative">
+          <button
+            onClick={goToMobilePrev}
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full border-2 border-red-200 bg-white text-red-500 hover:bg-red-50 hover:border-red-400 items-center justify-center transition-all shadow-lg flex"
+            aria-label="Previous service"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+
+          <button
+            onClick={goToMobileNext}
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full border-2 border-red-200 bg-white text-red-500 hover:bg-red-50 hover:border-red-400 items-center justify-center transition-all shadow-lg flex"
+            aria-label="Next service"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+
+          <div className="relative overflow-visible min-h-97.5 px-6">
+            {loading && (
+              <div className="w-[84%] bg-white rounded-xl overflow-hidden border border-gray-100">
+                <div className="h-40 w-full bg-gray-200 animate-pulse" />
+                <div className="p-4 space-y-3">
+                  <div className="h-5 w-2/3 bg-gray-200 rounded animate-pulse" />
+                  <div className="h-3 w-full bg-gray-200 rounded animate-pulse" />
+                  <div className="h-3 w-5/6 bg-gray-200 rounded animate-pulse" />
+                </div>
+              </div>
+            )}
+
+            {!loading && currentMobileService && (
+              <motion.div
+                key={`mobile-main-${currentMobileService.id}-${mobileIndex}`}
+                initial={{ x: mobileDirection > 0 ? 42 : -42, opacity: 0.7 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                className="relative z-10 w-[84%] bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100"
+              >
+                <div className="relative h-40 w-full overflow-hidden">
+                  {currentMobileService.customImage ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={currentMobileService.customImage}
+                      alt={pickLocalizedText(language, currentMobileService.title, currentMobileService.titleBn)}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <Image
+                      src={getServiceImageSrc(currentMobileService.image)}
+                      alt={pickLocalizedText(language, currentMobileService.title, currentMobileService.titleBn)}
+                      fill
+                      sizes="(max-width: 640px) 84vw, 340px"
+                      className="object-cover"
+                    />
+                  )}
+                </div>
+
+                <div className="p-4">
+                  <h3 className="text-base font-bold text-gray-900 mb-2">
+                    {pickLocalizedText(language, currentMobileService.title, currentMobileService.titleBn)}
+                  </h3>
+                  <p className="text-gray-600 text-xs leading-relaxed mb-4">
+                    {pickLocalizedText(language, currentMobileService.description, currentMobileService.descriptionBn)}
+                  </p>
+                  <div className="space-y-2 mb-4">
+                    {pickLocalizedList(language, currentMobileService.services, currentMobileService.servicesBn).map((item, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <div className="shrink-0 w-4 h-4 rounded-full bg-green-100 flex items-center justify-center">
+                          <Check className="w-2.5 h-2.5 text-green-600" />
+                        </div>
+                        <span className="text-xs text-gray-700">{item}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <Link
+                    href={`/category/${currentMobileService.slug}`}
+                    className="inline-flex items-center gap-2 text-xs font-semibold text-red-500 hover:text-red-600 transition-colors group/link"
+                  >
+                    {isBN ? 'আরও জানুন' : 'Read More'}
+                    <ArrowRight className="w-3.5 h-3.5 group-hover/link:translate-x-1 transition-transform" />
+                  </Link>
+                </div>
+              </motion.div>
+            )}
+
+            {!loading && nextMobileService && (
+              <motion.div
+                key={`mobile-preview-${nextMobileService.id}-${mobileIndex}`}
+                initial={{ x: mobileDirection > 0 ? 32 : -32, opacity: 0.72 }}
+                animate={{ x: 0, opacity: 0.95 }}
+                transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                className="pointer-events-none absolute left-[86%] top-1/2 -translate-y-1/2 z-0 w-[84%] bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm scale-y-90"
+              >
+                <div className="relative h-40 w-full overflow-hidden">
+                  {nextMobileService.customImage ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={nextMobileService.customImage}
+                      alt={pickLocalizedText(language, nextMobileService.title, nextMobileService.titleBn)}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <Image
+                      src={getServiceImageSrc(nextMobileService.image)}
+                      alt={pickLocalizedText(language, nextMobileService.title, nextMobileService.titleBn)}
+                      fill
+                      sizes="(max-width: 640px) 84vw, 340px"
+                      className="object-cover"
+                    />
+                  )}
+                </div>
+                <div className="p-4">
+                  <h4 className="text-base font-bold text-gray-900 mb-2 line-clamp-1">
+                    {pickLocalizedText(language, nextMobileService.title, nextMobileService.titleBn)}
+                  </h4>
+                  <p className="text-gray-600 text-xs leading-relaxed mb-3 line-clamp-2">
+                    {pickLocalizedText(language, nextMobileService.description, nextMobileService.descriptionBn)}
+                  </p>
+                  <div className="space-y-2">
+                    {pickLocalizedList(language, nextMobileService.services, nextMobileService.servicesBn)
+                      .slice(0, 10)
+                      .map((item, i) => (
+                        <div key={i} className="flex items-center gap-2">
+                          <div className="shrink-0 w-4 h-4 rounded-full bg-green-100 flex items-center justify-center">
+                            <Check className="w-2.5 h-2.5 text-green-600" />
+                          </div>
+                          <span className="text-xs text-gray-700 line-clamp-1">{item}</span>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </div>
+        </div>
+
+        {/* Cards + Arrows (Desktop) */}
+        <div className="hidden sm:block relative px-0 sm:px-8">
           <button onClick={() => scroll('left')} className="hidden sm:flex absolute -left-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full border-2 border-red-200 bg-white text-red-400 hover:bg-red-50 hover:border-red-400 hover:text-red-500 items-center justify-center transition-all shadow-lg">
             <ChevronLeft className="w-5 h-5" />
           </button>
