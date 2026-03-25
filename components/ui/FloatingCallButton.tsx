@@ -47,7 +47,7 @@ export const FloatingCallButton = () => {
             aria-label="Contact us"
           >
             <Phone className="h-4 w-4" />
-            <span>{t('floating_call_desc')}</span>
+            <span>{t('contact_badge')}</span>
           </button>
         )}
       </div>
