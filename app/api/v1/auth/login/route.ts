@@ -52,6 +52,7 @@ export async function POST(request: NextRequest) {
         status: true,
         emailVerified: true,
         passwordHash: true,
+        avatarUrl: true,
       },
     });
 
@@ -123,6 +124,7 @@ export async function POST(request: NextRequest) {
             email: user.email,
             phone: user.phone,
             role: user.role,
+            avatarUrl: user.avatarUrl,
           },
           accessToken,
         },

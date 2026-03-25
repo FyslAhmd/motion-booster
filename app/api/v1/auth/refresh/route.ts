@@ -86,6 +86,7 @@ export async function POST(request: NextRequest) {
         phone: true,
         role: true,
         status: true,
+        avatarUrl: true,
       },
     });
 
@@ -144,6 +145,7 @@ export async function POST(request: NextRequest) {
           email: user.email,
           phone: user.phone,
           role: user.role,
+          avatarUrl: user.avatarUrl,
         },
         accessToken: newAccessToken,
       },
