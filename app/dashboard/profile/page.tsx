@@ -465,7 +465,7 @@ export default function ProfilePage() {
                         >
                           <span
                             className={`${NOTIFICATION_TOGGLE_KNOB} ${
-                              value ? 'translate-x-[24px]' : 'translate-x-0'
+                              value ? 'translate-x-6' : 'translate-x-0'
                             }`}
                           />
                         </button>
