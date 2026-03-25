@@ -1,14 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import useEmblaCarousel from 'embla-carousel-react';
+import Autoplay from 'embla-carousel-autoplay';
 import Image from 'next/image';
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Autoplay, Navigation, Pagination, EffectCreative } from 'swiper/modules';
-
-import 'swiper/css';
-import 'swiper/css/navigation';
-import 'swiper/css/pagination';
-import 'swiper/css/effect-creative';
 
 export interface SlideData {
   id: number;
@@ -32,195 +27,121 @@ interface SliderProps {
 export const Slider: React.FC<SliderProps> = ({
   slides,
   autoPlay = true,
-  autoPlayInterval = 5000,
+  autoPlayInterval = 4000,
   showControls = true,
   showIndicators = true,
-  height = 'h-[500px] md:h-[600px]'
+  height = 'h-[500px] md:h-[600px]',
 }) => {
-  if (slides.length === 0) return null;
+  const autoplay = useRef(
+    Autoplay({
+      delay: autoPlayInterval,
+      stopOnInteraction: false,
+      stopOnMouseEnter: true,
+    })
+  );
 
-  const canLoop = slides.length > 1;
-  const useNavigation = showControls && canLoop;
-  const usePagination = showIndicators && canLoop;
+  const [emblaRef, emblaApi] = useEmblaCarousel(
+    {
+      loop: slides.length > 1,
+      align: 'start',
+      skipSnaps: false,
+      dragFree: false,
+    },
+    autoPlay ? [autoplay.current] : []
+  );
+
+  const [selectedIndex, setSelectedIndex] = useState(0);
+
+  const scrollPrev = useCallback(() => {
+    emblaApi?.scrollPrev();
+  }, [emblaApi]);
+
+  const scrollNext = useCallback(() => {
+    emblaApi?.scrollNext();
+  }, [emblaApi]);
+
+  const scrollTo = useCallback((index: number) => {
+    emblaApi?.scrollTo(index);
+  }, [emblaApi]);
+
+  const onSelect = useCallback(() => {
+    if (!emblaApi) return;
+    setSelectedIndex(emblaApi.selectedScrollSnap());
+  }, [emblaApi]);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+    onSelect();
+    emblaApi.on('select', onSelect);
+  }, [emblaApi, onSelect]);
+
+  if (!slides.length) return null;
 
   return (
-    <div className={`relative w-full ${height} min-h-50 overflow-hidden rounded-xl border border-gray-200 bg-black`}>
-      <Swiper
-        modules={[Autoplay, Navigation, Pagination, EffectCreative]}
-        className="motion-swiper h-full w-full"
-        slidesPerView={1}
-        spaceBetween={0}
-        loop={canLoop}
-        effect="creative"
-        creativeEffect={{
-          prev: {
-            translate: ['-100%', 0, 0],
-          },
-          next: {
-            translate: ['100%', 0, 0],
-          },
-        }}
-        speed={1200}
-        watchSlidesProgress={true}
-        navigation={useNavigation}
-        pagination={usePagination ? { clickable: true } : false}
-        autoplay={
-          autoPlay && canLoop
-            ? {
-                delay: autoPlayInterval,
-                disableOnInteraction: false,
-                pauseOnMouseEnter: true,
-                waitForTransition: true,
-              }
-            : false
-        }
-      >
-        {slides.map((slide, index) => (
-          <SwiperSlide key={`${slide.id ?? 'slide'}-${index}`}>
+    <div className={`relative w-full ${height} overflow-hidden rounded-xl`}>
+      {/* VIEWPORT */}
+      <div className="overflow-hidden" ref={emblaRef}>
+        {/* CONTAINER */}
+        <div className="flex h-full">
+          {slides.map((slide, index) => (
             <div
-              className={`relative h-full w-full ${slide.ctaLink ? 'cursor-pointer' : ''}`}
-              onClick={() => {
-                if (slide.ctaLink) window.location.href = slide.ctaLink;
-              }}
+              key={slide.id}
+              className="relative min-w-full h-full flex-[0_0_100%]"
             >
               {slide.image.startsWith('data:') ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={slide.image} alt={slide.title || `Slide ${index + 1}`} className="h-full w-full object-cover" />
+                <img
+                  src={slide.image}
+                  className="w-full h-full object-cover select-none pointer-events-none"
+                />
               ) : (
                 <Image
                   src={slide.image}
-                  alt={slide.title || `Slide ${index + 1}`}
+                  alt={slide.title || ''}
                   fill
-                  sizes="(max-width: 640px) calc(100vw - 2rem), (max-width: 1024px) calc(100vw - 3rem), 1280px"
-                  className="object-cover"
+                  sizes="100vw"
+                  className="object-cover select-none pointer-events-none"
                   priority={index === 0}
                 />
               )}
-
-              {(slide.title || slide.description || slide.badge || (slide.ctaText && slide.ctaLink)) && (
-                <div className="absolute inset-0 hidden items-center bg-linear-to-r from-black/70 via-black/45 to-transparent md:flex">
-                  <div className="mx-auto w-full max-w-7xl px-6 lg:px-8">
-                    <div className="max-w-2xl">
-                      {slide.badge && (
-                        <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-red-500 px-4 py-2 text-sm font-semibold text-white">
-                          {'\u2713'} {slide.badge}
-                        </div>
-                      )}
-
-                      {slide.title && (
-                        <h2 className="mb-6 text-4xl font-bold leading-tight text-white md:text-5xl lg:text-6xl">
-                          {slide.title}
-                        </h2>
-                      )}
-
-                      {slide.description && (
-                        <p className="mb-8 text-lg leading-relaxed text-gray-200 md:text-xl">
-                          {slide.description}
-                        </p>
-                      )}
-
-                      {slide.ctaText && slide.ctaLink && (
-                        <a
-                          href={slide.ctaLink}
-                          className="inline-flex items-center gap-2 rounded-lg bg-linear-to-r from-red-500 to-red-600 px-8 py-4 font-semibold text-white shadow-lg transition-all hover:from-red-600 hover:to-red-700 hover:shadow-xl"
-                        >
-                          {slide.ctaText}
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
-          </SwiperSlide>
-        ))}
-      </Swiper>
+          ))}
+        </div>
+      </div>
 
-      <style jsx global>{`
-        .motion-swiper {
-          overflow: hidden;
-        }
+      {/* NAVIGATION */}
+      {showControls && slides.length > 1 && (
+        <>
+          <button
+            onClick={scrollPrev}
+            className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/20 backdrop-blur p-3 rounded-full text-white"
+          >
+            ‹
+          </button>
+          <button
+            onClick={scrollNext}
+            className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/20 backdrop-blur p-3 rounded-full text-white"
+          >
+            ›
+          </button>
+        </>
+      )}
 
-        .motion-swiper .swiper-slide {
-          transition: transform 700ms ease, opacity 700ms ease;
-          transform: scale(1);
-          opacity: 1;
-        }
-
-        .motion-swiper .swiper-slide-active {
-          transform: scale(1);
-          opacity: 1;
-        }
-
-        .motion-swiper .swiper-slide-next,
-        .motion-swiper .swiper-slide-prev {
-          opacity: 1;
-          transform: scale(1);
-        }
-
-        .motion-swiper .swiper-wrapper {
-          transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-        }
-
-        .motion-swiper .swiper-button-next,
-        .motion-swiper .swiper-button-prev {
-          color: #ffffff;
-          width: 42px;
-          height: 42px;
-          border-radius: 9999px;
-          background: rgba(255, 255, 255, 0.22);
-          backdrop-filter: blur(6px);
-        }
-
-        .motion-swiper .swiper-button-next:after,
-        .motion-swiper .swiper-button-prev:after {
-          font-size: 16px;
-          font-weight: 700;
-        }
-
-        .motion-swiper .swiper-pagination {
-          left: auto !important;
-          right: 12px !important;
-          bottom: 10px !important;
-          width: auto !important;
-          display: flex;
-          align-items: center;
-          gap: 6px;
-        }
-
-        .motion-swiper .swiper-pagination-bullet {
-          width: 8px;
-          height: 8px;
-          margin: 0 !important;
-          border-radius: 9999px;
-          background: #fca5a5;
-          opacity: 1;
-          transition: all 220ms ease;
-        }
-
-        .motion-swiper .swiper-pagination-bullet-active {
-          width: 24px;
-          background: #ef4444;
-        }
-
-        @media (max-width: 767px) {
-          .motion-swiper .swiper-button-next,
-          .motion-swiper .swiper-button-prev {
-            width: 34px;
-            height: 34px;
-          }
-
-          .motion-swiper .swiper-button-next:after,
-          .motion-swiper .swiper-button-prev:after {
-            font-size: 13px;
-          }
-
-          .motion-swiper .swiper-pagination {
-            right: 10px !important;
-            bottom: 8px !important;
-          }
-        }
-      `}</style>
+      {/* DOTS */}
+      {showIndicators && slides.length > 1 && (
+        <div className="absolute bottom-4 right-4 flex gap-2">
+          {slides.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => scrollTo(index)}
+              className={`h-2 rounded-full transition-all ${
+                index === selectedIndex
+                  ? 'w-6 bg-red-500'
+                  : 'w-2 bg-red-300'
+              }`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };
