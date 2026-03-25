@@ -8,6 +8,37 @@ import { ChevronLeft, ChevronRight, Check, ArrowRight } from 'lucide-react';
 import { PopularServiceItem } from '@/lib/admin/store';
 import { pickLocalizedList, pickLocalizedText } from '@/lib/lang/localize';
 
+const SERVICE_IMAGE_ALIASES: Record<string, string> = {
+  '/service-web-development.jpg': '/service-web-dev.jpg',
+  '/service-software-development.jpg': '/service-software-dev.jpg',
+};
+
+const VALID_SERVICE_IMAGES = new Set([
+  '/service-branding.jpg',
+  '/service-consulting.jpg',
+  '/service-digital-marketing.jpg',
+  '/service-graphics-design.jpg',
+  '/service-mobile-app.jpg',
+  '/service-software-dev.jpg',
+  '/service-specialized.jpg',
+  '/service-uiux-design.jpg',
+  '/service-video-animation.jpg',
+  '/service-web-dev.jpg',
+]);
+
+const DEFAULT_SERVICE_IMAGE = '/service-digital-marketing.jpg';
+
+function getServiceImageSrc(src?: string | null) {
+  const raw = src?.trim();
+  if (!raw || raw === 'null' || raw === 'undefined') return DEFAULT_SERVICE_IMAGE;
+
+  const withLeadingSlash = raw.startsWith('/') ? raw : `/${raw}`;
+  const sanitized = withLeadingSlash.split('?')[0].split('#')[0];
+  const aliased = SERVICE_IMAGE_ALIASES[sanitized] || sanitized;
+
+  return VALID_SERVICE_IMAGES.has(aliased) ? aliased : DEFAULT_SERVICE_IMAGE;
+}
+
 export const PopularCourses = () => {
   const { t, language } = useLanguage();
   const isBN = language === 'BN';
@@ -139,6 +170,7 @@ export const PopularCourses = () => {
               const title = pickLocalizedText(language, service.title, service.titleBn);
               const description = pickLocalizedText(language, service.description, service.descriptionBn);
               const serviceItems = pickLocalizedList(language, service.services, service.servicesBn);
+              const normalizedImage = getServiceImageSrc(service.image);
               return (
               <div
                 key={service.id}
@@ -151,7 +183,7 @@ export const PopularCourses = () => {
                     <img src={service.customImage} alt={title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                   ) : (
                     <Image
-                      src={service.image}
+                      src={normalizedImage}
                       alt={title}
                       fill
                       sizes="(max-width: 640px) 288px, (max-width: 768px) 320px, 340px"

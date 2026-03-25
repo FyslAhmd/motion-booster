@@ -3,11 +3,12 @@
 import React from 'react';
 import Image from 'next/image';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Autoplay, Navigation, Pagination } from 'swiper/modules';
+import { Autoplay, Navigation, Pagination, EffectCreative } from 'swiper/modules';
 
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
+import 'swiper/css/effect-creative';
 
 export interface SlideData {
   id: number;
@@ -45,12 +46,21 @@ export const Slider: React.FC<SliderProps> = ({
   return (
     <div className={`relative w-full ${height} min-h-50 overflow-hidden rounded-xl border border-gray-200 bg-black`}>
       <Swiper
-        modules={[Autoplay, Navigation, Pagination]}
+        modules={[Autoplay, Navigation, Pagination, EffectCreative]}
         className="motion-swiper h-full w-full"
         slidesPerView={1}
         spaceBetween={0}
         loop={canLoop}
-        speed={1400}
+        effect="creative"
+        creativeEffect={{
+          prev: {
+            translate: ['-100%', 0, 0],
+          },
+          next: {
+            translate: ['100%', 0, 0],
+          },
+        }}
+        speed={1200}
         watchSlidesProgress={true}
         navigation={useNavigation}
         pagination={usePagination ? { clickable: true } : false}

@@ -78,7 +78,7 @@ export const HeaderBanner = () => {
             src={sliderImages[currentSlide].src}
             alt={sliderImages[currentSlide].alt}
             fill
-            sizes="100vw"
+            sizes="(max-width: 640px) calc(100vw - 2rem), (max-width: 1024px) calc(100vw - 3rem), 640px"
             className="object-cover"
             priority
           />
