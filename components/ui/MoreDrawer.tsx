@@ -47,13 +47,13 @@ export const MoreDrawer = ({ open, onClose }: MoreDrawerProps) => {
     <>
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 bg-black/40 z-[190] transition-opacity duration-300 lg:hidden ${open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+        className={`fixed inset-0 bg-black/40 z-190 transition-opacity duration-300 lg:hidden ${open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
         onClick={onClose}
       />
 
       {/* Drawer - slides in from left */}
       <div
-        className={`fixed inset-y-0 left-0 z-[200] bg-white transition-transform duration-300 lg:hidden ${open ? 'translate-x-0 shadow-2xl pointer-events-auto' : '-translate-x-full shadow-none pointer-events-none'}`}
+        className={`fixed inset-y-0 left-0 z-200 bg-white transition-transform duration-300 lg:hidden ${open ? 'translate-x-0 shadow-2xl pointer-events-auto' : '-translate-x-full shadow-none pointer-events-none'}`}
         style={{ width: '80vw', maxWidth: '320px' }}
       >
         <div
