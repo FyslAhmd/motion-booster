@@ -78,6 +78,7 @@ interface BoostFormData {
   placements: BoostPlacement[];
   location: BoostLocation;
   minAge: string;
+  maxAge: string;
   gender: BoostGender;
   audienceLanguages: BoostAudienceLanguage[];
   notes: string;
@@ -89,6 +90,7 @@ const DEFAULT_BOOST_DATA: BoostFormData = {
   placements: ['facebook', 'instagram'],
   location: 'bangladesh',
   minAge: '18',
+  maxAge: '65',
   gender: 'male',
   audienceLanguages: ['en', 'bn'],
   notes: '',
@@ -887,6 +889,7 @@ export default function MessagesPage() {
     placement: boostLang === 'bn' ? 'প্লেসমেন্ট' : 'Placement',
     location: boostLang === 'bn' ? 'লোকেশন' : 'Location',
     minAge: boostLang === 'bn' ? 'সর্বনিম্ন বয়স' : 'Minimum Age',
+    maxAge: boostLang === 'bn' ? 'সর্বোচ্চ বয়স' : 'Maximum Age',
     gender: boostLang === 'bn' ? 'জেন্ডার' : 'Gender',
     audienceLanguage: boostLang === 'bn' ? 'অডিয়েন্স ভাষা' : 'Audience Language',
     notes: boostLang === 'bn' ? 'অতিরিক্ত নোট' : 'Additional Notes',
@@ -914,6 +917,10 @@ export default function MessagesPage() {
   };
 
   const normalizedMinAge = Math.max(18, Number.parseInt(boostData.minAge || '18', 10) || 18);
+  const parsedMaxAge = Number.parseInt(boostData.maxAge || '', 10);
+  const normalizedMaxAge = Number.isFinite(parsedMaxAge)
+    ? Math.max(normalizedMinAge, parsedMaxAge)
+    : '';
   const canSubmitBoost = Boolean(
     boostData.totalBudget.trim() &&
     boostData.dailyBudget.trim() &&
@@ -945,7 +952,7 @@ export default function MessagesPage() {
     const targetAudience = [
       `Placements: ${selectedPlacementLabels.join(', ')}`,
       `Location: ${selectedLocationLabel}`,
-      `Age: ${normalizedMinAge}+`,
+      `Age: ${normalizedMaxAge === '' ? `${normalizedMinAge}+` : `${normalizedMinAge}-${normalizedMaxAge}`}`,
       `Gender: ${selectedGenderLabel}`,
       `Language: ${selectedLanguageLabels.join(', ')}`,
       boostData.notes.trim() ? `Notes: ${boostData.notes.trim()}` : '',
@@ -962,6 +969,13 @@ export default function MessagesPage() {
           totalBudget: boostData.totalBudget,
           dailyBudget: boostData.dailyBudget,
           targetAudience,
+          placements: boostData.placements,
+          location: boostData.location,
+          minAge: normalizedMinAge,
+          maxAge: normalizedMaxAge === '' ? null : normalizedMaxAge,
+          gender: boostData.gender,
+          audienceLanguages: boostData.audienceLanguages,
+          notes: boostData.notes.trim(),
         }),
       });
       if (!res.ok) throw new Error();
@@ -1613,14 +1627,37 @@ export default function MessagesPage() {
                                 </select>
                               </div>
                               <div>
-                                <label className="block text-xs font-medium text-gray-700 mb-1">{boostFieldLabels.minAge} <span className="text-red-500">*</span></label>
-                                <input
-                                  type="number"
-                                  min={18}
-                                  value={boostData.minAge}
-                                  onChange={e => setBoostData(p => ({ ...p, minAge: e.target.value }))}
-                                  className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent"
-                                />
+                                <label className="block text-xs font-medium text-gray-700 mb-1">{boostFieldLabels.minAge} / {boostFieldLabels.maxAge} <span className="text-red-500">*</span></label>
+                                <div className="grid grid-cols-2 gap-2">
+                                  <select
+                                    value={boostData.minAge}
+                                    onChange={e => {
+                                      const nextMin = Math.max(18, Number.parseInt(e.target.value || '18', 10) || 18);
+                                      setBoostData((prev) => {
+                                        const prevMax = Number.parseInt(prev.maxAge || '', 10);
+                                        const nextMax = Number.isFinite(prevMax) ? String(Math.max(nextMin, prevMax)) : '';
+                                        return { ...prev, minAge: String(nextMin), maxAge: nextMax };
+                                      });
+                                    }}
+                                    className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent bg-white"
+                                  >
+                                    {Array.from({ length: 48 }, (_, i) => 18 + i).map((age) => (
+                                      <option key={`min-age-${age}`} value={String(age)}>{age}</option>
+                                    ))}
+                                  </select>
+                                  <select
+                                    value={boostData.maxAge}
+                                    onChange={e => setBoostData((prev) => ({ ...prev, maxAge: e.target.value }))}
+                                    className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent bg-white"
+                                  >
+                                    <option value="">{boostLang === 'bn' ? 'ওপেন' : 'Open'}</option>
+                                    {Array.from({ length: 48 }, (_, i) => 18 + i)
+                                      .filter((age) => age >= normalizedMinAge)
+                                      .map((age) => (
+                                        <option key={`max-age-${age}`} value={String(age)}>{age}</option>
+                                      ))}
+                                  </select>
+                                </div>
                               </div>
                             </div>
 

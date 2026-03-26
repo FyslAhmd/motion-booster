@@ -42,6 +42,14 @@ type PlacementValue = 'facebook' | 'whatsapp' | 'instagram';
 type LocationValue = 'all_country' | 'bangladesh';
 type GenderValue = 'male' | 'female';
 
+interface BoostSetupDraft {
+  placements: PlacementValue[];
+  location: LocationValue;
+  minAge: number;
+  maxAge: number | '';
+  gender: GenderValue;
+}
+
 const PLACEMENT_OPTIONS: Array<{ value: PlacementValue; label: string }> = [
   { value: 'facebook', label: 'Facebook' },
   { value: 'whatsapp', label: 'WhatsApp' },
@@ -61,6 +69,8 @@ export default function BoostRequestsPage() {
   const [showAllAudience, setShowAllAudience] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [savingSetup, setSavingSetup] = useState(false);
+  const [setupDraft, setSetupDraft] = useState<BoostSetupDraft | null>(null);
   const limit = 15;
 
   useEffect(() => {
@@ -351,7 +361,7 @@ export default function BoostRequestsPage() {
     return 'male';
   };
 
-  const resolveAgeRange = (ageRange: string | null, rawAudience: string) => {
+  const resolveAgeRange = (ageRange: string | null, rawAudience: string): { minAge: number; maxAge: number | '' } => {
     const source = (ageRange || rawAudience || '').toLowerCase();
     const rangeMatch = source.match(/(\d{1,2})\s*(?:-|to)\s*(\d{1,2})/i);
     const plusMatch = source.match(/(\d{1,2})\s*\+/);
@@ -378,6 +388,81 @@ export default function BoostRequestsPage() {
 
     return { minAge, maxAge };
   };
+
+  const getInitialSetupDraft = (item: BoostRequestItem): BoostSetupDraft => {
+    const audienceProfile = buildAudienceProfile(item.targetAudience);
+    const selectedPlacementValues = resolveSelectedPlacements(audienceProfile.placements, item.targetAudience);
+    const selectedLocation = resolveSelectedLocation(audienceProfile.locations, item.targetAudience);
+    const selectedGender = resolveSelectedGender(audienceProfile.genders, item.targetAudience);
+    const selectedAge = resolveAgeRange(audienceProfile.ageRange, item.targetAudience);
+
+    return {
+      placements: selectedPlacementValues,
+      location: selectedLocation,
+      minAge: selectedAge.minAge,
+      maxAge: selectedAge.maxAge,
+      gender: selectedGender,
+    };
+  };
+
+  const saveSetupOptions = useCallback(async () => {
+    if (!selected || !setupDraft || setupDraft.placements.length === 0 || updatingId) return;
+
+    setSavingSetup(true);
+    setUpdatingId(selected.id);
+    try {
+      let res = await fetch(`/api/v1/boost-requests/${selected.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        },
+        body: JSON.stringify({
+          placements: setupDraft.placements,
+          location: setupDraft.location,
+          minAge: setupDraft.minAge,
+          maxAge: setupDraft.maxAge === '' ? null : setupDraft.maxAge,
+          gender: setupDraft.gender,
+        }),
+      });
+
+      if (res.status === 401) {
+        const newToken = await refreshSession();
+        if (newToken) {
+          res = await fetch(`/api/v1/boost-requests/${selected.id}`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${newToken}`,
+            },
+            body: JSON.stringify({
+              placements: setupDraft.placements,
+              location: setupDraft.location,
+              minAge: setupDraft.minAge,
+              maxAge: setupDraft.maxAge === '' ? null : setupDraft.maxAge,
+              gender: setupDraft.gender,
+            }),
+          });
+        }
+      }
+
+      if (!res.ok) return;
+      const updated: BoostRequestItem = await res.json();
+
+      setData(prev =>
+        prev
+          ? {
+              ...prev,
+              items: prev.items.map(entry => (entry.id === updated.id ? { ...entry, ...updated } : entry)),
+            }
+          : prev,
+      );
+      setSelected(prev => (prev && prev.id === updated.id ? { ...prev, ...updated } : prev));
+    } finally {
+      setSavingSetup(false);
+      setUpdatingId(null);
+    }
+  }, [selected, setupDraft, updatingId, accessToken, refreshSession]);
 
   return (
     <AdminShell>
@@ -420,7 +505,10 @@ export default function BoostRequestsPage() {
             {data.items.map(item => (
               <div
                 key={item.id}
-                onClick={() => setSelected(item)}
+                onClick={() => {
+                  setSetupDraft(getInitialSetupDraft(item));
+                  setSelected(item);
+                }}
                 className={`w-full text-left bg-white rounded-2xl border p-4 hover:shadow-md transition-shadow ${
                   item.completed ? 'border-emerald-200' : 'border-gray-100'
                 }`}
@@ -506,12 +594,12 @@ export default function BoostRequestsPage() {
 
       {/* Detail Modal */}
       {mounted && selected && createPortal(
-        <div className="fixed inset-0 z-100 flex items-end sm:items-center justify-center p-3 sm:p-4" onClick={() => setSelected(null)}>
+        <div className="fixed inset-0 z-100 flex items-end sm:items-center justify-center p-3 sm:p-4" onClick={() => { setSetupDraft(null); setSelected(null); }}>
           <div className="absolute inset-0 bg-black/65 backdrop-blur-[1px]" aria-hidden="true" />
           <div className="relative bg-white rounded-3xl w-full max-w-[calc(100vw-1.5rem)] sm:max-w-3xl h-[92dvh] sm:h-auto sm:max-h-[90vh] overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden border border-white/40 shadow-[0_35px_90px_-28px_rgba(0,0,0,0.65)]" onClick={e => e.stopPropagation()}>
             <div className="p-5 border-b border-gray-100 flex items-center justify-between">
               <h2 className="text-base sm:text-lg font-bold text-gray-900">Boost Request Details</h2>
-              <button onClick={() => setSelected(null)} className="p-2 hover:bg-gray-100 rounded-lg"><span className="text-lg leading-none text-gray-400">×</span></button>
+              <button onClick={() => { setSetupDraft(null); setSelected(null); }} className="p-2 hover:bg-gray-100 rounded-lg"><span className="text-lg leading-none text-gray-400">×</span></button>
             </div>
 
             <div className="p-4 sm:p-6 pb-8 sm:pb-8 space-y-5 bg-linear-to-b from-white via-white to-slate-50/70">
@@ -523,10 +611,14 @@ export default function BoostRequestsPage() {
                 ]);
                 const visibleAudience = showAllAudience ? targetingChips : targetingChips.slice(0, 12);
                 const audienceHasMore = targetingChips.length > 12;
-                const selectedPlacementValues = resolveSelectedPlacements(audienceProfile.placements, selected.targetAudience);
-                const selectedLocation = resolveSelectedLocation(audienceProfile.locations, selected.targetAudience);
-                const selectedGender = resolveSelectedGender(audienceProfile.genders, selected.targetAudience);
-                const selectedAge = resolveAgeRange(audienceProfile.ageRange, selected.targetAudience);
+                const fallbackSetup = getInitialSetupDraft(selected);
+                const selectedPlacementValues = setupDraft?.placements ?? fallbackSetup.placements;
+                const selectedLocation = setupDraft?.location ?? fallbackSetup.location;
+                const selectedGender = setupDraft?.gender ?? fallbackSetup.gender;
+                const selectedAge = {
+                  minAge: setupDraft?.minAge ?? fallbackSetup.minAge,
+                  maxAge: setupDraft?.maxAge ?? fallbackSetup.maxAge,
+                };
 
                 return (
                   <>
@@ -627,7 +719,7 @@ export default function BoostRequestsPage() {
 
                     <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
                       <h4 className="text-sm font-semibold text-gray-900">Boost Setup Options</h4>
-                      <p className="mt-1 text-xs text-gray-500">Placement, location, age and gender selected by the requester.</p>
+                      <p className="mt-1 text-xs text-gray-500">Placement, location, age and gender. You can adjust and save these options.</p>
 
                       <div className="mt-4 grid gap-3 sm:grid-cols-2">
                         <div className="rounded-2xl border border-gray-200 bg-gray-50 p-3.5">
@@ -638,7 +730,15 @@ export default function BoostRequestsPage() {
                                 <input
                                   type="checkbox"
                                   checked={selectedPlacementValues.includes(option.value)}
-                                  readOnly
+                                  onChange={() =>
+                                    setSetupDraft((prev) => {
+                                      if (!prev) return prev;
+                                      const placements = prev.placements.includes(option.value)
+                                        ? prev.placements.filter((item) => item !== option.value)
+                                        : [...prev.placements, option.value];
+                                      return { ...prev, placements };
+                                    })
+                                  }
                                   className="h-4 w-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
                                 />
                                 {option.label}
@@ -651,7 +751,7 @@ export default function BoostRequestsPage() {
                           <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-gray-500">Location</p>
                           <select
                             value={selectedLocation}
-                            disabled
+                            onChange={(e) => setSetupDraft((prev) => (prev ? { ...prev, location: e.target.value as LocationValue } : prev))}
                             className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
                           >
                             <option value="all_country">All Country</option>
@@ -664,7 +764,14 @@ export default function BoostRequestsPage() {
                           <div className="grid grid-cols-2 gap-2">
                             <select
                               value={String(selectedAge.minAge)}
-                              disabled
+                              onChange={(e) => {
+                                const nextMin = Math.max(18, Number.parseInt(e.target.value, 10) || 18);
+                                setSetupDraft((prev) => {
+                                  if (!prev) return prev;
+                                  const adjustedMax = prev.maxAge === '' ? '' : Math.max(nextMin, prev.maxAge);
+                                  return { ...prev, minAge: nextMin, maxAge: adjustedMax };
+                                });
+                              }}
                               className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
                             >
                               {AGE_OPTIONS.map((age) => (
@@ -673,11 +780,18 @@ export default function BoostRequestsPage() {
                             </select>
                             <select
                               value={selectedAge.maxAge === '' ? '' : String(selectedAge.maxAge)}
-                              disabled
+                              onChange={(e) =>
+                                setSetupDraft((prev) => {
+                                  if (!prev) return prev;
+                                  if (e.target.value === '') return { ...prev, maxAge: '' };
+                                  const nextMax = Math.max(prev.minAge, Number.parseInt(e.target.value, 10) || prev.minAge);
+                                  return { ...prev, maxAge: nextMax };
+                                })
+                              }
                               className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
                             >
                               <option value="">Open</option>
-                              {AGE_OPTIONS.map((age) => (
+                              {AGE_OPTIONS.filter((age) => age >= selectedAge.minAge).map((age) => (
                                 <option key={`age-max-${age}`} value={String(age)}>{age}</option>
                               ))}
                             </select>
@@ -689,13 +803,24 @@ export default function BoostRequestsPage() {
                           <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-gray-500">Gender</p>
                           <select
                             value={selectedGender}
-                            disabled
+                            onChange={(e) => setSetupDraft((prev) => (prev ? { ...prev, gender: e.target.value as GenderValue } : prev))}
                             className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
                           >
                             <option value="male">Male</option>
                             <option value="female">Female</option>
                           </select>
                         </div>
+                      </div>
+
+                      <div className="mt-4 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={() => void saveSetupOptions()}
+                          disabled={savingSetup || updatingId === selected.id || selectedPlacementValues.length === 0}
+                          className="inline-flex items-center rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          {savingSetup ? 'Saving...' : 'Save setup options'}
+                        </button>
                       </div>
                     </div>
 
