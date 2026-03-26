@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import {
+  fetchAdAccounts,
   fetchCampaignsPage,
   fetchAdSetsPage,
   fetchAdsPage,
@@ -37,6 +38,114 @@ interface AdRow {
   adset_id?: string;
 }
 
+interface ActiveCounts {
+  campaigns: number;
+  adSets: number;
+  ads: number;
+}
+
+interface AdAccountRow {
+  id?: string;
+  account_status?: number;
+}
+
+async function getActiveCountsForAccount(accountId: string): Promise<ActiveCounts> {
+  // Paginate through all effective_status=ACTIVE campaigns (100 per page)
+  // and count only those that derive to truly ACTIVE status.
+  let campaignActiveCount = 0;
+  const activeCampaignIds = new Set<string>();
+  let campaignAfter: string | undefined;
+
+  for (let page = 0; page < 15; page++) { // max 1500 campaigns
+    const batch = await fetchCampaignsPage({
+      accountId,
+      limit: 100,
+      status: 'ACTIVE',
+      after: campaignAfter,
+    }).catch(() => null);
+
+    if (!batch?.data?.length) break;
+
+    for (const campaign of batch.data as CampaignRow[]) {
+      const derived = deriveDeliveryStatus(campaign);
+      if (derived.key !== 'ACTIVE') continue;
+      campaignActiveCount += 1;
+      if (campaign.id) activeCampaignIds.add(campaign.id);
+    }
+
+    // No more pages
+    if (!batch.paging?.next) break;
+    campaignAfter = batch.paging?.cursors?.after;
+    if (!campaignAfter) break;
+  }
+
+  // Paginate ad sets and ads to avoid inflated summary.total_count values.
+  let adSetActiveCount = 0;
+  const activeAdSetIds = new Set<string>();
+  let adSetsAfter: string | undefined;
+  for (let page = 0; page < 30; page++) { // max 3000 ad sets
+    const batch = await fetchAdSetsPage({
+      accountId,
+      limit: 100,
+      status: 'ACTIVE',
+      after: adSetsAfter,
+    }).catch(() => null);
+
+    if (!batch?.data?.length) break;
+
+    for (const adSet of batch.data as AdSetRow[]) {
+      const derived = deriveAdSetStatus(adSet);
+      if (derived.key !== 'ACTIVE') continue;
+      // Strict: count only when parent campaign is truly ACTIVE.
+      if (!adSet.campaign_id || !activeCampaignIds.has(adSet.campaign_id)) {
+        continue;
+      }
+      adSetActiveCount += 1;
+      if (adSet.id) activeAdSetIds.add(adSet.id);
+    }
+
+    if (!batch.paging?.next) break;
+    adSetsAfter = batch.paging?.cursors?.after;
+    if (!adSetsAfter) break;
+  }
+
+  let adsActiveCount = 0;
+  let adsAfter: string | undefined;
+  for (let page = 0; page < 60; page++) { // max 6000 ads
+    const batch = await fetchAdsPage({
+      accountId,
+      limit: 100,
+      status: 'ACTIVE',
+      after: adsAfter,
+    }).catch(() => null);
+
+    if (!batch?.data?.length) break;
+
+    for (const ad of batch.data as AdRow[]) {
+      const derived = deriveAdStatus(ad);
+      if (derived.key !== 'ACTIVE') continue;
+      // Strict: count only when parent campaign + ad set are truly ACTIVE.
+      if (!ad.campaign_id || !activeCampaignIds.has(ad.campaign_id)) {
+        continue;
+      }
+      if (!ad.adset_id || !activeAdSetIds.has(ad.adset_id)) {
+        continue;
+      }
+      adsActiveCount += 1;
+    }
+
+    if (!batch.paging?.next) break;
+    adsAfter = batch.paging?.cursors?.after;
+    if (!adsAfter) break;
+  }
+
+  return {
+    campaigns: campaignActiveCount,
+    adSets: adSetActiveCount,
+    ads: adsActiveCount,
+  };
+}
+
 /**
  * GET /api/v1/meta/active-counts?account_id=act_xxx
  * Returns truly-active counts for campaigns, ad sets, and ads.
@@ -50,103 +159,62 @@ interface AdRow {
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
-    const accountId = searchParams.get('account_id') || 'act_586481100654531';
+    const accountId = searchParams.get('account_id');
+    const debug = searchParams.get('debug') === '1';
 
-    // Paginate through all effective_status=ACTIVE campaigns (100 per page)
-    // and count only those that derive to truly ACTIVE status.
-    let campaignActiveCount = 0;
-    const activeCampaignIds = new Set<string>();
-    let campaignAfter: string | undefined;
-
-    for (let page = 0; page < 15; page++) { // max 1500 campaigns
-      const batch = await fetchCampaignsPage({
-        accountId,
-        limit: 100,
-        status: 'ACTIVE',
-        after: campaignAfter,
-      }).catch(() => null);
-
-      if (!batch?.data?.length) break;
-
-      for (const campaign of batch.data as CampaignRow[]) {
-        const derived = deriveDeliveryStatus(campaign);
-        if (derived.key !== 'ACTIVE') continue;
-        campaignActiveCount += 1;
-        if (campaign.id) activeCampaignIds.add(campaign.id);
-      }
-
-      // No more pages
-      if (!batch.paging?.next) break;
-      campaignAfter = batch.paging?.cursors?.after;
-      if (!campaignAfter) break;
+    // Single-account mode
+    if (accountId) {
+      const counts = await getActiveCountsForAccount(accountId);
+      return NextResponse.json({
+        success: true,
+        data: counts,
+      });
     }
 
-    // Paginate ad sets and ads to avoid inflated summary.total_count values.
-    let adSetActiveCount = 0;
-    const activeAdSetIds = new Set<string>();
-    let adSetsAfter: string | undefined;
-    for (let page = 0; page < 30; page++) { // max 3000 ad sets
-      const batch = await fetchAdSetsPage({
-        accountId,
-        limit: 100,
-        status: 'ACTIVE',
-        after: adSetsAfter,
-      }).catch(() => null);
+    // Multi-account aggregation mode (sum of all discovered accounts)
+    const accounts = await fetchAdAccounts().catch(() => [] as AdAccountRow[]);
+    const accountIds = Array.from(
+      new Set(
+        accounts
+          .map((a) => a?.id)
+          .filter((id): id is string => typeof id === 'string' && id.trim().length > 0),
+      ),
+    );
 
-      if (!batch?.data?.length) break;
-
-      for (const adSet of batch.data as AdSetRow[]) {
-        const derived = deriveAdSetStatus(adSet);
-        if (derived.key !== 'ACTIVE') continue;
-        // Strict: count only when parent campaign is truly ACTIVE.
-        if (!adSet.campaign_id || !activeCampaignIds.has(adSet.campaign_id)) {
-          continue;
-        }
-        adSetActiveCount += 1;
-        if (adSet.id) activeAdSetIds.add(adSet.id);
-      }
-
-      if (!batch.paging?.next) break;
-      adSetsAfter = batch.paging?.cursors?.after;
-      if (!adSetsAfter) break;
+    if (accountIds.length === 0) {
+      return NextResponse.json({
+        success: true,
+        data: { campaigns: 0, adSets: 0, ads: 0 },
+      });
     }
 
-    let adsActiveCount = 0;
-    let adsAfter: string | undefined;
-    for (let page = 0; page < 60; page++) { // max 6000 ads
-      const batch = await fetchAdsPage({
-        accountId,
-        limit: 100,
-        status: 'ACTIVE',
-        after: adsAfter,
-      }).catch(() => null);
+    const perAccount = await Promise.allSettled(
+      accountIds.map(async (id) => ({
+        accountId: id,
+        counts: await getActiveCountsForAccount(id),
+      })),
+    );
 
-      if (!batch?.data?.length) break;
-
-      for (const ad of batch.data as AdRow[]) {
-        const derived = deriveAdStatus(ad);
-        if (derived.key !== 'ACTIVE') continue;
-        // Strict: count only when parent campaign + ad set are truly ACTIVE.
-        if (!ad.campaign_id || !activeCampaignIds.has(ad.campaign_id)) {
-          continue;
-        }
-        if (!ad.adset_id || !activeAdSetIds.has(ad.adset_id)) {
-          continue;
-        }
-        adsActiveCount += 1;
-      }
-
-      if (!batch.paging?.next) break;
-      adsAfter = batch.paging?.cursors?.after;
-      if (!adsAfter) break;
+    const totals: ActiveCounts = { campaigns: 0, adSets: 0, ads: 0 };
+    const perAccountBreakdown: Array<{ accountId: string; counts: ActiveCounts }> = [];
+    for (const item of perAccount) {
+      if (item.status !== 'fulfilled') continue;
+      totals.campaigns += item.value.counts.campaigns;
+      totals.adSets += item.value.counts.adSets;
+      totals.ads += item.value.counts.ads;
+      perAccountBreakdown.push(item.value);
     }
 
     return NextResponse.json({
       success: true,
       data: {
-        campaigns: campaignActiveCount,
-        adSets: adSetActiveCount,
-        ads: adsActiveCount,
+        ...totals,
+        ...(debug
+          ? {
+              accountsScanned: accountIds.length,
+              perAccount: perAccountBreakdown,
+            }
+          : {}),
       },
     });
   } catch (err: unknown) {
