@@ -24,17 +24,20 @@ interface AssignUserDropdownProps {
   metaObjectType: 'CAMPAIGN' | 'ADSET' | 'AD';
   /** The Meta ad account id (e.g. act_xxx) */
   metaAccountId?: string;
-  /** Currently assigned user (null if unassigned) */
-  assignedUser: AssignedUser | null;
+  /** Currently assigned users */
+  assignedUsers: AssignedUser[];
+  /** Enables assigning multiple users to the same object */
+  allowMultiple?: boolean;
   /** Callback after assignment changes */
-  onAssigned: (user: AssignedUser | null) => void;
+  onAssigned: (users: AssignedUser[]) => void;
 }
 
 export default function AssignUserDropdown({
   metaObjectId,
   metaObjectType,
   metaAccountId,
-  assignedUser,
+  assignedUsers,
+  allowMultiple = false,
   onAssigned,
 }: AssignUserDropdownProps) {
   const [open, setOpen] = useState(false);
@@ -103,14 +106,21 @@ export default function AssignUserDropdown({
       });
       const json = await res.json();
       if (json.success) {
-        onAssigned({
+        const nextUser = {
           id: user.id,
           fullName: user.fullName,
           phone: user.phone,
           username: user.username,
-        });
-        setOpen(false);
-        setSearch('');
+        };
+
+        if (allowMultiple) {
+          const exists = assignedUsers.some((u) => u.id === user.id);
+          onAssigned(exists ? assignedUsers : [...assignedUsers, nextUser]);
+        } else {
+          onAssigned([nextUser]);
+          setOpen(false);
+          setSearch('');
+        }
       }
     } catch {}
     finally {
@@ -118,18 +128,26 @@ export default function AssignUserDropdown({
     }
   };
 
-  const handleUnassign = async (e: React.MouseEvent) => {
+  const handleUnassign = async (e: React.MouseEvent, userId?: string) => {
     e.stopPropagation();
     setSaving(true);
     try {
       const res = await fetch('/api/v1/admin/meta-assignments', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ metaObjectId }),
+        body: JSON.stringify({ metaObjectId, userId }),
       });
       const json = await res.json();
       if (json.success) {
-        onAssigned(null);
+        if (allowMultiple) {
+          if (userId) {
+            onAssigned(assignedUsers.filter((u) => u.id !== userId));
+          } else {
+            onAssigned([]);
+          }
+        } else {
+          onAssigned([]);
+        }
       }
     } catch {}
     finally {
@@ -137,10 +155,40 @@ export default function AssignUserDropdown({
     }
   };
 
+  const singleAssignedUser = assignedUsers[0] ?? null;
+
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} className={`relative ${open ? 'z-220' : ''}`}>
       {/* Trigger button */}
-      {assignedUser ? (
+      {allowMultiple ? (
+        <div className="flex max-w-56 flex-wrap items-center gap-1.5">
+          {assignedUsers.map((user) => (
+            <span
+              key={user.id}
+              className="inline-flex items-center gap-1 rounded-full border border-green-200 bg-green-50 px-2 py-0.5 text-[11px] font-semibold text-green-700"
+              title={user.fullName}
+            >
+              <span className="max-w-24 truncate">{user.fullName}</span>
+              <button
+                onClick={(e) => handleUnassign(e, user.id)}
+                disabled={saving}
+                title="Unassign user"
+                className="rounded-full p-0.5 text-green-500 hover:bg-red-50 hover:text-red-500 disabled:opacity-50"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          ))}
+          <button
+            onClick={() => setOpen(!open)}
+            disabled={saving}
+            className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-[11px] font-medium text-gray-500 transition-colors hover:border-red-300 hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+          >
+            {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : <UserPlus className="h-3 w-3" />}
+            {assignedUsers.length > 0 ? 'Add user' : 'Assign'}
+          </button>
+        </div>
+      ) : singleAssignedUser ? (
         <div className="flex items-center gap-1.5">
           <button
             onClick={() => setOpen(!open)}
@@ -148,10 +196,10 @@ export default function AssignUserDropdown({
             className="inline-flex max-w-35 items-center gap-1.5 rounded-full border border-green-200 bg-green-50 px-2.5 py-1 text-[11px] font-semibold text-green-700 transition-opacity hover:opacity-80 disabled:opacity-50"
           >
             <Check className="h-3 w-3 shrink-0" />
-            <span className="truncate">{assignedUser.fullName}</span>
+            <span className="truncate">{singleAssignedUser.fullName}</span>
           </button>
           <button
-            onClick={handleUnassign}
+            onClick={(e) => handleUnassign(e)}
             disabled={saving}
             title="Unassign user"
             className="rounded-full p-0.5 text-gray-300 hover:bg-red-50 hover:text-red-500 transition-colors disabled:opacity-50"
@@ -172,7 +220,7 @@ export default function AssignUserDropdown({
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-1 w-64 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg">
+        <div className="absolute right-0 top-full z-230 mt-1 w-64 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg">
           {/* Search */}
           <div className="border-b border-gray-100 p-2">
             <div className="relative">
@@ -200,7 +248,7 @@ export default function AssignUserDropdown({
               </div>
             ) : (
               users.map((user) => {
-                const isCurrentlyAssigned = assignedUser?.id === user.id;
+                const isCurrentlyAssigned = assignedUsers.some((assigned) => assigned.id === user.id);
                 return (
                   <button
                     key={user.id}
