@@ -263,6 +263,12 @@ interface InsightSpendRow {
   spend?: string;
 }
 
+interface UserBudgetSummaryRow {
+  totalBudget?: number;
+  totalSpent?: number;
+  balance?: number;
+}
+
 interface UserOverviewProps {
   userName: string;
   statCards: StatCard[];
@@ -371,8 +377,10 @@ export default function DashboardPage() {
   const [totalSpendBDT, setTotalSpendBDT] = useState<number | null>(null);
   const [totalAds, setTotalAds] = useState<number | null>(null);
   const [dailySpendUSD, setDailySpendUSD] = useState<number | null>(null);
+  const [clientNetBalanceUSD, setClientNetBalanceUSD] = useState<number | null>(null);
   const [adminStatsLoading, setAdminStatsLoading] = useState(true);
   const [metaSummaryLoading, setMetaSummaryLoading] = useState(true);
+  const [budgetSummaryLoading, setBudgetSummaryLoading] = useState(true);
 
   // Spend reveal / mask
   const [spendRevealed, setSpendRevealed] = useState(false);
@@ -460,6 +468,43 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!isAdmin) {
+      setBudgetSummaryLoading(false);
+      return;
+    }
+
+    let mounted = true;
+    setBudgetSummaryLoading(true);
+
+    fetch('/api/v1/admin/user-budgets', {
+      method: 'GET',
+      credentials: 'include',
+    })
+      .then((r) => r.json())
+      .then((d) => {
+        if (!mounted || !d?.success || !Array.isArray(d.data)) return;
+        const totals = (d.data as UserBudgetSummaryRow[]).reduce(
+          (acc: { totalBudget: number; totalSpent: number; balance: number }, row) => {
+            acc.totalBudget += Number(row.totalBudget || 0);
+            acc.totalSpent += Number(row.totalSpent || 0);
+            acc.balance += Number(row.balance || 0);
+            return acc;
+          },
+          { totalBudget: 0, totalSpent: 0, balance: 0 },
+        );
+        setClientNetBalanceUSD(totals.balance);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (mounted) setBudgetSummaryLoading(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [isAdmin]);
+
+  useEffect(() => {
+    if (!isAdmin) {
       setMetaSummaryLoading(false);
       return;
     }
@@ -495,61 +540,51 @@ export default function DashboardPage() {
           return;
         }
 
-        const perAccountSummaries = await Promise.allSettled(
-          accountIds.map(async (accountId: string) => {
-            const [activeCountsRes, insightsRes] = await Promise.allSettled([
-              fetch(`/api/v1/meta/active-counts?account_id=${encodeURIComponent(accountId)}`, {
-                cache: "no-store",
-              }).then((r) => r.json()),
-              fetch(
+        const [allActiveCountsRes, perAccountSummaries] = await Promise.all([
+          fetch('/api/v1/meta/active-counts', { cache: 'no-store' })
+            .then((r) => r.json())
+            .catch(() => null),
+          Promise.allSettled(
+            accountIds.map(async (accountId: string) => {
+              const insightsRes = await fetch(
                 `/api/v1/meta/insights?type=account&date_preset=today&account_id=${encodeURIComponent(accountId)}`,
                 { cache: "no-store" },
-              ).then((r) => r.json()),
-            ]);
+              ).then((r) => r.json());
 
-            let adsCount: number | null = null;
-            if (
-              activeCountsRes.status === "fulfilled" &&
-              activeCountsRes.value?.success &&
-              typeof activeCountsRes.value?.data?.ads === "number"
-            ) {
-              // Active ads only
-              adsCount = activeCountsRes.value.data.ads;
-            }
+              let todaySpendUsd = 0;
+              if (insightsRes?.success && Array.isArray(insightsRes.data)) {
+                todaySpendUsd = (insightsRes.data as InsightSpendRow[]).reduce((sum: number, row) => {
+                  const spend = Number.parseFloat(String(row?.spend ?? "0"));
+                  return sum + (Number.isFinite(spend) ? spend : 0);
+                }, 0);
+              }
 
-            let todaySpendUsd = 0;
-            if (
-              insightsRes.status === "fulfilled" &&
-              insightsRes.value?.success &&
-              Array.isArray(insightsRes.value.data)
-            ) {
-              todaySpendUsd = (insightsRes.value.data as InsightSpendRow[]).reduce((sum: number, row) => {
-                const spend = Number.parseFloat(String(row?.spend ?? "0"));
-                return sum + (Number.isFinite(spend) ? spend : 0);
-              }, 0);
-            }
-
-            return { adsCount, todaySpendUsd };
-          }),
-        );
+              return { todaySpendUsd };
+            }),
+          ),
+        ]);
 
         if (!mounted) return;
 
-        let adsTotal = 0;
-        let adsFound = false;
+        let adsTotal: number | null = null;
         let dailySpendUsdTotal = 0;
+
+        if (
+          allActiveCountsRes?.success &&
+          typeof allActiveCountsRes?.data?.campaigns === 'number' &&
+          Number.isFinite(allActiveCountsRes.data.campaigns)
+        ) {
+          // Keep the same active metric users see in /dashboard/meta summary.
+          adsTotal = allActiveCountsRes.data.campaigns;
+        }
 
         for (const item of perAccountSummaries) {
           if (item.status !== "fulfilled") continue;
-          const { adsCount, todaySpendUsd } = item.value;
-          if (typeof adsCount === "number" && Number.isFinite(adsCount)) {
-            adsTotal += adsCount;
-            adsFound = true;
-          }
+          const { todaySpendUsd } = item.value;
           if (Number.isFinite(todaySpendUsd)) dailySpendUsdTotal += todaySpendUsd;
         }
 
-        setTotalAds(adsFound ? adsTotal : null);
+        setTotalAds(adsTotal);
         setDailySpendUSD(dailySpendUsdTotal);
       } catch {
         // Keep null values when API is unavailable; overview cards will show dashes.
@@ -564,6 +599,15 @@ export default function DashboardPage() {
       mounted = false;
     };
   }, [isAdmin]);
+
+  const hasBalanceRemaining =
+    clientNetBalanceUSD != null && Number.isFinite(clientNetBalanceUSD) && clientNetBalanceUSD > 0;
+
+  const clientDueLabel = hasBalanceRemaining ? "Balance Remaining" : "Total Client Due";
+  const clientDueValue =
+    clientNetBalanceUSD == null
+      ? "—"
+      : fmtUSD(hasBalanceRemaining ? clientNetBalanceUSD : Math.abs(clientNetBalanceUSD));
 
   const statCards: StatCard[] = [
     {
@@ -582,11 +626,11 @@ export default function DashboardPage() {
       bg: "bg-green-50",
     },
     {
-      label: "Total Client Due",
-      value: "—",
+      label: clientDueLabel,
+      value: clientDueValue,
       icon: DollarSign,
-      color: "text-amber-600",
-      bg: "bg-amber-50",
+      color: hasBalanceRemaining ? "text-green-600" : "text-red-600",
+      bg: hasBalanceRemaining ? "bg-green-50" : "bg-red-50",
     },
     {
       label: "Unseen Messages",
@@ -725,7 +769,7 @@ export default function DashboardPage() {
 
         {/* Main Dashboard Content */}
         <div className="max-w-7xl mx-auto px-3 py-3 sm:p-6 space-y-4 sm:space-y-6">
-          {adminStatsLoading || metaSummaryLoading ? (
+          {adminStatsLoading || metaSummaryLoading || budgetSummaryLoading ? (
             <DashboardQuickStatsSkeleton />
           ) : (
             /* Quick Stats */
