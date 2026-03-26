@@ -91,7 +91,7 @@ export const FloatingCallButton = () => {
                 href="https://wa.me/8801790939394"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex flex-1 items-center justify-center gap-2 rounded-full border-2 border-green-500 bg-white py-2.5 text-sm font-semibold text-green-600 transition-colors hover:bg-green-50"
+                className="flex flex-1 items-center justify-center gap-2 rounded-full border border-[#9ad9ab] bg-[#ecfaef] py-2.5 text-sm font-semibold text-[#1d7a3b] transition-colors hover:bg-[#dff6e6]"
               >
                 {/* WhatsApp icon */}
                 <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">

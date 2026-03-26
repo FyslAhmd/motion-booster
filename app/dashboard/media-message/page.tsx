@@ -142,12 +142,12 @@ export default function MediaMessagePage() {
               onClick={() => setActiveChannel('whatsapp')}
               className={`flex items-center justify-center rounded-xl border px-2 py-2.5 text-center transition-colors sm:rounded-2xl sm:px-3 sm:py-3 ${
                 activeChannel === 'whatsapp'
-                  ? 'border-amber-200 bg-amber-50'
+                  ? 'border-emerald-200 bg-emerald-50'
                   : 'border-gray-200 bg-white hover:bg-gray-50'
               }`}
             >
               <div className="flex items-center justify-center gap-1.5 sm:gap-2">
-                <span className={`hidden rounded-lg p-1.5 sm:inline-flex ${activeChannel === 'whatsapp' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600'}`}>
+                <span className={`hidden rounded-lg p-1.5 sm:inline-flex ${activeChannel === 'whatsapp' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600'}`}>
                   <Phone className="h-4 w-4" />
                 </span>
                 <div>
