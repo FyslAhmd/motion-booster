@@ -2,7 +2,7 @@
 
 import AdminShell from '../_components/AdminShell';
 import Image from 'next/image';
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useAuth } from '@/lib/auth/context';
 import { useSocket, type ChatMessage, type MessageType } from '@/lib/chat/use-socket';
 import { toast } from 'sonner';
@@ -753,10 +753,64 @@ export default function MessagesPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, typingUsers]);
 
-  // ─── Filter conversations ──────────────────────────
-  const filteredConversations = conversations.filter((conv) =>
-    conv.participant.fullName.toLowerCase().includes(searchQuery.toLowerCase())
+  const isRoleAdmin = (role?: string | null) => (role || '').toUpperCase() === 'ADMIN';
+  const isUserShownOnline = (id: string, role?: string | null) => onlineUsers.has(id) || isRoleAdmin(role);
+
+  const conversationByParticipantId = useMemo(
+    () => new Map(conversations.map((conv) => [conv.participant.id, conv])),
+    [conversations],
   );
+
+  const directoryUsers = useMemo(() => {
+    const byId = new Map<string, ChatableUser>();
+
+    for (const conv of conversations) {
+      byId.set(conv.participant.id, {
+        id: conv.participant.id,
+        username: conv.participant.username,
+        fullName: conv.participant.fullName,
+        role: conv.participant.role,
+        avatarUrl: conv.participant.avatarUrl ?? null,
+      });
+    }
+
+    for (const userItem of chatableUsers) {
+      if (!byId.has(userItem.id)) {
+        byId.set(userItem.id, userItem);
+      }
+    }
+
+    return Array.from(byId.values()).sort((a, b) => {
+      const convA = conversationByParticipantId.get(a.id);
+      const convB = conversationByParticipantId.get(b.id);
+      const tA = convA ? new Date(convA.updatedAt).getTime() : 0;
+      const tB = convB ? new Date(convB.updatedAt).getTime() : 0;
+      if (tA !== tB) return tB - tA;
+      return a.fullName.localeCompare(b.fullName);
+    });
+  }, [chatableUsers, conversations, conversationByParticipantId]);
+
+  const openUserConversation = useCallback(
+    (person: ChatableUser) => {
+      const existing = conversationByParticipantId.get(person.id);
+      if (existing) {
+        selectConversation(existing);
+        return;
+      }
+      startNewConversation(person);
+    },
+    [conversationByParticipantId, selectConversation, startNewConversation],
+  );
+
+  // ─── Filter user directory ─────────────────────────
+  const filteredDirectoryUsers = directoryUsers.filter((person) => {
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return true;
+    return (
+      person.fullName.toLowerCase().includes(q) ||
+      person.username.toLowerCase().includes(q)
+    );
+  });
 
   // Filter chatable users (exclude those who already have conversations)
   const newChatUsers = chatableUsers.filter(
@@ -767,9 +821,6 @@ export default function MessagesPage() {
   const typingText = typingUsers.size > 0
     ? `${Array.from(typingUsers.values()).join(', ')} is typing...`
     : null;
-
-  const isRoleAdmin = (role?: string | null) => (role || '').toUpperCase() === 'ADMIN';
-  const isUserShownOnline = (id: string, role?: string | null) => onlineUsers.has(id) || isRoleAdmin(role);
 
   // ─── Boost form helpers ────────────────────────────
   const boostLabels = boostLang === 'bn'
@@ -977,6 +1028,48 @@ export default function MessagesPage() {
               className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border-0 rounded-lg text-sm focus:ring-2 focus:ring-red-400 focus:bg-white transition-all"
             />
           </div>
+
+          <div className="mt-4">
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                People ({directoryUsers.length})
+              </p>
+              <span className="text-[11px] text-green-600 font-medium">
+                Active: {directoryUsers.filter((person) => isUserShownOnline(person.id, person.role)).length}
+              </span>
+            </div>
+            <div className="no-scrollbar flex gap-3 overflow-x-auto pb-1">
+              {directoryUsers.map((person) => {
+                const isOnline = isUserShownOnline(person.id, person.role);
+                const hasConversation = Boolean(conversationByParticipantId.get(person.id));
+                return (
+                  <button
+                    key={person.id}
+                    onClick={() => openUserConversation(person)}
+                    className="group shrink-0"
+                    title={person.fullName}
+                  >
+                    <div className="relative mx-auto w-fit">
+                      {person.avatarUrl ? (
+                        <Image src={person.avatarUrl} alt="avatar" width={56} height={56} className="h-14 w-14 rounded-full object-cover ring-2 ring-white shadow-sm" />
+                      ) : (
+                        <div className={`h-14 w-14 bg-linear-to-br ${getAvatarColor(person.id)} rounded-full flex items-center justify-center text-white font-semibold text-base ring-2 ring-white shadow-sm`}>
+                          {getInitials(person.fullName)}
+                        </div>
+                      )}
+                      <span className={`absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-white ${isOnline ? 'bg-green-500' : 'bg-gray-300'}`} />
+                    </div>
+                    <p className="mt-1 w-16 truncate text-center text-[11px] font-medium text-gray-700 group-hover:text-gray-900">
+                      {person.fullName}
+                    </p>
+                    <p className={`text-center text-[10px] ${hasConversation ? 'text-gray-400' : 'text-red-500'}`}>
+                      {hasConversation ? 'Inbox' : 'New'}
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
 
         {/* New chat user list */}
@@ -1030,13 +1123,13 @@ export default function MessagesPage() {
             <div className="px-4 py-4">
               <AdminSectionSkeleton variant="list" />
             </div>
-          ) : filteredConversations.length === 0 ? (
+          ) : filteredDirectoryUsers.length === 0 ? (
             <div className="text-center py-16 px-4">
               <MessageSquarePlus className="w-12 h-12 text-gray-300 mx-auto mb-3" />
               <p className="text-gray-500 text-sm">
                 {searchQuery
-                  ? 'No matching conversations'
-                  : 'No conversations yet'}
+                  ? 'No matching users'
+                  : 'No users yet'}
               </p>
               {!searchQuery && (
                 <button
@@ -1051,54 +1144,62 @@ export default function MessagesPage() {
               )}
             </div>
           ) : (
-            filteredConversations.map((conv) => (
+            filteredDirectoryUsers.map((person) => {
+              const conv = conversationByParticipantId.get(person.id);
+              const isOnline = isUserShownOnline(person.id, person.role);
+              const hasConversation = Boolean(conv);
+
+              return (
               <div
-                key={conv.id}
-                onClick={() => selectConversation(conv)}
+                key={person.id}
+                onClick={() => openUserConversation(person)}
                 className={`px-4 md:px-6 py-4 cursor-pointer transition-all relative ${
-                  selectedConversation?.id === conv.id
+                  selectedConversation?.participant.id === person.id
                     ? 'bg-red-50 border-r-4 border-r-red-500'
                     : 'hover:bg-gray-50'
                 }`}
               >
                 <div className="flex gap-3">
                   <div className="relative shrink-0">
-                    {conv.participant.avatarUrl ? (
-                      <Image src={conv.participant.avatarUrl} alt="avatar" width={48} height={48} className="w-12 h-12 rounded-full object-cover" />
+                    {person.avatarUrl ? (
+                      <Image src={person.avatarUrl} alt="avatar" width={48} height={48} className="w-12 h-12 rounded-full object-cover" />
                     ) : (
                       <div
-                        className={`w-12 h-12 bg-linear-to-br ${getAvatarColor(
-                          conv.participant.id
-                        )} rounded-full flex items-center justify-center text-white font-semibold text-sm`}
+                        className={`w-12 h-12 bg-linear-to-br ${getAvatarColor(person.id)} rounded-full flex items-center justify-center text-white font-semibold text-sm`}
                       >
-                        {getInitials(conv.participant.fullName)}
+                        {getInitials(person.fullName)}
                       </div>
                     )}
-                    {isUserShownOnline(conv.participant.id, conv.participant.role) && (
-                      <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white" />
-                    )}
+                    <div className={`absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full border-2 border-white ${isOnline ? 'bg-green-500' : 'bg-gray-300'}`} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between mb-1">
                       <div>
                         <h3 className="font-semibold text-gray-900 text-sm">
-                          {conv.participant.fullName}
+                          {person.fullName}
                         </h3>
-                        <span className="text-xs text-gray-400">
-                          {conv.participant.role === 'ADMIN' ? 'Admin' : 'User'}
-                        </span>
+                        <div className="mt-0.5 flex items-center gap-2">
+                          <span className="text-xs text-gray-400">
+                            {person.role === 'ADMIN' ? 'Admin' : 'User'}
+                          </span>
+                          <span className={`text-xs font-medium ${isOnline ? 'text-green-600' : 'text-gray-400'}`}>
+                            {isOnline ? 'Active now' : 'Offline'}
+                          </span>
+                        </div>
                       </div>
-                      {conv.lastMessage && (
+                      {conv?.lastMessage && (
                         <span className="text-xs text-gray-500">
                           {formatTime(conv.lastMessage.createdAt)}
                         </span>
                       )}
                     </div>
                     <p className="text-sm text-gray-600 truncate">
-                      {getLastMessagePreview(conv.lastMessage, user?.id)}
+                      {hasConversation
+                        ? getLastMessagePreview(conv?.lastMessage ?? null, user?.id)
+                        : 'Tap to start conversation'}
                     </p>
                   </div>
-                  {conv.unreadCount > 0 && (
+                  {conv && conv.unreadCount > 0 && (
                     <div className="absolute top-4 right-4">
                       <span className="flex items-center justify-center w-5 h-5 bg-red-500 text-white text-xs font-medium rounded-full">
                         {conv.unreadCount}
@@ -1107,7 +1208,7 @@ export default function MessagesPage() {
                   )}
                 </div>
               </div>
-            ))
+            )})
           )}
         </div>
       </div>

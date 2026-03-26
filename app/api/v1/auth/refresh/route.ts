@@ -6,6 +6,7 @@ import {
   generateRefreshToken,
   hashToken,
 } from '@/lib/auth/tokens';
+import { isRecoverableDbError } from '@/lib/server/db-error';
 
 /**
  * POST /api/v1/auth/refresh
@@ -171,6 +172,14 @@ export async function POST(request: NextRequest) {
     return response;
   } catch (error) {
     console.error('[auth/refresh]', error);
+
+    if (isRecoverableDbError(error)) {
+      return NextResponse.json(
+        { error: 'Auth service temporarily unavailable' },
+        { status: 503 }
+      );
+    }
+
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

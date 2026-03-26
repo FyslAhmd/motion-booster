@@ -266,7 +266,7 @@ interface CampaignsTableProps {
   accountId?: string;
 }
 
-const PAGE_SIZE = 12;
+const PAGE_SIZE = 9;
 
 export default function CampaignsTable({ accountId }: CampaignsTableProps) {
   const [data, setData] = useState<Campaign[]>([]);

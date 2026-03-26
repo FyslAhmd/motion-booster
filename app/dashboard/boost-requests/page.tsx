@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import AdminShell from '../_components/AdminShell';
 import { useAuth } from '@/lib/auth/context';
-import { Search, ChevronLeft, ChevronRight, Calendar, Target, Wallet, Clock3, Megaphone, Users2, Monitor } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, Calendar, Wallet, Clock3, Target, Users2 } from 'lucide-react';
 import { AdminSectionSkeleton } from '@/components/ui/AdminSectionSkeleton';
 import { createPortal } from 'react-dom';
 
@@ -37,6 +37,18 @@ interface AudienceProfile {
   notes: string[];
   placements: string[];
 }
+
+type PlacementValue = 'facebook' | 'whatsapp' | 'instagram';
+type LocationValue = 'all_country' | 'bangladesh';
+type GenderValue = 'male' | 'female';
+
+const PLACEMENT_OPTIONS: Array<{ value: PlacementValue; label: string }> = [
+  { value: 'facebook', label: 'Facebook' },
+  { value: 'whatsapp', label: 'WhatsApp' },
+  { value: 'instagram', label: 'Instagram' },
+];
+
+const AGE_OPTIONS = Array.from({ length: 48 }, (_, i) => 18 + i);
 
 export default function BoostRequestsPage() {
   const { accessToken, refreshSession } = useAuth();
@@ -312,11 +324,59 @@ export default function BoostRequestsPage() {
     };
   };
 
-  const getPlacementText = (audienceText: string) => {
-    const match = audienceText.match(/placement[s]?\s*[:\-]\s*([^\n]+)/i);
-    if (match?.[1]) return match[1].trim();
-    if (/advantage\+?/i.test(audienceText)) return 'Advantage+ placements';
-    return 'Auto placements';
+  const resolveSelectedPlacements = (placements: string[], rawAudience: string): PlacementValue[] => {
+    const source = `${placements.join(', ')} ${rawAudience}`.toLowerCase();
+    const selectedValues = PLACEMENT_OPTIONS
+      .filter((option) => source.includes(option.value))
+      .map((option) => option.value);
+
+    if (selectedValues.length === 0) {
+      return ['facebook', 'instagram'];
+    }
+
+    return selectedValues;
+  };
+
+  const resolveSelectedLocation = (locations: string[], rawAudience: string): LocationValue => {
+    const source = `${locations.join(', ')} ${rawAudience}`.toLowerCase();
+    if (source.includes('all country') || source.includes('all countries')) return 'all_country';
+    return 'bangladesh';
+  };
+
+  const resolveSelectedGender = (genders: string[], rawAudience: string): GenderValue => {
+    const source = `${genders.join(', ')} ${rawAudience}`.toLowerCase();
+    if (source.includes('female') || source.includes('women') || source.includes('girl') || source.includes('নারী') || source.includes('মহিলা')) {
+      return 'female';
+    }
+    return 'male';
+  };
+
+  const resolveAgeRange = (ageRange: string | null, rawAudience: string) => {
+    const source = (ageRange || rawAudience || '').toLowerCase();
+    const rangeMatch = source.match(/(\d{1,2})\s*(?:-|to)\s*(\d{1,2})/i);
+    const plusMatch = source.match(/(\d{1,2})\s*\+/);
+    const singleMatch = source.match(/\b(\d{1,2})\b/);
+
+    let minAge = 18;
+    let maxAge: number | '' = 65;
+
+    if (rangeMatch) {
+      minAge = Math.max(18, Number.parseInt(rangeMatch[1], 10) || 18);
+      const parsedMax = Number.parseInt(rangeMatch[2], 10);
+      maxAge = Number.isFinite(parsedMax) ? Math.max(minAge, parsedMax) : '';
+      return { minAge, maxAge };
+    }
+
+    if (plusMatch) {
+      minAge = Math.max(18, Number.parseInt(plusMatch[1], 10) || 18);
+      return { minAge, maxAge: '' };
+    }
+
+    if (singleMatch) {
+      minAge = Math.max(18, Number.parseInt(singleMatch[1], 10) || 18);
+    }
+
+    return { minAge, maxAge };
   };
 
   return (
@@ -463,9 +523,10 @@ export default function BoostRequestsPage() {
                 ]);
                 const visibleAudience = showAllAudience ? targetingChips : targetingChips.slice(0, 12);
                 const audienceHasMore = targetingChips.length > 12;
-                const placementText = audienceProfile.placements.length > 0
-                  ? audienceProfile.placements.join(', ')
-                  : getPlacementText(selected.targetAudience);
+                const selectedPlacementValues = resolveSelectedPlacements(audienceProfile.placements, selected.targetAudience);
+                const selectedLocation = resolveSelectedLocation(audienceProfile.locations, selected.targetAudience);
+                const selectedGender = resolveSelectedGender(audienceProfile.genders, selected.targetAudience);
+                const selectedAge = resolveAgeRange(audienceProfile.ageRange, selected.targetAudience);
 
                 return (
                   <>
@@ -482,7 +543,7 @@ export default function BoostRequestsPage() {
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-2">
                             <span className="inline-flex items-center rounded-full bg-white/85 px-3 py-1 text-[11px] font-semibold tracking-wide text-rose-700 shadow-sm">
-                              Boost campaign
+                              Boost Request
                             </span>
                             <span className={`inline-flex items-center rounded-full px-3 py-1 text-[11px] font-semibold ${selected.language === 'bn' ? 'bg-emerald-50 text-emerald-700' : 'bg-sky-50 text-sky-700'}`}>
                               {selected.language === 'bn' ? 'বাংলা content' : 'English content'}
@@ -496,18 +557,13 @@ export default function BoostRequestsPage() {
                           </div>
 
                           <p className="mt-3 text-base sm:text-xl font-semibold leading-snug text-gray-900">
-                            {getCampaignName(selected)}
+                            Request ID: {selected.id.slice(0, 8).toUpperCase()}
                           </p>
-                          <p className="mt-1 truncate text-sm text-gray-600">Requester identity hidden</p>
 
                           <div className="mt-4 flex flex-wrap gap-2 text-xs text-gray-700">
                             <span className="inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/80 px-3 py-1.5 shadow-sm">
                               <Calendar className="h-3.5 w-3.5" />
                               {formatDate(selected.createdAt)}
-                            </span>
-                            <span className="inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/80 px-3 py-1.5 shadow-sm">
-                              <Target className="h-3.5 w-3.5" />
-                              Requester hidden
                             </span>
                           </div>
                         </div>
@@ -567,30 +623,78 @@ export default function BoostRequestsPage() {
                           </div>
                         </div>
                       </div>
+                    </div>
 
-                      <div className="rounded-2xl border border-violet-100 bg-linear-to-br from-violet-50 to-white p-4 shadow-sm">
-                        <div className="flex items-start gap-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-violet-500/10 text-violet-700">
-                            <Megaphone className="h-4 w-4" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm font-medium text-gray-500">Campaign title</p>
-                            <p className="mt-1 text-sm sm:text-base font-semibold leading-snug text-gray-900 wrap-break-word">{getCampaignName(selected)}</p>
-                            <p className="mt-1 text-xs text-gray-600">Generated from selected audience setup</p>
+                    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                      <h4 className="text-sm font-semibold text-gray-900">Boost Setup Options</h4>
+                      <p className="mt-1 text-xs text-gray-500">Placement, location, age and gender selected by the requester.</p>
+
+                      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                        <div className="rounded-2xl border border-gray-200 bg-gray-50 p-3.5">
+                          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-gray-500">Placement</p>
+                          <div className="space-y-1.5">
+                            {PLACEMENT_OPTIONS.map((option) => (
+                              <label key={option.value} className="flex items-center gap-2 text-sm text-gray-700">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedPlacementValues.includes(option.value)}
+                                  readOnly
+                                  className="h-4 w-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
+                                />
+                                {option.label}
+                              </label>
+                            ))}
                           </div>
                         </div>
-                      </div>
 
-                      <div className="rounded-2xl border border-amber-100 bg-linear-to-br from-amber-50 to-white p-4 shadow-sm">
-                        <div className="flex items-start gap-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-700">
-                            <Monitor className="h-4 w-4" />
+                        <div className="rounded-2xl border border-gray-200 bg-gray-50 p-3.5">
+                          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-gray-500">Location</p>
+                          <select
+                            value={selectedLocation}
+                            disabled
+                            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
+                          >
+                            <option value="all_country">All Country</option>
+                            <option value="bangladesh">Bangladesh (BD)</option>
+                          </select>
+                        </div>
+
+                        <div className="rounded-2xl border border-gray-200 bg-gray-50 p-3.5">
+                          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-gray-500">Age</p>
+                          <div className="grid grid-cols-2 gap-2">
+                            <select
+                              value={String(selectedAge.minAge)}
+                              disabled
+                              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
+                            >
+                              {AGE_OPTIONS.map((age) => (
+                                <option key={`age-min-${age}`} value={String(age)}>{age}</option>
+                              ))}
+                            </select>
+                            <select
+                              value={selectedAge.maxAge === '' ? '' : String(selectedAge.maxAge)}
+                              disabled
+                              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
+                            >
+                              <option value="">Open</option>
+                              {AGE_OPTIONS.map((age) => (
+                                <option key={`age-max-${age}`} value={String(age)}>{age}</option>
+                              ))}
+                            </select>
                           </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm font-medium text-gray-500">Placements</p>
-                            <p className="mt-1 text-sm sm:text-base font-semibold text-gray-900">{placementText}</p>
-                            <p className="mt-1 text-xs text-gray-600">Placement setup parsed from the audience brief</p>
-                          </div>
+                          <p className="mt-1 text-[11px] text-gray-500">Minimum age is 18.</p>
+                        </div>
+
+                        <div className="rounded-2xl border border-gray-200 bg-gray-50 p-3.5">
+                          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-gray-500">Gender</p>
+                          <select
+                            value={selectedGender}
+                            disabled
+                            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
+                          >
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                          </select>
                         </div>
                       </div>
                     </div>
@@ -702,12 +806,6 @@ export default function BoostRequestsPage() {
                       </div>
                     </div>
 
-                    <div className="rounded-[26px] border border-gray-200 bg-white p-4 shadow-sm">
-                      <p className="text-sm font-medium text-gray-500">Privacy</p>
-                      <p className="mt-1 text-sm text-gray-700">
-                        Facebook link and requester username are hidden on this page.
-                      </p>
-                    </div>
                   </>
                 );
               })()}

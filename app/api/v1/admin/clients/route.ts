@@ -22,6 +22,15 @@ const CLIENT_SELECT = {
 
 const PAGE_SIZE = 20;
 
+function isUniqueConstraintError(err: unknown): err is { code: 'P2002'; meta?: { target?: string[] } } {
+  return (
+    typeof err === 'object' &&
+    err !== null &&
+    'code' in err &&
+    (err as { code?: unknown }).code === 'P2002'
+  );
+}
+
 // GET /api/v1/admin/clients?page=1&search= — paginated client list
 export async function GET(req: NextRequest) {
   try {
@@ -116,16 +125,29 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'No fields to update' }, { status: 400 });
     }
 
-    const updated = await prisma.user.update({
-      where: { id },
-      data,
-      select: CLIENT_SELECT,
+    const shouldRevokeSessions = status !== undefined && status !== 'ACTIVE';
+
+    const updated = await prisma.$transaction(async (tx) => {
+      const nextUser = await tx.user.update({
+        where: { id },
+        data,
+        select: CLIENT_SELECT,
+      });
+
+      if (shouldRevokeSessions) {
+        await tx.refreshToken.updateMany({
+          where: { userId: id, isRevoked: false },
+          data: { isRevoked: true },
+        });
+      }
+
+      return nextUser;
     });
 
     return NextResponse.json({ success: true, data: updated });
-  } catch (err: any) {
+  } catch (err: unknown) {
     // Handle unique constraint violations (duplicate email/username)
-    if (err?.code === 'P2002') {
+    if (isUniqueConstraintError(err)) {
       const field = err.meta?.target?.[0] || 'field';
       return NextResponse.json(
         { success: false, error: `This ${field} is already taken` },

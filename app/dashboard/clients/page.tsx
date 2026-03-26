@@ -144,9 +144,6 @@ interface EditModalProps {
 function EditModal({ client, onClose, onSave }: EditModalProps) {
   const [form, setForm] = useState({
     fullName: client.fullName,
-    username: client.username,
-    email: client.email,
-    phone: client.phone,
     status: client.status,
     adsAccess: client.adsAccess,
     emailVerified: client.emailVerified,
@@ -162,8 +159,8 @@ function EditModal({ client, onClose, onSave }: EditModalProps) {
   const { confirm } = useConfirm();
 
   const handleSave = async () => {
-    if (!form.fullName.trim() || !form.username.trim() || !form.email.trim()) {
-      setError('Full name, username, and email are required.');
+    if (!form.fullName.trim()) {
+      setError('Full name is required.');
       return;
     }
     if (form.newPassword && form.newPassword.length < 8) {
@@ -174,8 +171,14 @@ function EditModal({ client, onClose, onSave }: EditModalProps) {
     setSaving(true);
     setError('');
     try {
-      const payload: Record<string, unknown> = { id: client.id, ...form };
-      if (!form.newPassword) delete payload.newPassword;
+      const payload: Record<string, unknown> = {
+        id: client.id,
+        fullName: form.fullName,
+        status: form.status,
+        emailVerified: form.emailVerified,
+      };
+      if (form.adsAccess !== client.adsAccess) payload.adsAccess = form.adsAccess;
+      if (form.newPassword) payload.newPassword = form.newPassword;
       const res = await fetch('/api/v1/admin/clients', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -234,34 +237,26 @@ function EditModal({ client, onClose, onSave }: EditModalProps) {
               />
             </div>
 
-            {/* Username */}
-            <div>
-              <label className="mb-1 block text-xs font-medium text-gray-500">Username</label>
-              <input
-                value={form.username}
-                onChange={(e) => set('username', e.target.value)}
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-400"
-              />
-            </div>
-
             {/* Email */}
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-500">Email</label>
+              <label className="mb-1 block text-xs font-medium text-gray-500">Email (read only)</label>
               <input
                 type="email"
-                value={form.email}
-                onChange={(e) => set('email', e.target.value)}
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-400"
+                value={client.email}
+                readOnly
+                disabled
+                className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-500"
               />
             </div>
 
             {/* Phone */}
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-500">Phone</label>
+              <label className="mb-1 block text-xs font-medium text-gray-500">Phone (read only)</label>
               <input
-                value={form.phone}
-                onChange={(e) => set('phone', e.target.value)}
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-400"
+                value={client.phone}
+                readOnly
+                disabled
+                className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-500"
               />
             </div>
 

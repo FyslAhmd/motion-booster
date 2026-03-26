@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   X, ChevronRight, Info, Users, Briefcase,
-  HelpCircle, Phone, FileText, Image, MessageCircle,
+  HelpCircle, Phone, FileText, Image,
   User, Globe, LogIn
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/context';
@@ -30,7 +30,6 @@ export const MoreDrawer = ({ open, onClose }: MoreDrawerProps) => {
     { label: t('menu_faq'), icon: HelpCircle, href: '/#faq' },
     { label: t('menu_contact'), icon: Phone, href: '/contact' },
     { label: t('menu_privacy'), icon: FileText, href: '/privacy-policy' },
-    { label: t('menu_feedback'), icon: MessageCircle, href: '/contact?topic=feedback' },
   ];
   const userInitial = (user?.fullName || user?.username || user?.email || 'U').trim().charAt(0).toUpperCase();
   const userAvatarUrl = user?.avatarUrl?.trim() || '';
