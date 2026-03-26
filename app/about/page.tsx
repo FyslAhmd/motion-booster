@@ -178,7 +178,7 @@ export default function AboutPage() {
       <section className="pt-10 sm:pt-14 lg:pt-32 pb-10 sm:pb-12 lg:pb-16 bg-linear-to-br from-red-50 via-white to-rose-50">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="text-center max-w-4xl mx-auto page-reveal">
-            <h1 className="text-2xl lg:text-5xl font-bold text-gray-900 mb-6">
+            <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
               {isBN ? 'আমরা তৈরি করি এমন সফটওয়্যার' : 'We build software'}
               <span className="block text-red-500">
                 {isBN ? 'যা ব্যবসাকে এগিয়ে নেয়' : 'that drives business forward'}
