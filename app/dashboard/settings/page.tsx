@@ -86,7 +86,7 @@ export default function AdminSettingsPage() {
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Site Settings</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Update site-wide information, contact details, and social links</p>
+          <p className="text-sm text-gray-500 mt-0.5">Update site-wide information, contact details, and social links.</p>
         </div>
         <div className="flex items-center gap-2">
           {saved && <span className="flex items-center gap-1.5 text-green-600 text-sm font-medium"><Check className="w-4 h-4" /> Settings Saved!</span>}

@@ -266,6 +266,8 @@ interface CampaignsTableProps {
   accountId?: string;
 }
 
+const PAGE_SIZE = 12;
+
 export default function CampaignsTable({ accountId }: CampaignsTableProps) {
   const [data, setData] = useState<Campaign[]>([]);
   const [paging, setPaging] = useState<CursorPaging | null>(null);
@@ -323,7 +325,7 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
       setLoading(true);
       setError('');
       try {
-        const p = new URLSearchParams({ limit: '10' });
+        const p = new URLSearchParams({ limit: String(PAGE_SIZE) });
         if (accountId) p.set('account_id', accountId);
         if (search) p.set('search', search);
         if (currentAfter) p.set('after', currentAfter);
@@ -494,7 +496,7 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
 
   const hasNext = !!paging?.hasNext;
   const hasPrev = cursorStack.length > 0;
-  const totalPages = totalCount != null ? Math.ceil(totalCount / 10) : null;
+  const totalPages = totalCount != null ? Math.ceil(totalCount / PAGE_SIZE) : null;
 
   const campaignBudgetLabel = (c: Campaign) =>
     c.daily_budget ? `${fmtBudget(c.daily_budget)}/day` : c.lifetime_budget ? `${fmtBudget(c.lifetime_budget)} lifetime` : '—';

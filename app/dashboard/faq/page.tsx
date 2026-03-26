@@ -108,7 +108,7 @@ export default function AdminFAQPage() {
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
           <h1 className="text-xl font-bold text-gray-900">FAQ Management</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Manage frequently asked questions shown on the website</p>
+          <p className="text-sm text-gray-500 mt-0.5">Manage frequently asked questions shown on the website.</p>
         </div>
         <button
           onClick={() => { setEditing({ id: '', order: 0, ...BLANK }); setIsNew(true); }}

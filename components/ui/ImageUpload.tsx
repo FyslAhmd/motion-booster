@@ -48,6 +48,15 @@ function resizeToBase64(file: File, maxPx: number, quality: number): Promise<str
   });
 }
 
+function fileToDataURL(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = () => resolve(String(reader.result || ''));
+    reader.readAsDataURL(file);
+  });
+}
+
 export default function ImageUpload({
   value,
   onChange,
@@ -69,6 +78,13 @@ export default function ImageUpload({
     if (!file) return;
     if (!file.type.startsWith('image/')) return;
     try {
+      // Keep SVG as-is so vector quality remains intact.
+      if (file.type === 'image/svg+xml') {
+        const svgDataUrl = await fileToDataURL(file);
+        onChange(svgDataUrl);
+        return;
+      }
+
       const b64 = await resizeToBase64(file, maxPx, quality);
       onChange(b64);
     } catch {
@@ -84,7 +100,7 @@ export default function ImageUpload({
       <input
         ref={inputRef}
         type="file"
-        accept="image/*"
+        accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
         className="hidden"
         onChange={e => handleFile(e.target.files?.[0])}
       />
@@ -126,7 +142,7 @@ export default function ImageUpload({
           </div>
           <div className="text-center">
             <p className="text-xs font-medium text-gray-500 group-hover:text-red-600 transition-colors">Upload Image</p>
-            <p className="text-xs text-gray-400 mt-0.5">JPG, PNG, WebP</p>
+            <p className="text-xs text-gray-400 mt-0.5">JPG, PNG, WebP, SVG</p>
             {sizeHint && <p className="text-[10px] text-gray-300 mt-0.5">{sizeHint}</p>}
           </div>
         </button>

@@ -181,7 +181,7 @@ export default function AdminTeamPage() {
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Team Management</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Add and manage team member profiles</p>
+          <p className="text-sm text-gray-500 mt-0.5">Add and manage team member profiles.</p>
         </div>
         <button onClick={openNew} className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-4 py-2 rounded-xl">
           <Plus className="w-4 h-4" /> Add Member

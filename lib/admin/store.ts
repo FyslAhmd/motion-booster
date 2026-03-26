@@ -335,12 +335,48 @@ export const defaultTeam: TeamMemberItem[] = [
 ];
 
 export const defaultFAQs: FAQItem[] = [
-  { id: '1', question: 'What courses do you offer?', answer: 'We offer 45+ courses including Web Development, Graphic Design, Digital Marketing, Video Editing, App Development, and more. All courses are job-oriented and industry-relevant.' },
-  { id: '2', question: 'Do I need prior experience?', answer: 'No! Most of our courses are designed for beginners. We start from basics and gradually move to advanced topics with hands-on practice.' },
-  { id: '3', question: 'What is the course duration and fee?', answer: 'Course duration ranges from 3-6 months depending on the program. Fees vary by course. Contact us or visit our office for detailed information.' },
-  { id: '4', question: 'Do you provide job placement?', answer: 'Yes! We offer job placement support, career counseling, resume building, and interview preparation. Many of our students are now working at top companies.' },
-  { id: '5', question: 'Will I get a certificate?', answer: 'Absolutely! After successfully completing the course, you will receive an industry-recognized certificate from Motion Booster.' },
-  { id: '6', question: 'Can I attend classes online?', answer: 'We offer both online and offline batches. You can choose the mode that suits you best based on your location and schedule.' },
+  {
+    id: '1',
+    question: 'What services does Motion Booster provide?',
+    questionBn: 'মোশন বুস্টার কী কী সার্ভিস দেয়?',
+    answer: 'We provide end-to-end digital services including Digital Marketing, Graphics Design, Web Development, Software Development, Video & Animation, Mobile App Development, UI/UX Design, Branding, and Business Consulting.',
+    answerBn: 'আমরা ডিজিটাল মার্কেটিং, গ্রাফিক্স ডিজাইন, ওয়েব ডেভেলপমেন্ট, সফটওয়্যার ডেভেলপমেন্ট, ভিডিও ও অ্যানিমেশন, মোবাইল অ্যাপ ডেভেলপমেন্ট, UI/UX ডিজাইন, ব্র্যান্ডিং এবং বিজনেস কনসাল্টিংসহ end-to-end ডিজিটাল সার্ভিস দিই।',
+  },
+  {
+    id: '2',
+    question: 'How long does a project usually take?',
+    questionBn: 'একটি প্রজেক্ট সাধারণত কত সময়ে সম্পন্ন হয়?',
+    answer: 'Project timelines depend on scope and complexity. Small tasks can be completed in a few days, while larger projects may take several weeks. We share a clear timeline before starting.',
+    answerBn: 'প্রজেক্টের ধরণ ও জটিলতার উপর সময় নির্ভর করে। ছোট কাজ কয়েকদিনে শেষ হয়, বড় প্রজেক্টে কয়েক সপ্তাহ লাগতে পারে। কাজ শুরুর আগে আমরা স্পষ্ট timeline শেয়ার করি।',
+  },
+  {
+    id: '3',
+    question: 'How much does it cost to work with Motion Booster?',
+    questionBn: 'মোশন বুস্টারের সাথে কাজ করতে কত খরচ হয়?',
+    answer: 'Pricing is based on your goals, deliverables, and timeline. After understanding your requirements, we provide a transparent custom quotation with no hidden charges.',
+    answerBn: 'আপনার লক্ষ্য, কাজের পরিধি ও timeline অনুযায়ী মূল্য নির্ধারণ করা হয়। requirements বুঝে আমরা কোনো hidden charge ছাড়া পরিষ্কার custom quotation দিই।',
+  },
+  {
+    id: '4',
+    question: 'Do you provide revisions and post-delivery support?',
+    questionBn: 'আপনারা কি revision ও ডেলিভারির পর support দেন?',
+    answer: 'Yes. We include revision support during project execution and provide post-delivery assistance based on the selected package or maintenance plan.',
+    answerBn: 'হ্যাঁ। প্রজেক্ট চলাকালীন revision support থাকে এবং ডেলিভারির পর নির্বাচিত package বা maintenance plan অনুযায়ী support দেওয়া হয়।',
+  },
+  {
+    id: '5',
+    question: 'How will I get project updates?',
+    questionBn: 'আমি কীভাবে প্রজেক্ট আপডেট পাব?',
+    answer: 'We keep communication simple and regular through your preferred channel (call, WhatsApp, Messenger, or email) and share progress updates at agreed milestones.',
+    answerBn: 'আপনার পছন্দের মাধ্যম (কল, WhatsApp, Messenger বা ইমেইল)-এ নিয়মিত যোগাযোগ রাখা হয় এবং নির্ধারিত milestone অনুযায়ী progress update দেওয়া হয়।',
+  },
+  {
+    id: '6',
+    question: 'How can I start a project with Motion Booster?',
+    questionBn: 'মোশন বুস্টারের সাথে প্রজেক্ট শুরু করব কীভাবে?',
+    answer: 'Simply contact us with your business needs. Our team will review your requirements, suggest the best approach, and start execution after your approval.',
+    answerBn: 'আপনার business need নিয়ে আমাদের সাথে যোগাযোগ করুন। আমাদের টিম requirement review করে best approach প্রস্তাব করবে, এবং আপনার approval এর পর কাজ শুরু হবে।',
+  },
 ];
 
 export const defaultTestimonials: TestimonialItem[] = [

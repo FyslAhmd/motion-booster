@@ -249,6 +249,20 @@ interface StatCard {
   href?: string;
 }
 
+interface MetaAccountSummary {
+  id?: string;
+  account_id?: string;
+  amount_spent?: string;
+}
+
+interface ConversationSummary {
+  unreadCount?: number;
+}
+
+interface InsightSpendRow {
+  spend?: string;
+}
+
 interface UserOverviewProps {
   userName: string;
   statCards: StatCard[];
@@ -315,15 +329,33 @@ function UserOverview({ statCards }: Pick<UserOverviewProps, "statCards">) {
 // ── Meta account summary card (shown on admin overview) ─────────────────
 const BDT_RATE = 145;
 
-function usdCentsToNum(cents: string | undefined): number {
-  if (!cents) return 0;
-  return parseInt(cents, 10) / 100;
+function metaAmountToUsd(amount: string | undefined): number {
+  if (!amount) return 0;
+  const n = Number(amount);
+  if (!Number.isFinite(n)) return 0;
+
+  // Meta amount_spent may arrive as:
+  // - decimal string (e.g. "123.45")
+  // - minor units string (e.g. "12345")
+  return amount.includes(".") ? n : n / 100;
+}
+
+function resolveAccountId(account: MetaAccountSummary | null | undefined): string | null {
+  const id = account?.account_id || account?.id;
+  return typeof id === "string" && id.trim() ? id.trim() : null;
 }
 
 function fmtBDT(n: number) {
   return (
     "৳ " +
     new Intl.NumberFormat("en-BD", { maximumFractionDigits: 0 }).format(n)
+  );
+}
+
+function fmtUSD(n: number) {
+  return (
+    "$ " +
+    new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n)
   );
 }
 
@@ -335,9 +367,10 @@ export default function DashboardPage() {
   const userName = user?.fullName || user?.username || "User";
   const [totalClients, setTotalClients] = useState<number | null>(null);
   const [unseenMessages, setUnseenMessages] = useState<number | null>(null);
+  const [pendingBoostRequests, setPendingBoostRequests] = useState<number | null>(null);
   const [totalSpendBDT, setTotalSpendBDT] = useState<number | null>(null);
   const [totalAds, setTotalAds] = useState<number | null>(null);
-  const [dailySpendBDT, setDailySpendBDT] = useState<number | null>(null);
+  const [dailySpendUSD, setDailySpendUSD] = useState<number | null>(null);
   const [adminStatsLoading, setAdminStatsLoading] = useState(true);
   const [metaSummaryLoading, setMetaSummaryLoading] = useState(true);
 
@@ -395,6 +428,7 @@ export default function DashboardPage() {
           if (d.success) {
             setTotalClients(d.data.totalClients);
             setUnseenMessages(d.data.unseenMessages ?? 0);
+            setPendingBoostRequests(d.data.pendingBoostRequests ?? 0);
           }
         })
         .catch(() => {})
@@ -412,7 +446,8 @@ export default function DashboardPage() {
         .then((d) => {
           if (Array.isArray(d.conversations)) {
             setClientChats(d.conversations.length);
-            const unread = (d.conversations as any[]).reduce(
+            const conversations = d.conversations as ConversationSummary[];
+            const unread = conversations.reduce(
               (sum, c) => sum + (c.unreadCount || 0),
               0,
             );
@@ -434,50 +469,88 @@ export default function DashboardPage() {
 
     const loadMetaSummary = async () => {
       try {
-        const response = await fetch("/api/v1/meta/account?discover=1");
+        const response = await fetch("/api/v1/meta/account?discover=1", {
+          cache: "no-store",
+        });
         const d = await response.json();
 
         if (!mounted || !d.success || !Array.isArray(d.data)) {
           return;
         }
 
-        const total = d.data.reduce(
-          (sum: number, a: any) => sum + usdCentsToNum(a.amount_spent),
+        const accounts = d.data as MetaAccountSummary[];
+        const total = accounts.reduce(
+          (sum: number, a) => sum + metaAmountToUsd(a.amount_spent),
           0,
         );
         setTotalSpendBDT(total * BDT_RATE);
 
-        const firstAccount = d.data[0];
-        const accountId = firstAccount?.account_id || firstAccount?.id;
-        if (!accountId) {
-          setDailySpendBDT(0);
+        const accountIds = accounts
+          .map((a) => resolveAccountId(a))
+          .filter((id: string | null): id is string => Boolean(id));
+
+        if (accountIds.length === 0) {
+          setTotalAds(0);
+          setDailySpendUSD(0);
           return;
         }
 
-        const [activeCountsRes, insightsRes] = await Promise.allSettled([
-          fetch(`/api/v1/meta/active-counts?account_id=${accountId}`).then((r) =>
-            r.json(),
-          ),
-          fetch(
-            `/api/v1/meta/insights?type=account&date_preset=today&account_id=${accountId}`,
-          ).then((r) => r.json()),
-        ]);
+        const perAccountSummaries = await Promise.allSettled(
+          accountIds.map(async (accountId: string) => {
+            const [activeCountsRes, insightsRes] = await Promise.allSettled([
+              fetch(`/api/v1/meta/active-counts?account_id=${encodeURIComponent(accountId)}`, {
+                cache: "no-store",
+              }).then((r) => r.json()),
+              fetch(
+                `/api/v1/meta/insights?type=account&date_preset=today&account_id=${encodeURIComponent(accountId)}`,
+                { cache: "no-store" },
+              ).then((r) => r.json()),
+            ]);
+
+            let adsCount: number | null = null;
+            if (
+              activeCountsRes.status === "fulfilled" &&
+              activeCountsRes.value?.success &&
+              typeof activeCountsRes.value?.data?.ads === "number"
+            ) {
+              // Active ads only
+              adsCount = activeCountsRes.value.data.ads;
+            }
+
+            let todaySpendUsd = 0;
+            if (
+              insightsRes.status === "fulfilled" &&
+              insightsRes.value?.success &&
+              Array.isArray(insightsRes.value.data)
+            ) {
+              todaySpendUsd = (insightsRes.value.data as InsightSpendRow[]).reduce((sum: number, row) => {
+                const spend = Number.parseFloat(String(row?.spend ?? "0"));
+                return sum + (Number.isFinite(spend) ? spend : 0);
+              }, 0);
+            }
+
+            return { adsCount, todaySpendUsd };
+          }),
+        );
 
         if (!mounted) return;
 
-        if (activeCountsRes.status === "fulfilled" && activeCountsRes.value.success) {
-          setTotalAds(activeCountsRes.value.data.ads ?? null);
+        let adsTotal = 0;
+        let adsFound = false;
+        let dailySpendUsdTotal = 0;
+
+        for (const item of perAccountSummaries) {
+          if (item.status !== "fulfilled") continue;
+          const { adsCount, todaySpendUsd } = item.value;
+          if (typeof adsCount === "number" && Number.isFinite(adsCount)) {
+            adsTotal += adsCount;
+            adsFound = true;
+          }
+          if (Number.isFinite(todaySpendUsd)) dailySpendUsdTotal += todaySpendUsd;
         }
 
-        if (insightsRes.status === "fulfilled") {
-          const json = insightsRes.value;
-          if (json.success && Array.isArray(json.data) && json.data.length > 0) {
-            const spend = parseFloat(json.data[0]?.spend ?? "0");
-            setDailySpendBDT(spend * BDT_RATE);
-          } else {
-            setDailySpendBDT(0);
-          }
-        }
+        setTotalAds(adsFound ? adsTotal : null);
+        setDailySpendUSD(dailySpendUsdTotal);
       } catch {
         // Keep null values when API is unavailable; overview cards will show dashes.
       } finally {
@@ -494,7 +567,7 @@ export default function DashboardPage() {
 
   const statCards: StatCard[] = [
     {
-      label: "Total Ads",
+      label: "Active Ads",
       value: totalAds ?? "—",
       icon: Megaphone,
       color: "text-red-600",
@@ -503,7 +576,7 @@ export default function DashboardPage() {
     },
     {
       label: "Daily Spend",
-      value: dailySpendBDT != null ? fmtBDT(dailySpendBDT) : "—",
+      value: dailySpendUSD != null ? fmtUSD(dailySpendUSD) : "—",
       icon: TrendingUp,
       color: "text-green-600",
       bg: "bg-green-50",
@@ -525,11 +598,11 @@ export default function DashboardPage() {
     },
     {
       label: "Schedule",
-      value: "—",
+      value: pendingBoostRequests ?? "—",
       icon: CalendarDays,
       color: "text-violet-600",
       bg: "bg-violet-50",
-      href: "/dashboard/schedule",
+      href: "/dashboard/boost-requests",
     },
   ];
 

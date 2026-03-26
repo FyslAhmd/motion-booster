@@ -159,7 +159,7 @@ export default function AdminCompaniesPage() {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-900 mb-1">Companies Marquee</h1>
-              <p className="text-sm text-gray-600">Manage the scrolling company logos on the homepage</p>
+              <p className="text-sm text-gray-600">Manage the scrolling company logos on the homepage.</p>
             </div>
           </div>
           <div className="flex items-center gap-2">

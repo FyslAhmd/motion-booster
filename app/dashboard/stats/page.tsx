@@ -108,7 +108,7 @@ export default function AdminStatsPage() {
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Stats & Achievements</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Update the achievement numbers shown on the website</p>
+          <p className="text-sm text-gray-500 mt-0.5">Update the achievement numbers shown on the website.</p>
         </div>
         <button onClick={() => { setEditing({ id: '', order: 0, ...BLANK }); setIsNew(true); }} className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-4 py-2 rounded-xl">
           <Plus className="w-4 h-4" /> Add Stat

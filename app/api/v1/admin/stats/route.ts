@@ -3,7 +3,7 @@ import { prisma } from '@/lib/db/prisma';
 
 export async function GET() {
   try {
-    const [totalClients, unseenMessages] = await Promise.all([
+    const [totalClients, unseenMessages, pendingBoostRequests] = await Promise.all([
       prisma.user.count({ where: { role: 'USER' } }),
       // Messages sent by clients (USER role) that haven't been READ by admin yet
       prisma.message.count({
@@ -12,9 +12,15 @@ export async function GET() {
           sender: { role: 'USER' },
         },
       }),
+      prisma.boostRequest.count({
+        where: { completed: false },
+      }),
     ]);
 
-    return NextResponse.json({ success: true, data: { totalClients, unseenMessages } });
+    return NextResponse.json({
+      success: true,
+      data: { totalClients, unseenMessages, pendingBoostRequests },
+    });
   } catch (error) {
     console.error('[admin stats]', error);
     return NextResponse.json({ success: false, error: 'Failed to fetch stats' }, { status: 500 });

@@ -180,7 +180,7 @@ export const CompanyMarquee = () => {
                         <img
                           src={company.logoImage}
                           alt={company.name}
-                          className="h-8 md:h-10 lg:h-11 w-auto object-contain rounded-sm transition-all"
+                          className="h-10 md:h-10 lg:h-10 w-auto max-w-none object-contain rounded-sm transition-all"
                         />
                       ) : (
                         <span className="text-2xl md:text-3xl lg:text-4xl font-extrabold italic text-gray-900 hover:text-red-500 transition-colors whitespace-nowrap">

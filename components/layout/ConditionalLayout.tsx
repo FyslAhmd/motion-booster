@@ -11,9 +11,10 @@ export const ConditionalLayout = ({ children }: { children: React.ReactNode }) =
   const isDashboard = pathname?.startsWith('/dashboard');
   const isAdmin = pathname?.startsWith('/admin');
   const isForgotPassword = pathname === '/forgot-password';
+  const isInvoice = pathname === '/invoice';
   
-  const shouldHideLayout = isDashboard || isAdmin || isForgotPassword;
-  const isHandledByAdminShell = isDashboard || isAdmin;
+  const shouldHideLayout = isDashboard || isAdmin || isForgotPassword || isInvoice;
+  const isHandledByAdminShell = isDashboard || isAdmin || isInvoice;
   const content = isHandledByAdminShell ? (
     children
   ) : (

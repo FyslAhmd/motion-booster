@@ -35,10 +35,10 @@ const DEFAULT_NOTIFICATIONS = {
 };
 
 const NOTIFICATION_TOGGLE_BASE =
-  'relative inline-flex h-8 w-14 items-center rounded-full border px-[2px] transition-all duration-300 ease-out focus:outline-none focus:ring-2 focus:ring-red-300';
+  'relative inline-flex h-8 w-14 shrink-0 items-center overflow-hidden rounded-full border-[0.5px] px-[2px] transition-all duration-300 ease-out focus:outline-none focus:ring-2 focus:ring-red-300';
 
 const NOTIFICATION_TOGGLE_KNOB =
-  'inline-block h-6 w-6 rounded-full bg-white shadow-[0_1px_2px_rgba(0,0,0,0.25)] transition-transform duration-300 ease-out';
+  'inline-block h-[22px] w-[22px] rounded-full bg-white shadow-[0_1px_2px_rgba(0,0,0,0.22)] transition-transform duration-300 ease-out';
 
 export default function ProfilePage() {
   const { user, updateUser } = useAuth();
@@ -465,7 +465,7 @@ export default function ProfilePage() {
                         >
                           <span
                             className={`${NOTIFICATION_TOGGLE_KNOB} ${
-                              value ? 'translate-x-6' : 'translate-x-0'
+                              value ? 'translate-x-[1.375rem]' : 'translate-x-0'
                             }`}
                           />
                         </button>

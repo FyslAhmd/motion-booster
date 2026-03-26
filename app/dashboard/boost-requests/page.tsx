@@ -14,6 +14,8 @@ interface BoostRequestItem {
   dailyBudget: string;
   targetAudience: string;
   createdAt: string;
+  completed: boolean;
+  completedAt?: string | null;
 }
 
 interface PaginatedResponse {
@@ -46,6 +48,7 @@ export default function BoostRequestsPage() {
   const [selected, setSelected] = useState<BoostRequestItem | null>(null);
   const [showAllAudience, setShowAllAudience] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
   const limit = 15;
 
   useEffect(() => {
@@ -93,6 +96,53 @@ export default function BoostRequestsPage() {
     // Reset audience expansion when selecting another request
     setShowAllAudience(false);
   }, [selected?.id]);
+
+  const toggleCompleted = useCallback(
+    async (item: BoostRequestItem, nextCompleted: boolean) => {
+      if (updatingId) return;
+      setUpdatingId(item.id);
+      try {
+        let res = await fetch(`/api/v1/boost-requests/${item.id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+          },
+          body: JSON.stringify({ completed: nextCompleted }),
+        });
+
+        if (res.status === 401) {
+          const newToken = await refreshSession();
+          if (newToken) {
+            res = await fetch(`/api/v1/boost-requests/${item.id}`, {
+              method: 'PATCH',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${newToken}`,
+              },
+              body: JSON.stringify({ completed: nextCompleted }),
+            });
+          }
+        }
+
+        if (!res.ok) return;
+        const updated: BoostRequestItem = await res.json();
+
+        setData(prev =>
+          prev
+            ? {
+                ...prev,
+                items: prev.items.map(entry => (entry.id === updated.id ? { ...entry, ...updated } : entry)),
+              }
+            : prev,
+        );
+        setSelected(prev => (prev && prev.id === updated.id ? { ...prev, ...updated } : prev));
+      } finally {
+        setUpdatingId(null);
+      }
+    },
+    [accessToken, refreshSession, updatingId],
+  );
 
   const formatDate = (d: string) => {
     const date = new Date(d);
@@ -277,7 +327,7 @@ export default function BoostRequestsPage() {
           <h1 className="text-xl font-bold text-gray-900">Boost Requests</h1>
           <p className="text-sm text-gray-500 mt-0.5">
             View all boost form submissions from users
-            {data && <span className="ml-1 text-gray-400">({data.total} total)</span>}
+            {data && <span className="ml-1 text-gray-400">({data.total} total).</span>}
           </p>
         </div>
       </div>
@@ -308,10 +358,12 @@ export default function BoostRequestsPage() {
           {/* Cards */}
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
             {data.items.map(item => (
-              <button
+              <div
                 key={item.id}
                 onClick={() => setSelected(item)}
-                className="w-full text-left bg-white rounded-2xl border border-gray-100 p-4 hover:shadow-md transition-shadow"
+                className={`w-full text-left bg-white rounded-2xl border p-4 hover:shadow-md transition-shadow ${
+                  item.completed ? 'border-emerald-200' : 'border-gray-100'
+                }`}
               >
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-10 h-10 rounded-full bg-linear-to-br from-red-500 to-pink-500 flex items-center justify-center text-white text-xs font-bold">
@@ -321,6 +373,9 @@ export default function BoostRequestsPage() {
                     <p className="font-semibold text-gray-900 text-sm">Boost Request</p>
                     <p className="text-xs text-gray-400">{formatDate(item.createdAt)}</p>
                   </div>
+                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${item.completed ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
+                    {item.completed ? 'Completed' : 'Pending'}
+                  </span>
                   <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${item.language === 'bn' ? 'bg-green-50 text-green-700' : 'bg-blue-50 text-blue-700'}`}>
                     {item.language === 'bn' ? 'বাংলা' : 'EN'}
                   </span>
@@ -342,7 +397,23 @@ export default function BoostRequestsPage() {
                     <p className="font-medium text-gray-800 line-clamp-2">{item.targetAudience || '—'}</p>
                   </div>
                 </div>
-              </button>
+                <label
+                  className="mt-3 inline-flex items-center gap-2 text-xs font-medium text-gray-700"
+                  onClick={e => e.stopPropagation()}
+                >
+                  <input
+                    type="checkbox"
+                    checked={item.completed}
+                    disabled={updatingId === item.id}
+                    onChange={e => {
+                      e.stopPropagation();
+                      void toggleCompleted(item, e.target.checked);
+                    }}
+                    className="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 disabled:opacity-60"
+                  />
+                  Mark as completed
+                </label>
+              </div>
             ))}
           </div>
 
@@ -416,6 +487,9 @@ export default function BoostRequestsPage() {
                             <span className={`inline-flex items-center rounded-full px-3 py-1 text-[11px] font-semibold ${selected.language === 'bn' ? 'bg-emerald-50 text-emerald-700' : 'bg-sky-50 text-sky-700'}`}>
                               {selected.language === 'bn' ? 'বাংলা content' : 'English content'}
                             </span>
+                            <span className={`inline-flex items-center rounded-full px-3 py-1 text-[11px] font-semibold ${selected.completed ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
+                              {selected.completed ? 'Completed' : 'Pending'}
+                            </span>
                             <span className="inline-flex items-center rounded-full bg-slate-900 px-3 py-1 text-[11px] font-semibold text-white">
                               {audienceProfile.audienceType}
                             </span>
@@ -451,6 +525,16 @@ export default function BoostRequestsPage() {
                           <p className="mt-1 text-xs text-gray-600">Average spend per day</p>
                         </div>
                       </div>
+                      <label className="relative mt-4 inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/85 px-3 py-2 text-xs font-medium text-gray-700 shadow-sm">
+                        <input
+                          type="checkbox"
+                          checked={selected.completed}
+                          disabled={updatingId === selected.id}
+                          onChange={e => void toggleCompleted(selected, e.target.checked)}
+                          className="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 disabled:opacity-60"
+                        />
+                        Completed
+                      </label>
                     </div>
 
                     <div className="px-1">

@@ -31,6 +31,26 @@ export const HeaderBanner = () => {
   const isBN = language === 'BN';
   const [currentSlide, setCurrentSlide] = useState(0);
   const bannerRef = useRef<HTMLElement | null>(null);
+  const heading = t('header_banner_heading');
+
+  const renderDesktopHeading = () => {
+    const brandCandidates = isBN
+      ? ['মোশন বুস্টারের', 'মোশন বুস্টার']
+      : ['Motion Booster'];
+    const brandText = brandCandidates.find((text) => heading.includes(text));
+
+    if (!brandText) return heading;
+
+    const brandIndex = heading.indexOf(brandText);
+
+    return (
+      <>
+        {heading.slice(0, brandIndex)}
+        <span className="text-[#E4000A]">{brandText}</span>
+        {heading.slice(brandIndex + brandText.length)}
+      </>
+    );
+  };
 
   // Auto-play slider
   useEffect(() => {
@@ -126,7 +146,7 @@ export const HeaderBanner = () => {
             </div>
             <h1 className="text-5xl xl:text-6xl font-bold text-gray-900 leading-tight mb-4">
               <span className="inline-block align-baseline">
-                {t('header_banner_heading')}
+                {renderDesktopHeading()}
               </span>
             </h1>
             <p className="text-lg text-gray-600 mb-6 leading-relaxed">
