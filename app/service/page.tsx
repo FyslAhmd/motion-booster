@@ -121,7 +121,7 @@ export default function ServicePage() {
       <section className="pt-8 pb-12 sm:py-16 lg:pt-28 lg:pb-14 bg-linear-to-br from-red-50 via-white to-rose-50">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="text-center max-w-4xl mx-auto page-reveal">
-            <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+            <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6 leading-tight">
               {isBN ? 'সম্পূর্ণ ডিজিটাল সমাধান' : 'Complete Digital Solutions'}
               <span className="block text-red-600">
                 {isBN ? 'এক ছাদের নিচে' : 'Under one roof'}
