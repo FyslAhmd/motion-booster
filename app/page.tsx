@@ -26,7 +26,7 @@ export default function Home() {
         <CategorySlider />
       </div>
       <div className="lg:hidden mt-3 px-4 sm:px-6 pb-2 text-center page-reveal page-delay-1">
-        <h2 className="text-[18px] sm:text-[22px] font-extrabold leading-[1.2] text-gray-900 text-wave">
+        <h2 className="text-2xl sm:text-3xl font-extrabold leading-[1.2] text-gray-900 text-wave">
           <span className="block whitespace-nowrap">
             {isBN ? 'আপনার ব্যবসার পরিচিতি বৃদ্ধি করুন' : 'Grow your business identity with'}
           </span>
