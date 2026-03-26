@@ -148,6 +148,7 @@ const phraseMap: Array<[string, string]> = [
   ['ERP', 'ইআরপি'],
 ];
 
+
 function hasBn(text: string) {
   return /[\u0980-\u09FF]/.test(text);
 }
