@@ -3,13 +3,7 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  color-scheme: light;
 }
 
 html,
@@ -405,4 +399,3 @@ body.public-page .home-page [data-hb-left],
 body.public-page .home-page [data-hb-right] {
   opacity: 1;
 }
-

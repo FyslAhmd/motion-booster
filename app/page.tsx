@@ -11,7 +11,7 @@ export default function Home() {
   const isBN = language === 'BN';
 
   return (
-    <main className="home-page min-h-screen pb-10 sm:pb-12 lg:pb-0">
+    <main className="home-page min-h-screen bg-white pb-10 sm:pb-12 lg:pb-0">
       <WelcomeModal />
       <FloatingSocialButtons />
       <FloatingCallButton />
