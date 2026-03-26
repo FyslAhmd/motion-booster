@@ -3,7 +3,6 @@ export interface NavItem {
   href: string;
   hasDropdown?: boolean;
 }
-
 export interface ButtonProps {
   variant?: 'primary' | 'outline';
   children: React.ReactNode;
