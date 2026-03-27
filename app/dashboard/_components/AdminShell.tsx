@@ -37,6 +37,7 @@ import {
   BookOpen,
   DollarSign,
   Inbox,
+  History,
 } from 'lucide-react';
 interface NavItem {
   href: string;
@@ -64,6 +65,7 @@ const navItems: NavEntry[] = [
   { href: '/dashboard/boost-requests', label: 'Boost Requests', icon: Rocket, adminOnly: true },
   { href: '/dashboard/user-budget', label: 'User Budget', icon: DollarSign, adminOnly: true },
   { href: '/dashboard/clients', label: 'Clients', icon: Users, adminOnly: true },
+  { href: '/dashboard/history', label: 'Activity History', icon: History, adminOnly: true },
   {
     group: true,
     label: 'Home Page',
@@ -365,6 +367,28 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
     }
     return () => { document.body.style.overflow = ''; };
   }, [sidebarOpen]);
+
+  // Track dashboard route visits for history timeline.
+  useEffect(() => {
+    if (!isAuthenticated || !pathname.startsWith('/dashboard')) {
+      return;
+    }
+
+    const storageKey = 'mb:lastTrackedDashboardPath';
+    const lastTrackedPath = sessionStorage.getItem(storageKey);
+    if (lastTrackedPath === pathname) {
+      return;
+    }
+    sessionStorage.setItem(storageKey, pathname);
+
+    void fetch('/api/v1/history/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path: pathname, action: 'PAGE VISIT' }),
+    }).catch(() => {
+      // Silently ignore tracking failures in UI.
+    });
+  }, [isAuthenticated, pathname]);
 
   if (isLoading) {
     return (

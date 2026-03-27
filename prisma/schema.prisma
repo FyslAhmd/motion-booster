@@ -47,11 +47,34 @@ model User {
   boostRequests     BoostRequest[]
   budgetDeposits    UserBudgetDeposit[] @relation("BudgetDepositsForUser")
   budgetEntriesCreated UserBudgetDeposit[] @relation("BudgetDepositsCreatedByAdmin")
+  activityHistory     ActivityHistory[]
 
   @@index([email])
   @@index([username])
   @@index([phone])
   @@map("users")
+}
+
+// ─── ACTIVITY HISTORY ─────────────────────────────────
+
+model ActivityHistory {
+  id          String   @id @default(cuid())
+  userId      String?  @map("user_id")
+  eventType   String   @map("event_type")
+  action      String
+  path        String?  @db.Text
+  method      String?  @db.VarChar(10)
+  ipAddress   String?  @map("ip_address")
+  userAgent   String?  @map("user_agent") @db.Text
+  metadata    Json?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([eventType])
+  @@index([createdAt])
+  @@map("activity_history")
 }
 
 // ─── USER BUDGET DEPOSIT HISTORY ─────────────────────

@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { verifyAccessToken, type AccessTokenPayload } from './tokens';
 import { prisma } from '@/lib/db/prisma';
+import { getClientIp, logActivity } from '@/lib/server/activity-history';
 
 export interface AuthenticatedUser {
   id: string;
@@ -41,6 +42,25 @@ export async function validateRequest(
     });
 
     if (!user || user.status !== 'ACTIVE') return null;
+
+    const path = req.nextUrl.pathname;
+    const skipLogging =
+      path === '/api/v1/history/track' ||
+      path === '/api/v1/admin/history';
+
+    if (!skipLogging && path.startsWith('/api/')) {
+      void logActivity({
+        userId: user.id,
+        eventType: 'API_REQUEST',
+        action: `API ${req.method}`,
+        path,
+        method: req.method,
+        ipAddress: getClientIp(req),
+        userAgent: req.headers.get('user-agent'),
+      }).catch(() => {
+        // Do not block request auth flow for logging failures.
+      });
+    }
 
     return user;
   } catch {
