@@ -437,7 +437,7 @@ model BlogPost {
 
 // ─── META AD ASSIGNMENTS ──────────────────────────────
 // Tracks which Meta campaign / ad set / ad is assigned to which user.
-// One Meta entity can be assigned to at most one user (unique on metaObjectId).
+// One Meta entity can be assigned to multiple users.
 
 enum MetaObjectType {
   CAMPAIGN
@@ -447,7 +447,7 @@ enum MetaObjectType {
 
 model MetaAdAssignment {
   id             String         @id @default(cuid())
-  metaObjectId   String         @unique @map("meta_object_id")   // Facebook API id (campaign, adset, or ad)
+  metaObjectId   String         @map("meta_object_id")            // Facebook API id (campaign, adset, or ad)
   metaObjectType MetaObjectType @map("meta_object_type")
   metaAccountId  String         @map("meta_account_id")          // e.g. act_xxxxx
   userId         String         @map("user_id")
@@ -458,7 +458,9 @@ model MetaAdAssignment {
 
   @@index([userId])
   @@index([metaAccountId])
+  @@index([metaObjectId])
   @@index([metaObjectType, metaAccountId])
+  @@unique([metaObjectId, metaObjectType, userId])
   @@map("meta_ad_assignments")
 }
 

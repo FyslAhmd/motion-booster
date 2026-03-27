@@ -266,6 +266,13 @@ interface CampaignsTableProps {
   accountId?: string;
 }
 
+interface AssignmentUser {
+  id: string;
+  fullName: string;
+  phone: string;
+  username: string;
+}
+
 const PAGE_SIZE = 9;
 
 export default function CampaignsTable({ accountId }: CampaignsTableProps) {
@@ -296,8 +303,8 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
   const [mounted, setMounted] = useState(false);
   const customSinceRef = useRef<HTMLInputElement>(null);
 
-  // Assignment tracking: metaObjectId → { id, fullName, phone, username }
-  const [assignments, setAssignments] = useState<Record<string, { id: string; fullName: string; phone: string; username: string } | null>>({});
+  // Assignment tracking: metaObjectId → users[]
+  const [assignments, setAssignments] = useState<Record<string, AssignmentUser[]>>({});
 
   const searchTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
@@ -359,9 +366,10 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
       .then((r) => r.json())
       .then((json) => {
         if (json.success) {
-          const map: Record<string, { id: string; fullName: string; phone: string; username: string }> = {};
+          const map: Record<string, AssignmentUser[]> = {};
           for (const a of json.data) {
-            map[a.metaObjectId] = a.user;
+            if (!map[a.metaObjectId]) map[a.metaObjectId] = [];
+            map[a.metaObjectId].push(a.user);
           }
           setAssignments(map);
         }
@@ -878,8 +886,9 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
 	                            metaObjectId={c.id}
                             metaObjectType="CAMPAIGN"
                             metaAccountId={accountId}
-                            assignedUser={assignments[c.id] || null}
-                            onAssigned={(user) => setAssignments((prev) => ({ ...prev, [c.id]: user }))}
+                            assignedUsers={assignments[c.id] || []}
+                            allowMultiple
+                            onAssigned={(users) => setAssignments((prev) => ({ ...prev, [c.id]: users }))}
                           />
 	                        ) : (
 	                          <span className="text-xs text-gray-400">No account selected</span>

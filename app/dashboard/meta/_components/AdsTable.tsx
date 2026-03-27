@@ -265,6 +265,7 @@ export default function AdsTable({ accountId }: AdsTableProps) {
                 {data.map((ad) => {
                   const derived = ad.derived_status || { label: ad.effective_status?.replace(/_/g, ' ') || 'Unknown', key: ad.effective_status || 'UNKNOWN' };
                   const color = STATUS_STYLES[derived.key]?.color || 'bg-gray-100 text-gray-500';
+                  const assignedUser = assignments[ad.id];
                   return (
                     <div key={ad.id} className="flex items-start gap-3 px-4 py-3">
                       {ad.creative?.thumbnail_url ? (
@@ -302,8 +303,8 @@ export default function AdsTable({ accountId }: AdsTableProps) {
                             metaObjectId={ad.id}
                             metaObjectType="AD"
                             metaAccountId={accountId}
-                            assignedUser={assignments[ad.id] ?? null}
-                            onAssigned={(user) => setAssignments((prev) => ({ ...prev, [ad.id]: user }))}
+                            assignedUsers={assignedUser ? [assignedUser] : []}
+                            onAssigned={(users) => setAssignments((prev) => ({ ...prev, [ad.id]: users[0] ?? null }))}
                           />
                         </div>
                       </div>
@@ -331,6 +332,7 @@ export default function AdsTable({ accountId }: AdsTableProps) {
                     {data.map((ad) => {
                       const derived = ad.derived_status || { label: ad.effective_status?.replace(/_/g, ' ') || 'Unknown', key: ad.effective_status || 'UNKNOWN' };
                       const color = STATUS_STYLES[derived.key]?.color || 'bg-gray-100 text-gray-500';
+                      const assignedUser = assignments[ad.id];
                       return (
                         <tr key={ad.id} className="transition-colors hover:bg-gray-50">
                           <td className="px-6 py-3">
@@ -354,8 +356,8 @@ export default function AdsTable({ accountId }: AdsTableProps) {
                               metaObjectId={ad.id}
                               metaObjectType="AD"
                               metaAccountId={accountId}
-                              assignedUser={assignments[ad.id] ?? null}
-                              onAssigned={(user) => setAssignments((prev) => ({ ...prev, [ad.id]: user }))}
+                              assignedUsers={assignedUser ? [assignedUser] : []}
+                              onAssigned={(users) => setAssignments((prev) => ({ ...prev, [ad.id]: users[0] ?? null }))}
                             />
                           </td>
                           <td className="px-4 py-3 text-center">

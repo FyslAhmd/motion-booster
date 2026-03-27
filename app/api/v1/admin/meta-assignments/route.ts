@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { validateRequest } from '@/lib/auth/validate-request';
+import { Prisma } from '@/lib/generated/prisma';
 
 /**
  * GET /api/v1/admin/meta-assignments?account_id=act_xxx&type=CAMPAIGN
@@ -44,7 +45,8 @@ export async function GET(req: NextRequest) {
 /**
  * POST /api/v1/admin/meta-assignments
  * Body: { metaObjectId, metaObjectType, metaAccountId, userId }
- * Creates or updates (upserts) an assignment. Each Meta object can only be assigned to one user.
+ * Creates an assignment between a Meta object and a user.
+ * Duplicate assignments for the same object+user are ignored.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -79,16 +81,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'Cannot assign to admin users' }, { status: 400 });
     }
 
-    // Upsert: create if not exists, update userId if already assigned
-    const assignment = await prisma.metaAdAssignment.upsert({
-      where: { metaObjectId },
-      create: {
+    const existing = await prisma.metaAdAssignment.findFirst({
+      where: { metaObjectId, metaObjectType, userId },
+      include: {
+        user: {
+          select: { id: true, fullName: true, phone: true, username: true },
+        },
+      },
+    });
+
+    const assignment = existing ?? await prisma.metaAdAssignment.create({
+      data: {
         metaObjectId,
         metaObjectType,
         metaAccountId,
-        userId,
-      },
-      update: {
         userId,
       },
       include: {
@@ -100,6 +106,22 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, data: assignment });
   } catch (err) {
+    if (
+      err instanceof Prisma.PrismaClientKnownRequestError &&
+      err.code === 'P2002' &&
+      Array.isArray(err.meta?.target) &&
+      err.meta.target.includes('meta_object_id')
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            'Database schema is still using legacy single-assignment constraint. Run Prisma migration to allow multiple users per campaign.',
+          code: 'LEGACY_UNIQUE_META_OBJECT_ID',
+        },
+        { status: 409 },
+      );
+    }
     console.error('[meta-assignments POST]', err);
     return NextResponse.json({ success: false, error: 'Failed to save assignment' }, { status: 500 });
   }
@@ -107,8 +129,9 @@ export async function POST(req: NextRequest) {
 
 /**
  * DELETE /api/v1/admin/meta-assignments
- * Body: { metaObjectId }
- * Removes an assignment (unassigns a Meta object from its user).
+ * Body: { metaObjectId, userId? }
+ * Removes one assignment for a specific user if userId is provided,
+ * otherwise removes all assignments for the Meta object.
  */
 export async function DELETE(req: NextRequest) {
   try {
@@ -118,13 +141,18 @@ export async function DELETE(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { metaObjectId } = body as { metaObjectId: string };
+    const { metaObjectId, userId } = body as { metaObjectId: string; userId?: string };
 
     if (!metaObjectId) {
       return NextResponse.json({ success: false, error: 'Missing metaObjectId' }, { status: 400 });
     }
 
-    await prisma.metaAdAssignment.deleteMany({ where: { metaObjectId } });
+    await prisma.metaAdAssignment.deleteMany({
+      where: {
+        metaObjectId,
+        ...(userId ? { userId } : {}),
+      },
+    });
 
     return NextResponse.json({ success: true });
   } catch (err) {
