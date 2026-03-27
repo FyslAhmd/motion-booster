@@ -4,6 +4,7 @@ import { hashPassword } from '@/lib/auth/password';
 import { registerSchema, formatZodErrors } from '@/lib/validators/auth';
 import { AppError, formatErrorResponse } from '@/lib/errors/AppError';
 import { ZodError } from 'zod';
+import { getClientIp, logActivity } from '@/lib/server/activity-history';
 
 export async function POST(request: NextRequest) {
   const requestId = crypto.randomUUID();
@@ -88,6 +89,24 @@ export async function POST(request: NextRequest) {
         role: true,
         createdAt: true,
       },
+    });
+
+    void logActivity({
+      userId: user.id,
+      eventType: 'CUSTOM_ACTION',
+      action: `Client ${user.username} added (registration)`,
+      path: request.nextUrl.pathname,
+      method: request.method,
+      ipAddress: getClientIp(request),
+      userAgent: request.headers.get('user-agent'),
+      metadata: {
+        module: 'clients',
+        clientId: user.id,
+        clientUsername: user.username,
+        source: 'registration',
+      },
+    }).catch(() => {
+      // Do not fail registration if history logging fails.
     });
 
     // 7. Return success response

@@ -38,6 +38,7 @@ export async function POST(req: NextRequest) {
         education: body.education ?? [],
         educationBn: body.educationBn ?? [],
         workPlaces: body.workPlaces ?? [],
+        workPlaceLogos: body.workPlaceLogos ?? [],
         workPlacesBn: body.workPlacesBn ?? [],
         order: count,
       },

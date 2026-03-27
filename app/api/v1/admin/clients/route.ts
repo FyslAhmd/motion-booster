@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { validateRequest } from '@/lib/auth/validate-request';
 import bcrypt from 'bcryptjs';
+import { getClientIp, logActivity } from '@/lib/server/activity-history';
 
 const CLIENT_SELECT = {
   id: true,
@@ -21,6 +22,31 @@ const CLIENT_SELECT = {
 } as const;
 
 const PAGE_SIZE = 20;
+
+async function recordClientHistory(input: {
+  adminId: string;
+  action: string;
+  req: NextRequest;
+  metadata?: Record<string, unknown>;
+}): Promise<void> {
+  try {
+    await logActivity({
+      userId: input.adminId,
+      eventType: 'CUSTOM_ACTION',
+      action: input.action,
+      path: input.req.nextUrl.pathname,
+      method: input.req.method,
+      ipAddress: getClientIp(input.req),
+      userAgent: input.req.headers.get('user-agent'),
+      metadata: {
+        module: 'clients',
+        ...input.metadata,
+      },
+    });
+  } catch (logErr) {
+    console.error('[admin clients history]', logErr);
+  }
+}
 
 function isUniqueConstraintError(err: unknown): err is { code: 'P2002'; meta?: { target?: string[] } } {
   return (
@@ -125,6 +151,23 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'No fields to update' }, { status: 400 });
     }
 
+    const existingClient = await prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        fullName: true,
+        status: true,
+        adsAccess: true,
+        emailVerified: true,
+      },
+    });
+
+    if (!existingClient) {
+      return NextResponse.json({ success: false, error: 'Client not found' }, { status: 404 });
+    }
+
     const shouldRevokeSessions = status !== undefined && status !== 'ACTIVE';
 
     const updated = await prisma.$transaction(async (tx) => {
@@ -142,6 +185,48 @@ export async function PATCH(req: NextRequest) {
       }
 
       return nextUser;
+    });
+
+    const changeNotes: string[] = [];
+    if (existingClient.adsAccess !== updated.adsAccess) {
+      changeNotes.push(updated.adsAccess ? 'Ads Access ON' : 'Ads Access OFF');
+    }
+    if (existingClient.status !== updated.status) {
+      changeNotes.push(`Status ${existingClient.status} -> ${updated.status}`);
+    }
+    if (existingClient.emailVerified !== updated.emailVerified) {
+      changeNotes.push(updated.emailVerified ? 'Email Verified ON' : 'Email Verified OFF');
+    }
+    if (newPassword !== undefined) {
+      changeNotes.push('Password updated');
+    }
+    if (
+      (username !== undefined && username.trim() !== existingClient.username) ||
+      (fullName !== undefined && fullName.trim() !== existingClient.fullName) ||
+      (email !== undefined && email.trim().toLowerCase() !== existingClient.email)
+    ) {
+      changeNotes.push('Profile info updated');
+    }
+
+    const action =
+      changeNotes.length > 0
+        ? `Client ${updated.username}: ${changeNotes.join(', ')}`
+        : `Client ${updated.username}: details updated`;
+
+    await recordClientHistory({
+      adminId: auth.id,
+      action,
+      req,
+      metadata: {
+        actorAdminId: auth.id,
+        actorAdminUsername: auth.username,
+        actorAdminEmail: auth.email,
+        clientId: updated.id,
+        clientUsername: updated.username,
+        clientEmail: updated.email,
+        clientFullName: updated.fullName,
+        changeNotes,
+      },
     });
 
     return NextResponse.json({ success: true, data: updated });
@@ -173,7 +258,10 @@ export async function DELETE(req: NextRequest) {
     }
 
     // Prevent deleting admin accounts
-    const user = await prisma.user.findUnique({ where: { id }, select: { role: true } });
+    const user = await prisma.user.findUnique({
+      where: { id },
+      select: { role: true, username: true, fullName: true, email: true },
+    });
     if (!user) {
       return NextResponse.json({ success: false, error: 'User not found' }, { status: 404 });
     }
@@ -199,6 +287,21 @@ export async function DELETE(req: NextRequest) {
     }
 
     await prisma.user.delete({ where: { id } });
+
+    await recordClientHistory({
+      adminId: auth.id,
+      action: `Client ${user.username} deleted`,
+      req,
+      metadata: {
+        actorAdminId: auth.id,
+        actorAdminUsername: auth.username,
+        actorAdminEmail: auth.email,
+        clientId: id,
+        clientUsername: user.username,
+        clientEmail: user.email,
+        clientFullName: user.fullName,
+      },
+    });
 
     return NextResponse.json({ success: true });
   } catch (err) {

@@ -85,7 +85,7 @@ export default function BlogPage() {
   });
 
   return (
-    <main className="min-h-screen bg-white pb-16 lg:pb-0">
+    <main className="min-h-screen bg-white pb-[calc(5.5rem+env(safe-area-inset-bottom))] lg:pb-0">
       {/* Header Section */}
       <section className="pt-12 sm:pt-18 md:pt-22 lg:pt-26 pb-5 sm:pb-7 lg:pb-9 bg-linear-to-br from-red-50 via-white to-rose-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center page-reveal">
@@ -102,7 +102,7 @@ export default function BlogPage() {
       </section>
 
       {/* Main Content */}
-      <section className="pt-3 pb-8 sm:pt-5 sm:pb-10 px-3 sm:px-4">
+      <section className="pt-3 pb-10 sm:pt-5 sm:pb-12 px-3 sm:px-4">
         <div className="max-w-7xl mx-auto">
           {loading ? (
             <BlogContentSkeleton />
@@ -241,7 +241,7 @@ export default function BlogPage() {
 
                 {/* Popular Tags */}
                 {allTags.length > 0 && (
-                  <div className="hidden lg:block bg-white p-4 sm:p-5 rounded-2xl border border-gray-200 shadow-sm page-reveal page-delay-3">
+                  <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-200 shadow-sm page-reveal page-delay-3">
                     <button
                       type="button"
                       className="w-full flex items-center justify-between text-left"
@@ -268,7 +268,7 @@ export default function BlogPage() {
 
                 {/* Latest Posts */}
                 {latestPosts.length > 0 && (
-                  <div className="hidden lg:block bg-white p-4 sm:p-5 rounded-2xl border border-gray-200 shadow-sm page-reveal page-delay-4">
+                  <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-200 shadow-sm page-reveal page-delay-4">
                     <button
                       type="button"
                       className="w-full flex items-center justify-between text-left mb-3 sm:mb-4"

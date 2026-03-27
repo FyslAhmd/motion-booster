@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import AdminShell from '../_components/AdminShell';
-import { Check, Mail, MessageCircle, Phone, Search, X } from 'lucide-react';
+import { Mail, MessageCircle, Phone, Search, X } from 'lucide-react';
 import { createPortal } from 'react-dom';
 
 interface ContactMessageRow {
@@ -48,11 +48,23 @@ export default function MediaMessagePage() {
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const [activeMessage, setActiveMessage] = useState<ContactMessageRow | null>(null);
+  const [replyText, setReplyText] = useState('');
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!activeMessage) {
+      setReplyText('');
+      return;
+    }
+
+    setReplyText(
+      `Hi ${activeMessage.fullName},\n\nThanks for contacting Motion Booster.\n\n`,
+    );
+  }, [activeMessage]);
 
   useEffect(() => {
     let cancelled = false;
@@ -75,9 +87,9 @@ export default function MediaMessagePage() {
         if (!cancelled) {
           setMessages(json.data || []);
         }
-      } catch (e: any) {
+      } catch (e: unknown) {
         if (!cancelled) {
-          setError(e?.message || 'Failed to load contact messages');
+          setError(e instanceof Error ? e.message : 'Failed to load contact messages');
         }
       } finally {
         if (!cancelled) {
@@ -319,6 +331,45 @@ export default function MediaMessagePage() {
             <div className="mt-3 rounded-2xl border border-rose-100 bg-linear-to-br from-white to-rose-50 p-3.5">
               <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">Message</p>
               <p className="whitespace-pre-wrap text-sm text-gray-700">{activeMessage.queryDetails}</p>
+            </div>
+
+            <div className="mt-4 rounded-2xl border border-gray-200 bg-white p-3.5">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Reply Message</p>
+              <textarea
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
+                rows={6}
+                placeholder="Write your reply here..."
+                className="w-full resize-y rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-red-400"
+              />
+              <p className="mt-2 text-[11px] text-gray-500">
+                This will open your email app with this message and the original query.
+              </p>
+            </div>
+
+            <div className="mt-4 flex justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  const subject = `Re: Your inquiry to Motion Booster (${activeMessage.source.replace(/_/g, ' ')})`;
+                  const fullBody = [
+                    replyText.trim(),
+                    '',
+                    '--- Original Message ---',
+                    activeMessage.queryDetails,
+                  ]
+                    .join('\n')
+                    .trim();
+
+                  const href = `mailto:${encodeURIComponent(activeMessage.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(fullBody)}`;
+                  window.location.href = href;
+                }}
+                disabled={!replyText.trim()}
+                className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Mail className="h-4 w-4" />
+                Reply by Email
+              </button>
             </div>
           </div>
         </div>,

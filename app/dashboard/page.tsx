@@ -1,13 +1,10 @@
 "use client";
 
-import { useMemo, useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Users,
-  Briefcase,
   BarChart2,
-  Layers,
   MessageCircle,
-  UserCheck,
   TrendingUp,
   CalendarDays,
   Eye,
@@ -26,8 +23,6 @@ import {
   DashboardQuickStatsSkeleton,
 } from "./_components/OverviewSectionSkeletons";
 import { useAuth } from "@/lib/auth/context";
-import { useSiteData } from "@/lib/admin/context";
-import { AdminStore } from "@/lib/admin/store";
 import { Slider, SlideData } from "@/components/ui";
 import Link from "next/link";
 
@@ -358,20 +353,10 @@ function fmtBDT(n: number) {
   );
 }
 
-function fmtUSD(n: number) {
-  return (
-    "$ " +
-    new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n)
-  );
-}
-
 export default function DashboardPage() {
   const { user } = useAuth();
-  const { team, services } = useSiteData();
-  const portfolio = useMemo(() => AdminStore.getPortfolio(), []);
   const isAdmin = user?.role === "ADMIN";
   const userName = user?.fullName || user?.username || "User";
-  const [totalClients, setTotalClients] = useState<number | null>(null);
   const [unseenMessages, setUnseenMessages] = useState<number | null>(null);
   const [pendingBoostRequests, setPendingBoostRequests] = useState<number | null>(null);
   const [totalSpendBDT, setTotalSpendBDT] = useState<number | null>(null);
@@ -434,7 +419,6 @@ export default function DashboardPage() {
         .then((r) => r.json())
         .then((d) => {
           if (d.success) {
-            setTotalClients(d.data.totalClients);
             setUnseenMessages(d.data.unseenMessages ?? 0);
             setPendingBoostRequests(d.data.pendingBoostRequests ?? 0);
           }
@@ -600,14 +584,23 @@ export default function DashboardPage() {
     };
   }, [isAdmin]);
 
-  const hasBalanceRemaining =
-    clientNetBalanceUSD != null && Number.isFinite(clientNetBalanceUSD) && clientNetBalanceUSD > 0;
+  const advanceUSD =
+    clientNetBalanceUSD != null && Number.isFinite(clientNetBalanceUSD) && clientNetBalanceUSD > 0
+      ? clientNetBalanceUSD
+      : 0;
+  const dueUSD =
+    clientNetBalanceUSD != null && Number.isFinite(clientNetBalanceUSD) && clientNetBalanceUSD < 0
+      ? Math.abs(clientNetBalanceUSD)
+      : 0;
 
-  const clientDueLabel = hasBalanceRemaining ? "Balance Remaining" : "Total Client Due";
-  const clientDueValue =
+  const advanceValue =
     clientNetBalanceUSD == null
       ? "—"
-      : fmtUSD(hasBalanceRemaining ? clientNetBalanceUSD : Math.abs(clientNetBalanceUSD));
+      : fmtBDT(advanceUSD * BDT_RATE);
+  const dueValue =
+    clientNetBalanceUSD == null
+      ? "—"
+      : fmtBDT(dueUSD * BDT_RATE);
 
   const statCards: StatCard[] = [
     {
@@ -620,17 +613,24 @@ export default function DashboardPage() {
     },
     {
       label: "Daily Spend",
-      value: dailySpendUSD != null ? fmtUSD(dailySpendUSD) : "—",
+      value: dailySpendUSD != null ? fmtBDT(dailySpendUSD * BDT_RATE) : "—",
       icon: TrendingUp,
       color: "text-green-600",
       bg: "bg-green-50",
     },
     {
-      label: clientDueLabel,
-      value: clientDueValue,
+      label: "Advance",
+      value: advanceValue,
       icon: DollarSign,
-      color: hasBalanceRemaining ? "text-green-600" : "text-red-600",
-      bg: hasBalanceRemaining ? "bg-green-50" : "bg-red-50",
+      color: "text-green-600",
+      bg: "bg-green-50",
+    },
+    {
+      label: "Due",
+      value: dueValue,
+      icon: DollarSign,
+      color: "text-red-600",
+      bg: "bg-red-50",
     },
     {
       label: "Unseen Messages",
@@ -773,7 +773,7 @@ export default function DashboardPage() {
             <DashboardQuickStatsSkeleton />
           ) : (
             /* Quick Stats */
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
               {statCards.map((card) => {
                 const Icon = card.icon;
                 const inner = (
@@ -797,7 +797,7 @@ export default function DashboardPage() {
                     </div>
                   </>
                 );
-                const cls = `rounded-xl border border-gray-100 bg-white p-4 flex flex-col gap-3 shadow-sm hover:shadow-md transition-shadow${card.href ? " cursor-pointer" : ""}`;
+                const cls = `rounded-xl border border-gray-100 bg-white p-4 min-h-[132px] flex flex-col gap-3 shadow-sm hover:shadow-md transition-shadow${card.href ? " cursor-pointer" : ""}`;
                 return card.href ? (
                   <Link key={card.label} href={card.href} className={cls}>
                     {inner}

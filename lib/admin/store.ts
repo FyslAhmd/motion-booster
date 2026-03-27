@@ -30,6 +30,7 @@ export interface TeamMemberItem {
   education: string[];
   educationBn?: string[];
   workPlaces: string[];
+  workPlaceLogos?: string[];
   workPlacesBn?: string[];
 }
 
@@ -471,7 +472,7 @@ export const defaultHeroSlides: HeroSlideItem[] = [
 export const defaultSettings: SiteSettings = {
   siteName: 'Motion Booster',
   tagline: 'Accelerate Your Digital Growth',
-  contactEmail: 'info@motionbooster.com',
+  contactEmail: 'hello@motionbooster.com',
   contactPhone: '+880 1234-567890',
   address: 'Dhaka, Bangladesh',
   facebookUrl: 'https://facebook.com/motionbooster',

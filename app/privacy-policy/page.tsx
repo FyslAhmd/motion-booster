@@ -13,7 +13,9 @@ export default function PrivacyPolicy() {
       <div className="bg-linear-to-r from-red-500 to-red-600 text-white pt-20 pb-12 md:pt-24 md:pb-16 lg:pt-32 lg:pb-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-center mb-4">
-            <Shield className="w-12 h-12 md:w-16 md:h-16" />
+            <div className="w-16 h-16 md:w-20 md:h-20 rounded-full border-2 border-white/70 bg-white/10 flex items-center justify-center">
+              <Shield className="w-9 h-9 md:w-11 md:h-11" />
+            </div>
           </div>
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-center mb-4">
             Privacy Policy
@@ -352,8 +354,8 @@ export default function PrivacyPolicy() {
                 </div>
                 <div>
                   <p className="font-semibold">Email</p>
-                  <a href="mailto:info@motionbooster.com" className="text-red-50 hover:underline">
-                    info@motionbooster.com
+                  <a href="mailto:hello@motionbooster.com" className="text-red-50 hover:underline">
+                    hello@motionbooster.com
                   </a>
                 </div>
               </div>

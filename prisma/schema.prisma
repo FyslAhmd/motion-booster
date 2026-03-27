@@ -352,6 +352,7 @@ model TeamMember {
   education       String[]
   educationBn     String[] @default([]) @map("education_bn")
   workPlaces      String[] @map("work_places")
+  workPlaceLogos  String[] @default([]) @map("work_place_logos")
   workPlacesBn    String[] @default([]) @map("work_places_bn")
   order           Int      @default(0)
   createdAt       DateTime @default(now()) @map("created_at")

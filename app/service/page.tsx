@@ -26,6 +26,7 @@ interface ServiceCategoryProps {
   title: string;
   description: string;
   services: string[];
+  ctaLabel: string;
   tone: {
     cardBg: string;
     iconBg: string;
@@ -34,7 +35,7 @@ interface ServiceCategoryProps {
   };
 }
 
-const ServiceCategory: React.FC<ServiceCategoryProps> = ({ iconType, title, description, services, tone }) => {
+const ServiceCategory: React.FC<ServiceCategoryProps> = ({ iconType, title, description, services, ctaLabel, tone }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
@@ -73,6 +74,15 @@ const ServiceCategory: React.FC<ServiceCategoryProps> = ({ iconType, title, desc
           </div>
         </div>
       )}
+
+      <div className="px-6 pb-5 pt-2 flex justify-end bg-white">
+        <Link
+          href="/login"
+          className="inline-flex items-center rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 transition-colors"
+        >
+          {ctaLabel}
+        </Link>
+      </div>
     </div>
   );
 };
@@ -175,6 +185,7 @@ export default function ServicePage() {
                     title={pickLocalizedText(language, category.title, category.titleBn)}
                     description={pickLocalizedText(language, category.description, category.descriptionBn)}
                     services={pickLocalizedList(language, category.services, category.servicesBn)}
+                    ctaLabel={isBN ? 'শুরু করুন' : 'Get Started'}
                     tone={lightTones[index % lightTones.length]}
                   />
                 </div>

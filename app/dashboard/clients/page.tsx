@@ -516,7 +516,7 @@ export default function ClientsPage() {
               )}
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="ml-auto flex w-full items-center justify-end gap-2 sm:w-auto">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
               <input
@@ -524,13 +524,13 @@ export default function ClientsPage() {
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Search clients…"
-                className="pl-9 pr-4 py-2 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-red-400 w-56"
+                className="w-full max-w-65 rounded-xl border border-gray-200 bg-white py-2 pl-9 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 sm:w-56"
               />
             </div>
             <button
               onClick={() => load(page, debouncedSearch)}
               disabled={loading}
-              className="p-2 rounded-xl border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+              className="p-2 rounded-xl border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 disabled:opacity-50 transition-colors ml-auto"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             </button>

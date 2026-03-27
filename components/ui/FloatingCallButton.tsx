@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useLanguage } from '@/lib/lang/LanguageContext';
-import { Phone, X, ArrowUp } from 'lucide-react';
+import { Phone, X, ArrowUp, Headset } from 'lucide-react';
 
 export const FloatingCallButton = () => {
   const { t } = useLanguage();
@@ -35,18 +35,18 @@ export const FloatingCallButton = () => {
         {scrolled ? (
           <button
             onClick={() => setModalOpen(true)}
-            className="flex h-12 w-12 items-center justify-center rounded-full bg-red-500 shadow-lg transition-colors hover:bg-red-600"
+            className="flex h-12 w-12 items-center justify-center rounded-full bg-red-500 shadow-lg transition-colors hover:bg-red-600 animate-float-up"
             aria-label={t('floating_call_phone_aria')}
           >
-            <Phone className="h-5 w-5 text-white" />
+            <Headset className="h-5 w-5 text-white" />
           </button>
         ) : (
           <button
             onClick={() => setModalOpen(true)}
-            className="flex items-center gap-2 rounded-full bg-red-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-red-600"
+            className="flex items-center gap-2 rounded-full bg-red-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-red-600 animate-float-up"
             aria-label="Contact us"
           >
-            <Phone className="h-4 w-4" />
+            <Headset className="h-4 w-4" />
             <span>{t('contact_badge')}</span>
           </button>
         )}

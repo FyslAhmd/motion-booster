@@ -26,6 +26,7 @@ import {
   Image as ImageIcon,
   Film,
   Rocket,
+  ChevronDown,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────
@@ -73,6 +74,7 @@ type BoostGender = 'male' | 'female';
 type BoostAudienceLanguage = 'en' | 'bn' | 'hindi';
 
 interface BoostFormData {
+  postLink: string;
   totalBudget: string;
   dailyBudget: string;
   placements: BoostPlacement[];
@@ -85,6 +87,7 @@ interface BoostFormData {
 }
 
 const DEFAULT_BOOST_DATA: BoostFormData = {
+  postLink: '',
   totalBudget: '',
   dailyBudget: '',
   placements: ['facebook', 'instagram'],
@@ -922,6 +925,7 @@ export default function MessagesPage() {
     ? Math.max(normalizedMinAge, parsedMaxAge)
     : '';
   const canSubmitBoost = Boolean(
+    boostData.postLink.trim() &&
     boostData.totalBudget.trim() &&
     boostData.dailyBudget.trim() &&
     boostData.placements.length > 0 &&
@@ -950,6 +954,7 @@ export default function MessagesPage() {
     const selectedGenderLabel = genderOptions.find((option) => option.value === boostData.gender)?.label || 'Male';
 
     const targetAudience = [
+      boostData.postLink.trim() ? `Facebook Boost Link: ${boostData.postLink.trim()}` : '',
       `Placements: ${selectedPlacementLabels.join(', ')}`,
       `Location: ${selectedLocationLabel}`,
       `Age: ${normalizedMaxAge === '' ? `${normalizedMinAge}+` : `${normalizedMinAge}-${normalizedMaxAge}`}`,
@@ -965,7 +970,7 @@ export default function MessagesPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           language: boostLang,
-          postLink: '',
+          postLink: boostData.postLink.trim(),
           totalBudget: boostData.totalBudget,
           dailyBudget: boostData.dailyBudget,
           targetAudience,
@@ -1567,6 +1572,17 @@ export default function MessagesPage() {
                             </div>
                           </div>
                           <div className="p-5 space-y-3">
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-1">{boostLabels.postLink} <span className="text-red-500">*</span></label>
+                              <input
+                                type="url"
+                                value={boostData.postLink}
+                                onChange={e => setBoostData(p => ({ ...p, postLink: e.target.value }))}
+                                placeholder={boostLabels.postLinkPlaceholder}
+                                className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent"
+                              />
+                            </div>
+
                             <div className="grid grid-cols-2 gap-2">
                               <div>
                                 <label className="block text-xs font-medium text-gray-700 mb-1">{boostLabels.totalBudget} <span className="text-red-500">*</span></label>
@@ -1616,62 +1632,74 @@ export default function MessagesPage() {
                             <div className="grid grid-cols-2 gap-2">
                               <div>
                                 <label className="block text-xs font-medium text-gray-700 mb-1">{boostFieldLabels.location} <span className="text-red-500">*</span></label>
-                                <select
-                                  value={boostData.location}
-                                  onChange={e => setBoostData(p => ({ ...p, location: e.target.value as BoostLocation }))}
-                                  className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent bg-white"
-                                >
-                                  {locationOptions.map((option) => (
-                                    <option key={option.value} value={option.value}>{option.label}</option>
-                                  ))}
-                                </select>
+                                <div className="relative">
+                                  <select
+                                    value={boostData.location}
+                                    onChange={e => setBoostData(p => ({ ...p, location: e.target.value as BoostLocation }))}
+                                    className="w-full appearance-none px-3 py-2 pr-8 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent bg-white"
+                                  >
+                                    {locationOptions.map((option) => (
+                                      <option key={option.value} value={option.value}>{option.label}</option>
+                                    ))}
+                                  </select>
+                                  <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+                                </div>
                               </div>
                               <div>
                                 <label className="block text-xs font-medium text-gray-700 mb-1">{boostFieldLabels.minAge} / {boostFieldLabels.maxAge} <span className="text-red-500">*</span></label>
                                 <div className="grid grid-cols-2 gap-2">
-                                  <select
-                                    value={boostData.minAge}
-                                    onChange={e => {
-                                      const nextMin = Math.max(18, Number.parseInt(e.target.value || '18', 10) || 18);
-                                      setBoostData((prev) => {
-                                        const prevMax = Number.parseInt(prev.maxAge || '', 10);
-                                        const nextMax = Number.isFinite(prevMax) ? String(Math.max(nextMin, prevMax)) : '';
-                                        return { ...prev, minAge: String(nextMin), maxAge: nextMax };
-                                      });
-                                    }}
-                                    className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent bg-white"
-                                  >
-                                    {Array.from({ length: 48 }, (_, i) => 18 + i).map((age) => (
-                                      <option key={`min-age-${age}`} value={String(age)}>{age}</option>
-                                    ))}
-                                  </select>
-                                  <select
-                                    value={boostData.maxAge}
-                                    onChange={e => setBoostData((prev) => ({ ...prev, maxAge: e.target.value }))}
-                                    className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent bg-white"
-                                  >
-                                    <option value="">{boostLang === 'bn' ? 'ওপেন' : 'Open'}</option>
-                                    {Array.from({ length: 48 }, (_, i) => 18 + i)
-                                      .filter((age) => age >= normalizedMinAge)
-                                      .map((age) => (
-                                        <option key={`max-age-${age}`} value={String(age)}>{age}</option>
+                                  <div className="relative">
+                                    <select
+                                      value={boostData.minAge}
+                                      onChange={e => {
+                                        const nextMin = Math.max(18, Number.parseInt(e.target.value || '18', 10) || 18);
+                                        setBoostData((prev) => {
+                                          const prevMax = Number.parseInt(prev.maxAge || '', 10);
+                                          const nextMax = Number.isFinite(prevMax) ? String(Math.max(nextMin, prevMax)) : '';
+                                          return { ...prev, minAge: String(nextMin), maxAge: nextMax };
+                                        });
+                                      }}
+                                      className="w-full appearance-none px-3 py-2 pr-8 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent bg-white"
+                                    >
+                                      {Array.from({ length: 48 }, (_, i) => 18 + i).map((age) => (
+                                        <option key={`min-age-${age}`} value={String(age)}>{age}</option>
                                       ))}
-                                  </select>
+                                    </select>
+                                    <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+                                  </div>
+                                  <div className="relative">
+                                    <select
+                                      value={boostData.maxAge}
+                                      onChange={e => setBoostData((prev) => ({ ...prev, maxAge: e.target.value }))}
+                                      className="w-full appearance-none px-3 py-2 pr-8 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent bg-white"
+                                    >
+                                      <option value="">{boostLang === 'bn' ? 'ওপেন' : 'Open'}</option>
+                                      {Array.from({ length: 48 }, (_, i) => 18 + i)
+                                        .filter((age) => age >= normalizedMinAge)
+                                        .map((age) => (
+                                          <option key={`max-age-${age}`} value={String(age)}>{age}</option>
+                                        ))}
+                                    </select>
+                                    <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+                                  </div>
                                 </div>
                               </div>
                             </div>
 
                             <div>
                               <label className="block text-xs font-medium text-gray-700 mb-1">{boostFieldLabels.gender} <span className="text-red-500">*</span></label>
-                              <select
-                                value={boostData.gender}
-                                onChange={e => setBoostData(p => ({ ...p, gender: e.target.value as BoostGender }))}
-                                className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent bg-white"
-                              >
-                                {genderOptions.map((option) => (
-                                  <option key={option.value} value={option.value}>{option.label}</option>
-                                ))}
-                              </select>
+                              <div className="relative">
+                                <select
+                                  value={boostData.gender}
+                                  onChange={e => setBoostData(p => ({ ...p, gender: e.target.value as BoostGender }))}
+                                  className="w-full appearance-none px-3 py-2 pr-8 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent bg-white"
+                                >
+                                  {genderOptions.map((option) => (
+                                    <option key={option.value} value={option.value}>{option.label}</option>
+                                  ))}
+                                </select>
+                                <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+                              </div>
                             </div>
 
                             <div>

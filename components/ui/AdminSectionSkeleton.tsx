@@ -95,7 +95,7 @@ export function AdminSectionSkeleton({
             <Pulse className="h-24 w-full" />
           </div>
         </div>
-        <div className="rounded-2xl border border-gray-100 bg-white p-5">
+        <div className="hidden rounded-2xl border border-gray-100 bg-white p-5 sm:block">
           <Pulse className="h-5 w-36" />
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Pulse className="h-10 w-full" />

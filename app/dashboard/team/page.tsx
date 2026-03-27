@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import AdminShell from '../_components/AdminShell';
-import { Plus, Pencil, Trash2, X, AlertTriangle, Star, Loader2 } from 'lucide-react';
+import { Plus, Trash2, X, AlertTriangle, Star, Loader2 } from 'lucide-react';
 import ImageUpload from '@/components/ui/ImageUpload';
 import { AdminSectionSkeleton } from '@/components/ui/AdminSectionSkeleton';
 import { toast } from 'sonner';
@@ -42,6 +42,7 @@ interface TeamMemberItem {
   education: string[];
   educationBn?: string[];
   workPlaces: string[];
+  workPlaceLogos?: string[];
   workPlacesBn?: string[];
   order: number;
 }
@@ -67,8 +68,129 @@ const BLANK: Omit<TeamMemberItem, 'id' | 'order'> = {
   education: [''],
   educationBn: [''],
   workPlaces: [''],
+  workPlaceLogos: [''],
   workPlacesBn: [''],
 };
+
+function toDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ''));
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function EditableWorkPlaceList({
+  places,
+  logos,
+  onChange,
+}: {
+  places: string[];
+  logos: string[];
+  onChange: (nextPlaces: string[], nextLogos: string[]) => void;
+}) {
+  const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
+
+  const updatePlace = (idx: number, val: string) => {
+    const nextPlaces = [...places];
+    nextPlaces[idx] = val;
+    onChange(nextPlaces, logos);
+  };
+
+  const add = () => {
+    onChange([...places, ''], [...logos, '']);
+  };
+
+  const remove = (idx: number) => {
+    const nextPlaces = places.filter((_, i) => i !== idx);
+    const nextLogos = logos.filter((_, i) => i !== idx);
+    onChange(nextPlaces.length ? nextPlaces : [''], nextLogos.length ? nextLogos : ['']);
+  };
+
+  const pickLogo = async (idx: number, file?: File) => {
+    if (!file || !file.type.startsWith('image/')) return;
+    try {
+      const base64 = await toDataUrl(file);
+      const nextLogos = [...logos];
+      nextLogos[idx] = base64;
+      onChange(places, nextLogos);
+    } catch {
+      // Ignore file read errors in editor.
+    }
+  };
+
+  const removeLogo = (idx: number) => {
+    const nextLogos = [...logos];
+    nextLogos[idx] = '';
+    onChange(places, nextLogos);
+  };
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1">
+        <label className="text-sm font-medium text-gray-700">Work Places</label>
+        <button onClick={add} type="button" className="text-xs text-red-600 hover:underline">+ Add</button>
+      </div>
+      <div className="space-y-1.5">
+        {places.map((place, idx) => (
+          <div key={idx} className="flex items-center gap-2">
+            <input
+              type="text"
+              value={place}
+              onChange={(e) => updatePlace(idx, e.target.value)}
+              placeholder={`Work Place ${idx + 1}`}
+              className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
+            />
+
+            <input
+              ref={(el) => {
+                inputRefs.current[idx] = el;
+              }}
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
+              className="hidden"
+              onChange={(e) => {
+                void pickLogo(idx, e.target.files?.[0]);
+                e.currentTarget.value = '';
+              }}
+            />
+
+            <button
+              type="button"
+              onClick={() => inputRefs.current[idx]?.click()}
+              className="px-2.5 py-2 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50"
+            >
+              Logo
+            </button>
+
+            {logos[idx] ? (
+              <div className="relative h-9 w-9 rounded-md border border-gray-200 overflow-hidden shrink-0">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={logos[idx]} alt={`Work place ${idx + 1} logo`} className="h-full w-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => removeLogo(idx)}
+                  className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-white border border-gray-300 text-gray-500 hover:text-red-500 text-[10px] leading-none"
+                  aria-label="Remove logo"
+                >
+                  x
+                </button>
+              </div>
+            ) : (
+              <div className="h-9 w-9 rounded-md border border-dashed border-gray-200 shrink-0" />
+            )}
+
+            {places.length > 1 && (
+              <button onClick={() => remove(idx)} type="button" className="p-2 text-gray-400 hover:text-red-500"><X className="w-3.5 h-3.5" /></button>
+            )}
+          </div>
+        ))}
+      </div>
+      <p className="mt-1 text-xs text-gray-400">Each work place can have its own logo.</p>
+    </div>
+  );
+}
 
 function EditableList({ label, items, onChange }: { label: string; items: string[]; onChange: (v: string[]) => void }) {
   const update = (idx: number, val: string) => { const n = [...items]; n[idx] = val; onChange(n); };
@@ -114,6 +236,11 @@ export default function AdminTeamPage() {
 
   const handleSave = async () => {
     if (!editing || !editing.name.trim()) return;
+    const placeRows = editing.workPlaces.map((place, idx) => ({
+      place: place.trim(),
+      logo: (editing.workPlaceLogos?.[idx] || '').trim(),
+    })).filter((row) => row.place);
+
     const clean = {
       ...editing,
       avatar: editing.avatar.trim() || editing.name.slice(0, 2).toUpperCase(),
@@ -127,7 +254,8 @@ export default function AdminTeamPage() {
       specializedAreaBn: (editing.specializedAreaBn || []).filter(v => v.trim()),
       education: editing.education.filter(v => v.trim()),
       educationBn: (editing.educationBn || []).filter(v => v.trim()),
-      workPlaces: editing.workPlaces.filter(v => v.trim()),
+      workPlaces: placeRows.map((row) => row.place),
+      workPlaceLogos: placeRows.map((row) => row.logo),
       workPlacesBn: (editing.workPlacesBn || []).filter(v => v.trim()),
     };
     setSaving(true);
@@ -331,7 +459,11 @@ export default function AdminTeamPage() {
               <EditableList label="Specialized Area (Bangla)" items={(editing.specializedAreaBn || []).length ? (editing.specializedAreaBn || []) : ['']} onChange={v => setEditing({ ...editing, specializedAreaBn: v })} />
               <EditableList label="Education" items={editing.education.length ? editing.education : ['']} onChange={v => setEditing({ ...editing, education: v })} />
               <EditableList label="Education (Bangla)" items={(editing.educationBn || []).length ? (editing.educationBn || []) : ['']} onChange={v => setEditing({ ...editing, educationBn: v })} />
-              <EditableList label="Work Places" items={editing.workPlaces.length ? editing.workPlaces : ['']} onChange={v => setEditing({ ...editing, workPlaces: v })} />
+              <EditableWorkPlaceList
+                places={editing.workPlaces.length ? editing.workPlaces : ['']}
+                logos={(editing.workPlaceLogos || []).length ? (editing.workPlaceLogos || []) : ['']}
+                onChange={(nextPlaces, nextLogos) => setEditing({ ...editing, workPlaces: nextPlaces, workPlaceLogos: nextLogos })}
+              />
               <EditableList label="Work Places (Bangla)" items={(editing.workPlacesBn || []).length ? (editing.workPlacesBn || []) : ['']} onChange={v => setEditing({ ...editing, workPlacesBn: v })} />
             </div>
 

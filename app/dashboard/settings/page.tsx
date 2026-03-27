@@ -113,7 +113,7 @@ export default function AdminSettingsPage() {
         <div className="bg-white rounded-2xl border border-gray-100 p-6">
           <h2 className="font-semibold text-sm uppercase tracking-wider text-gray-500 mb-4">Contact Information</h2>
           <div className="grid sm:grid-cols-2 gap-4">
-            <Field label="Email Address" value={settings.contactEmail} onChange={set('contactEmail')} placeholder="info@motionbooster.com" />
+            <Field label="Email Address" value={settings.contactEmail} onChange={set('contactEmail')} placeholder="hello@motionbooster.com" />
             <Field label="Phone Number" value={settings.contactPhone} onChange={set('contactPhone')} placeholder="+880 1234-567890" />
             <div className="sm:col-span-2">
               <Field label="Address" value={settings.address} onChange={set('address')} placeholder="Dhaka, Bangladesh" />

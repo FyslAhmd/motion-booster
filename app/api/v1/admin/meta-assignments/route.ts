@@ -2,6 +2,37 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { validateRequest } from '@/lib/auth/validate-request';
 import { Prisma } from '@/lib/generated/prisma';
+import { getClientIp, logActivity } from '@/lib/server/activity-history';
+
+async function recordMetaAssignmentHistory(input: {
+  req: NextRequest;
+  adminId: string;
+  adminUsername: string;
+  adminEmail: string;
+  action: string;
+  metadata: Record<string, unknown>;
+}): Promise<void> {
+  try {
+    await logActivity({
+      userId: input.adminId,
+      eventType: 'CUSTOM_ACTION',
+      action: input.action,
+      path: input.req.nextUrl.pathname,
+      method: input.req.method,
+      ipAddress: getClientIp(input.req),
+      userAgent: input.req.headers.get('user-agent'),
+      metadata: {
+        module: 'meta-assignments',
+        actorAdminId: input.adminId,
+        actorAdminUsername: input.adminUsername,
+        actorAdminEmail: input.adminEmail,
+        ...input.metadata,
+      },
+    });
+  } catch (logErr) {
+    console.error('[meta-assignments history]', logErr);
+  }
+}
 
 /**
  * GET /api/v1/admin/meta-assignments?account_id=act_xxx&type=CAMPAIGN
@@ -73,7 +104,10 @@ export async function POST(req: NextRequest) {
     }
 
     // Verify user exists and is not admin
-    const user = await prisma.user.findUnique({ where: { id: userId }, select: { role: true } });
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, role: true, username: true, fullName: true, email: true },
+    });
     if (!user) {
       return NextResponse.json({ success: false, error: 'User not found' }, { status: 404 });
     }
@@ -101,6 +135,26 @@ export async function POST(req: NextRequest) {
         user: {
           select: { id: true, fullName: true, phone: true, username: true },
         },
+      },
+    });
+
+    await recordMetaAssignmentHistory({
+      req,
+      adminId: auth.id,
+      adminUsername: auth.username,
+      adminEmail: auth.email,
+      action: existing
+        ? `Assignment already existed for ${user.username}`
+        : `Assigned ${metaObjectType} to ${user.username}`,
+      metadata: {
+        targetUserId: user.id,
+        targetUserUsername: user.username,
+        targetUserFullName: user.fullName,
+        targetUserEmail: user.email,
+        metaObjectId,
+        metaObjectType,
+        metaAccountId,
+        isExisting: Boolean(existing),
       },
     });
 
@@ -147,12 +201,43 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'Missing metaObjectId' }, { status: 400 });
     }
 
+    const toDelete = await prisma.metaAdAssignment.findMany({
+      where: {
+        metaObjectId,
+        ...(userId ? { userId } : {}),
+      },
+      include: {
+        user: {
+          select: { id: true, username: true, fullName: true, email: true },
+        },
+      },
+    });
+
     await prisma.metaAdAssignment.deleteMany({
       where: {
         metaObjectId,
         ...(userId ? { userId } : {}),
       },
     });
+
+    for (const row of toDelete) {
+      await recordMetaAssignmentHistory({
+        req,
+        adminId: auth.id,
+        adminUsername: auth.username,
+        adminEmail: auth.email,
+        action: `Unassigned ${row.metaObjectType} from ${row.user?.username || row.userId}`,
+        metadata: {
+          targetUserId: row.user?.id || row.userId,
+          targetUserUsername: row.user?.username || null,
+          targetUserFullName: row.user?.fullName || null,
+          targetUserEmail: row.user?.email || null,
+          metaObjectId: row.metaObjectId,
+          metaObjectType: row.metaObjectType,
+          metaAccountId: row.metaAccountId,
+        },
+      });
+    }
 
     return NextResponse.json({ success: true });
   } catch (err) {

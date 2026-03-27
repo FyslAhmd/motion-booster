@@ -167,7 +167,7 @@ export default function TeamMemberPage({ params }: { params: Promise<{ id: strin
             <div className="grid grid-cols-2 gap-3">
               {localizedWorkPlaces.map((place, i) => {
                 const canonicalName = canonicalWorkPlaces[i] || place;
-                const logoSrc = companyLogoByName[normalizeName(canonicalName)] || '';
+                const logoSrc = (member.workPlaceLogos?.[i] || '').trim() || companyLogoByName[normalizeName(canonicalName)] || '';
                 return (
                 <div
                   key={i}

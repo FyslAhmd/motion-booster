@@ -38,6 +38,39 @@ function fmtDateTime(iso: string): string {
   return `${d.toLocaleDateString()} ${d.toLocaleTimeString()}`;
 }
 
+function getHistoryDetails(item: HistoryItem): string {
+  const metadata = item.metadata;
+  if (!metadata) return '-';
+
+  const actorAdmin = typeof metadata.actorAdminUsername === 'string'
+    ? metadata.actorAdminUsername
+    : item.user?.username || null;
+  const clientUsername = typeof metadata.clientUsername === 'string' ? metadata.clientUsername : null;
+  const targetUserUsername = typeof metadata.targetUserUsername === 'string' ? metadata.targetUserUsername : null;
+  const metaObjectType = typeof metadata.metaObjectType === 'string' ? metadata.metaObjectType : null;
+  const metaObjectId = typeof metadata.metaObjectId === 'string' ? metadata.metaObjectId : null;
+  const notesRaw = metadata.changeNotes;
+  const notes = Array.isArray(notesRaw)
+    ? notesRaw.filter((n): n is string => typeof n === 'string' && n.length > 0)
+    : [];
+
+  if (clientUsername && notes.length > 0) {
+    const actor = actorAdmin || 'Unknown admin';
+    return `${actor} -> ${clientUsername}: ${notes.join(', ')}`;
+  }
+
+  if (targetUserUsername && metaObjectType && metaObjectId) {
+    const actor = actorAdmin || 'Unknown admin';
+    return `${actor} -> ${targetUserUsername}: ${metaObjectType} (${metaObjectId})`;
+  }
+
+  try {
+    return JSON.stringify(metadata);
+  } catch {
+    return '-';
+  }
+}
+
 const EVENT_TYPE_OPTIONS = ['ALL', 'PAGE_VISIT', 'API_REQUEST', 'CUSTOM_ACTION'];
 
 export default function DashboardHistoryPage() {
@@ -111,7 +144,7 @@ export default function DashboardHistoryPage() {
                       setQuery(search);
                     }
                   }}
-                  placeholder="Search action, path, username, email"
+                  placeholder="Search action, username, email"
                   className="w-full rounded-lg border border-gray-200 py-2 pl-9 pr-3 text-sm outline-hidden focus:border-red-400"
                 />
               </div>
@@ -152,6 +185,7 @@ export default function DashboardHistoryPage() {
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500">User</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500">Event</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500">Action</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500">Details</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500">Path</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500">IP</th>
                 </tr>
@@ -159,13 +193,13 @@ export default function DashboardHistoryPage() {
               <tbody className="divide-y divide-gray-100 bg-white">
                 {loading && (
                   <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-sm text-gray-500">Loading history...</td>
+                    <td colSpan={7} className="px-4 py-8 text-center text-sm text-gray-500">Loading history...</td>
                   </tr>
                 )}
 
                 {!loading && !hasRows && (
                   <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-sm text-gray-500">No history found.</td>
+                    <td colSpan={7} className="px-4 py-8 text-center text-sm text-gray-500">No history found.</td>
                   </tr>
                 )}
 
@@ -177,7 +211,8 @@ export default function DashboardHistoryPage() {
                       <div className="text-gray-500">{item.user?.email || '-'}</div>
                     </td>
                     <td className="px-4 py-3 text-xs text-gray-700 whitespace-nowrap">{item.eventType}</td>
-                    <td className="px-4 py-3 text-xs text-gray-700 whitespace-nowrap">{item.action}</td>
+                    <td className="px-4 py-3 text-xs text-gray-700">{item.action}</td>
+                    <td className="px-4 py-3 text-xs text-gray-700">{getHistoryDetails(item)}</td>
                     <td className="px-4 py-3 text-xs text-gray-700 break-all">{item.path || '-'}</td>
                     <td className="px-4 py-3 text-xs text-gray-700 whitespace-nowrap">{item.ipAddress || '-'}</td>
                   </tr>
