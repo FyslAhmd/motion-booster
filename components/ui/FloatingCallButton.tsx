@@ -8,6 +8,7 @@ export const FloatingCallButton = () => {
   const { t } = useLanguage();
   const [scrolled, setScrolled] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+  const contactDesc = `You are welcome to visit our office for any\ninformation related to Service. You can also reach us\nthrough the hotline number or messenger.`;
 
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
@@ -72,8 +73,8 @@ export const FloatingCallButton = () => {
             </button>
 
             <h3 className="mb-2 text-xl font-bold text-gray-900">{t('floating_call_title')}</h3>
-            <p className="mb-4 text-sm text-gray-500 leading-relaxed">
-              {t('floating_call_desc')}
+            <p className="mx-auto mb-4 text-sm leading-relaxed text-gray-500 whitespace-pre-line">
+              {contactDesc}
             </p>
 
             {/* Call icon image */}
