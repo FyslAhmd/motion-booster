@@ -37,7 +37,7 @@ export const FloatingCallButton = () => {
         {scrolled ? (
           <button
             onClick={() => setModalOpen(true)}
-            className="flex h-12 w-12 items-center justify-center rounded-full bg-red-500 shadow-lg transition-colors hover:bg-red-600 animate-float-up"
+            className="floating-call-bob flex h-12 w-12 items-center justify-center rounded-full bg-red-500 shadow-lg transition-colors hover:bg-red-600"
             aria-label={t('floating_call_phone_aria')}
           >
             <Image
@@ -52,7 +52,7 @@ export const FloatingCallButton = () => {
         ) : (
           <button
             onClick={() => setModalOpen(true)}
-            className="flex items-center gap-2 rounded-full bg-red-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-red-600 animate-float-up"
+            className="floating-call-bob flex items-center gap-2 rounded-full bg-red-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-red-600"
             aria-label="Contact us"
           >
             <Image

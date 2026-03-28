@@ -134,6 +134,11 @@ html {
   animation: floatUp 3s ease-in-out infinite;
 }
 
+/* Allow selected floating controls to keep subtle motion on public pages */
+.floating-call-bob {
+  animation: floatUp 2.6s ease-in-out infinite;
+}
+
 /* Slide up animation for chart bars */
 @keyframes slideUp {
   0% {
@@ -398,4 +403,17 @@ html.public-page .home-page [data-hb-right],
 body.public-page .home-page [data-hb-left],
 body.public-page .home-page [data-hb-right] {
   opacity: 1;
+}
+
+html.public-page .floating-call-bob,
+body.public-page .floating-call-bob {
+  animation: floatUp 2.6s ease-in-out infinite !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .floating-call-bob,
+  html.public-page .floating-call-bob,
+  body.public-page .floating-call-bob {
+    animation: none !important;
+  }
 }

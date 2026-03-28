@@ -76,7 +76,7 @@ const ServiceCategory: React.FC<ServiceCategoryProps> = ({ iconType, title, desc
       )}
 
       {isExpanded && (
-        <div className="px-6 pb-5 pt-2 flex justify-end bg-white">
+        <div className="px-6 pb-5 pt-2 flex justify-end bg-gray-50">
           <Link
             href="/login"
             className="inline-flex items-center rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 transition-colors"
