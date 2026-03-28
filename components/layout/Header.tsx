@@ -321,7 +321,7 @@ export const Header = () => {
       </nav>
 
       {/* Bottom Navbar for Mobile */}
-      <nav className="fixed bottom-0 left-0 right-0 z-130 flex lg:hidden justify-around items-center px-2 pt-1 h-[calc(4rem+env(safe-area-inset-bottom))] pb-[env(safe-area-inset-bottom)] bg-white border-t border-gray-200 shadow-lg">
+      <nav className="fixed bottom-0 left-0 right-0 z-130 flex h-16 items-center justify-around border-t border-gray-200 bg-white px-2 pt-1 shadow-lg lg:hidden">
         <Link
           href="/"
           className={`flex flex-col items-center justify-center gap-1 px-3 py-2 transition-colors flex-1 min-w-0 ${
