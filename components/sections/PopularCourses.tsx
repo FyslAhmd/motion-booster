@@ -3,9 +3,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { motion } from 'framer-motion';
 import { useLanguage } from '@/lib/lang/LanguageContext';
 import { ChevronLeft, ChevronRight, Check, ArrowRight } from 'lucide-react';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Pagination } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/pagination';
 import { PopularServiceItem } from '@/lib/admin/store';
 import { pickLocalizedList, pickLocalizedText } from '@/lib/lang/localize';
 
@@ -46,8 +49,6 @@ export const PopularCourses = () => {
   const [allServices, setAllServices] = useState<PopularServiceItem[]>([]);
   const [categoryLabels, setCategoryLabels] = useState<Record<string, string>>({});
   const [activeTab, setActiveTab] = useState('All');
-  const [mobileIndex, setMobileIndex] = useState(0);
-  const [mobileDirection, setMobileDirection] = useState<1 | -1>(1);
   const [loading, setLoading] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const tabsScrollRef = useRef<HTMLDivElement>(null);
@@ -107,27 +108,6 @@ export const PopularCourses = () => {
     ? allServices
     : allServices.filter(s => s.category === activeTab);
 
-  useEffect(() => {
-    setMobileIndex(0);
-    setMobileDirection(1);
-  }, [activeTab, filteredServices.length]);
-
-  const goToMobilePrev = () => {
-    if (filteredServices.length <= 1) return;
-    setMobileDirection(-1);
-    setMobileIndex((prev) => (prev - 1 + filteredServices.length) % filteredServices.length);
-  };
-
-  const goToMobileNext = () => {
-    if (filteredServices.length <= 1) return;
-    setMobileDirection(1);
-    setMobileIndex((prev) => (prev + 1) % filteredServices.length);
-  };
-
-  const currentMobileService = filteredServices[mobileIndex] || null;
-  const nextMobileService =
-    filteredServices.length > 1 ? filteredServices[(mobileIndex + 1) % filteredServices.length] : null;
-
   const scroll = (direction: 'left' | 'right') => {
     if (scrollRef.current) {
       scrollRef.current.scrollBy({ left: direction === 'left' ? -400 : 400, behavior: 'smooth' });
@@ -155,8 +135,7 @@ export const PopularCourses = () => {
         {/* Tabs */}
         {!loading && (
         <div className="mb-8 md:mb-10">
-          <div ref={tabsScrollRef} className="flex gap-1.5 sm:gap-2 overflow-x-auto scroll-smooth border-b border-gray-200 pb-3 sm:pb-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-            <style jsx>{`div::-webkit-scrollbar { display: none; }`}</style>
+          <div ref={tabsScrollRef} className="no-scrollbar flex gap-1.5 sm:gap-2 overflow-x-auto scroll-smooth border-b border-gray-200 pb-3 sm:pb-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
             {tabs.map(tab => (
               <button
                 key={tab}
@@ -172,138 +151,102 @@ export const PopularCourses = () => {
         </div>
         )}
 
-        {/* Cards + Arrows (Mobile) */}
+        {/* Cards (Mobile Swiper) */}
         <div className="sm:hidden relative">
-          <button
-            onClick={goToMobilePrev}
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full border-2 border-red-200 bg-white text-red-500 hover:bg-red-50 hover:border-red-400 items-center justify-center transition-all shadow-lg flex"
-            aria-label="Previous service"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-
-          <button
-            onClick={goToMobileNext}
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full border-2 border-red-200 bg-white text-red-500 hover:bg-red-50 hover:border-red-400 items-center justify-center transition-all shadow-lg flex"
-            aria-label="Next service"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
-
-          <div className="relative overflow-visible min-h-97.5 px-6">
+          <div className="relative overflow-visible min-h-97.5">
             {loading && (
-              <div className="w-[84%] bg-white rounded-xl overflow-hidden border border-gray-100">
-                <div className="h-40 w-full bg-gray-200 animate-pulse" />
-                <div className="p-4 space-y-3">
-                  <div className="h-5 w-2/3 bg-gray-200 rounded animate-pulse" />
-                  <div className="h-3 w-full bg-gray-200 rounded animate-pulse" />
-                  <div className="h-3 w-5/6 bg-gray-200 rounded animate-pulse" />
-                </div>
-              </div>
-            )}
-
-            {!loading && currentMobileService && (
-              <motion.div
-                key={`mobile-main-${currentMobileService.id}-${mobileIndex}`}
-                initial={{ x: mobileDirection > 0 ? 42 : -42, opacity: 0.7 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                className="relative z-10 w-[84%] bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100"
+              <Swiper
+                slidesPerView={'auto'}
+                spaceBetween={12}
+                className="popular-mobile-swiper"
               >
-                <div className="relative h-40 w-full overflow-hidden">
-                  {currentMobileService.customImage ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={currentMobileService.customImage}
-                      alt={pickLocalizedText(language, currentMobileService.title, currentMobileService.titleBn)}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <Image
-                      src={getServiceImageSrc(currentMobileService.image)}
-                      alt={pickLocalizedText(language, currentMobileService.title, currentMobileService.titleBn)}
-                      fill
-                      sizes="(max-width: 640px) 84vw, 340px"
-                      className="object-cover"
-                    />
-                  )}
-                </div>
-
-                <div className="p-4">
-                  <h3 className="text-base font-bold text-gray-900 mb-2">
-                    {pickLocalizedText(language, currentMobileService.title, currentMobileService.titleBn)}
-                  </h3>
-                  <p className="text-gray-600 text-xs leading-relaxed mb-4">
-                    {pickLocalizedText(language, currentMobileService.description, currentMobileService.descriptionBn)}
-                  </p>
-                  <div className="space-y-2 mb-4">
-                    {pickLocalizedList(language, currentMobileService.services, currentMobileService.servicesBn).map((item, i) => (
-                      <div key={i} className="flex items-center gap-2">
-                        <div className="shrink-0 w-4 h-4 rounded-full bg-green-100 flex items-center justify-center">
-                          <Check className="w-2.5 h-2.5 text-green-600" />
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <SwiperSlide key={`mobile-skeleton-${i}`} className="popular-mobile-slide">
+                    <div className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100">
+                      <div className="h-40 w-full bg-gray-200 animate-pulse" />
+                      <div className="p-4">
+                        <div className="h-5 w-2/3 bg-gray-200 rounded animate-pulse mb-2" />
+                        <div className="h-3 w-full bg-gray-200 rounded animate-pulse mb-2" />
+                        <div className="h-3 w-5/6 bg-gray-200 rounded animate-pulse mb-4" />
+                        <div className="space-y-2 mb-4">
+                          <div className="h-3 w-3/4 bg-gray-200 rounded animate-pulse" />
+                          <div className="h-3 w-2/3 bg-gray-200 rounded animate-pulse" />
                         </div>
-                        <span className="text-xs text-gray-700">{item}</span>
+                        <div className="h-3.5 w-24 bg-gray-200 rounded animate-pulse" />
                       </div>
-                    ))}
-                  </div>
-                  <Link
-                    href={`/category/${currentMobileService.slug}`}
-                    className="inline-flex items-center gap-2 text-xs font-semibold text-red-500 hover:text-red-600 transition-colors group/link"
-                  >
-                    {isBN ? 'আরও জানুন' : 'Read More'}
-                    <ArrowRight className="w-3.5 h-3.5 group-hover/link:translate-x-1 transition-transform" />
-                  </Link>
-                </div>
-              </motion.div>
+                    </div>
+                  </SwiperSlide>
+                ))}
+              </Swiper>
             )}
 
-            {!loading && nextMobileService && (
-              <motion.div
-                key={`mobile-preview-${nextMobileService.id}-${mobileIndex}`}
-                initial={{ x: mobileDirection > 0 ? 32 : -32, opacity: 0.72 }}
-                animate={{ x: 0, opacity: 0.95 }}
-                transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                className="pointer-events-none absolute left-[86%] top-1/2 -translate-y-1/2 z-0 w-[84%] bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm scale-y-90"
+            {!loading && (
+              <Swiper
+                slidesPerView={'auto'}
+                centeredSlides
+                centeredSlidesBounds
+                spaceBetween={12}
+                speed={560}
+                grabCursor
+                watchSlidesProgress
+                longSwipesRatio={0.2}
+                longSwipesMs={220}
+                pagination={{ clickable: true }}
+                modules={[Pagination]}
+                className="popular-mobile-swiper"
               >
-                <div className="relative h-40 w-full overflow-hidden">
-                  {nextMobileService.customImage ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={nextMobileService.customImage}
-                      alt={pickLocalizedText(language, nextMobileService.title, nextMobileService.titleBn)}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <Image
-                      src={getServiceImageSrc(nextMobileService.image)}
-                      alt={pickLocalizedText(language, nextMobileService.title, nextMobileService.titleBn)}
-                      fill
-                      sizes="(max-width: 640px) 84vw, 340px"
-                      className="object-cover"
-                    />
-                  )}
-                </div>
-                <div className="p-4">
-                  <h4 className="text-base font-bold text-gray-900 mb-2 line-clamp-1">
-                    {pickLocalizedText(language, nextMobileService.title, nextMobileService.titleBn)}
-                  </h4>
-                  <p className="text-gray-600 text-xs leading-relaxed mb-3 line-clamp-2">
-                    {pickLocalizedText(language, nextMobileService.description, nextMobileService.descriptionBn)}
-                  </p>
-                  <div className="space-y-2">
-                    {pickLocalizedList(language, nextMobileService.services, nextMobileService.servicesBn)
-                      .slice(0, 10)
-                      .map((item, i) => (
-                        <div key={i} className="flex items-center gap-2">
-                          <div className="shrink-0 w-4 h-4 rounded-full bg-green-100 flex items-center justify-center">
-                            <Check className="w-2.5 h-2.5 text-green-600" />
-                          </div>
-                          <span className="text-xs text-gray-700 line-clamp-1">{item}</span>
+                {filteredServices.map((service) => {
+                  const title = pickLocalizedText(language, service.title, service.titleBn);
+                  const description = pickLocalizedText(language, service.description, service.descriptionBn);
+                  const serviceItems = pickLocalizedList(language, service.services, service.servicesBn);
+                  return (
+                    <SwiperSlide key={service.id} className="popular-mobile-slide">
+                      <div className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100">
+                        <div className="relative h-40 w-full overflow-hidden">
+                          {service.customImage ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={service.customImage}
+                              alt={title}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <Image
+                              src={getServiceImageSrc(service.image)}
+                              alt={title}
+                              fill
+                              sizes="(max-width: 640px) 84vw, 340px"
+                              className="object-cover"
+                            />
+                          )}
                         </div>
-                      ))}
-                  </div>
-                </div>
-              </motion.div>
+
+                        <div className="p-4">
+                          <h3 className="text-base font-bold text-gray-900 mb-2">{title}</h3>
+                          <p className="text-gray-600 text-xs leading-relaxed mb-4">{description}</p>
+                          <div className="space-y-2 mb-4">
+                            {serviceItems.map((item, i) => (
+                              <div key={i} className="flex items-center gap-2">
+                                <div className="shrink-0 w-4 h-4 rounded-full bg-green-100 flex items-center justify-center">
+                                  <Check className="w-2.5 h-2.5 text-green-600" />
+                                </div>
+                                <span className="text-xs text-gray-700">{item}</span>
+                              </div>
+                            ))}
+                          </div>
+                          <Link
+                            href={`/category/${service.slug}`}
+                            className="inline-flex items-center gap-2 text-xs font-semibold text-red-500 hover:text-red-600 transition-colors group/link"
+                          >
+                            {isBN ? 'আরও জানুন' : 'Read More'}
+                            <ArrowRight className="w-3.5 h-3.5 group-hover/link:translate-x-1 transition-transform" />
+                          </Link>
+                        </div>
+                      </div>
+                    </SwiperSlide>
+                  );
+                })}
+              </Swiper>
             )}
           </div>
         </div>
@@ -314,8 +257,7 @@ export const PopularCourses = () => {
             <ChevronLeft className="w-5 h-5" />
           </button>
 
-          <div ref={scrollRef} className="flex gap-3 sm:gap-4 md:gap-6 overflow-x-auto scroll-smooth pb-4 px-1 sm:px-2" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-            <style jsx>{`div::-webkit-scrollbar { display: none; }`}</style>
+          <div ref={scrollRef} className="no-scrollbar flex gap-3 sm:gap-4 md:gap-6 overflow-x-auto scroll-smooth pb-4 px-1 sm:px-2" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
             {loading && Array.from({ length: 3 }).map((_, i) => (
               <div key={`skeleton-${i}`} className="shrink-0 w-72 sm:w-80 md:w-85 bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-gray-100">
                 <div className="h-40 sm:h-48 w-full bg-gray-200 animate-pulse" />
@@ -379,6 +321,58 @@ export const PopularCourses = () => {
           </button>
         </div>
       </div>
+      <style jsx global>{`
+        .no-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+
+        .popular-mobile-swiper {
+          padding-bottom: 30px;
+          overflow: visible;
+        }
+
+        .popular-mobile-swiper .swiper-wrapper {
+          align-items: stretch;
+          transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .popular-mobile-slide {
+          width: 74vw;
+          max-width: 280px;
+          backface-visibility: hidden;
+          transform: translateZ(0);
+          transition: transform 560ms cubic-bezier(0.22, 1, 0.36, 1),
+            opacity 560ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .popular-mobile-swiper .swiper-slide {
+          opacity: 0.88;
+          transform: scale(0.9) translateY(10px);
+        }
+
+        .popular-mobile-swiper .swiper-slide-active {
+          opacity: 1;
+          transform: scale(1) translateY(0);
+        }
+
+        .popular-mobile-swiper .swiper-pagination {
+          bottom: 0 !important;
+        }
+
+        .popular-mobile-swiper .swiper-pagination-bullet {
+          width: 8px;
+          height: 8px;
+          background: #fca5a5;
+          opacity: 1;
+          margin: 0 4px !important;
+        }
+
+        .popular-mobile-swiper .swiper-pagination-bullet-active {
+          width: 20px;
+          border-radius: 9999px;
+          background: #ef4444;
+        }
+      `}</style>
     </section>
   );
 };
