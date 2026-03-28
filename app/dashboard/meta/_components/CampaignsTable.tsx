@@ -253,13 +253,25 @@ function fmtDate(val?: string) {
 function summarizeTargeting(t: any): string {
   if (!t) return '—';
   const parts: string[] = [];
-  if (t.age_min || t.age_max) parts.push(`Age ${t.age_min || '?'}-${t.age_max || '?'}`);
+  if (Array.isArray(t.age_range) && t.age_range.length >= 2) {
+    const [minAge, maxAge] = t.age_range;
+    parts.push(`Age ${minAge || '?'}-${maxAge || '?'}`);
+  } else if (t.age_min || t.age_max) {
+    parts.push(`Age ${t.age_min || '?'}-${t.age_max || '?'}`);
+  }
   if (t.genders?.length) {
     parts.push(t.genders.map((v: number) => (v === 1 ? 'M' : v === 2 ? 'F' : 'All')).join(', '));
   }
-  if (t.geo_locations?.countries?.length) parts.push(t.geo_locations.countries.join(', '));
   if (t.interests?.length) parts.push(`${t.interests.length} interest(s)`);
-  return parts.length ? parts.join(' • ') : '—';
+
+  const locationLine = t.geo_locations?.countries?.length
+    ? `Location: ${t.geo_locations.countries.join(', ')}`
+    : '';
+
+  if (!parts.length && !locationLine) return '—';
+  if (!locationLine) return parts.join(' • ');
+  if (!parts.length) return locationLine;
+  return `${parts.join(' • ')}\n${locationLine}`;
 }
 
 interface CampaignsTableProps {
@@ -946,7 +958,7 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
           onClick={closeCampaignModal}
         >
           <div
-            className="max-h-[92vh] w-full max-w-3xl overflow-hidden rounded-2xl bg-white shadow-2xl"
+            className="max-h-[80vh] w-full max-w-3xl overflow-hidden rounded-2xl bg-white shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 sm:px-5">
@@ -960,7 +972,7 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
               </button>
             </div>
 
-            <div className="no-scrollbar max-h-[calc(92vh-56px)] space-y-4 overflow-y-auto p-4 sm:p-5">
+            <div className="no-scrollbar max-h-[calc(80vh-56px)] space-y-4 overflow-y-auto p-4 sm:p-5">
               {(() => {
                 const derived = selectedCampaign.derived_status || {
                   label: selectedCampaign.effective_status?.replace(/_/g, ' ') || 'Unknown',
@@ -1265,7 +1277,7 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
                           <div className="mt-2 rounded-lg border border-gray-100 bg-gray-50 px-2.5 py-2">
                             <p className="text-[10px] uppercase tracking-wide text-gray-500">Optimization</p>
                             <p className="mt-0.5 text-xs font-medium text-gray-700">{adSet.optimization_goal?.replace(/_/g, ' ') || '—'}</p>
-                            <p className="mt-1 truncate text-[11px] text-gray-500">Targeting: {summarizeTargeting(adSet.targeting)}</p>
+                            <p className="mt-1 whitespace-pre-line text-[11px] text-gray-500">Targeting: {summarizeTargeting(adSet.targeting)}</p>
                           </div>
 
                           {adList.length > 0 ? (
