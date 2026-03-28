@@ -313,7 +313,7 @@ export function PublicPageLoadingSkeleton({
 
   if (variant === 'blog') {
     return (
-      <main className="min-h-screen bg-white pb-16 lg:pb-0">
+      <main className="min-h-screen bg-white pb-3 sm:pb-4 lg:pb-0">
         <HeroSkeleton />
         <section className="px-4 py-8">
           <div className="mx-auto grid max-w-7xl grid-cols-1 gap-8 lg:grid-cols-4">

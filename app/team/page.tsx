@@ -48,20 +48,22 @@ export default function TeamPage() {
         </div>
 
         {/* Filter Tabs */}
-        <div className="flex flex-wrap gap-2 px-4 pb-3">
-          {departments.map(dep => (
-            <button
-              key={dep}
-              onClick={() => setActiveTab(dep)}
-              className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${
-                activeTab === dep
-                  ? 'bg-white text-red-500 border-red-500'
-                  : 'text-gray-500 border-gray-200 bg-white hover:border-red-300'
-              }`}
-            >
-              {dep === 'all' ? (isBN ? 'সব' : 'All') : getDepartmentLabel(dep)}
-            </button>
-          ))}
+        <div className="px-4 pb-3">
+          <div className="flex gap-2 overflow-x-auto no-scrollbar whitespace-nowrap">
+            {departments.map(dep => (
+              <button
+                key={dep}
+                onClick={() => setActiveTab(dep)}
+                className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                  activeTab === dep
+                    ? 'bg-white text-red-500 border-red-500'
+                    : 'text-gray-500 border-gray-200 bg-white hover:border-red-300'
+                }`}
+              >
+                {dep === 'all' ? (isBN ? 'সব' : 'All') : getDepartmentLabel(dep)}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

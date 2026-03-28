@@ -361,7 +361,9 @@ export const Header = () => {
         </Link>
         <button
           onClick={() => setShowMoreDrawer(true)}
-          className="flex flex-col items-center justify-center gap-1 px-3 py-2 text-gray-500 transition-colors flex-1 min-w-0"
+          className={`flex flex-col items-center justify-center gap-1 px-3 py-2 transition-colors flex-1 min-w-0 ${
+            showMoreDrawer ? 'text-red-500' : 'text-gray-500 hover:text-red-500'
+          }`}
         >
           <Menu className="w-6 h-6" />
           <span className="text-[10px] font-medium">{t('nav_more')}</span>

@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { Phone, Mail, MessageSquare, MapPin, Clock } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAuth } from '@/lib/auth/context';
 import { useLanguage } from '@/lib/lang/LanguageContext';
 
 type ContactFormData = {
@@ -17,7 +19,9 @@ type ContactFormErrors = Partial<Record<keyof ContactFormData, string>>;
 
 export default function ContactPage() {
   const { language } = useLanguage();
+  const { isAuthenticated } = useAuth();
   const isBN = language === 'BN';
+  const chatHref = isAuthenticated ? '/dashboard/chat' : '/login?next=%2Fdashboard%2Fchat';
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState<ContactFormData>({
     fullName: '',
@@ -151,9 +155,13 @@ export default function ContactPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 max-w-4xl mx-auto">
             <div className="bg-white p-5 md:p-7 rounded-2xl border border-gray-100 hover:shadow-lg hover:border-red-100 transition-all card-reveal-left page-delay-1">
-              <div className="w-14 h-14 bg-red-500 rounded-xl flex items-center justify-center mx-auto mb-5">
+              <a
+                href="tel:+8801790939394"
+                aria-label={isBN ? 'ফোনে কল করুন' : 'Call on phone'}
+                className="w-14 h-14 bg-red-500 rounded-xl flex items-center justify-center mx-auto mb-5"
+              >
                 <Phone className="w-7 h-7 text-white" />
-              </div>
+              </a>
               <h3 className="text-lg font-bold text-gray-900 mb-2">{isBN ? 'ফোন করুন' : 'Call us'}</h3>
               <p className="text-gray-500 text-sm leading-relaxed">
                 <span className="text-red-500 font-semibold">+880 1790-939394</span><br />
@@ -162,9 +170,15 @@ export default function ContactPage() {
             </div>
 
             <div className="bg-white p-5 md:p-7 rounded-2xl border border-gray-100 hover:shadow-lg hover:border-red-100 transition-all card-reveal-right page-delay-2">
-              <div className="w-14 h-14 bg-red-500 rounded-xl flex items-center justify-center mx-auto mb-5">
+              <a
+                href="https://mail.google.com/mail/?view=cm&fs=1&to=hello@motionbooster.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={isBN ? 'জিমেইল কম্পোজ খুলুন' : 'Open Gmail compose'}
+                className="w-14 h-14 bg-red-500 rounded-xl flex items-center justify-center mx-auto mb-5"
+              >
                 <Mail className="w-7 h-7 text-white" />
-              </div>
+              </a>
               <h3 className="text-lg font-bold text-gray-900 mb-2">{isBN ? 'ইমেইল করুন' : 'Email us'}</h3>
               <p className="text-gray-500 text-sm leading-relaxed">
                 <a href="mailto:hello@motionbooster.com" className="text-red-500 font-semibold hover:text-red-600 transition-colors">
@@ -175,9 +189,13 @@ export default function ContactPage() {
             </div>
 
             <div className="bg-white p-5 md:p-7 rounded-2xl border border-gray-100 hover:shadow-lg hover:border-red-100 transition-all card-reveal-left page-delay-3">
-              <div className="w-14 h-14 bg-red-500 rounded-xl flex items-center justify-center mx-auto mb-5">
+              <Link
+                href={chatHref}
+                aria-label={isBN ? 'লাইভ চ্যাট খুলুন' : 'Open live chat'}
+                className="w-14 h-14 bg-red-500 rounded-xl flex items-center justify-center mx-auto mb-5"
+              >
                 <MessageSquare className="w-7 h-7 text-white" />
-              </div>
+              </Link>
               <h3 className="text-lg font-bold text-gray-900 mb-2">{isBN ? 'লাইভ চ্যাট' : 'Live chat'}</h3>
               <p className="text-gray-500 text-sm leading-relaxed">
                 {isBN ? 'আমাদের টিমের সাথে চ্যাট করুন' : 'Chat with our team'}<br />
@@ -199,8 +217,8 @@ export default function ContactPage() {
               <h2 className="text-3xl font-bold text-gray-900 mb-3 text-wave">{isBN ? 'ম্যাপে আমাদের খুঁজুন' : 'Find us on map'}</h2>
               <p className="text-gray-500 text-sm">
                 {isBN
-                  ? 'আমাদের অফিস নিউ মার্কেট, ঢাকায়। খোলা থাকে সোমবার থেকে শুক্রবার, সকাল ৯টা থেকে সন্ধ্যা ৬টা।'
-                  : 'Our office is in New Market, Dhaka. Open Monday to Friday, 9:00 AM to 6:00 PM.'}
+                  ? 'আমাদের অফিস নিউ মার্কেট, ঢাকা-১২০৫, বাংলাদেশে। খোলা থাকে সোমবার থেকে শুক্রবার, সকাল ৯টা থেকে সন্ধ্যা ৬টা।'
+                  : 'Our office is in New Market, Dhaka-1205, Bangladesh. Open Monday to Friday, 9:00 AM to 6:00 PM.'}
               </p>
             </div>
 
@@ -226,7 +244,7 @@ export default function ContactPage() {
                 <div>
                   <p className="text-gray-900 font-semibold text-sm">Motion Booster</p>
                   <p className="text-gray-500 text-xs">
-                    {isBN ? 'নিউ মার্কেট, ঢাকা, বাংলাদেশ' : 'New Market, Dhaka, Bangladesh'}
+                    {isBN ? 'নিউ মার্কেট, ঢাকা-১২০৫, বাংলাদেশ।' : 'New Market, Dhaka-1205, Bangladesh.'}
                   </p>
                 </div>
               </div>
@@ -238,7 +256,7 @@ export default function ContactPage() {
                 <MapPin className="w-5 h-5 text-red-500 shrink-0" />
                 <div>
                   <p className="text-xs text-gray-500 font-medium">{isBN ? 'ঠিকানা' : 'Address'}</p>
-                  <p className="text-sm font-semibold text-gray-800">{isBN ? 'নিউ মার্কেট, ঢাকা' : 'New Market, Dhaka'}</p>
+                  <p className="text-sm font-semibold text-gray-800">{isBN ? 'নিউ মার্কেট, ঢাকা-১২০৫, বাংলাদেশ।' : 'New Market, Dhaka-1205, Bangladesh.'}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3 bg-red-50 rounded-xl p-4">

@@ -474,7 +474,7 @@ export const defaultSettings: SiteSettings = {
   tagline: 'Accelerate Your Digital Growth',
   contactEmail: 'hello@motionbooster.com',
   contactPhone: '+880 1234-567890',
-  address: 'Dhaka, Bangladesh',
+  address: 'New Market, Dhaka-1205, Bangladesh.',
   facebookUrl: 'https://facebook.com/motionbooster',
   instagramUrl: 'https://instagram.com/motionbooster',
   linkedinUrl: 'https://linkedin.com/company/motionbooster',

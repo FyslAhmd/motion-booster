@@ -214,6 +214,8 @@ export const translations = {
     menu_faq: 'FAQ',
     menu_contact: 'Contact Us',
     menu_privacy: 'Privacy Policy',
+    menu_terms: 'Terms & Conditions',
+    menu_connect: 'Connect',
     menu_feedback: 'Feedback & Suggestions',
   },
 
@@ -433,6 +435,8 @@ export const translations = {
     menu_faq: 'সাধারণ প্রশ্ন',
     menu_contact: 'আমাদের সাথে যোগাযোগ করুন',
     menu_privacy: 'গোপনীয়তা নীতি',
+    menu_terms: 'শর্তাবলী',
+    menu_connect: 'যোগাযোগ',
     menu_feedback: 'মতামত ও পরামর্শ',
   },
 } as const;

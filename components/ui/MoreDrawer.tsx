@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   X, ChevronRight, Info, Users, Briefcase,
   HelpCircle, Phone, FileText, Image,
@@ -23,13 +24,14 @@ export const MoreDrawer = ({ open, onClose }: MoreDrawerProps) => {
 
   const menuItems = [
     { label: t('menu_about'), icon: Info, href: '/about' },
-    { label: t('menu_team'), icon: Users, href: '/team' },
-    { label: t('menu_services'), icon: Briefcase, href: '/service' },
+    { label: t('menu_contact'), icon: Phone, href: '/contact' },
     { label: t('menu_blog'), icon: FileText, href: '/blog' },
+    { label: t('menu_services'), icon: Briefcase, href: '/service' },
+    { label: t('menu_team'), icon: Users, href: '/team' },
     { label: t('menu_portfolio'), icon: Image, href: '/portfolio' },
     { label: t('menu_faq'), icon: HelpCircle, href: '/#faq' },
-    { label: t('menu_contact'), icon: Phone, href: '/contact' },
     { label: t('menu_privacy'), icon: FileText, href: '/privacy-policy' },
+    { label: isBN ? 'টার্মস অ্যান্ড কন্ডিশনস' : 'Terms & Conditions', icon: FileText, href: '/terms' },
   ];
   const userInitial = (user?.fullName || user?.username || user?.email || 'U').trim().charAt(0).toUpperCase();
   const userAvatarUrl = user?.avatarUrl?.trim() || '';
@@ -43,23 +45,34 @@ export const MoreDrawer = ({ open, onClose }: MoreDrawerProps) => {
   };
 
   return (
-    <>
-      {/* Backdrop */}
-      <div
-        className={`fixed inset-0 bg-black/40 z-190 transition-opacity duration-300 lg:hidden ${open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
-        onClick={onClose}
-      />
+    <AnimatePresence>
+      {open && (
+        <div className="fixed inset-0 z-200 lg:hidden">
+          {/* Backdrop */}
+          <motion.div
+            className="absolute inset-0 bg-black/50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.22, ease: 'easeOut' }}
+            onClick={onClose}
+          />
 
-      {/* Drawer - slides in from left */}
-      <div
-        className={`fixed inset-y-0 left-0 z-200 bg-white transition-transform duration-300 lg:hidden ${open ? 'translate-x-0 shadow-2xl pointer-events-auto' : '-translate-x-full shadow-none pointer-events-none'}`}
-        style={{ width: '80vw', maxWidth: '320px' }}
-      >
-        <div
-          className="h-full overflow-y-scroll overscroll-y-contain no-scrollbar scroll-smooth [touch-action:pan-y]"
-          style={{ WebkitOverflowScrolling: 'touch' }}
-          onTouchMove={(e) => e.stopPropagation()}
-        >
+          {/* Drawer - slides in from left */}
+          <motion.aside
+            className="absolute inset-y-0 left-0 bg-white shadow-2xl"
+            initial={{ x: '-100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '-100%' }}
+            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+            style={{ width: '80vw', maxWidth: '320px' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              className="h-full overflow-y-scroll overscroll-y-contain no-scrollbar scroll-smooth [touch-action:pan-y]"
+              style={{ WebkitOverflowScrolling: 'touch' }}
+              onTouchMove={(e) => e.stopPropagation()}
+            >
           {/* Close */}
           <button
             onClick={onClose}
@@ -123,35 +136,35 @@ export const MoreDrawer = ({ open, onClose }: MoreDrawerProps) => {
             </div>
           )}
 
-          {/* Language */}
-          <div className="px-4 border-b border-gray-100">
-            <div className="flex items-center justify-between py-3">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center">
-                  <Globe className="w-5 h-5 text-red-500" />
+            {/* Language */}
+            <div className="px-4 pt-2">
+              <div className="my-1 flex items-center justify-between rounded-xl px-3 py-3.5 border border-gray-100 bg-white">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center bg-gray-100">
+                    <Globe className="w-5 h-5 text-red-500" />
+                  </div>
+                  <span className="font-semibold text-sm text-gray-800">{isBN ? 'ভাষা' : 'Language'}</span>
                 </div>
-                <span className="font-semibold text-gray-800">{isBN ? 'ভাষা' : 'Language'}</span>
-              </div>
-              <div className="flex items-center bg-gray-100 rounded-full p-1 text-xs font-bold">
-                <button
-                  onClick={() => setLanguage('BN')}
-                  className={`px-2 py-0.5 rounded-full transition-colors ${
-                    language === 'BN' ? 'bg-white text-red-500 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-                  }`}
-                >
-                  BN
-                </button>
-                <button
-                  onClick={() => setLanguage('EN')}
-                  className={`px-2 py-0.5 rounded-full transition-colors ${
-                    language === 'EN' ? 'bg-white text-red-500 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-                  }`}
-                >
-                  EN
-                </button>
+                <div className="flex items-center bg-gray-100 rounded-full p-1 text-xs font-bold">
+                  <button
+                    onClick={() => setLanguage('BN')}
+                    className={`px-2 py-0.5 rounded-full transition-colors ${
+                      language === 'BN' ? 'bg-white text-red-500 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    বাং
+                  </button>
+                  <button
+                    onClick={() => setLanguage('EN')}
+                    className={`px-2 py-0.5 rounded-full transition-colors ${
+                      language === 'EN' ? 'bg-white text-red-500 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    EN
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
 
           {/* Menu Items */}
           <div className="px-4 py-2 divide-y divide-gray-100 pb-8">
@@ -178,8 +191,10 @@ export const MoreDrawer = ({ open, onClose }: MoreDrawerProps) => {
               );
             })}
           </div>
+            </div>
+          </motion.aside>
         </div>
-      </div>
-    </>
+      )}
+    </AnimatePresence>
   );
 };

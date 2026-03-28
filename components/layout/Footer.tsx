@@ -56,7 +56,7 @@ export const Footer = () => {
                   <MapPin className="w-5 h-5 text-[#FF2525] shrink-0 mt-0.5" />
                   <div className="text-gray-400 text-sm leading-relaxed">
                     {t('footer_head_office')}<br />
-                    New Market, Dhaka
+                    New Market, Dhaka-1205, Bangladesh.
                   </div>
                 </div>
                 <div className="flex items-start gap-3">

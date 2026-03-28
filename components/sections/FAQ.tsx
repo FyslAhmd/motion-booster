@@ -55,7 +55,7 @@ export const FAQ = () => {
   };
 
   return (
-    <section className="pt-0 pb-1 sm:pb-2 md:pb-4 lg:pb-4 bg-white page-reveal">
+    <section id="faq" className="scroll-mt-24 pt-0 pb-1 sm:pb-2 md:pb-4 lg:pb-4 bg-white page-reveal">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 text-center mb-8 sm:mb-10 md:mb-12 px-4 text-wave">
           {isBN ? 'আপনার সাধারণ প্রশ্নগুলোর উত্তর' : 'Answers to Your Frequently Asked Questions'}

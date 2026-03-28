@@ -85,7 +85,7 @@ export default function BlogPage() {
   });
 
   return (
-    <main className="min-h-screen bg-white pb-[calc(5.5rem+env(safe-area-inset-bottom))] lg:pb-0">
+    <main className="min-h-screen bg-white pb-[calc(12px+env(safe-area-inset-bottom))] sm:pb-[calc(16px+env(safe-area-inset-bottom))] lg:pb-0">
       {/* Header Section */}
       <section className="pt-12 sm:pt-18 md:pt-22 lg:pt-26 pb-5 sm:pb-7 lg:pb-9 bg-linear-to-br from-red-50 via-white to-rose-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center page-reveal">
@@ -102,7 +102,7 @@ export default function BlogPage() {
       </section>
 
       {/* Main Content */}
-      <section className="pt-3 pb-10 sm:pt-5 sm:pb-12 px-3 sm:px-4">
+      <section className="pt-3 pb-3 sm:pt-5 sm:pb-4 px-3 sm:px-4">
         <div className="max-w-7xl mx-auto">
           {loading ? (
             <BlogContentSkeleton />

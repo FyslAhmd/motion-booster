@@ -116,7 +116,7 @@ export default function AdminSettingsPage() {
             <Field label="Email Address" value={settings.contactEmail} onChange={set('contactEmail')} placeholder="hello@motionbooster.com" />
             <Field label="Phone Number" value={settings.contactPhone} onChange={set('contactPhone')} placeholder="+880 1234-567890" />
             <div className="sm:col-span-2">
-              <Field label="Address" value={settings.address} onChange={set('address')} placeholder="Dhaka, Bangladesh" />
+              <Field label="Address" value={settings.address} onChange={set('address')} placeholder="New Market, Dhaka-1205, Bangladesh." />
             </div>
           </div>
         </div>
