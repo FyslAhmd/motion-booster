@@ -8,7 +8,7 @@ export const FloatingCallButton = () => {
   const { t } = useLanguage();
   const [scrolled, setScrolled] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
-  const contactDesc = `You are welcome to visit our office for any\ninformation related to Service. You can also reach us\nthrough the hotline number or messenger.`;
+  const contactDesc = `You are welcome to visit our office for any information related to Service. You can also reach us through the hotline number or messenger.`;
 
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 

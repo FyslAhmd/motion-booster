@@ -125,7 +125,7 @@ export const Testimonials = () => {
   };
 
   return (
-    <section className="py-12 md:py-16 lg:py-14 bg-white overflow-hidden page-reveal">
+    <section className="py-4 md:py-16 bg-white overflow-hidden page-reveal">
       <style>{`
         .drag-scroll {
           scrollbar-width: none;

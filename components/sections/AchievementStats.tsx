@@ -110,7 +110,7 @@ export const AchievementStats = () => {
   return (
     <section
       ref={sectionRef}
-      className="bg-white py-8 md:py-12 lg:py-10 page-reveal"
+      className="bg-white py-8 md:py-12 page-reveal"
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
