@@ -75,14 +75,16 @@ const ServiceCategory: React.FC<ServiceCategoryProps> = ({ iconType, title, desc
         </div>
       )}
 
-      <div className="px-6 pb-5 pt-2 flex justify-end bg-white">
-        <Link
-          href="/login"
-          className="inline-flex items-center rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 transition-colors"
-        >
-          {ctaLabel}
-        </Link>
-      </div>
+      {isExpanded && (
+        <div className="px-6 pb-5 pt-2 flex justify-end bg-white">
+          <Link
+            href="/login"
+            className="inline-flex items-center rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 transition-colors"
+          >
+            {ctaLabel}
+          </Link>
+        </div>
+      )}
     </div>
   );
 };
@@ -131,13 +133,13 @@ export default function ServicePage() {
       <section className="py-8 sm:py-16 lg:pt-28 lg:pb-14 bg-linear-to-br from-red-50 via-white to-rose-50">
         <div className="max-w-7xl mx-auto px-6 md:px-8">
           <div className="text-center max-w-4xl mx-auto page-reveal">
-            <h1 className="text-3xl lg:text-5xl font-bold text-gray-900 mb-6 leading-tight">
+            <h1 className="text-xl lg:text-2xl font-bold text-gray-900 mb-6 leading-tight">
               {isBN ? 'সম্পূর্ণ ডিজিটাল সমাধান' : 'Complete Digital Solutions'}
-              <span className="block text-red-600">
+              <span className="block text-red-600 text-3xl lg:text-5xl">
                 {isBN ? 'এক ছাদের নিচে' : 'Under one roof'}
               </span>
             </h1>
-            <p className="text-xl text-gray-600 leading-relaxed mb-8 text-wave">
+            <p className="text-base md:text-2xl text-gray-600 leading-relaxed mb-8 text-wave">
               {isBN
                 ? 'স্ট্র্যাটেজি থেকে এক্সিকিউশন পর্যন্ত, আপনার ব্যবসার জন্য কাস্টমাইজড এন্ড-টু-এন্ড সার্ভিসে আমরা ডিজিটাল উপস্থিতি গড়ে তুলি ও সম্প্রসারণ করি।'
                 : 'From strategy to execution, we build and scale your digital presence with tailored end-to-end services.'}
@@ -145,13 +147,13 @@ export default function ServicePage() {
             <div className="flex gap-4 justify-center">
               <Link
                 href="/contact"
-                className="px-6 py-3 bg-red-500 text-white rounded-full font-semibold hover:bg-red-600 transition-colors shadow-lg"
+                className="inline-flex items-center justify-center text-center px-6 py-3 bg-red-500 text-white rounded-full font-semibold hover:bg-red-600 transition-colors shadow-lg"
               >
                 {isBN ? 'শুরু করুন' : 'Get Started'}
               </Link>
               <Link
                 href="/about"
-                className="px-6 py-3 bg-white text-gray-900 rounded-full font-semibold border-2 border-gray-200 hover:border-red-500 hover:text-red-600 transition-colors"
+                className="inline-flex items-center justify-center text-center px-6 py-3 bg-white text-gray-900 rounded-full font-semibold border-2 border-gray-200 hover:border-red-500 hover:text-red-600 transition-colors"
               >
                 {isBN ? 'আরও জানুন' : 'Learn More'}
               </Link>
@@ -161,13 +163,13 @@ export default function ServicePage() {
       </section>
 
       {/* Services Section */}
-      <section className="pt-10 pb-14 sm:py-16 lg:pt-12 lg:pb-16 bg-white">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="text-center mb-16 page-reveal page-delay-1">
-            <h2 className="text-3xl lg:text-5xl font-bold text-gray-900 mb-4">
+      <section className="py-4 md:py-8 bg-white">
+        <div className="max-w-7xl mx-auto lg:px-8">
+          <div className="text-center mb-4 page-reveal page-delay-1">
+            <h2 className="px-6 text-2xl lg:text-5xl font-bold text-gray-900 mb-4">
               {isBN ? 'আমাদের সেবাসমূহ' : 'Our Services'}
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p className="text-base md:text-xl text-gray-600 max-w-3xl mx-auto">
               {isBN
                 ? 'আমরা কী কী সেবা দিই তা দেখতে যেকোনো ক্যাটাগরিতে ক্লিক করুন'
                 : 'Click any category to explore what we offer'}
