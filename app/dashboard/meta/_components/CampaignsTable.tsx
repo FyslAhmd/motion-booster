@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Search, Filter, ChevronLeft, ChevronRight, X, Loader2 } from 'lucide-react';
+import { Search, Filter, ChevronLeft, ChevronRight, X, Loader2, CalendarDays } from 'lucide-react';
 import AssignUserDropdown from './AssignUserDropdown';
 import { toast } from 'sonner';
 import { createPortal } from 'react-dom';
@@ -1015,14 +1015,14 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
               })()}
 
               <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                <div className="mb-4 flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
                   <h4 className="text-sm font-semibold text-gray-900">Campaign Insights</h4>
-                  <div className="flex gap-1 rounded-lg bg-gray-100 p-1">
+                  <div className="grid w-full grid-cols-5 gap-1 rounded-lg bg-gray-100 p-1">
                     {[
                       { value: 'today', label: 'Today' },
                       { value: 'last_7d', label: '7 Days' },
                       { value: 'last_30d', label: '30 Days' },
-                      { value: 'maximum', label: 'Maximum' },
+                      { value: 'maximum', label: 'Max' },
                       { value: 'custom', label: 'Custom' },
                     ].map((tab) => (
                       <button
@@ -1045,13 +1045,20 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
                           setInsightDatePreset(tab.value);
                           fetchInsights(selectedCampaign.id, tab.value);
                         }}
-                        className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                        className={`w-full min-w-0 rounded-md px-1.5 py-1.5 text-[11px] font-medium whitespace-nowrap transition-colors sm:px-3 sm:text-xs ${
                           insightDatePreset === tab.value
                             ? 'bg-white text-gray-900 shadow-sm'
                             : 'text-gray-500 hover:text-gray-700'
                         }`}
+                        aria-label={tab.value === 'custom' ? 'Custom date range' : tab.label}
                       >
-                        {tab.label}
+                        {tab.value === 'custom' ? (
+                          <span className="flex items-center justify-center">
+                            <CalendarDays className="h-4 w-4 text-black" />
+                          </span>
+                        ) : (
+                          tab.label
+                        )}
                       </button>
                     ))}
                   </div>
