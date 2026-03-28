@@ -254,14 +254,14 @@ export default function FeaturesPageEN() {
     },
   ];
 
-  const filteredFeatures = activeCategory === 'all' 
-    ? features 
+  const filteredFeatures = activeCategory === 'all'
+    ? features
     : features.filter(f => f.category === activeCategory);
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white pt-10 md:pt-40">
       {/* Hero Section */}
-      <section className="pt-14 pb-10 lg:pt-28 lg:pb-14 bg-linear-to-br from-red-50 via-white to-rose-50">
+      <section className="pb-10 md:pb-14">
         <div className="max-w-7xl mx-auto px-6 lg:px-8 text-center page-reveal">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 rounded-full text-sm font-medium mb-6">
             <Rocket className="w-4 h-4" />

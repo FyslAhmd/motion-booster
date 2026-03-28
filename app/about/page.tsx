@@ -173,32 +173,32 @@ export default function AboutPage() {
       ];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white pt-10 sm:pt-14 md:pt-40">
       {/* Hero Section */}
-      <section className="pt-10 sm:pt-14 lg:pt-32 pb-10 sm:pb-12 lg:pb-16 bg-linear-to-br from-red-50 via-white to-rose-50">
+      <section className="pb-10 sm:pb-12 lg:pb-16 bg-linear-to-br from-red-50 via-white to-rose-50">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="text-center max-w-4xl mx-auto page-reveal">
-            <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
+            <h1 className="text-xl lg:text-3xl font-bold text-gray-900 mb-3">
               {isBN ? 'আমরা তৈরি করি এমন সফটওয়্যার' : 'We build software'}
-              <span className="block text-red-500">
+              <span className="block text-red-500 text-3xl lg:text-5xl mt-1">
                 {isBN ? 'যা ব্যবসাকে এগিয়ে নেয়' : 'that drives business forward'}
               </span>
             </h1>
-            <p className="text-xl text-gray-600 leading-relaxed mb-8 text-wave">
+            <p className="text-base md:text-xl text-gray-600 leading-relaxed mb-3 text-wave">
               {isBN
                 ? 'আমরা একটি উদ্যমী সফটওয়্যার টিম, যারা উদ্ভাবনী সমাধানের মাধ্যমে ব্যবসাকে ডিজিটাল যুগে সফল হতে সহায়তা করে।'
                 : 'We are a passionate software team helping businesses succeed in the digital era through innovative solutions.'}
             </p>
-            <div className="flex flex-wrap gap-4 justify-center">
+            <div className="flex gap-4 justify-center">
               <Link
                 href="/contact"
-                className="px-8 py-4 bg-red-500 text-white rounded-full font-semibold hover:bg-red-600 transition-colors"
+                className="inline-flex items-center justify-center px-4 py-2 text-center md:px-8 md:py-6 bg-red-500 text-white rounded-full font-semibold hover:bg-red-600 transition-colors"
               >
                 {isBN ? 'যোগাযোগ করুন' : 'Contact Us'}
               </Link>
               <Link
                 href="/service"
-                className="px-8 py-4 bg-white text-gray-900 rounded-full font-semibold border-2 border-gray-200 hover:border-gray-300 transition-colors"
+                className="inline-flex items-center justify-center px-4 py-2 text-center md:px-8 md:py-6 bg-white text-gray-900 rounded-full font-semibold border-2 border-gray-200 hover:border-gray-300 transition-colors"
               >
                 {isBN ? 'আমাদের সেবাসমূহ' : 'Our Services'}
               </Link>

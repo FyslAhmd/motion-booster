@@ -9,7 +9,7 @@ export default function Home() {
   const isBN = language === 'BN';
 
   return (
-    <main className="home-page min-h-screen bg-white pb-10 sm:pb-12 lg:pb-0">
+    <main className="home-page min-h-screen bg-white pb-10 sm:pb-12 lg:pb-0 pt-0 md:pt-10">
       <WelcomeModal />
       {/* Mobile: HeroSlider, Desktop: HeaderBanner */}
       <div className="home-hero-mobile lg:hidden page-reveal">

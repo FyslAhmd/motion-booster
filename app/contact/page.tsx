@@ -139,12 +139,12 @@ export default function ContactPage() {
     <main className="min-h-screen bg-white pb-[calc(2.8rem+env(safe-area-inset-bottom))] lg:pb-0">
 
       {/* Hero */}
-      <section className="pt-10 pb-10 md:pt-14 md:pb-14 lg:pt-32 bg-linear-to-br from-red-50 via-white to-rose-50">
+      <section className="pt-10 pb-10 md:pt-40 md:pb-14 bg-linear-to-br from-red-50 via-white to-rose-50">
         <div className="max-w-7xl mx-auto px-6 lg:px-8 text-center page-reveal">
           <span className="inline-block px-4 py-1.5 bg-red-100 text-red-600 rounded-full text-sm font-semibold mb-4 lg:hidden">
             {isBN ? 'যোগাযোগ' : 'Contact'}
           </span>
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 text-wave">
+          <h1 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4 text-wave">
             {isBN ? 'আমাদের সাথে যোগাযোগ করুন' : 'Get in touch with us'}
           </h1>
           <p className="text-gray-600 mb-6 md:mb-10 max-w-2xl mx-auto text-wave">
