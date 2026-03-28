@@ -36,8 +36,6 @@ export const HeroSlider = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="h-50 md:h-70 lg:h-80 rounded-xl bg-gray-200 animate-pulse" />
           <div className="mt-4 flex items-center gap-3">
-            <div className="h-12 flex-1 rounded-xl bg-gray-200 animate-pulse" />
-            <div className="h-12 flex-1 rounded-xl bg-gray-200 animate-pulse" />
           </div>
         </div>
       </section>
