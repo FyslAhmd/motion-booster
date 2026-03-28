@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { useLanguage } from '@/lib/lang/LanguageContext';
-import { motion } from 'framer-motion';
+import { motion, useAnimationControls } from 'framer-motion';
 
 interface FeatureCardProps {
   icon: React.ReactNode;
@@ -15,32 +15,42 @@ interface FeatureCardProps {
 }
 
 const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, description, iconColor, delay = 0, t }) => {
+  const iconControls = useAnimationControls();
+
+  const triggerIconFlip = () => {
+    iconControls.start({
+      rotateY: [0, 180, 360],
+      transition: { duration: 0.85, ease: 'easeInOut' },
+    });
+  };
+
   return (
     <div
       className="feature-card bg-white border border-gray-100 rounded-2xl sm:rounded-3xl p-4 sm:p-8 flex flex-col items-start text-left h-full hover:shadow-xl transition-all duration-300 group min-h-0 sm:min-h-70 hover:border-red-100"
       style={{ animationDelay: `${Math.round(delay * 1000)}ms` }}
+      onMouseEnter={triggerIconFlip}
+      onClick={triggerIconFlip}
     >
       {/* Icon */}
       <div className={`w-12 h-12 sm:w-16 sm:h-16 ${iconColor} rounded-xl sm:rounded-2xl flex items-center justify-center mb-3 sm:mb-6 transition-transform duration-300`}>
         <motion.div
-          whileHover={{ rotateY: 180 }}
-          transition={{ duration: 0.5, ease: 'easeInOut' }}
+          animate={iconControls}
           style={{ transformStyle: 'preserve-3d' }}
         >
           {icon}
         </motion.div>
       </div>
-      
+
       {/* Title */}
       <h3 className="text-gray-900 text-lg sm:text-xl font-bold mb-2 sm:mb-4">
         {title}
       </h3>
-      
+
       {/* Description */}
       <p className="text-gray-500 text-sm sm:text-base leading-snug sm:leading-relaxed mb-3 sm:mb-6 grow">
         {description}
       </p>
-      
+
       {/* Learn More Link */}
       <Link href="/service" className="text-red-500 font-semibold flex items-center gap-2 hover:text-red-600 group-hover:gap-4 transition-all mt-1 sm:mt-auto">
         {t('features_learn_more')}
@@ -119,7 +129,7 @@ export const Features = () => {
         {/* Feature Cards Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
           {allFeatures.map((feature, index) => (
-            <div 
+            <div
               key={index}
               className={index % 2 === 0 ? 'card-reveal-left' : 'card-reveal-right'}
               style={{ animationDelay: `${Math.min(index * 80, 280)}ms` }}
