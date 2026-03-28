@@ -47,7 +47,6 @@ export const Footer = () => {
                 </a>
               </div>
             </div>
-
             {/* Contact */}
             <div className="card-reveal-right page-delay-1">
               <h3 className="text-white font-bold text-lg mb-6 text-wave">{t('footer_contact')}</h3>
