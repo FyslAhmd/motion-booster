@@ -1008,7 +1008,7 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
                     <div className="mt-3 space-y-1.5 text-sm text-gray-600">
                       <p>Budget: <span className="font-medium text-gray-800">{campaignBudgetLabel(selectedCampaign)}</span></p>
                       <p>Date Range: <span className="font-medium text-gray-800">{campaignDateRangeLabel(selectedCampaign)}</span></p>
-                      <p>Created: <span className="font-medium text-gray-800">{fmtDate(selectedCampaign.created_time)}</span></p>
+                      {/* <p>Created: <span className="font-medium text-gray-800">{fmtDate(selectedCampaign.created_time)}</span></p> */}
                     </div>
                   </div>
                 );

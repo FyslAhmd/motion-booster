@@ -353,6 +353,14 @@ function fmtBDT(n: number) {
   );
 }
 
+function fmtUSD(n: number) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 2,
+  }).format(n);
+}
+
 export default function DashboardPage() {
   const { user } = useAuth();
   const isAdmin = user?.role === "ADMIN";
@@ -613,20 +621,20 @@ export default function DashboardPage() {
     },
     {
       label: "Daily Spend",
-      value: dailySpendUSD != null ? fmtBDT(dailySpendUSD * BDT_RATE) : "—",
+      value: dailySpendUSD != null ? fmtUSD(dailySpendUSD) : "—",
       icon: TrendingUp,
       color: "text-green-600",
       bg: "bg-green-50",
     },
     {
-      label: "Advance",
+      label: "Advance Payment",
       value: advanceValue,
       icon: DollarSign,
       color: "text-green-600",
       bg: "bg-green-50",
     },
     {
-      label: "Due",
+      label: "Due Amount",
       value: dueValue,
       icon: DollarSign,
       color: "text-red-600",
@@ -768,7 +776,7 @@ export default function DashboardPage() {
         )}
 
         {/* Main Dashboard Content */}
-        <div className="max-w-7xl mx-auto px-3 py-3 sm:p-6 space-y-4 sm:space-y-6">
+        <div className="max-w-7xl mx-auto py-3 sm:p-6 space-y-4 sm:space-y-6">
           {adminStatsLoading || metaSummaryLoading || budgetSummaryLoading ? (
             <DashboardQuickStatsSkeleton />
           ) : (
