@@ -14,7 +14,9 @@ export default function TermsPage() {
       <div className="bg-linear-to-r from-red-500 to-red-600 text-white pt-20 pb-12 md:pt-24 md:pb-16 lg:pt-32 lg:pb-20">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-center mb-4">
-            <FileText className="w-12 h-12 md:w-16 md:h-16" />
+            <div className="w-16 h-16 md:w-20 md:h-20 rounded-full border-2 border-white/70 bg-white/10 flex items-center justify-center">
+              <FileText className="w-9 h-9 md:w-11 md:h-11" />
+            </div>
           </div>
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-center mb-4">
             Terms &amp; Conditions
@@ -96,7 +98,8 @@ export default function TermsPage() {
         </section>
 
         <section className="bg-white rounded-2xl border border-gray-100 p-6 md:p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-3">
+          <h2 className="text-2xl font-bold text-gray-900 mb-3 flex items-center gap-2">
+            <FileText className="w-6 h-6 text-red-500" />
             5. Payments, Refunds, and Cancellations
           </h2>
           <p className="text-gray-600 leading-relaxed mb-3">
@@ -109,7 +112,8 @@ export default function TermsPage() {
         </section>
 
         <section className="bg-white rounded-2xl border border-gray-100 p-6 md:p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-3">
+          <h2 className="text-2xl font-bold text-gray-900 mb-3 flex items-center gap-2">
+            <Shield className="w-6 h-6 text-blue-500" />
             6. Intellectual Property
           </h2>
           <p className="text-gray-600 leading-relaxed">
@@ -119,7 +123,8 @@ export default function TermsPage() {
         </section>
 
         <section className="bg-white rounded-2xl border border-gray-100 p-6 md:p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-3">
+          <h2 className="text-2xl font-bold text-gray-900 mb-3 flex items-center gap-2">
+            <AlertTriangle className="w-6 h-6 text-orange-500" />
             7. Limitation of Liability
           </h2>
           <p className="text-gray-600 leading-relaxed">
@@ -130,7 +135,8 @@ export default function TermsPage() {
         </section>
 
         <section className="bg-white rounded-2xl border border-gray-100 p-6 md:p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-3">
+          <h2 className="text-2xl font-bold text-gray-900 mb-3 flex items-center gap-2">
+            <CheckCircle className="w-6 h-6 text-green-500" />
             8. Updates to Terms
           </h2>
           <p className="text-gray-600 leading-relaxed">

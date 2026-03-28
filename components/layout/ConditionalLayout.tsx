@@ -12,7 +12,7 @@ export const ConditionalLayout = ({ children }: { children: React.ReactNode }) =
   // Hide Header and Footer on dashboard, admin, and forgot-password routes
   const isDashboard = pathname?.startsWith('/dashboard');
   const isAdmin = pathname?.startsWith('/admin');
-  const isForgotPassword = pathname === '/forgot-password';
+  const isForgotPassword = pathname?.startsWith('/forgot-password');
   const isInvoice = pathname === '/invoice';
 
   const shouldHideLayout = isDashboard || isAdmin || isForgotPassword || isInvoice;

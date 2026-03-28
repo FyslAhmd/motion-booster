@@ -8,13 +8,56 @@ import { useLanguage } from '@/lib/lang/LanguageContext';
 export default function ForgotPasswordPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
+  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { language } = useLanguage();
   const isBN = language === 'BN';
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim()) return;
-    router.push(`/forgot-password/verify?email=${encodeURIComponent(email.trim())}`);
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail) return;
+
+    setError('');
+    setIsSubmitting(true);
+
+    try {
+      const res = await fetch('/api/v1/auth/forgot-password/request-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: normalizedEmail }),
+      });
+
+      let payload: { error?: string; data?: { resetToken?: string } } | null = null;
+      try {
+        payload = await res.json();
+      } catch {
+        payload = null;
+      }
+
+      if (!res.ok) {
+        setError(
+          payload?.error ||
+            (isBN ? 'OTP পাঠানো যায়নি। আবার চেষ্টা করুন।' : 'Failed to send OTP. Please try again.')
+        );
+        return;
+      }
+
+      const resetToken = payload?.data?.resetToken;
+      if (resetToken && typeof window !== 'undefined') {
+        sessionStorage.setItem(`forgot_password_reset_token:${normalizedEmail}`, resetToken);
+      }
+
+      router.push(`/forgot-password/verify?email=${encodeURIComponent(normalizedEmail)}`);
+    } catch {
+      setError(
+        isBN
+          ? 'নেটওয়ার্ক সমস্যা হয়েছে। আবার চেষ্টা করুন।'
+          : 'Network error. Please try again.'
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -29,6 +72,12 @@ export default function ForgotPasswordPage() {
               {isBN ? 'ইমেইল দিন, আমরা ভেরিফিকেশন কোড পাঠাব।' : 'Enter your email to receive a verification code.'}
             </p>
           </div>
+
+          {error && (
+            <div className="mb-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {error}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="relative">
@@ -62,9 +111,12 @@ export default function ForgotPasswordPage() {
 
             <button
               type="submit"
-              className="w-full py-3.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-full transition-all focus:outline-none focus:ring-4 focus:ring-red-200"
+              disabled={isSubmitting}
+              className="w-full py-3.5 bg-red-600 hover:bg-red-700 disabled:bg-red-400 disabled:cursor-not-allowed text-white font-semibold rounded-full transition-all focus:outline-none focus:ring-4 focus:ring-red-200"
             >
-              {isBN ? 'কোড পাঠান' : 'Send Code'}
+              {isSubmitting
+                ? (isBN ? 'পাঠানো হচ্ছে...' : 'Sending...')
+                : (isBN ? 'কোড পাঠান' : 'Send Code')}
             </button>
           </form>
 

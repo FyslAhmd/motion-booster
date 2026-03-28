@@ -13,7 +13,7 @@ const usernameSchema = z
   )
   .transform((v) => v.toLowerCase());
 
-const emailSchema = z
+export const emailSchema = z
   .string()
   .trim()
   .min(1, 'Email is required')
@@ -41,7 +41,7 @@ const phoneSchema = z
     'Please enter a valid phone number (digits, spaces, +, -, () allowed)'
   );
 
-const passwordSchema = z
+export const passwordSchema = z
   .string()
   .min(8, 'Password must be at least 8 characters')
   .max(128, 'Password must be at most 128 characters')
