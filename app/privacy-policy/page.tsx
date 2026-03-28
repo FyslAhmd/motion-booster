@@ -36,8 +36,8 @@ export default function PrivacyPolicy() {
         {/* Quick Summary Banner */}
         <section className="mb-10 md:mb-12">
           <div className="bg-green-50 border border-green-200 rounded-2xl p-6 md:p-8">
-            <h2 className="text-xl font-bold text-green-900 mb-4 flex items-center gap-2">
-              <CheckCircle className="w-6 h-6 text-green-600" />
+            <h2 className="text-xl font-bold text-green-900 mb-4 flex items-start gap-2">
+              <CheckCircle className="w-6 h-6 shrink-0 mt-1 text-green-600" />
               Privacy at a Glance
             </h2>
             <div className="grid gap-3 sm:grid-cols-2">
@@ -61,8 +61,8 @@ export default function PrivacyPolicy() {
         {/* 1 — Introduction */}
         <section className="mb-10 md:mb-12">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+            <div className="flex items-start gap-3 mb-4">
+              <div className="w-12 h-12 shrink-0 bg-red-100 rounded-full flex items-center justify-center">
                 <Shield className="w-6 h-6 text-red-500" />
               </div>
               <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
@@ -85,8 +85,8 @@ export default function PrivacyPolicy() {
         {/* 2 — No Data Collection */}
         <section className="mb-10 md:mb-12">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+            <div className="flex items-start gap-3 mb-4">
+              <div className="w-12 h-12 shrink-0 bg-red-100 rounded-full flex items-center justify-center">
                 <Ban className="w-6 h-6 text-red-500" />
               </div>
               <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
@@ -116,8 +116,8 @@ export default function PrivacyPolicy() {
         {/* 3 — No Data Selling or Sharing */}
         <section className="mb-10 md:mb-12">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+            <div className="flex items-start gap-3 mb-4">
+              <div className="w-12 h-12 shrink-0 bg-blue-100 rounded-full flex items-center justify-center">
                 <ShieldCheck className="w-6 h-6 text-blue-500" />
               </div>
               <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
@@ -149,8 +149,8 @@ export default function PrivacyPolicy() {
         {/* 4 — No Cookies or Tracking */}
         <section className="mb-10 md:mb-12">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+            <div className="flex items-start gap-3 mb-4">
+              <div className="w-12 h-12 shrink-0 bg-orange-100 rounded-full flex items-center justify-center">
                 <Ban className="w-6 h-6 text-orange-500" />
               </div>
               <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
@@ -178,8 +178,8 @@ export default function PrivacyPolicy() {
         {/* 5 — No Third-Party Services */}
         <section className="mb-10 md:mb-12">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+            <div className="flex items-start gap-3 mb-4">
+              <div className="w-12 h-12 shrink-0 bg-purple-100 rounded-full flex items-center justify-center">
                 <Globe className="w-6 h-6 text-purple-500" />
               </div>
               <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
@@ -207,8 +207,8 @@ export default function PrivacyPolicy() {
         {/* 6 — Data Security */}
         <section className="mb-10 md:mb-12">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+            <div className="flex items-start gap-3 mb-4">
+              <div className="w-12 h-12 shrink-0 bg-green-100 rounded-full flex items-center justify-center">
                 <Lock className="w-6 h-6 text-green-500" />
               </div>
               <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
@@ -233,8 +233,8 @@ export default function PrivacyPolicy() {
         {/* 7 — User Rights */}
         <section className="mb-10 md:mb-12">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
+            <div className="flex items-start gap-3 mb-4">
+              <div className="w-12 h-12 shrink-0 bg-indigo-100 rounded-full flex items-center justify-center">
                 <UserCheck className="w-6 h-6 text-indigo-500" />
               </div>
               <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
@@ -263,8 +263,8 @@ export default function PrivacyPolicy() {
         {/* 8 — Children's Privacy */}
         <section className="mb-10 md:mb-12">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-pink-100 rounded-full flex items-center justify-center">
+            <div className="flex items-start gap-3 mb-4">
+              <div className="w-12 h-12 shrink-0 bg-pink-100 rounded-full flex items-center justify-center">
                 <UserCheck className="w-6 h-6 text-pink-500" />
               </div>
               <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
@@ -284,8 +284,8 @@ export default function PrivacyPolicy() {
         {/* 9 — External Links */}
         <section className="mb-10 md:mb-12">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-cyan-100 rounded-full flex items-center justify-center">
+            <div className="flex items-start gap-3 mb-4">
+              <div className="w-12 h-12 shrink-0 bg-cyan-100 rounded-full flex items-center justify-center">
                 <Globe className="w-6 h-6 text-cyan-600" />
               </div>
               <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
@@ -304,8 +304,8 @@ export default function PrivacyPolicy() {
         {/* 10 — Data Retention */}
         <section className="mb-10 md:mb-12">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center">
+            <div className="flex items-start gap-3 mb-4">
+              <div className="w-12 h-12 shrink-0 bg-slate-100 rounded-full flex items-center justify-center">
                 <Lock className="w-6 h-6 text-slate-600" />
               </div>
               <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
@@ -323,8 +323,8 @@ export default function PrivacyPolicy() {
         {/* 11 — Changes */}
         <section className="mb-10 md:mb-12">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-violet-100 rounded-full flex items-center justify-center">
+            <div className="flex items-start gap-3 mb-4">
+              <div className="w-12 h-12 shrink-0 bg-violet-100 rounded-full flex items-center justify-center">
                 <FileText className="w-6 h-6 text-violet-600" />
               </div>
               <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
@@ -343,8 +343,8 @@ export default function PrivacyPolicy() {
         {/* 12 — Governing Law */}
         <section className="mb-10 md:mb-12">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center">
+            <div className="flex items-start gap-3 mb-4">
+              <div className="w-12 h-12 shrink-0 bg-amber-100 rounded-full flex items-center justify-center">
                 <ShieldCheck className="w-6 h-6 text-amber-600" />
               </div>
               <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
@@ -361,8 +361,8 @@ export default function PrivacyPolicy() {
         {/* Contact Us */}
         <section className="mb-10 md:mb-12">
           <div className="bg-linear-to-r from-red-500 to-red-600 text-white rounded-2xl shadow-lg p-6 md:p-8">
-            <h2 className="text-2xl md:text-3xl font-bold mb-4 flex items-center gap-2">
-              <Mail className="w-7 h-7 text-white" />
+            <h2 className="text-2xl md:text-3xl font-bold mb-4 flex items-start gap-2">
+              <Mail className="w-7 h-7 shrink-0 mt-1 text-white" />
               13. Contact Us
             </h2>
             <p className="mb-6 text-red-50">

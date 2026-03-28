@@ -16,6 +16,20 @@ interface FieldErrors {
   password?: string;
 }
 
+interface LoginResponse {
+  data?: {
+    accessToken?: string;
+    user?: ({ role?: string } & Record<string, unknown>) | null;
+  };
+  error?: {
+    message?: string;
+    details?: {
+      fields?: FieldErrors;
+    };
+  };
+  message?: string;
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const { login, isAuthenticated, isLoading } = useAuth();
@@ -119,7 +133,7 @@ export default function LoginPage() {
         body: JSON.stringify(formData),
       });
 
-      let data: any = null;
+      let data: LoginResponse | null = null;
       try {
         data = await res.json();
       } catch {
@@ -141,7 +155,7 @@ export default function LoginPage() {
 
       // Store auth state and redirect
       if (data?.data?.accessToken && data?.data?.user) {
-        login(data.data.accessToken, data.data.user);
+        login(data.data.accessToken, data.data.user as Parameters<typeof login>[1]);
       }
 
       toast.success(isBN ? 'লগইন সফল হয়েছে' : 'Login successful');
@@ -161,8 +175,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-red-50 to-white flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md -mt-3 lg:mt-0">
+    <div className="min-h-[calc(100dvh-11rem)] md:min-h-screen bg-linear-to-br from-red-50 to-white flex items-start md:items-center justify-center px-4 pt-20 pb-12 md:py-12">
+      <div className="w-full max-w-md lg:mt-0">
         <div className="bg-white rounded-3xl shadow-md p-8 md:p-10">
           {/* Header */}
           <div className="text-center mb-8">

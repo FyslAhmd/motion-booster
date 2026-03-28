@@ -1,15 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
 import { useLanguage } from '@/lib/lang/LanguageContext';
-import { Phone, X, ArrowUp } from 'lucide-react';
+import { Phone, X, ArrowUp, Headset } from 'lucide-react';
 
 export const FloatingCallButton = () => {
   const { t } = useLanguage();
   const [scrolled, setScrolled] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
-  const contactDesc = `You are welcome to visit our office for any information related to Service. You can also reach us through the hotline number or messenger.`;
 
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
@@ -40,14 +38,7 @@ export const FloatingCallButton = () => {
             className="floating-call-bob flex h-12 w-12 items-center justify-center rounded-full bg-red-500 shadow-lg transition-colors hover:bg-red-600"
             aria-label={t('floating_call_phone_aria')}
           >
-            <Image
-              src="/customer-servicee.png"
-              alt=""
-              aria-hidden="true"
-              width={50}
-              height={50}
-              className="h-8 w-8 object-contain"
-            />
+            <Headset className="h-5 w-5 text-white" />
           </button>
         ) : (
           <button
@@ -55,14 +46,7 @@ export const FloatingCallButton = () => {
             className="floating-call-bob flex items-center gap-2 rounded-full bg-red-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-red-600"
             aria-label="Contact us"
           >
-            <Image
-              src="/customer-servicee.png"
-              alt=""
-              aria-hidden="true"
-              width={50}
-              height={50}
-              className="h-6 w-6 object-contain"
-            />
+            <Headset className="h-4 w-4" />
             <span>{t('contact_badge')}</span>
           </button>
         )}
@@ -88,17 +72,15 @@ export const FloatingCallButton = () => {
             </button>
 
             <h3 className="mb-2 text-xl font-bold text-gray-900">{t('floating_call_title')}</h3>
-            <p className="mx-auto mb-4 text-sm leading-relaxed text-gray-500 whitespace-pre-line">
-              {contactDesc}
+            <p className="mb-4 text-sm text-gray-500 leading-relaxed">
+              {t('floating_call_desc')}
             </p>
 
             {/* Call icon image */}
             <div className="mb-5 flex justify-center">
-              <Image
+              <img
                 src="/call-icon.png"
                 alt="Contact support"
-                width={128}
-                height={128}
                 className="h-32 w-32 object-contain"
               />
             </div>

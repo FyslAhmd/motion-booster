@@ -78,10 +78,10 @@ const ServiceCategory: React.FC<ServiceCategoryProps> = ({ iconType, title, desc
       )}
 
       {isExpanded && (
-        <div className="px-6 pb-5 pt-2 flex justify-end bg-gray-50">
+        <div className="px-6 pb-5 pt-2 flex justify-center bg-gray-50">
           <Link
             href={ctaHref}
-            className="inline-flex items-center rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 transition-colors"
+            className="inline-flex min-w-40 items-center justify-center rounded-full bg-red-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-red-700 transition-colors"
           >
             {ctaLabel}
           </Link>
@@ -132,9 +132,9 @@ export default function ServicePage() {
       ];
 
   return (
-    <main className="min-h-screen bg-gray-50 pt-10 md:pt-40">
+    <main className="min-h-screen bg-gray-50 pt-0 md:pt-40">
       {/* Hero Section */}
-      <section className="pb-10 md:pb-14 bg-linear-to-br from-red-50 via-white to-rose-50">
+      <section className="pt-5 pb-10 md:pt-0 md:pb-14 bg-linear-to-br from-red-50 via-white to-rose-50">
         <div className="max-w-7xl mx-auto px-6 md:px-8">
           <div className="text-center max-w-4xl mx-auto page-reveal">
             <h1 className="text-xl lg:text-2xl font-bold text-gray-900 mb-6 leading-tight">
@@ -185,7 +185,11 @@ export default function ServicePage() {
           ) : (
             <div className="space-y-6">
               {serviceCategories.map((category, index) => (
-                <div key={category.id} className={index % 2 === 0 ? 'card-reveal-left' : 'card-reveal-right'} style={{ animationDelay: `${index * 90}ms` }}>
+                <div
+                  key={category.id}
+                  className={`${index % 2 === 0 ? 'card-reveal-left' : 'card-reveal-right'} mx-auto w-[88%] md:w-full`}
+                  style={{ animationDelay: `${index * 90}ms` }}
+                >
                   <ServiceCategory
                     iconType={category.category}
                     title={pickLocalizedText(language, category.title, category.titleBn)}

@@ -23,6 +23,8 @@ export const Header = () => {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const notificationPanelRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
+  const isServicePage = pathname === '/service';
+  const isAboutPage = pathname === '/about';
 
   useEffect(() => {
     if (showSearch) {
@@ -169,7 +171,7 @@ export const Header = () => {
           </div>
         </div>
       </div>
-      <div className="lg:hidden h-18.5" aria-hidden="true" />
+      <div className={`h-18.5 lg:hidden ${(isServicePage || isAboutPage) ? 'bg-red-50' : 'bg-white'}`} aria-hidden="true" />
 
       {/* Desktop Top Bar */}
       <div className="hidden lg:block text-white" style={{ background: 'linear-gradient(214.38deg, #ff8079 -2.24%, #ff1e1e 59.38%)', padding: '7px 0' }}>

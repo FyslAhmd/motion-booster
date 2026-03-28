@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import AdminShell from '../_components/AdminShell';
 import { Mail, MessageCircle, Phone, Search, X } from 'lucide-react';
 import { createPortal } from 'react-dom';
+import { toast } from 'sonner';
 
 interface ContactMessageRow {
   id: string;
@@ -49,6 +50,7 @@ export default function MediaMessagePage() {
   const [search, setSearch] = useState('');
   const [activeMessage, setActiveMessage] = useState<ContactMessageRow | null>(null);
   const [replyText, setReplyText] = useState('');
+  const [replySending, setReplySending] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -343,32 +345,51 @@ export default function MediaMessagePage() {
                 className="w-full resize-y rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-red-400"
               />
               <p className="mt-2 text-[11px] text-gray-500">
-                This will open your email app with this message and the original query.
+                This message will be sent directly from the dashboard.
               </p>
             </div>
 
             <div className="mt-4 flex justify-end">
               <button
                 type="button"
-                onClick={() => {
-                  const subject = `Re: Your inquiry to Motion Booster (${activeMessage.source.replace(/_/g, ' ')})`;
-                  const fullBody = [
-                    replyText.trim(),
-                    '',
-                    '--- Original Message ---',
-                    activeMessage.queryDetails,
-                  ]
-                    .join('\n')
-                    .trim();
+                onClick={async () => {
+                  if (!activeMessage || !replyText.trim() || replySending) return;
 
-                  const href = `mailto:${encodeURIComponent(activeMessage.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(fullBody)}`;
-                  window.location.href = href;
+                  setReplySending(true);
+
+                  try {
+                    const res = await fetch('/api/v1/admin/contact-messages/reply', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      credentials: 'include',
+                      body: JSON.stringify({
+                        messageId: activeMessage.id,
+                        replyText: replyText.trim(),
+                      }),
+                    });
+
+                    const json = (await res.json()) as { success?: boolean; error?: string; message?: string };
+                    if (!res.ok || !json.success) {
+                      throw new Error(json.error || 'Failed to send reply email');
+                    }
+
+                    toast.success(json.message || 'Reply sent successfully.');
+                    setMessages((prev) =>
+                      prev.map((msg) => (msg.id === activeMessage.id ? { ...msg, isRead: true } : msg)),
+                    );
+                    setActiveMessage((prev) => (prev ? { ...prev, isRead: true } : prev));
+                  } catch (e: unknown) {
+                    const errorText = e instanceof Error ? e.message : 'Failed to send reply email';
+                    toast.error(errorText);
+                  } finally {
+                    setReplySending(false);
+                  }
                 }}
-                disabled={!replyText.trim()}
+                disabled={!replyText.trim() || replySending}
                 className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Mail className="h-4 w-4" />
-                Reply by Email
+                {replySending ? 'Sending...' : 'Send Reply'}
               </button>
             </div>
           </div>

@@ -186,8 +186,8 @@ export const translations = {
     testimonials_subtext: 'Real feedback from businesses we have worked with',
 
     // ── Floating Call Button ────────────────────────────────────────────
-    floating_call_title: 'Contact Us',
-    floating_call_desc: 'You are welcome to visit our office for any information related to Service. You can also reach us through the hotline number or messenger.',
+    floating_call_title: 'Need Help?',
+    floating_call_desc: 'Chat with our support team',
     floating_call_close: 'Close',
     floating_call_message: 'Send Message',
     floating_call_whatsapp_aria: 'Chat on WhatsApp',
@@ -214,8 +214,6 @@ export const translations = {
     menu_faq: 'FAQ',
     menu_contact: 'Contact Us',
     menu_privacy: 'Privacy Policy',
-    menu_terms: 'Terms & Conditions',
-    menu_connect: 'Connect',
     menu_feedback: 'Feedback & Suggestions',
   },
 
@@ -407,8 +405,8 @@ export const translations = {
     testimonials_subtext: 'যে ব্যবসাগুলির সাথে আমরা কাজ করেছি তাদের থেকে প্রকৃত প্রতিক্রিয়া',
 
     // ── Floating Call Button ────────────────────────────────────────────
-    floating_call_title: 'যোগাযোগ করুন',
-    floating_call_desc: 'সার্ভিস সম্পর্কিত যেকোনো তথ্যের জন্য আপনি আমাদের অফিসে আসতে পারেন। এছাড়াও হটলাইন নম্বর বা মেসেঞ্জারের মাধ্যমে আমাদের সাথে যোগাযোগ করতে পারেন।',
+    floating_call_title: 'সাহায্যের প্রয়োজন?',
+    floating_call_desc: 'আমাদের সাপোর্ট টিমের সাথে চ্যাট করুন',
     floating_call_close: 'বন্ধ করুন',
     floating_call_message: 'বার্তা পাঠান',
     floating_call_whatsapp_aria: 'WhatsApp এ চ্যাট করুন',
@@ -435,8 +433,6 @@ export const translations = {
     menu_faq: 'সাধারণ প্রশ্ন',
     menu_contact: 'আমাদের সাথে যোগাযোগ করুন',
     menu_privacy: 'গোপনীয়তা নীতি',
-    menu_terms: 'শর্তাবলী',
-    menu_connect: 'যোগাযোগ',
     menu_feedback: 'মতামত ও পরামর্শ',
   },
 } as const;

@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, type ComponentType } from "react";
 import {
-  Users,
   BarChart2,
   MessageCircle,
   TrendingUp,
@@ -14,7 +13,6 @@ import {
   Loader2,
   ShieldCheck,
   Megaphone,
-  DollarSign,
 } from "lucide-react";
 import AdminShell from "./_components/AdminShell";
 import MetaOverviewSection from "./_components/MetaOverviewSection";
@@ -238,10 +236,14 @@ function PromoSlider() {
 interface StatCard {
   label: string;
   value: number | string;
-  icon: typeof Users;
+  icon: ComponentType<{ className?: string }>;
   color: string;
   bg: string;
   href?: string;
+}
+
+function TakaIcon({ className = "" }: { className?: string }) {
+  return <span className={`font-bold leading-none ${className}`}>৳</span>;
 }
 
 interface MetaAccountSummary {
@@ -283,8 +285,16 @@ function UserOverview({ statCards }: Pick<UserOverviewProps, "statCards">) {
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {statCards.map((card) => {
             const Icon = card.icon;
+            const hasNewBadge =
+              (card.label === "Unseen Messages" || card.label === "Unread Messages") &&
+              Number(card.value) > 0;
             const inner = (
               <>
+                {hasNewBadge && (
+                  <span className="absolute right-3 top-3 inline-flex items-center rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-semibold text-orange-600">
+                    New
+                  </span>
+                )}
                 <div
                   className={`w-8 h-8 rounded-lg ${card.bg} flex items-center justify-center`}
                 >
@@ -297,17 +307,10 @@ function UserOverview({ statCards }: Pick<UserOverviewProps, "statCards">) {
                   <p className="text-[11px] text-gray-500 mt-0.5">
                     {card.label}
                   </p>
-                  {(card.label === "Unseen Messages" ||
-                    card.label === "Unread Messages") &&
-                    (card.value as number) > 0 && (
-                      <span className="inline-block mt-1 text-[10px] bg-orange-100 text-orange-600 font-semibold px-1.5 py-0.5 rounded-full">
-                        New
-                      </span>
-                    )}
                 </div>
               </>
             );
-            const cls = `rounded-xl border border-gray-100 bg-white p-4 flex flex-col gap-3 shadow-sm active:scale-95 transition-transform${card.href ? " cursor-pointer hover:shadow-md" : ""}`;
+            const cls = `relative rounded-xl border border-gray-100 bg-white p-4 flex flex-col gap-3 shadow-sm active:scale-95 transition-transform${card.href ? " cursor-pointer hover:shadow-md" : ""}`;
             return card.href ? (
               <Link key={card.label} href={card.href} className={cls}>
                 {inner}
@@ -629,14 +632,14 @@ export default function DashboardPage() {
     {
       label: "Advance Payment",
       value: advanceValue,
-      icon: DollarSign,
+      icon: TakaIcon,
       color: "text-green-600",
       bg: "bg-green-50",
     },
     {
       label: "Due Amount",
       value: dueValue,
-      icon: DollarSign,
+      icon: TakaIcon,
       color: "text-red-600",
       bg: "bg-red-50",
     },
@@ -784,8 +787,14 @@ export default function DashboardPage() {
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
               {statCards.map((card) => {
                 const Icon = card.icon;
+                const hasNewBadge = card.label === "Unseen Messages" && (unseenMessages ?? 0) > 0;
                 const inner = (
                   <>
+                    {hasNewBadge && (
+                      <span className="absolute right-3 top-3 inline-flex items-center rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-semibold text-orange-600">
+                        New
+                      </span>
+                    )}
                     <div
                       className={`w-9 h-9 rounded-lg ${card.bg} flex items-center justify-center`}
                     >
@@ -796,16 +805,10 @@ export default function DashboardPage() {
                         {card.value}
                       </p>
                       <p className="text-xs text-gray-500 mt-0.5">{card.label}</p>
-                      {card.label === "Unseen Messages" &&
-                        (unseenMessages ?? 0) > 0 && (
-                          <span className="inline-block mt-1 text-[10px] bg-orange-100 text-orange-600 font-semibold px-1.5 py-0.5 rounded-full">
-                            New
-                          </span>
-                        )}
                     </div>
                   </>
                 );
-                const cls = `rounded-xl border border-gray-100 bg-white p-4 min-h-[132px] flex flex-col gap-3 shadow-sm hover:shadow-md transition-shadow${card.href ? " cursor-pointer" : ""}`;
+                const cls = `relative rounded-xl border border-gray-100 bg-white p-4 min-h-[132px] flex flex-col gap-3 shadow-sm hover:shadow-md transition-shadow${card.href ? " cursor-pointer" : ""}`;
                 return card.href ? (
                   <Link key={card.label} href={card.href} className={cls}>
                     {inner}

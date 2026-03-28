@@ -2,7 +2,7 @@ import nodemailer from 'nodemailer';
 
 let cachedTransporter: nodemailer.Transporter | null = null;
 
-function createTransporter() {
+export function createMailerTransporter() {
   const smtpHost = process.env.SMTP_HOST;
   const smtpPort = Number(process.env.SMTP_PORT || 587);
   const smtpUser = process.env.SMTP_USER;
@@ -25,7 +25,7 @@ function createTransporter() {
 
 export function getMailerTransporter() {
   if (!cachedTransporter) {
-    cachedTransporter = createTransporter();
+    cachedTransporter = createMailerTransporter();
   }
   return cachedTransporter;
 }
@@ -70,4 +70,3 @@ export async function sendPasswordResetOtpEmail(input: {
     html,
   });
 }
-

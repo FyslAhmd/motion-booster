@@ -177,7 +177,45 @@ export default function DashboardHistoryPage() {
         </div>
 
         <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
-          <div className="overflow-x-auto">
+          {/* Mobile cards */}
+          <div className="space-y-3 p-3 md:hidden">
+            {loading && (
+              <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-8 text-center text-sm text-gray-500">
+                Loading history...
+              </div>
+            )}
+
+            {!loading && !hasRows && (
+              <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-8 text-center text-sm text-gray-500">
+                No history found.
+              </div>
+            )}
+
+            {!loading && hasRows && items.map((item) => (
+              <div key={item.id} className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
+                <div className="mb-2 flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-gray-900">{item.user?.username || 'Unknown'}</p>
+                    <p className="text-[11px] text-gray-500 break-all">{item.user?.email || '-'}</p>
+                  </div>
+                  <span className="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-600">
+                    {item.eventType}
+                  </span>
+                </div>
+
+                <div className="space-y-1.5 text-xs text-gray-700">
+                  <p><span className="font-medium text-gray-500">Time:</span> {fmtDateTime(item.createdAt)}</p>
+                  <p><span className="font-medium text-gray-500">Action:</span> {item.action}</p>
+                  <p><span className="font-medium text-gray-500">Details:</span> {getHistoryDetails(item)}</p>
+                  <p className="break-all"><span className="font-medium text-gray-500">Path:</span> {item.path || '-'}</p>
+                  <p><span className="font-medium text-gray-500">IP:</span> {item.ipAddress || '-'}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop table */}
+          <div className="hidden overflow-x-auto md:block">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
@@ -221,7 +259,7 @@ export default function DashboardHistoryPage() {
             </table>
           </div>
 
-          <div className="flex items-center justify-between border-t border-gray-100 px-4 py-3 text-sm">
+          <div className="flex flex-col gap-2 border-t border-gray-100 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
             <div className="text-gray-500">
               Total: <span className="font-semibold text-gray-900">{pagination.total}</span>
             </div>

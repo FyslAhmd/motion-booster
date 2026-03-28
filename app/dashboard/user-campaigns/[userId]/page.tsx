@@ -488,65 +488,122 @@ function CampaignsSection({
         {campaigns.length === 0 ? (
           <div className="px-6 py-10 text-center text-sm text-gray-500">No campaigns found.</div>
         ) : (
-          <div className="grid gap-3 p-4 sm:grid-cols-2 sm:p-5 xl:grid-cols-2">
-            {campaigns.map((c) => {
-          const st = getStatusStyle(c.effective_status);
-          const thumb = c.ads?.data?.[0]?.creative?.thumbnail_url;
-          const budget = formatBudgetValue(c.daily_budget, c.lifetime_budget);
-          const dateRange = formatShortRange(c.start_time, c.stop_time);
-          const isActive = (c.effective_status || c.status || '').toUpperCase() === 'ACTIVE';
+          <>
+            {/* Mobile cards */}
+            <div className="space-y-3 p-3 md:hidden">
+              {campaigns.map((c) => {
+                const st = getStatusStyle(c.effective_status);
+                const thumb = c.ads?.data?.[0]?.creative?.thumbnail_url;
+                const budget = formatBudgetValue(c.daily_budget, c.lifetime_budget);
+                const dateRange = formatShortRange(c.start_time, c.stop_time);
+                const isActive = (c.effective_status || c.status || '').toUpperCase() === 'ACTIVE';
 
-          return (
-            <button
-              key={c.id}
-              type="button"
-              onClick={() => setSelectedCampaign(c)}
-              className="rounded-2xl border border-gray-200 bg-white p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md hover:border-gray-300"
-            >
-              <div className="mb-3 flex items-start gap-3">
-                <div className="relative shrink-0">
-                  {thumb ? (
-                    <img src={thumb} alt={c.name} className="h-12 w-12 rounded-lg object-cover" />
-                  ) : (
-                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gray-100 text-[10px] text-gray-400">N/A</div>
-                  )}
-                  <span
-                    className={`absolute -bottom-1 -right-1 h-3.5 w-3.5 rounded-full border-2 border-white ${isActive ? 'bg-green-500' : 'bg-gray-300'}`}
-                  />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-gray-900">{c.name}</p>
-                  <div className="mt-1 flex flex-wrap items-center gap-2">
-                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${st.color}`}>{st.label}</span>
-                    <p className="text-xs uppercase text-gray-500">{c.objective?.replace(/_/g, ' ') || 'No objective'}</p>
-                  </div>
-                </div>
-              </div>
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => setSelectedCampaign(c)}
+                    className="w-full rounded-xl border border-gray-200 bg-white p-3 text-left shadow-sm transition-colors hover:border-gray-300"
+                  >
+                    <div className="flex items-start gap-2.5">
+                      <div className="relative shrink-0">
+                        {thumb ? (
+                          <img src={thumb} alt={c.name} className="h-11 w-11 rounded-lg object-cover" />
+                        ) : (
+                          <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-gray-100 text-[10px] text-gray-400">N/A</div>
+                        )}
+                        <span
+                          className={`absolute -bottom-1 -right-1 h-3 w-3 rounded-full border-2 border-white ${isActive ? 'bg-green-500' : 'bg-gray-300'}`}
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-gray-900">{c.name}</p>
+                        <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                          <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${st.color}`}>{st.label}</span>
+                          <p className="truncate text-[11px] uppercase text-gray-500">{c.objective?.replace(/_/g, ' ') || 'No objective'}</p>
+                        </div>
+                        <p className="mt-1 text-xs text-gray-600"><span className="text-gray-500">Budget:</span> {budget}</p>
+                        <p className="mt-0.5 text-xs text-gray-600"><span className="text-gray-500">Date:</span> {dateRange}</p>
+                      </div>
+                    </div>
 
-              <div className="space-y-1 text-sm text-gray-700">
-                <p><span className="text-gray-500">Budget:</span> {budget}</p>
-                <p><span className="text-gray-500">Date Range:</span> {dateRange}</p>
-                <p>
-                  <span className="text-gray-500">Created:</span>{' '}
-                  {new Date(c.created_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                </p>
-              </div>
+                    <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 border-t border-gray-100 pt-2.5">
+                      <span className="rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[11px] text-gray-600">
+                        {adSets.filter((a) => a.campaign_id === c.id).length} ad sets
+                      </span>
+                      <div className="inline-flex items-center gap-1.5">
+                        <span className="text-xs text-gray-500">Active</span>
+                        <span className={`inline-flex h-5 w-9 items-center rounded-full ${isActive ? 'bg-green-500' : 'bg-gray-300'}`}>
+                          <span className={`h-3.5 w-3.5 rounded-full bg-white shadow ${isActive ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                        </span>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
 
-              <div className="mt-3 flex items-center justify-between border-t border-gray-100 pt-3">
-                <span className="rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-xs text-gray-600">
-                  {adSets.filter((a) => a.campaign_id === c.id).length} ad sets
-                </span>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-500">Active</span>
-                  <span className={`inline-flex h-5 w-9 items-center rounded-full ${isActive ? 'bg-green-500' : 'bg-gray-300'}`}>
-                    <span className={`h-3.5 w-3.5 rounded-full bg-white shadow transition-transform ${isActive ? 'translate-x-5' : 'translate-x-0.5'}`} />
-                  </span>
-                </div>
-              </div>
-            </button>
-          );
-        })}
-          </div>
+            {/* Desktop / tablet cards */}
+            <div className="hidden gap-3 p-4 sm:p-5 md:grid md:grid-cols-2 xl:grid-cols-2">
+              {campaigns.map((c) => {
+                const st = getStatusStyle(c.effective_status);
+                const thumb = c.ads?.data?.[0]?.creative?.thumbnail_url;
+                const budget = formatBudgetValue(c.daily_budget, c.lifetime_budget);
+                const dateRange = formatShortRange(c.start_time, c.stop_time);
+                const isActive = (c.effective_status || c.status || '').toUpperCase() === 'ACTIVE';
+
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => setSelectedCampaign(c)}
+                    className="w-full rounded-2xl border border-gray-200 bg-white p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-gray-300 hover:shadow-md"
+                  >
+                    <div className="mb-3 flex items-start gap-3">
+                      <div className="relative shrink-0">
+                        {thumb ? (
+                          <img src={thumb} alt={c.name} className="h-12 w-12 rounded-lg object-cover" />
+                        ) : (
+                          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gray-100 text-[10px] text-gray-400">N/A</div>
+                        )}
+                        <span
+                          className={`absolute -bottom-1 -right-1 h-3.5 w-3.5 rounded-full border-2 border-white ${isActive ? 'bg-green-500' : 'bg-gray-300'}`}
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-gray-900">{c.name}</p>
+                        <div className="mt-1 flex flex-wrap items-center gap-2">
+                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${st.color}`}>{st.label}</span>
+                          <p className="truncate text-xs uppercase text-gray-500">{c.objective?.replace(/_/g, ' ') || 'No objective'}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1 text-sm text-gray-700">
+                      <p><span className="text-gray-500">Budget:</span> {budget}</p>
+                      <p><span className="text-gray-500">Date Range:</span> {dateRange}</p>
+                      <p>
+                        <span className="text-gray-500">Created:</span>{' '}
+                        {new Date(c.created_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </p>
+                    </div>
+
+                    <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-gray-100 pt-3">
+                      <span className="rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-xs text-gray-600">
+                        {adSets.filter((a) => a.campaign_id === c.id).length} ad sets
+                      </span>
+                      <div className="inline-flex items-center gap-2 shrink-0">
+                        <span className="text-sm text-gray-500">Active</span>
+                        <span className={`inline-flex h-5 w-9 items-center rounded-full ${isActive ? 'bg-green-500' : 'bg-gray-300'}`}>
+                          <span className={`h-3.5 w-3.5 rounded-full bg-white shadow transition-transform ${isActive ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                        </span>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </>
         )}
       </div>
 

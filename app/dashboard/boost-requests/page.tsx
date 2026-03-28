@@ -7,6 +7,17 @@ import { Search, ChevronLeft, ChevronRight, Calendar, Wallet, Clock3, Target, Us
 import { AdminSectionSkeleton } from '@/components/ui/AdminSectionSkeleton';
 import { createPortal } from 'react-dom';
 
+type BoostRequestStatus = 'PENDING' | 'COMPLETED' | 'CANCELLED';
+
+interface BoostRequestUser {
+  id: string;
+  fullName?: string | null;
+  username?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  avatarUrl?: string | null;
+}
+
 interface BoostRequestItem {
   id: string;
   language: string;
@@ -16,6 +27,7 @@ interface BoostRequestItem {
   createdAt: string;
   completed: boolean;
   completedAt?: string | null;
+  user?: BoostRequestUser | null;
 }
 
 interface PaginatedResponse {
@@ -49,6 +61,12 @@ interface BoostSetupDraft {
   maxAge: number | '';
   gender: GenderValue;
 }
+
+const BOOST_REQUEST_STATUS_OPTIONS: Array<{ value: BoostRequestStatus; label: string }> = [
+  { value: 'PENDING', label: 'Pending' },
+  { value: 'COMPLETED', label: 'Completed' },
+  { value: 'CANCELLED', label: 'Cancelled' },
+];
 
 const PLACEMENT_OPTIONS: Array<{ value: PlacementValue; label: string }> = [
   { value: 'facebook', label: 'Facebook' },
@@ -119,8 +137,42 @@ export default function BoostRequestsPage() {
     setShowAllAudience(false);
   }, [selected?.id]);
 
-  const toggleCompleted = useCallback(
-    async (item: BoostRequestItem, nextCompleted: boolean) => {
+  const getBoostRequestStatus = useCallback((item: BoostRequestItem): BoostRequestStatus => {
+    const matchedStatus = item.targetAudience.match(/^\s*status\s*[:\-]\s*([^\n]+)/im)?.[1]?.trim().toLowerCase();
+    if (matchedStatus) {
+      if (matchedStatus === 'completed') return 'COMPLETED';
+      if (matchedStatus === 'cancelled' || matchedStatus === 'canceled') return 'CANCELLED';
+      if (matchedStatus === 'pending') return 'PENDING';
+    }
+    return item.completed ? 'COMPLETED' : 'PENDING';
+  }, []);
+
+  const getRequesterName = useCallback((item: BoostRequestItem) => {
+    const name = item.user?.fullName?.trim();
+    if (name) return name;
+    const username = item.user?.username?.trim();
+    if (username) return username;
+    const email = item.user?.email?.trim();
+    if (email) return email;
+    return 'Unknown requester';
+  }, []);
+
+  const getRequesterPhone = useCallback((item: BoostRequestItem) => {
+    const phone = item.user?.phone?.trim();
+    if (phone) return phone;
+    return 'No mobile number';
+  }, []);
+
+  const getRequesterInitials = useCallback((item: BoostRequestItem) => {
+    const name = getRequesterName(item);
+    if (!name || name === 'Unknown requester') return 'BR';
+    const words = name.split(/\s+/).filter(Boolean);
+    if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+    return `${words[0][0]}${words[1][0]}`.toUpperCase();
+  }, [getRequesterName]);
+
+  const updateRequestStatus = useCallback(
+    async (item: BoostRequestItem, nextStatus: BoostRequestStatus) => {
       if (updatingId) return;
       setUpdatingId(item.id);
       try {
@@ -130,7 +182,7 @@ export default function BoostRequestsPage() {
             'Content-Type': 'application/json',
             ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
           },
-          body: JSON.stringify({ completed: nextCompleted }),
+          body: JSON.stringify({ status: nextStatus }),
         });
 
         if (res.status === 401) {
@@ -142,7 +194,7 @@ export default function BoostRequestsPage() {
                 'Content-Type': 'application/json',
                 Authorization: `Bearer ${newToken}`,
               },
-              body: JSON.stringify({ completed: nextCompleted }),
+              body: JSON.stringify({ status: nextStatus }),
             });
           }
         }
@@ -502,67 +554,68 @@ export default function BoostRequestsPage() {
         <>
           {/* Cards */}
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {data.items.map(item => (
-              <div
-                key={item.id}
-                onClick={() => {
-                  setSetupDraft(getInitialSetupDraft(item));
-                  setSelected(item);
-                }}
-                className={`w-full text-left bg-white rounded-2xl border p-4 hover:shadow-md transition-shadow ${
-                  item.completed ? 'border-emerald-200' : 'border-gray-100'
-                }`}
-              >
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-full bg-linear-to-br from-red-500 to-pink-500 flex items-center justify-center text-white text-xs font-bold">
-                    BR
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-900 text-sm">Boost Request</p>
-                    <p className="text-xs text-gray-400">{formatDate(item.createdAt)}</p>
-                  </div>
-                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${item.completed ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
-                    {item.completed ? 'Completed' : 'Pending'}
-                  </span>
-                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${item.language === 'bn' ? 'bg-green-50 text-green-700' : 'bg-blue-50 text-blue-700'}`}>
-                    {item.language === 'bn' ? 'বাংলা' : 'EN'}
-                  </span>
-                </div>
-                <p className="text-sm font-medium text-gray-900 truncate mb-2">
-                  {getCampaignName(item)}
-                </p>
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="bg-gray-50 rounded-lg p-2 mt-3">
-                    <span className="text-gray-400">Total</span>
-                    <p className="font-semibold text-gray-900">{item.totalBudget}</p>
-                  </div>
-                  <div className="bg-gray-50 rounded-lg p-2 mt-3">
-                    <span className="text-gray-400">Daily</span>
-                    <p className="font-semibold text-gray-900">{item.dailyBudget}</p>
-                  </div>
-                  <div className="col-span-2 bg-gray-50 rounded-lg p-2">
-                    <span className="text-gray-400">Target audience</span>
-                    <p className="font-medium text-gray-800 line-clamp-2">{item.targetAudience || '—'}</p>
-                  </div>
-                </div>
-                <label
-                  className="mt-3 inline-flex items-center gap-2 text-xs font-medium text-gray-700"
-                  onClick={e => e.stopPropagation()}
+            {data.items.map(item => {
+              const itemStatus = getBoostRequestStatus(item);
+
+              return (
+                <div
+                  key={item.id}
+                  onClick={() => {
+                    setSetupDraft(getInitialSetupDraft(item));
+                    setSelected(item);
+                  }}
+                  className={`w-full text-left bg-white rounded-2xl border p-4 hover:shadow-md transition-shadow ${
+                    itemStatus === 'COMPLETED' ? 'border-emerald-200' : itemStatus === 'CANCELLED' ? 'border-rose-200' : 'border-gray-100'
+                  }`}
                 >
-                  <input
-                    type="checkbox"
-                    checked={item.completed}
-                    disabled={updatingId === item.id}
-                    onChange={e => {
-                      e.stopPropagation();
-                      void toggleCompleted(item, e.target.checked);
-                    }}
-                    className="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 disabled:opacity-60"
-                  />
-                  Mark as completed
-                </label>
-              </div>
-            ))}
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-full bg-linear-to-br from-red-500 to-pink-500 flex items-center justify-center text-white text-xs font-bold">
+                      {getRequesterInitials(item)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-900 text-sm truncate">{getRequesterName(item)}</p>
+                      <p className="text-xs text-gray-600 truncate">Mobile: {getRequesterPhone(item)}</p>
+                      <p className="text-[11px] text-gray-400">{formatDate(item.createdAt)}</p>
+                    </div>
+                    <select
+                      value={itemStatus}
+                      disabled={updatingId === item.id}
+                      onClick={(e) => e.stopPropagation()}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        void updateRequestStatus(item, e.target.value as BoostRequestStatus);
+                      }}
+                      className="rounded-lg border border-gray-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {BOOST_REQUEST_STATUS_OPTIONS.map((option) => (
+                        <option key={`card-status-${option.value}`} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <p className="text-sm font-medium text-gray-900 truncate mb-2">
+                    {getCampaignName(item)}
+                  </p>
+
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="bg-gray-50 rounded-lg p-2 mt-3">
+                      <span className="text-gray-400">Total</span>
+                      <p className="font-semibold text-gray-900">{item.totalBudget}</p>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-2 mt-3">
+                      <span className="text-gray-400">Daily</span>
+                      <p className="font-semibold text-gray-900">{item.dailyBudget}</p>
+                    </div>
+                    <div className="col-span-2 bg-gray-50 rounded-lg p-2">
+                      <span className="text-gray-400">Target audience</span>
+                      <p className="font-medium text-gray-800 line-clamp-2">{item.targetAudience || '—'}</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
           {/* Pagination */}
@@ -619,6 +672,7 @@ export default function BoostRequestsPage() {
                   minAge: setupDraft?.minAge ?? fallbackSetup.minAge,
                   maxAge: setupDraft?.maxAge ?? fallbackSetup.maxAge,
                 };
+                const selectedStatus = getBoostRequestStatus(selected);
 
                 return (
                   <>
@@ -629,31 +683,34 @@ export default function BoostRequestsPage() {
 
                       <div className="relative flex items-start gap-4">
                         <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-linear-to-br from-red-500 to-orange-500 text-sm font-bold text-white shadow-lg shadow-rose-200/80">
-                          BR
+                          {getRequesterInitials(selected)}
                         </div>
 
-                        <div className="min-w-0 flex-1">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="inline-flex items-center rounded-full bg-white/85 px-3 py-1 text-[11px] font-semibold tracking-wide text-rose-700 shadow-sm">
-                              Boost Request
-                            </span>
-                            <span className={`inline-flex items-center rounded-full px-3 py-1 text-[11px] font-semibold ${selected.language === 'bn' ? 'bg-emerald-50 text-emerald-700' : 'bg-sky-50 text-sky-700'}`}>
-                              {selected.language === 'bn' ? 'বাংলা content' : 'English content'}
-                            </span>
-                            <span className={`inline-flex items-center rounded-full px-3 py-1 text-[11px] font-semibold ${selected.completed ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
-                              {selected.completed ? 'Completed' : 'Pending'}
-                            </span>
-                            <span className="inline-flex items-center rounded-full bg-slate-900 px-3 py-1 text-[11px] font-semibold text-white">
-                              {audienceProfile.audienceType}
-                            </span>
+                        <div className="min-w-0 flex-1 relative pr-28 sm:pr-32">
+                          <select
+                            value={selectedStatus}
+                            disabled={updatingId === selected.id}
+                            onChange={(e) => void updateRequestStatus(selected, e.target.value as BoostRequestStatus)}
+                            className="absolute right-0 top-0 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {BOOST_REQUEST_STATUS_OPTIONS.map((option) => (
+                              <option key={`modal-status-${option.value}`} value={option.value}>
+                                {option.label}
+                              </option>
+                            ))}
+                          </select>
+                          <div>
+                            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-gray-500">Requester</p>
+                            <p className="mt-1 text-base sm:text-lg font-semibold text-gray-900">{getRequesterName(selected)}</p>
+                            <p className="mt-1 text-xs sm:text-sm text-gray-600 whitespace-nowrap">Mobile: {getRequesterPhone(selected)}</p>
                           </div>
 
-                          <p className="mt-3 text-base sm:text-xl font-semibold leading-snug text-gray-900">
+                          <p className="mt-3 text-base sm:text-xl font-semibold leading-snug text-gray-900 whitespace-nowrap">
                             Request ID: {selected.id.slice(0, 8).toUpperCase()}
                           </p>
 
                           <div className="mt-4 flex flex-wrap gap-2 text-xs text-gray-700">
-                            <span className="inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/80 px-3 py-1.5 shadow-sm">
+                            <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-white/80 bg-white/80 px-3 py-1.5 shadow-sm">
                               <Calendar className="h-3.5 w-3.5" />
                               {formatDate(selected.createdAt)}
                             </span>
@@ -673,16 +730,6 @@ export default function BoostRequestsPage() {
                           <p className="mt-1 text-xs text-gray-600">Average spend per day</p>
                         </div>
                       </div>
-                      <label className="relative mt-4 inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/85 px-3 py-2 text-xs font-medium text-gray-700 shadow-sm">
-                        <input
-                          type="checkbox"
-                          checked={selected.completed}
-                          disabled={updatingId === selected.id}
-                          onChange={e => void toggleCompleted(selected, e.target.checked)}
-                          className="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 disabled:opacity-60"
-                        />
-                        Completed
-                      </label>
                     </div>
 
                     <div className="px-1">
@@ -833,7 +880,6 @@ export default function BoostRequestsPage() {
                           <div className="flex flex-wrap items-center justify-between gap-2">
                             <div>
                               <p className="text-sm font-medium text-gray-500">Audience setup</p>
-                              <p className="mt-1 text-sm sm:text-base font-semibold text-gray-900">{audienceProfile.audienceType}</p>
                               <p className="mt-1 text-xs sm:text-sm text-gray-600">Facebook Ads style summary from the requester&apos;s note.</p>
                             </div>
                             <span className="rounded-full bg-white px-3 py-1 text-[11px] font-medium text-blue-700 shadow-sm">

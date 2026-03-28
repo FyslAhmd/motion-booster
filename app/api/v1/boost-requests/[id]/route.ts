@@ -5,6 +5,7 @@ import { requireAdmin } from '@/lib/auth/require-admin';
 type PlacementValue = 'facebook' | 'instagram' | 'whatsapp';
 type LocationValue = 'all_country' | 'bangladesh';
 type GenderValue = 'male' | 'female';
+type BoostRequestStatus = 'PENDING' | 'COMPLETED' | 'CANCELLED';
 
 type NormalizedBoostSetup = {
   placements: PlacementValue[];
@@ -28,6 +29,12 @@ const LOCATION_LABELS: Record<LocationValue, string> = {
 const GENDER_LABELS: Record<GenderValue, string> = {
   male: 'Male',
   female: 'Female',
+};
+
+const STATUS_LABELS: Record<BoostRequestStatus, string> = {
+  PENDING: 'Pending',
+  COMPLETED: 'Completed',
+  CANCELLED: 'Cancelled',
 };
 
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>
@@ -131,6 +138,24 @@ const mergeTargetAudienceSetup = (current: string, setup: NormalizedBoostSetup):
   return [...buildSetupLines(setup), ...preservedLines].join('\n').trim();
 };
 
+const normalizeStatus = (value: unknown): BoostRequestStatus | null => {
+  if (typeof value !== 'string') return null;
+  const normalized = value.toUpperCase().trim();
+  if (normalized === 'PENDING' || normalized === 'COMPLETED' || normalized === 'CANCELLED') {
+    return normalized;
+  }
+  return null;
+};
+
+const mergeTargetAudienceStatus = (current: string, status: BoostRequestStatus): string => {
+  const currentLines = current
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const preservedLines = currentLines.filter((line) => !/^status\s*[:\-]/i.test(line));
+  return [`Status: ${STATUS_LABELS[status]}`, ...preservedLines].join('\n').trim();
+};
+
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -152,6 +177,8 @@ export async function PATCH(
   }
 
   const hasCompletedUpdate = typeof body.completed === 'boolean';
+  const normalizedStatus = normalizeStatus(body.status);
+  const hasStatusUpdate = normalizedStatus !== null;
   const hasSetupUpdate =
     Object.prototype.hasOwnProperty.call(body, 'placements') ||
     Object.prototype.hasOwnProperty.call(body, 'location') ||
@@ -159,7 +186,7 @@ export async function PATCH(
     Object.prototype.hasOwnProperty.call(body, 'maxAge') ||
     Object.prototype.hasOwnProperty.call(body, 'gender');
 
-  if (!hasCompletedUpdate && !hasSetupUpdate) {
+  if (!hasCompletedUpdate && !hasStatusUpdate && !hasSetupUpdate) {
     return NextResponse.json({ error: 'Nothing to update' }, { status: 400 });
   }
 
@@ -169,18 +196,17 @@ export async function PATCH(
     targetAudience?: string;
   } = {};
 
-  if (hasCompletedUpdate) {
+  if (hasStatusUpdate) {
+    const completed = normalizedStatus === 'COMPLETED';
+    data.completed = completed;
+    data.completedAt = completed ? new Date() : null;
+  } else if (hasCompletedUpdate) {
     const completed = Boolean(body.completed);
     data.completed = completed;
     data.completedAt = completed ? new Date() : null;
   }
 
-  if (hasSetupUpdate) {
-    const setup = normalizeBoostSetup(body);
-    if (setup.placements.length === 0 || !setup.location || !setup.gender || setup.minAge === null) {
-      return NextResponse.json({ error: 'Invalid setup options payload' }, { status: 400 });
-    }
-
+  if (hasSetupUpdate || hasStatusUpdate) {
     const existing = await prisma.boostRequest.findUnique({
       where: { id },
       select: { targetAudience: true },
@@ -189,7 +215,21 @@ export async function PATCH(
       return NextResponse.json({ error: 'Boost request not found' }, { status: 404 });
     }
 
-    data.targetAudience = mergeTargetAudienceSetup(existing.targetAudience || '', setup);
+    let mergedAudience = existing.targetAudience || '';
+
+    if (hasSetupUpdate) {
+      const setup = normalizeBoostSetup(body);
+      if (setup.placements.length === 0 || !setup.location || !setup.gender || setup.minAge === null) {
+        return NextResponse.json({ error: 'Invalid setup options payload' }, { status: 400 });
+      }
+      mergedAudience = mergeTargetAudienceSetup(mergedAudience, setup);
+    }
+
+    if (hasStatusUpdate && normalizedStatus) {
+      mergedAudience = mergeTargetAudienceStatus(mergedAudience, normalizedStatus);
+    }
+
+    data.targetAudience = mergedAudience;
   }
 
   try {

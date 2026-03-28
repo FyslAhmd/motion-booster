@@ -32,8 +32,8 @@ export default function TermsPage() {
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 lg:py-16 space-y-6">
         <section className="bg-green-50 border border-green-200 rounded-2xl p-6 md:p-8">
-          <h2 className="text-xl font-bold text-green-900 mb-4 flex items-center gap-2">
-            <CheckCircle className="w-6 h-6 text-green-600" />
+          <h2 className="text-xl font-bold text-green-900 mb-4 flex items-start gap-2">
+            <CheckCircle className="w-6 h-6 shrink-0 mt-1 text-green-600" />
             Quick Summary
           </h2>
           <ul className="space-y-2 text-sm text-green-800">
@@ -46,8 +46,8 @@ export default function TermsPage() {
         </section>
 
         <section className="bg-white rounded-2xl border border-gray-100 p-6 md:p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-3 flex items-center gap-2">
-            <FileText className="w-6 h-6 text-red-500" />
+          <h2 className="text-2xl font-bold text-gray-900 mb-3 flex items-start gap-2">
+            <FileText className="w-6 h-6 shrink-0 mt-1 text-red-500" />
             1. Acceptance of Terms
           </h2>
           <p className="text-gray-600 leading-relaxed">
@@ -57,8 +57,8 @@ export default function TermsPage() {
         </section>
 
         <section className="bg-white rounded-2xl border border-gray-100 p-6 md:p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-3 flex items-center gap-2">
-            <Shield className="w-6 h-6 text-blue-500" />
+          <h2 className="text-2xl font-bold text-gray-900 mb-3 flex items-start gap-2">
+            <Shield className="w-6 h-6 shrink-0 mt-1 text-blue-500" />
             2. Account Registration
           </h2>
           <ul className="space-y-2 text-gray-600 leading-relaxed">
@@ -70,8 +70,8 @@ export default function TermsPage() {
         </section>
 
         <section className="bg-white rounded-2xl border border-gray-100 p-6 md:p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-3 flex items-center gap-2">
-            <Scale className="w-6 h-6 text-indigo-500" />
+          <h2 className="text-2xl font-bold text-gray-900 mb-3 flex items-start gap-2">
+            <Scale className="w-6 h-6 shrink-0 mt-1 text-indigo-500" />
             3. Services and Project Terms
           </h2>
           <p className="text-gray-600 leading-relaxed mb-3">
@@ -85,8 +85,8 @@ export default function TermsPage() {
         </section>
 
         <section className="bg-white rounded-2xl border border-gray-100 p-6 md:p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-3 flex items-center gap-2">
-            <AlertTriangle className="w-6 h-6 text-orange-500" />
+          <h2 className="text-2xl font-bold text-gray-900 mb-3 flex items-start gap-2">
+            <AlertTriangle className="w-6 h-6 shrink-0 mt-1 text-orange-500" />
             4. Prohibited Use
           </h2>
           <ul className="space-y-2 text-gray-600 leading-relaxed">
@@ -98,8 +98,8 @@ export default function TermsPage() {
         </section>
 
         <section className="bg-white rounded-2xl border border-gray-100 p-6 md:p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-3 flex items-center gap-2">
-            <FileText className="w-6 h-6 text-red-500" />
+          <h2 className="text-2xl font-bold text-gray-900 mb-3 flex items-start gap-2">
+            <FileText className="w-6 h-6 shrink-0 mt-1 text-red-500" />
             5. Payments, Refunds, and Cancellations
           </h2>
           <p className="text-gray-600 leading-relaxed mb-3">
@@ -112,8 +112,8 @@ export default function TermsPage() {
         </section>
 
         <section className="bg-white rounded-2xl border border-gray-100 p-6 md:p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-3 flex items-center gap-2">
-            <Shield className="w-6 h-6 text-blue-500" />
+          <h2 className="text-2xl font-bold text-gray-900 mb-3 flex items-start gap-2">
+            <Shield className="w-6 h-6 shrink-0 mt-1 text-blue-500" />
             6. Intellectual Property
           </h2>
           <p className="text-gray-600 leading-relaxed">
@@ -123,8 +123,8 @@ export default function TermsPage() {
         </section>
 
         <section className="bg-white rounded-2xl border border-gray-100 p-6 md:p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-3 flex items-center gap-2">
-            <AlertTriangle className="w-6 h-6 text-orange-500" />
+          <h2 className="text-2xl font-bold text-gray-900 mb-3 flex items-start gap-2">
+            <AlertTriangle className="w-6 h-6 shrink-0 mt-1 text-orange-500" />
             7. Limitation of Liability
           </h2>
           <p className="text-gray-600 leading-relaxed">
@@ -135,8 +135,8 @@ export default function TermsPage() {
         </section>
 
         <section className="bg-white rounded-2xl border border-gray-100 p-6 md:p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-3 flex items-center gap-2">
-            <CheckCircle className="w-6 h-6 text-green-500" />
+          <h2 className="text-2xl font-bold text-gray-900 mb-3 flex items-start gap-2">
+            <CheckCircle className="w-6 h-6 shrink-0 mt-1 text-green-500" />
             8. Updates to Terms
           </h2>
           <p className="text-gray-600 leading-relaxed">
@@ -146,8 +146,8 @@ export default function TermsPage() {
         </section>
 
         <section className="bg-white rounded-2xl border border-gray-100 p-6 md:p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-3 flex items-center gap-2">
-            <Mail className="w-6 h-6 text-red-500" />
+          <h2 className="text-2xl font-bold text-gray-900 mb-3 flex items-start gap-2">
+            <Mail className="w-6 h-6 shrink-0 mt-1 text-red-500" />
             9. Contact
           </h2>
           <p className="text-gray-600 leading-relaxed mb-2">
