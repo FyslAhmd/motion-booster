@@ -6,9 +6,7 @@ import Image from 'next/image';
 import { useLanguage } from '@/lib/lang/LanguageContext';
 import { ChevronLeft, ChevronRight, Check, ArrowRight } from 'lucide-react';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Pagination } from 'swiper/modules';
 import 'swiper/css';
-import 'swiper/css/pagination';
 import { PopularServiceItem } from '@/lib/admin/store';
 import { pickLocalizedList, pickLocalizedText } from '@/lib/lang/localize';
 
@@ -123,11 +121,11 @@ export const PopularCourses = () => {
     <section className="pt-2 pb-6 md:py-8 lg:py-9 bg-white page-reveal">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="text-center mb-8 md:mb-10">
+        <div className="text-center md:mb-8">
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-3 md:mb-4 text-wave">
             {t('popular_heading')}
           </h2>
-          <p className="text-sm sm:text-base text-gray-500 max-w-2xl mx-auto leading-relaxed px-4 text-wave">
+          <p className="text-sm sm:text-base text-gray-500 max-w-2xl mx-auto leading-relaxed px-4 mb-3 text-wave">
             {t('popular_subtext')}
           </p>
         </div>
@@ -191,8 +189,6 @@ export const PopularCourses = () => {
                 watchSlidesProgress
                 longSwipesRatio={0.2}
                 longSwipesMs={220}
-                pagination={{ clickable: true }}
-                modules={[Pagination]}
                 className="popular-mobile-swiper"
               >
                 {filteredServices.map((service) => {
@@ -355,23 +351,6 @@ export const PopularCourses = () => {
           transform: scale(1) translateY(0);
         }
 
-        .popular-mobile-swiper .swiper-pagination {
-          bottom: 0 !important;
-        }
-
-        .popular-mobile-swiper .swiper-pagination-bullet {
-          width: 8px;
-          height: 8px;
-          background: #fca5a5;
-          opacity: 1;
-          margin: 0 4px !important;
-        }
-
-        .popular-mobile-swiper .swiper-pagination-bullet-active {
-          width: 20px;
-          border-radius: 9999px;
-          background: #ef4444;
-        }
       `}</style>
     </section>
   );
