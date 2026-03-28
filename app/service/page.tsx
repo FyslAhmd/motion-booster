@@ -7,6 +7,7 @@ import { CategoryIcon } from '@/lib/admin/categoryIcons';
 import { ServiceCategoryListSkeleton } from '@/components/ui/PublicPageLoadingSkeleton';
 import { useLanguage } from '@/lib/lang/LanguageContext';
 import { pickLocalizedList, pickLocalizedText } from '@/lib/lang/localize';
+import { useAuth } from '@/lib/auth/context';
 
 interface PopularServiceItem {
   id: string;
@@ -27,6 +28,7 @@ interface ServiceCategoryProps {
   description: string;
   services: string[];
   ctaLabel: string;
+  ctaHref: string;
   tone: {
     cardBg: string;
     iconBg: string;
@@ -35,7 +37,7 @@ interface ServiceCategoryProps {
   };
 }
 
-const ServiceCategory: React.FC<ServiceCategoryProps> = ({ iconType, title, description, services, ctaLabel, tone }) => {
+const ServiceCategory: React.FC<ServiceCategoryProps> = ({ iconType, title, description, services, ctaLabel, ctaHref, tone }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
@@ -78,7 +80,7 @@ const ServiceCategory: React.FC<ServiceCategoryProps> = ({ iconType, title, desc
       {isExpanded && (
         <div className="px-6 pb-5 pt-2 flex justify-end bg-gray-50">
           <Link
-            href="/login"
+            href={ctaHref}
             className="inline-flex items-center rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 transition-colors"
           >
             {ctaLabel}
@@ -91,9 +93,11 @@ const ServiceCategory: React.FC<ServiceCategoryProps> = ({ iconType, title, desc
 
 export default function ServicePage() {
   const { language } = useLanguage();
+  const { isAuthenticated } = useAuth();
   const isBN = language === 'BN';
   const [serviceCategories, setServiceCategories] = useState<PopularServiceItem[]>([]);
   const [serviceLoading, setServiceLoading] = useState(true);
+  const getStartedHref = isAuthenticated ? '/dashboard' : '/login';
 
   useEffect(() => {
     fetch('/api/v1/cms/popular-services', { cache: 'no-store' })
@@ -146,7 +150,7 @@ export default function ServicePage() {
             </p>
             <div className="flex gap-4 justify-center">
               <Link
-                href="/contact"
+                href={getStartedHref}
                 className="inline-flex items-center justify-center text-center px-6 py-3 bg-red-500 text-white rounded-full font-semibold hover:bg-red-600 transition-colors shadow-lg"
               >
                 {isBN ? 'শুরু করুন' : 'Get Started'}
@@ -188,6 +192,7 @@ export default function ServicePage() {
                     description={pickLocalizedText(language, category.description, category.descriptionBn)}
                     services={pickLocalizedList(language, category.services, category.servicesBn)}
                     ctaLabel={isBN ? 'শুরু করুন' : 'Get Started'}
+                    ctaHref={getStartedHref}
                     tone={lightTones[index % lightTones.length]}
                   />
                 </div>

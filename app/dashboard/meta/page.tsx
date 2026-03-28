@@ -39,14 +39,14 @@ export default function MetaDashboardPage() {
 
   return (
     <AdminShell>
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {/* Header */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5">
+        <div className="rounded-2xl border border-gray-200 bg-white p-3 sm:p-5">
           <h1 className="text-xl font-bold text-gray-900">Meta Ads Manager</h1>
           <p className="mt-0.5 text-sm text-gray-500">
             Manage and monitor your Meta campaigns and ads.
           </p>
-          <div className="mt-4 grid grid-cols-[minmax(0,1fr)_92px] sm:grid-cols-[minmax(0,1fr)_110px] gap-2.5">
+          <div className="mt-3 grid grid-cols-[minmax(0,1fr)_92px] gap-2 sm:mt-4 sm:grid-cols-[minmax(0,1fr)_110px] sm:gap-2.5">
             <div className="h-full rounded-xl border border-gray-200 bg-gray-50 p-2.5 sm:p-3">
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
                 Select Account
@@ -78,10 +78,7 @@ export default function MetaDashboardPage() {
         {countsLoading && <AdminSectionSkeleton variant="inline" />}
 
         {/* Campaigns (main view) */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm sm:p-4">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-gray-900 sm:text-base">Campaigns</h2>
-          </div>
+        <div>
           <CampaignsTable accountId={accountId} />
         </div>
       </div>

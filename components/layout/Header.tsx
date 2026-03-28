@@ -12,7 +12,6 @@ import { toast } from 'sonner';
 
 export const Header = () => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
   const [showMoreDrawer, setShowMoreDrawer] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -24,15 +23,6 @@ export const Header = () => {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const notificationPanelRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 50);
-    };
-    window.addEventListener('scroll', handleScroll);
-    handleScroll();
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   useEffect(() => {
     if (showSearch) {
@@ -126,9 +116,9 @@ export const Header = () => {
         : 'Client Account';
 
   return (
-    <header className={`relative z-120 lg:fixed lg:top-0 lg:left-0 lg:right-0 transition-all duration-300 ${scrolled ? 'lg:bg-white lg:shadow-md' : 'lg:bg-transparent'}`}>
+    <header className="relative z-120 lg:fixed lg:top-0 lg:left-0 lg:right-0 lg:bg-white lg:shadow-md">
       {/* Mobile Top Bar - Logo + Icons */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-130 py-3 px-4 bg-white/95 backdrop-blur-sm border-b border-gray-100">
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-130 py-3 px-4 bg-white border-b border-gray-100">
         <div className="flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">

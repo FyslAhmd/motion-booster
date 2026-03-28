@@ -19,13 +19,13 @@ function fmt(val: string | undefined, type: 'money' | 'number' | 'percent' = 'nu
 
 const METRIC_CONFIG = [
   { key: 'spend', label: 'Spend', type: 'money' as const },
+  { key: 'reach', label: 'Reach', type: 'number' as const },
   { key: 'impressions', label: 'Impressions', type: 'number' as const },
   { key: 'clicks', label: 'Clicks', type: 'number' as const },
   { key: 'ctr', label: 'CTR', type: 'percent' as const },
+  { key: 'frequency', label: 'Frequency', type: 'number' as const },
   { key: 'cpc', label: 'CPC', type: 'money' as const },
   { key: 'cpm', label: 'CPM', type: 'money' as const },
-  { key: 'reach', label: 'Reach', type: 'number' as const },
-  { key: 'frequency', label: 'Frequency', type: 'number' as const },
 ];
 
 interface Props {
@@ -50,7 +50,7 @@ export default function InsightsCards({ insights }: Props) {
         return (
           <div
             key={m.key}
-            className="rounded-xl border border-gray-100 bg-white p-4 
+            className="rounded-xl border border-gray-100 bg-white p-4
                        transition-all hover:border-red-400/40"
           >
             <p className="text-xs font-medium text-gray-400 mb-1">{m.label}</p>

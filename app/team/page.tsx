@@ -49,21 +49,32 @@ export default function TeamPage() {
 
         {/* Filter Tabs */}
         <div className="px-4 pb-3">
-          <div className="flex gap-2 overflow-x-auto no-scrollbar whitespace-nowrap">
-            {departments.map(dep => (
-              <button
-                key={dep}
-                onClick={() => setActiveTab(dep)}
-                className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${
-                  activeTab === dep
-                    ? 'bg-white text-red-500 border-red-500'
-                    : 'text-gray-500 border-gray-200 bg-white hover:border-red-300'
-                }`}
-              >
-                {dep === 'all' ? (isBN ? 'সব' : 'All') : getDepartmentLabel(dep)}
-              </button>
-            ))}
-          </div>
+          {loading ? (
+            <div className="flex gap-2 overflow-x-auto no-scrollbar whitespace-nowrap">
+              {Array.from({ length: 5 }).map((_, idx) => (
+                <div
+                  key={`team-tab-skeleton-${idx}`}
+                  className="h-8 w-20 shrink-0 rounded-full bg-gray-200 animate-pulse"
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="flex gap-2 overflow-x-auto no-scrollbar whitespace-nowrap">
+              {departments.map(dep => (
+                <button
+                  key={dep}
+                  onClick={() => setActiveTab(dep)}
+                  className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                    activeTab === dep
+                      ? 'bg-white text-red-500 border-red-500'
+                      : 'text-gray-500 border-gray-200 bg-white hover:border-red-300'
+                  }`}
+                >
+                  {dep === 'all' ? (isBN ? 'সব' : 'All') : getDepartmentLabel(dep)}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

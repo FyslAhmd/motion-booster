@@ -715,7 +715,7 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
   return (
     <div className="rounded-xl border border-gray-100 bg-white">
       {/* Controls */}
-      <div className="flex flex-col gap-3 border-b border-gray-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 border-b border-gray-100 px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-4">
         <h3 className="text-sm font-semibold text-gray-700">
           Campaigns {pageNum > 1 && <span className="ml-1 text-xs text-gray-500">Page {pageNum}{totalPages ? `/${totalPages}` : ''}</span>}
         </h3>
@@ -760,7 +760,7 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
 
       {/* Loading */}
       {loading && (
-        <div className="grid grid-cols-1 gap-4 p-4 sm:p-5 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 p-3 sm:gap-4 sm:p-5 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={`campaign-skeleton-${i}`} className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
               <div className="flex items-start gap-3">
@@ -791,16 +791,16 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
 
       {/* Error */}
       {error && !loading && (
-        <div className="px-6 py-10 text-center text-sm text-red-400">{error}</div>
+        <div className="px-3 py-8 text-center text-sm text-red-400 sm:px-6 sm:py-10">{error}</div>
       )}
 
       {/* Cards */}
       {!loading && !error && (
         <>
           {data.length === 0 ? (
-            <div className="px-6 py-10 text-center text-sm text-gray-500">No campaigns found.</div>
+            <div className="px-3 py-8 text-center text-sm text-gray-500 sm:px-6 sm:py-10">No campaigns found.</div>
           ) : (
-            <div className="grid grid-cols-1 gap-4 p-4 sm:p-5 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 p-3 sm:gap-4 sm:p-5 lg:grid-cols-3">
 	              {data.map((c) => {
 	                const derived = c.derived_status || { label: c.effective_status?.replace(/_/g, ' ') || 'Unknown', key: c.effective_status || 'UNKNOWN' };
 	                const { color, label } = statusMeta(derived.key, derived.label);
@@ -850,13 +850,7 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
                     </div>
 
                     <div className="mt-3 grid grid-cols-3 gap-2">
-                      <div className="rounded-lg border border-gray-100 bg-gray-50 px-2 py-1.5">
-                        <p className="text-[10px] uppercase tracking-wide text-gray-500">Spend</p>
-                        <p className="mt-0.5 text-xs font-semibold text-gray-900">
-                          {cardMetric ? `$${cardMetric.spend.toFixed(2)}` : '—'}
-                        </p>
-                      </div>
-                      <div className="rounded-lg border border-gray-100 bg-gray-50 px-2 py-1.5">
+                                              <div className="rounded-lg border border-gray-100 bg-gray-50 px-2 py-1.5">
                         <p className="truncate text-[10px] uppercase tracking-wide text-gray-500" title={cardMetric?.metricLabel || 'Metric'}>
                           {cardMetric?.metricLabel || 'Metric'}
                         </p>
@@ -870,6 +864,12 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
                         </p>
                         <p className="mt-0.5 text-xs font-semibold text-gray-900">
                           {cardMetric ? (cardMetric.costValue > 0 ? `$${cardMetric.costValue.toFixed(4)}` : '—') : '—'}
+                        </p>
+                      </div>
+                      <div className="rounded-lg border border-gray-100 bg-gray-50 px-2 py-1.5">
+                        <p className="text-[10px] uppercase tracking-wide text-gray-500">Spend</p>
+                        <p className="mt-0.5 text-xs font-semibold text-gray-900">
+                          {cardMetric ? `$${cardMetric.spend.toFixed(2)}` : '—'}
                         </p>
                       </div>
                     </div>
