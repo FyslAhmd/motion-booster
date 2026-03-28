@@ -1139,6 +1139,26 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
                       const dynamicMetric = resolveDynamicInsightMetric(data, dominantGoal);
                       return (
                         <>
+                        {dynamicMetric && (
+                            <>
+                              <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                                <p className="text-[11px] font-medium uppercase tracking-wider text-gray-500">{dynamicMetric.metricLabel}</p>
+                                <p className="mt-1 text-lg font-bold text-gray-900">{dynamicMetric.metricValue.toLocaleString()}</p>
+                                {/* <p className="mt-0.5 text-[10px] text-gray-400">Goal: {dynamicMetric.goal?.replace(/_/g, ' ') || '—'}</p> */}
+                              </div>
+                              <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                                <p
+                                  className="truncate text-[11px] font-medium uppercase tracking-wider text-gray-500"
+                                  title={dynamicMetric.costLabel}
+                                >
+                                  {dynamicMetric.costLabel}
+                                </p>
+                                <p className="mt-1 text-lg font-bold text-gray-900">
+                                  {dynamicMetric.costValue > 0 ? `$${dynamicMetric.costValue.toFixed(4)}` : '—'}
+                                </p>
+                              </div>
+                            </>
+                          )}
                           <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
                             <p className="text-[11px] font-medium uppercase tracking-wider text-gray-500">Spend</p>
                             <p className="mt-1 text-lg font-bold text-gray-900">${data.spend.toFixed(2)}</p>
@@ -1151,21 +1171,7 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
                             <p className="text-[11px] font-medium uppercase tracking-wider text-gray-500">Impressions</p>
                             <p className="mt-1 text-lg font-bold text-gray-900">{data.impressions.toLocaleString()}</p>
                           </div>
-                          {dynamicMetric && (
-                            <>
-                              <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
-                                <p className="text-[11px] font-medium uppercase tracking-wider text-gray-500">{dynamicMetric.metricLabel}</p>
-                                <p className="mt-1 text-lg font-bold text-gray-900">{dynamicMetric.metricValue.toLocaleString()}</p>
-                                <p className="mt-0.5 text-[10px] text-gray-400">Goal: {dynamicMetric.goal?.replace(/_/g, ' ') || '—'}</p>
-                              </div>
-                              <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
-                                <p className="text-[11px] font-medium uppercase tracking-wider text-gray-500">{dynamicMetric.costLabel}</p>
-                                <p className="mt-1 text-lg font-bold text-gray-900">
-                                  {dynamicMetric.costValue > 0 ? `$${dynamicMetric.costValue.toFixed(4)}` : '—'}
-                                </p>
-                              </div>
-                            </>
-                          )}
+
                           <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
                             <p className="text-[11px] font-medium uppercase tracking-wider text-gray-500">CTR</p>
                             <p className="mt-1 text-lg font-bold text-gray-900">{data.ctr.toFixed(2)}%</p>
