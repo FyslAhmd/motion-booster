@@ -3,16 +3,18 @@
 import { usePathname } from 'next/navigation';
 import { Header } from './Header';
 import { Footer } from './Footer';
+import { FloatingSocialButtons } from '@/components/ui/FloatingSocialButtons';
+import { FloatingCallButton } from '@/components/ui/FloatingCallButton';
 
 export const ConditionalLayout = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
-  
+
   // Hide Header and Footer on dashboard, admin, and forgot-password routes
   const isDashboard = pathname?.startsWith('/dashboard');
   const isAdmin = pathname?.startsWith('/admin');
   const isForgotPassword = pathname === '/forgot-password';
   const isInvoice = pathname === '/invoice';
-  
+
   const shouldHideLayout = isDashboard || isAdmin || isForgotPassword || isInvoice;
   const isHandledByAdminShell = isDashboard || isAdmin || isInvoice;
   const content = isHandledByAdminShell ? (
@@ -24,6 +26,8 @@ export const ConditionalLayout = ({ children }: { children: React.ReactNode }) =
   return (
     <>
       {!shouldHideLayout && <Header />}
+      {!isDashboard && <FloatingSocialButtons />}
+      {!isDashboard && <FloatingCallButton />}
       {content}
       {!shouldHideLayout && <Footer />}
     </>

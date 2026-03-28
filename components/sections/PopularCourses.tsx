@@ -107,9 +107,30 @@ export const PopularCourses = () => {
     : allServices.filter(s => s.category === activeTab);
 
   const scroll = (direction: 'left' | 'right') => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: direction === 'left' ? -400 : 400, behavior: 'smooth' });
+    const container = scrollRef.current;
+    if (!container) return;
+
+    const firstCard = container.querySelector<HTMLElement>('.service-card');
+    const gap = 24;
+    const step = firstCard ? firstCard.offsetWidth + gap : 400;
+    const atStart = container.scrollLeft <= 8;
+    const atEnd = container.scrollLeft + container.clientWidth >= container.scrollWidth - 8;
+
+    if (direction === 'right') {
+      if (atEnd) {
+        container.scrollTo({ left: 0, behavior: 'smooth' });
+        return;
+      }
+      container.scrollBy({ left: step, behavior: 'smooth' });
+      return;
     }
+
+    if (atStart) {
+      container.scrollTo({ left: container.scrollWidth - container.clientWidth, behavior: 'smooth' });
+      return;
+    }
+
+    container.scrollBy({ left: -step, behavior: 'smooth' });
   };
 
   const handleTabClick = (tab: string, event: React.MouseEvent<HTMLButtonElement>) => {
@@ -182,7 +203,7 @@ export const PopularCourses = () => {
               <Swiper
                 slidesPerView={'auto'}
                 centeredSlides
-                centeredSlidesBounds
+                loop={filteredServices.length > 1}
                 spaceBetween={12}
                 speed={560}
                 grabCursor

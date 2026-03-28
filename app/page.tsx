@@ -1,8 +1,6 @@
 'use client';
 
 import { CategorySlider, PopularCourses, AchievementStats, Portfolio, CompanyMarquee, Features, Testimonials, FAQ, HeroSlider, HeaderBanner } from '@/components/sections';
-import { FloatingSocialButtons } from '@/components/ui/FloatingSocialButtons';
-import { FloatingCallButton } from '@/components/ui/FloatingCallButton';
 import { WelcomeModal } from '@/components/ui/WelcomeModal';
 import { useLanguage } from '@/lib/lang/LanguageContext';
 
@@ -13,8 +11,6 @@ export default function Home() {
   return (
     <main className="home-page min-h-screen bg-white pb-10 sm:pb-12 lg:pb-0">
       <WelcomeModal />
-      <FloatingSocialButtons />
-      <FloatingCallButton />
       {/* Mobile: HeroSlider, Desktop: HeaderBanner */}
       <div className="home-hero-mobile lg:hidden page-reveal">
         <HeroSlider />

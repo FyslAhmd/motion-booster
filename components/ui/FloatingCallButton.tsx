@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { useLanguage } from '@/lib/lang/LanguageContext';
-import { Phone, X, ArrowUp, Headset } from 'lucide-react';
+import { Phone, X, ArrowUp } from 'lucide-react';
 
 export const FloatingCallButton = () => {
   const { t } = useLanguage();
@@ -39,7 +40,14 @@ export const FloatingCallButton = () => {
             className="flex h-12 w-12 items-center justify-center rounded-full bg-red-500 shadow-lg transition-colors hover:bg-red-600 animate-float-up"
             aria-label={t('floating_call_phone_aria')}
           >
-            <Headset className="h-5 w-5 text-white" />
+            <Image
+              src="/customer-servicee.png"
+              alt=""
+              aria-hidden="true"
+              width={50}
+              height={50}
+              className="h-8 w-8 object-contain"
+            />
           </button>
         ) : (
           <button
@@ -47,7 +55,14 @@ export const FloatingCallButton = () => {
             className="flex items-center gap-2 rounded-full bg-red-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-red-600 animate-float-up"
             aria-label="Contact us"
           >
-            <Headset className="h-4 w-4" />
+            <Image
+              src="/customer-servicee.png"
+              alt=""
+              aria-hidden="true"
+              width={50}
+              height={50}
+              className="h-6 w-6 object-contain"
+            />
             <span>{t('contact_badge')}</span>
           </button>
         )}
@@ -79,9 +94,11 @@ export const FloatingCallButton = () => {
 
             {/* Call icon image */}
             <div className="mb-5 flex justify-center">
-              <img
+              <Image
                 src="/call-icon.png"
                 alt="Contact support"
+                width={128}
+                height={128}
                 className="h-32 w-32 object-contain"
               />
             </div>
