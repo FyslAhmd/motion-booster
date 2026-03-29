@@ -1,37 +1,38 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Motion Booster
 
-## Getting Started
+Next.js App Router project for Motion Booster platform.
 
-First, run the development server:
+## Start
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+App URL: http://localhost:3000
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Frontend Folder Organization
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `app/`: route-level pages, layouts, and API routes
+- `app/dashboard/`: authenticated dashboard modules (one folder per module)
+- `components/layout/`: global layout pieces (Header, Footer, wrappers)
+- `components/sections/`: landing/public section components
+- `components/ui/`: reusable UI building blocks
+- `lib/`: shared utilities, auth, DB, server helpers
+- `types/`: shared type declarations (legacy TS modules still in migration)
 
-## Learn More
+## JSX Migration (Phased)
 
-To learn more about Next.js, take a look at the following resources:
+Phase 1 complete for `dashboard/user-campaigns` frontend module:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `app/dashboard/user-campaigns/page.tsx` -> `page.jsx`
+- `app/dashboard/user-campaigns/loading.tsx` -> `loading.jsx`
+- `app/dashboard/user-campaigns/[userId]/page.tsx` -> `page.jsx`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+`tsconfig.json` is updated to include JS/JSX files so TS+JS can coexist during migration.
 
-## Deploy on Vercel
+## Migration Rules
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-# motion-booster
+- Migrate module-by-module, not all files at once.
+- Keep routes stable (`page.jsx`, `loading.jsx`, `layout.jsx`) while converting.
+- Run lint after each module migration.
+- Move shared UI logic to `components/ui` and module-specific pieces under each module folder.

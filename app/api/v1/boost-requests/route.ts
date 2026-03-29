@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { validateRequest } from '@/lib/auth/validate-request';
-import { requireAdmin } from '@/lib/auth/require-admin';
 
 type PlacementValue = 'facebook' | 'instagram' | 'whatsapp';
 type LocationValue = 'all_country' | 'bangladesh';
@@ -216,15 +215,17 @@ export async function POST(req: NextRequest) {
 
 // ─── GET: Admin lists all boost requests (paginated + searchable) ──
 export async function GET(req: NextRequest) {
-  const result = await requireAdmin(req);
-  if (result instanceof NextResponse) return result;
+  const user = await validateRequest(req);
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
   const { searchParams } = new URL(req.url);
   const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
   const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20', 10)));
   const search = (searchParams.get('search') || '').trim();
 
-  const where = search
+  const searchWhere = search
     ? {
         OR: [
           { postLink: { contains: search, mode: 'insensitive' as const } },
@@ -235,6 +236,13 @@ export async function GET(req: NextRequest) {
         ],
       }
     : {};
+
+  const where = user.role === 'ADMIN'
+    ? searchWhere
+    : {
+        userId: user.id,
+        ...(searchWhere as object),
+      };
 
   const [total, items] = await Promise.all([
     prisma.boostRequest.count({ where }),

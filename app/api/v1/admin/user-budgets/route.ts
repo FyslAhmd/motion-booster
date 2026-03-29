@@ -53,15 +53,17 @@ async function fetchSpendMapForType(accountId: string, type: MetaType, ids: stri
 export async function GET(req: NextRequest) {
   try {
     const auth = await validateRequest(req);
-    if (!auth || auth.role !== 'ADMIN') {
+    if (!auth) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
+
+    const isAdmin = auth.role === 'ADMIN';
 
     const budgetDelegate = (prisma as any).userBudgetDeposit;
 
     const [users, assignments] = await Promise.all([
       prisma.user.findMany({
-        where: { role: 'USER' },
+        where: isAdmin ? { role: 'USER' } : { id: auth.id },
         select: {
           id: true,
           username: true,

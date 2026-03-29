@@ -75,7 +75,7 @@ function normalizeAssignedUsers(payload: unknown): AssignedUser[] {
     })
     .filter((user) => user.id.length > 0);
 }
-/* ─── Interfaces for the user's own detail view ─── */
+/* --- Interfaces for the user's own detail view --- */
 
 interface AssignmentRef {
   metaObjectId: string;
@@ -130,7 +130,7 @@ interface Ad {
   };
 }
 
-/* ─── Status badge styles ─── */
+/* --- Status badge styles --- */
 
 const STATUS_STYLES: Record<string, { color: string; label: string }> = {
   ACTIVE:          { color: 'bg-green-50 text-green-700 border border-green-200',   label: 'Active' },
@@ -160,9 +160,9 @@ const TABS: { id: Tab; label: string; icon: typeof Megaphone }[] = [
   { id: 'ads', label: 'Ads', icon: MonitorPlay },
 ];
 
-/* ═════════════════════════════════════════════════════════════════
+/* -----------------------------------------------------------------
    Main Page Component
-   ═════════════════════════════════════════════════════════════════ */
+   ----------------------------------------------------------------- */
 
 export default function UserCampaignsPage() {
   const { user: authUser } = useAuth();
@@ -179,9 +179,9 @@ export default function UserCampaignsPage() {
   return isAdmin ? <AdminView /> : <UserOwnView userId={authUser.id} />;
 }
 
-/* ═════════════════════════════════════════════════════════════════
-   Admin View — List all users with assignments
-   ═════════════════════════════════════════════════════════════════ */
+/* -----------------------------------------------------------------
+   Admin View � List all users with assignments
+   ----------------------------------------------------------------- */
 
 function AdminView() {
   const { accessToken, refreshSession } = useAuth();
@@ -189,7 +189,7 @@ function AdminView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // ─── Fetch wrapper: auto-refresh on 401 & retry once ──
+  // --- Fetch wrapper: auto-refresh on 401 & retry once --
   const authFetch = useCallback(async (url: string, options: RequestInit = {}): Promise<Response> => {
     const headers = new Headers(options.headers || {});
     if (accessToken) {
@@ -339,16 +339,16 @@ function AdminView() {
   );
 }
 
-/* ═════════════════════════════════════════════════════════════════
-   User View — Show the logged-in user's own assigned campaigns
-   ═════════════════════════════════════════════════════════════════ */
+/* -----------------------------------------------------------------
+   User View � Show the logged-in user's own assigned campaigns
+   ----------------------------------------------------------------- */
 
 function UserOwnView({ userId }: { userId: string }) {
   const { accessToken, refreshSession } = useAuth();
   const { confirm } = useConfirm();
   const BY_IDS_CHUNK_SIZE = 40;
 
-  // ─── Fetch wrapper: auto-refresh on 401 & retry once ──
+  // --- Fetch wrapper: auto-refresh on 401 & retry once --
   const authFetch = useCallback(async (url: string, options: RequestInit = {}): Promise<Response> => {
     const headers = new Headers(options.headers || {});
     if (accessToken) {
@@ -673,9 +673,9 @@ function UserOwnView({ userId }: { userId: string }) {
   );
 }
 
-/* ═════════════════════════════════════════════════════════════════
+/* -----------------------------------------------------------------
    Tab Section Components
-   ═════════════════════════════════════════════════════════════════ */
+   ----------------------------------------------------------------- */
 
 function Spinner() {
   return <AdminSectionSkeleton variant="tableEmbedded" />;
@@ -689,7 +689,7 @@ function Empty({ label }: { label: string }) {
   );
 }
 
-/* ─── Campaigns Section ─── */
+/* --- Campaigns Section --- */
 
 function CampaignsSection({ campaigns, loading, canToggle, toggleStatus, togglingId }: {
   campaigns: Campaign[];
@@ -712,7 +712,7 @@ function CampaignsSection({ campaigns, loading, canToggle, toggleStatus, togglin
             ? `$${(parseInt(c.daily_budget) / 100).toFixed(2)}/day`
             : c.lifetime_budget
               ? `$${(parseInt(c.lifetime_budget) / 100).toFixed(2)} total`
-              : '—';
+              : '�';
           const start = c.start_time ? new Date(c.start_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
           const end = c.stop_time ? new Date(c.stop_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Ongoing';
 
@@ -726,12 +726,12 @@ function CampaignsSection({ campaigns, loading, canToggle, toggleStatus, togglin
                 )}
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-gray-900">{c.name}</p>
-                  <p className="mt-0.5 text-[11px] text-gray-500 capitalize">{c.objective?.replace(/_/g, ' ').toLowerCase() || '—'}</p>
+                  <p className="mt-0.5 text-[11px] text-gray-500 capitalize">{c.objective?.replace(/_/g, ' ').toLowerCase() || '�'}</p>
                   <div className="mt-1.5 flex items-center gap-2">
                     <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${st.color}`}>{st.label}</span>
                     <span className="text-[11px] text-gray-500">{budget}</span>
                   </div>
-                  <p className="mt-1 text-[11px] text-gray-500">{start ? `${start} - ${end}` : '—'}</p>
+                  <p className="mt-1 text-[11px] text-gray-500">{start ? `${start} - ${end}` : '�'}</p>
                 </div>
                 {canToggle(c) ? (
                   <button
@@ -776,7 +776,7 @@ function CampaignsSection({ campaigns, loading, canToggle, toggleStatus, togglin
                 ? `$${(parseInt(c.daily_budget) / 100).toFixed(2)}/day`
                 : c.lifetime_budget
                   ? `$${(parseInt(c.lifetime_budget) / 100).toFixed(2)} total`
-                  : '—';
+                  : '�';
               const start = c.start_time ? new Date(c.start_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
               const end = c.stop_time ? new Date(c.stop_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Ongoing';
               return (
@@ -792,9 +792,9 @@ function CampaignsSection({ campaigns, loading, canToggle, toggleStatus, togglin
                   <td className="px-4 py-3">
                     <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${st.color}`}>{st.label}</span>
                   </td>
-                  <td className="px-4 py-3 text-xs capitalize text-gray-500">{c.objective?.replace(/_/g, ' ').toLowerCase() || '—'}</td>
+                  <td className="px-4 py-3 text-xs capitalize text-gray-500">{c.objective?.replace(/_/g, ' ').toLowerCase() || '�'}</td>
                   <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">{budget}</td>
-                  <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">{start ? `${start} – ${end}` : '—'}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">{start ? `${start} � ${end}` : '�'}</td>
                   <td className="px-4 py-3 text-center">
                     {canToggle(c) ? (
                       <button
@@ -811,7 +811,7 @@ function CampaignsSection({ campaigns, loading, canToggle, toggleStatus, togglin
                         />
                       </button>
                     ) : (
-                      <span className="text-xs text-gray-300">—</span>
+                      <span className="text-xs text-gray-300">�</span>
                     )}
                   </td>
                 </tr>
@@ -824,7 +824,7 @@ function CampaignsSection({ campaigns, loading, canToggle, toggleStatus, togglin
   );
 }
 
-/* ─── Ad Sets Section ─── */
+/* --- Ad Sets Section --- */
 
 function AdSetsSection({ adSets, loading, canToggleAdSet, toggleAdSetStatus, togglingId }: {
   adSets: AdSet[];
@@ -846,7 +846,7 @@ function AdSetsSection({ adSets, loading, canToggleAdSet, toggleAdSetStatus, tog
             ? `$${(parseInt(a.daily_budget) / 100).toFixed(2)}/day`
             : a.lifetime_budget
               ? `$${(parseInt(a.lifetime_budget) / 100).toFixed(2)} total`
-              : '—';
+              : '�';
           const start = a.start_time ? new Date(a.start_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
           const end = a.end_time ? new Date(a.end_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Ongoing';
 
@@ -855,12 +855,12 @@ function AdSetsSection({ adSets, loading, canToggleAdSet, toggleAdSetStatus, tog
               <div className="flex items-start gap-3">
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-gray-900">{a.name}</p>
-                  <p className="mt-0.5 text-[11px] text-gray-500 capitalize">{a.optimization_goal?.replace(/_/g, ' ').toLowerCase() || '—'}</p>
+                  <p className="mt-0.5 text-[11px] text-gray-500 capitalize">{a.optimization_goal?.replace(/_/g, ' ').toLowerCase() || '�'}</p>
                   <div className="mt-1.5 flex items-center gap-2">
                     <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${st.color}`}>{st.label}</span>
                     <span className="text-[11px] text-gray-500">{budget}</span>
                   </div>
-                  <p className="mt-1 text-[11px] text-gray-500">{start ? `${start} - ${end}` : '—'}</p>
+                  <p className="mt-1 text-[11px] text-gray-500">{start ? `${start} - ${end}` : '�'}</p>
                 </div>
                 {canToggleAdSet(a) ? (
                   <button
@@ -903,7 +903,7 @@ function AdSetsSection({ adSets, loading, canToggleAdSet, toggleAdSetStatus, tog
                 ? `$${(parseInt(a.daily_budget) / 100).toFixed(2)}/day`
                 : a.lifetime_budget
                   ? `$${(parseInt(a.lifetime_budget) / 100).toFixed(2)} total`
-                  : '—';
+                  : '�';
               const start = a.start_time ? new Date(a.start_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
               const end = a.end_time ? new Date(a.end_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Ongoing';
               return (
@@ -912,9 +912,9 @@ function AdSetsSection({ adSets, loading, canToggleAdSet, toggleAdSetStatus, tog
                   <td className="px-4 py-3">
                     <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${st.color}`}>{st.label}</span>
                   </td>
-                  <td className="px-4 py-3 text-xs capitalize text-gray-500">{a.optimization_goal?.replace(/_/g, ' ').toLowerCase() || '—'}</td>
+                  <td className="px-4 py-3 text-xs capitalize text-gray-500">{a.optimization_goal?.replace(/_/g, ' ').toLowerCase() || '�'}</td>
                   <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">{budget}</td>
-                  <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">{start ? `${start} – ${end}` : '—'}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">{start ? `${start} � ${end}` : '�'}</td>
                   <td className="px-4 py-3 text-center">
                     {canToggleAdSet(a) ? (
                       <button
@@ -931,7 +931,7 @@ function AdSetsSection({ adSets, loading, canToggleAdSet, toggleAdSetStatus, tog
                         />
                       </button>
                     ) : (
-                      <span className="text-xs text-gray-300">—</span>
+                      <span className="text-xs text-gray-300">�</span>
                     )}
                   </td>
                 </tr>
@@ -944,7 +944,7 @@ function AdSetsSection({ adSets, loading, canToggleAdSet, toggleAdSetStatus, tog
   );
 }
 
-/* ─── Ads Section ─── */
+/* --- Ads Section --- */
 
 function AdsSection({ ads, loading, canToggleAd, toggleAdStatus, togglingId }: {
   ads: Ad[];
@@ -1031,8 +1031,8 @@ function AdsSection({ ads, loading, canToggleAd, toggleAdStatus, togglingId }: {
                   <td className="px-4 py-3">
                     <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${st.color}`}>{st.label}</span>
                   </td>
-                  <td className="max-w-40 truncate px-4 py-3 text-xs text-gray-500">{ad.creative?.title || '—'}</td>
-                  <td className="max-w-48 truncate px-4 py-3 text-xs text-gray-500">{ad.creative?.body || '—'}</td>
+                  <td className="max-w-40 truncate px-4 py-3 text-xs text-gray-500">{ad.creative?.title || '�'}</td>
+                  <td className="max-w-48 truncate px-4 py-3 text-xs text-gray-500">{ad.creative?.body || '�'}</td>
                   <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">
                     {new Date(ad.created_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                   </td>
@@ -1052,7 +1052,7 @@ function AdsSection({ ads, loading, canToggleAd, toggleAdStatus, togglingId }: {
                         />
                       </button>
                     ) : (
-                      <span className="text-xs text-gray-300">—</span>
+                      <span className="text-xs text-gray-300">�</span>
                     )}
                   </td>
                 </tr>

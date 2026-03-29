@@ -13,7 +13,7 @@ import {
   Mail,
 } from 'lucide-react';
 
-/* ─── Interfaces ──────────────────────────────────────────────── */
+/* --- Interfaces ------------------------------------------------ */
 
 interface UserInfo {
   id: string;
@@ -82,7 +82,7 @@ const BY_IDS_CHUNK_SIZE = 40;
 const META_PAGE_LIMIT = 50;
 const MAX_META_PAGES = 200;
 
-/* ─── Status badge styles ─────────────────────────────────────── */
+/* --- Status badge styles --------------------------------------- */
 
 const STATUS_STYLES: Record<string, { color: string; label: string }> = {
   ACTIVE:              { color: 'bg-green-50 text-green-700 border border-green-200',   label: 'Active' },
@@ -107,7 +107,7 @@ function getStatusStyle(status: string) {
 function formatBudgetValue(daily?: string, lifetime?: string) {
   if (daily) return `$${(parseInt(daily, 10) / 100).toFixed(2)}/day`;
   if (lifetime) return `$${(parseInt(lifetime, 10) / 100).toFixed(2)} total`;
-  return '—';
+  return '�';
 }
 
 function formatShortRange(start?: string, end?: string) {
@@ -117,7 +117,7 @@ function formatShortRange(start?: string, end?: string) {
   const e = end
     ? new Date(end).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
     : 'Ongoing';
-  return s ? `${s} - ${e}` : '—';
+  return s ? `${s} - ${e}` : '�';
 }
 
 async function fetchMetaByIdsChunked<T>(type: 'CAMPAIGN' | 'ADSET' | 'AD', refs: AssignmentRef[]): Promise<T[]> {
@@ -221,7 +221,7 @@ function DetailModal({
               <h3 className="truncate text-base font-semibold text-gray-900 sm:text-lg">{title}</h3>
               {subtitle && <p className="mt-1 text-xs text-gray-500">{subtitle}</p>}
             </div>
-            <button onClick={onClose} className="rounded-lg px-2 py-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700">×</button>
+            <button onClick={onClose} className="rounded-lg px-2 py-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700">�</button>
           </div>
         </div>
 
@@ -230,7 +230,7 @@ function DetailModal({
             {rows.map((row) => (
               <div key={row.label} className="rounded-xl border border-gray-200 bg-white px-3 py-2.5 shadow-sm">
                 <p className="text-[11px] uppercase tracking-wide text-gray-500">{row.label}</p>
-                <p className="mt-1 wrap-break-word text-sm font-medium text-gray-900">{row.value || '—'}</p>
+                <p className="mt-1 wrap-break-word text-sm font-medium text-gray-900">{row.value || '�'}</p>
               </div>
             ))}
           </div>
@@ -242,7 +242,7 @@ function DetailModal({
   );
 }
 
-/* ─── Main Page ───────────────────────────────────────────────── */
+/* --- Main Page ------------------------------------------------- */
 
 export default function UserCampaignDetailPage({
   params,
@@ -441,9 +441,9 @@ export default function UserCampaignDetailPage({
   );
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   Section Components — mirrors /dashboard/meta table designs
-   ═══════════════════════════════════════════════════════════════ */
+/* ---------------------------------------------------------------
+   Section Components � mirrors /dashboard/meta table designs
+   --------------------------------------------------------------- */
 
 function Spinner() {
   return <AdminSectionSkeleton variant="grid" />;
@@ -457,7 +457,7 @@ function Empty({ label }: { label: string }) {
   );
 }
 
-/* ─── Campaigns Section ───────────────────────────────────────── */
+/* --- Campaigns Section ----------------------------------------- */
 
 function CampaignsSection({
   campaigns,
@@ -766,7 +766,7 @@ function CampaignsSection({
             onClose={() => setSelectedCampaign(null)}
             rows={[
               { label: 'Status', value: getStatusStyle(selectedCampaign.effective_status).label },
-              { label: 'Objective', value: selectedCampaign.objective?.replace(/_/g, ' ').toLowerCase() || '—' },
+              { label: 'Objective', value: selectedCampaign.objective?.replace(/_/g, ' ').toLowerCase() || '�' },
               { label: 'Budget', value: formatBudgetValue(selectedCampaign.daily_budget, selectedCampaign.lifetime_budget) },
               { label: 'Date Range', value: formatShortRange(selectedCampaign.start_time, selectedCampaign.stop_time) },
               { label: 'Created', value: new Date(selectedCampaign.created_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) },

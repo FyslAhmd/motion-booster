@@ -111,7 +111,7 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
 
   const userNavItems = [
     { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
-    { href: '/dashboard/user-campaigns', label: 'My Campaigns', icon: Megaphone },
+    { href: '/dashboard/user-campaigns', label: 'My Campaign', icon: Megaphone },
     { href: '/dashboard/chat', label: 'Chat', icon: MessageCircle },
   ];
 
@@ -216,7 +216,7 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
               className={`flex flex-col items-center justify-center gap-1 px-4 py-2 flex-1 transition-colors ${active ? 'text-red-500' : 'text-gray-500 hover:text-red-500'}`}
             >
               <Icon className="w-6 h-6" />
-              <span className="text-[10px] font-medium">{label}</span>
+              <span className="whitespace-nowrap text-[10px] font-medium">{label}</span>
             </Link>
           );
         })}

@@ -2,6 +2,15 @@
 
 import { useState, useEffect, useRef, useCallback, type ComponentType } from "react";
 import {
+  CartesianGrid,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import {
   BarChart2,
   MessageCircle,
   TrendingUp,
@@ -260,6 +269,11 @@ interface InsightSpendRow {
   spend?: string;
 }
 
+interface AssignedCampaignLite {
+  metaObjectId: string;
+  metaAccountId: string;
+}
+
 interface UserBudgetSummaryRow {
   totalBudget?: number;
   totalSpent?: number;
@@ -268,15 +282,177 @@ interface UserBudgetSummaryRow {
 
 interface UserOverviewProps {
   statCards: StatCard[];
+  userId?: string;
 }
 
-function UserOverview({ statCards }: UserOverviewProps) {
+interface AssignedCampaign {
+  metaObjectId: string;
+  metaAccountId: string;
+}
+
+interface CampaignInsightRow {
+  campaign_id?: string;
+  campaign_name?: string;
+  spend?: string;
+  reach?: string;
+  impressions?: string;
+}
+
+interface CampaignPerformanceRow {
+  campaignId: string;
+  campaignName: string;
+  spend: number;
+  reach: number;
+  impressions: number;
+}
+
+function UserOverview({ statCards, userId }: UserOverviewProps) {
   const [activeMetric, setActiveMetric] = useState<"Spend" | "Reach" | "Impression">("Spend");
+  const [isDateRangeOpen, setIsDateRangeOpen] = useState(false);
+  const [isMetaActive, setIsMetaActive] = useState(true);
+  const [isLoadingPerformance, setIsLoadingPerformance] = useState(false);
+  const [performanceError, setPerformanceError] = useState<string | null>(null);
+  const [campaignPerformance, setCampaignPerformance] = useState<CampaignPerformanceRow[]>([]);
+  const [fromDate, setFromDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 6);
+    return d.toISOString().slice(0, 10);
+  });
+  const [toDate, setToDate] = useState(() => new Date().toISOString().slice(0, 10));
   const secondScreenRef = useRef<HTMLDivElement | null>(null);
 
   const totalSpendValue = String(statCards.find((c) => c.label === "Daily Spend")?.value ?? "—");
   const activeAdsValue = String(statCards.find((c) => c.label === "Active Ads")?.value ?? "—");
   const unseenValue = String(statCards.find((c) => c.label === "Unseen Messages")?.value ?? "—");
+  const formatShortDate = (dateValue: string) => {
+    if (!dateValue) return "";
+    return new Date(`${dateValue}T00:00:00`).toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  };
+  const dateRangeLabel = fromDate && toDate
+    ? `${formatShortDate(fromDate)} - ${formatShortDate(toDate)}`
+    : "Custom date range";
+
+  useEffect(() => {
+    if (!userId || !isMetaActive) return;
+
+    let mounted = true;
+    const loadCampaignPerformance = async () => {
+      setIsLoadingPerformance(true);
+      setPerformanceError(null);
+
+      try {
+        const assignedRes = await fetch(
+          `/api/v1/admin/meta-assignments/users/${encodeURIComponent(userId)}`,
+          { cache: "no-store" },
+        );
+        const assignedData = await assignedRes.json();
+
+        if (!assignedData?.success) {
+          throw new Error("Failed to load assigned campaigns");
+        }
+
+        const campaigns = Array.isArray(assignedData?.data?.campaigns)
+          ? (assignedData.data.campaigns as AssignedCampaign[])
+          : [];
+
+        if (campaigns.length === 0) {
+          if (mounted) setCampaignPerformance([]);
+          return;
+        }
+
+        const campaignsByAccount = new Map<string, Set<string>>();
+        for (const campaign of campaigns) {
+          if (!campaign.metaAccountId || !campaign.metaObjectId) continue;
+          const ids = campaignsByAccount.get(campaign.metaAccountId) ?? new Set<string>();
+          ids.add(campaign.metaObjectId);
+          campaignsByAccount.set(campaign.metaAccountId, ids);
+        }
+
+        const accountResults = await Promise.all(
+          Array.from(campaignsByAccount.entries()).map(async ([accountId, campaignIds]) => {
+            const params = new URLSearchParams({
+              type: "campaigns",
+              account_id: accountId,
+              since: fromDate,
+              until: toDate,
+            });
+
+            const insightsRes = await fetch(`/api/v1/meta/insights?${params.toString()}`, {
+              cache: "no-store",
+            });
+            const insightsData = await insightsRes.json();
+
+            if (!insightsData?.success || !Array.isArray(insightsData?.data)) return [];
+
+            return (insightsData.data as CampaignInsightRow[])
+              .filter((row) => row.campaign_id && campaignIds.has(String(row.campaign_id)))
+              .map((row) => ({
+                campaignId: String(row.campaign_id),
+                campaignName: String(row.campaign_name || row.campaign_id || "Unnamed campaign"),
+                spend: Number.parseFloat(String(row.spend ?? "0")) || 0,
+                reach: Number.parseFloat(String(row.reach ?? "0")) || 0,
+                impressions: Number.parseFloat(String(row.impressions ?? "0")) || 0,
+              }));
+          }),
+        );
+
+        const merged = accountResults.flat();
+        const byCampaign = new Map<string, CampaignPerformanceRow>();
+
+        for (const row of merged) {
+          const existing = byCampaign.get(row.campaignId);
+          if (!existing) {
+            byCampaign.set(row.campaignId, row);
+            continue;
+          }
+
+          byCampaign.set(row.campaignId, {
+            ...existing,
+            spend: existing.spend + row.spend,
+            reach: existing.reach + row.reach,
+            impressions: existing.impressions + row.impressions,
+          });
+        }
+
+        if (!mounted) return;
+        setCampaignPerformance(Array.from(byCampaign.values()));
+      } catch {
+        if (!mounted) return;
+        setPerformanceError("Campaign performance data load korte problem hocche.");
+      } finally {
+        if (mounted) setIsLoadingPerformance(false);
+      }
+    };
+
+    loadCampaignPerformance();
+
+    return () => {
+      mounted = false;
+    };
+  }, [fromDate, isMetaActive, toDate, userId]);
+
+  const totalSpend = campaignPerformance.reduce((sum, row) => sum + row.spend, 0);
+  const totalReach = campaignPerformance.reduce((sum, row) => sum + row.reach, 0);
+  const totalImpression = campaignPerformance.reduce((sum, row) => sum + row.impressions, 0);
+
+  const metricKey =
+    activeMetric === "Spend" ? "spend" : activeMetric === "Reach" ? "reach" : "impressions";
+
+  const chartData = campaignPerformance
+    .slice()
+    .sort((a, b) => b[metricKey] - a[metricKey])
+    .slice(0, 8)
+    .map((row) => ({
+      name: row.campaignName.length > 16 ? `${row.campaignName.slice(0, 16)}...` : row.campaignName,
+      fullName: row.campaignName,
+      spend: Number(row.spend.toFixed(2)),
+      reach: Math.round(row.reach),
+      impressions: Math.round(row.impressions),
+    }));
 
   return (
     <div className="w-full overflow-x-hidden bg-gray-50 pb-6">
@@ -327,50 +503,107 @@ function UserOverview({ statCards }: UserOverviewProps) {
           <div className="mt-3 flex items-center gap-2">
             <button
               type="button"
-              className="flex-1 rounded-lg border border-rose-200 bg-rose-100/70 px-3 py-2 text-left text-xs font-medium text-gray-700"
+              onClick={() => setIsDateRangeOpen((prev) => !prev)}
+              disabled={!isMetaActive}
+              className={`flex-1 rounded-lg border px-3 py-2 text-left text-xs font-medium transition ${isMetaActive ? "border-red-200 bg-red-50 text-gray-700 hover:bg-red-100" : "cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400"}`}
             >
-              Custom date range ^
+              {dateRangeLabel} {isDateRangeOpen ? "^" : "v"}
             </button>
             <button
               type="button"
-              onClick={() => secondScreenRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
-              className="h-9 w-12 rounded-lg border border-rose-200 bg-rose-100/70 text-xs font-semibold text-gray-700 transition hover:bg-rose-200/70"
-              aria-label="Open performance details"
-              title="Open performance details"
-              >
-              {">"}
+              onClick={() => setIsMetaActive((prev) => !prev)}
+              className={`h-9 min-w-24 rounded-lg border px-3 text-xs font-semibold transition ${isMetaActive ? "border-red-200 bg-red-50 text-red-700 hover:bg-red-100" : "border-gray-300 bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
+              aria-label={isMetaActive ? "Deactivate performance controls" : "Activate performance controls"}
+              title={isMetaActive ? "Deactivate performance controls" : "Activate performance controls"}
+            >
+              {isMetaActive ? "Deactivate" : "Activate"}
             </button>
           </div>
+
+          {isDateRangeOpen && (
+            <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <label className="text-xs font-medium text-gray-600">
+                From
+                <input
+                  type="date"
+                  value={fromDate}
+                  max={toDate}
+                  onChange={(e) => {
+                    const nextFrom = e.target.value;
+                    setFromDate(nextFrom);
+                    if (toDate && nextFrom > toDate) {
+                      setToDate(nextFrom);
+                    }
+                  }}
+                  disabled={!isMetaActive}
+                  className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-2.5 py-2 text-xs text-gray-700 outline-none transition focus:border-red-300 focus:ring-2 focus:ring-red-100 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400"
+                />
+              </label>
+              <label className="text-xs font-medium text-gray-600">
+                To
+                <input
+                  type="date"
+                  value={toDate}
+                  min={fromDate}
+                  onChange={(e) => {
+                    const nextTo = e.target.value;
+                    setToDate(nextTo);
+                    if (fromDate && nextTo < fromDate) {
+                      setFromDate(nextTo);
+                    }
+                  }}
+                  disabled={!isMetaActive}
+                  className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-2.5 py-2 text-xs text-gray-700 outline-none transition focus:border-red-300 focus:ring-2 focus:ring-red-100 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400"
+                />
+              </label>
+            </div>
+          )}
         </div>
 
         <div ref={secondScreenRef} className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+          {performanceError && (
+            <div className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+              {performanceError}
+            </div>
+          )}
+
           <div className="mb-4 grid grid-cols-2 gap-3">
             <div>
               <p className="text-sm font-semibold text-gray-900">Total Spend</p>
-              <p className="mt-1 text-lg font-bold text-gray-900">{totalSpendValue}</p>
+              <p className="mt-1 text-lg font-bold text-gray-900">
+                {isLoadingPerformance ? "Loading..." : fmtUSD(totalSpend)}
+              </p>
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-900">Join Date</p>
-              <p className="mt-1 text-sm font-semibold text-gray-900">—</p>
+              <p className="text-sm font-semibold text-gray-900">Assigned Campaigns</p>
+              <p className="mt-1 text-sm font-semibold text-gray-900">
+                {isLoadingPerformance ? "..." : campaignPerformance.length}
+              </p>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-2.5">
             <div className="rounded-xl border border-gray-300 bg-gray-50 px-3 py-3 text-center">
               <p className="text-xs text-gray-500">Spend</p>
-              <p className="mt-1 text-sm font-semibold text-gray-900">{totalSpendValue}</p>
+              <p className="mt-1 text-sm font-semibold text-gray-900">
+                {isLoadingPerformance ? "..." : fmtUSD(totalSpend)}
+              </p>
             </div>
             <div className="rounded-xl border border-gray-300 bg-gray-50 px-3 py-3 text-center">
               <p className="text-xs text-gray-500">Reach</p>
-              <p className="mt-1 text-sm font-semibold text-gray-900">{activeAdsValue}</p>
+              <p className="mt-1 text-sm font-semibold text-gray-900">
+                {isLoadingPerformance ? "..." : totalReach.toLocaleString("en-US")}
+              </p>
             </div>
             <div className="rounded-xl border border-gray-300 bg-gray-50 px-3 py-3 text-center">
               <p className="text-xs text-gray-500">Impression</p>
-              <p className="mt-1 text-sm font-semibold text-gray-900">{unseenValue}</p>
+              <p className="mt-1 text-sm font-semibold text-gray-900">
+                {isLoadingPerformance ? "..." : totalImpression.toLocaleString("en-US")}
+              </p>
             </div>
             <div className="rounded-xl border border-gray-300 bg-gray-50 px-3 py-3 text-center">
-              <p className="text-xs text-gray-500">CTR</p>
-              <p className="mt-1 text-sm font-semibold text-gray-900">—</p>
+              <p className="text-xs text-gray-500">Active Ads</p>
+              <p className="mt-1 text-sm font-semibold text-gray-900">{activeAdsValue}</p>
             </div>
           </div>
 
@@ -391,19 +624,47 @@ function UserOverview({ statCards }: UserOverviewProps) {
           </div>
 
           <div className="mt-4 rounded-xl border border-gray-200 bg-white p-3">
-            <svg viewBox="0 0 320 170" className="h-44 w-full" aria-label="Performance graph">
-              <line x1="16" y1="150" x2="304" y2="150" stroke="#111827" strokeWidth="2" />
-              <line x1="16" y1="150" x2="16" y2="20" stroke="#111827" strokeWidth="2" />
-              <path
-                d={activeMetric === "Spend" ? "M20 145 C 48 103, 74 96, 102 114 C 132 133, 165 85, 194 64 C 221 45, 257 37, 300 28" : activeMetric === "Reach" ? "M20 146 C 52 136, 86 112, 116 92 C 146 73, 181 70, 214 57 C 244 45, 274 38, 300 30" : "M20 145 C 48 126, 78 133, 109 106 C 141 78, 173 90, 205 76 C 238 62, 267 52, 300 43"}
-                fill="none"
-                stroke="#111827"
-                strokeWidth="3"
-                strokeLinecap="round"
-              />
-              <path d="M284 34 L300 28 L292 44" fill="none" stroke="#111827" strokeWidth="3" strokeLinecap="round" />
-            </svg>
+            {isLoadingPerformance ? (
+              <div className="flex h-44 items-center justify-center text-xs font-medium text-gray-500">
+                Loading chart data...
+              </div>
+            ) : chartData.length === 0 ? (
+              <div className="flex h-44 items-center justify-center text-xs font-medium text-gray-500">
+                No campaign data for selected date range.
+              </div>
+            ) : (
+              <div className="h-44 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData} margin={{ top: 8, right: 12, left: 0, bottom: 8 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                    <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#6b7280" }} interval={0} angle={-20} textAnchor="end" height={48} />
+                    <YAxis tick={{ fontSize: 10, fill: "#6b7280" }} width={36} />
+                    <Tooltip
+                      formatter={(value: unknown) =>
+                        activeMetric === "Spend"
+                          ? fmtUSD(Number(value ?? 0))
+                          : Number(value ?? 0).toLocaleString("en-US")
+                      }
+                      labelFormatter={(_, payload) =>
+                        Array.isArray(payload) && payload[0]?.payload?.fullName
+                          ? String(payload[0].payload.fullName)
+                          : ""
+                      }
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey={metricKey}
+                      stroke="#dc2626"
+                      strokeWidth={2.5}
+                      dot={{ r: 3, fill: "#dc2626" }}
+                      activeDot={{ r: 4 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            )}
           </div>
+
         </div>
 
       </div>
@@ -521,8 +782,21 @@ export default function DashboardPage() {
     }
 
     setUnseenMessages(0);
-    setPendingBoostRequests(0);
-    setAdminStatsLoading(false);
+    setAdminStatsLoading(true);
+
+    fetch('/api/v1/boost-requests?page=1&limit=1', {
+      method: 'GET',
+      credentials: 'include',
+    })
+      .then((r) => r.json())
+      .then((d) => {
+        const total = typeof d?.total === 'number' ? d.total : 0;
+        setPendingBoostRequests(total);
+      })
+      .catch(() => {
+        setPendingBoostRequests(0);
+      })
+      .finally(() => setAdminStatsLoading(false));
   }, [isAdmin]);
 
   useEffect(() => {
@@ -561,11 +835,7 @@ export default function DashboardPage() {
   }, [isAdmin, user?.id]);
 
   useEffect(() => {
-    if (!isAdmin) {
-      setClientNetBalanceUSD(0);
-      setBudgetSummaryLoading(false);
-      return;
-    }
+    if (!user?.id) return;
 
     let mounted = true;
     setBudgetSummaryLoading(true);
@@ -577,16 +847,26 @@ export default function DashboardPage() {
       .then((r) => r.json())
       .then((d) => {
         if (!mounted || !d?.success || !Array.isArray(d.data)) return;
-        const totals = (d.data as UserBudgetSummaryRow[]).reduce(
-          (acc: { totalBudget: number; totalSpent: number; balance: number }, row) => {
-            acc.totalBudget += Number(row.totalBudget || 0);
-            acc.totalSpent += Number(row.totalSpent || 0);
-            acc.balance += Number(row.balance || 0);
-            return acc;
-          },
-          { totalBudget: 0, totalSpent: 0, balance: 0 },
-        );
-        setClientNetBalanceUSD(totals.balance);
+
+        const targetRow = isAdmin
+          ? null
+          : (d.data as Array<UserBudgetSummaryRow & { id: string }>).find((row) => row.id === user.id);
+
+        if (isAdmin) {
+          const totals = (d.data as UserBudgetSummaryRow[]).reduce(
+            (acc: { totalBudget: number; totalSpent: number; balance: number }, row) => {
+              acc.totalBudget += Number(row.totalBudget || 0);
+              acc.totalSpent += Number(row.totalSpent || 0);
+              acc.balance += Number(row.balance || 0);
+              return acc;
+            },
+            { totalBudget: 0, totalSpent: 0, balance: 0 },
+          );
+          setClientNetBalanceUSD(totals.balance);
+          return;
+        }
+
+        setClientNetBalanceUSD(targetRow ? Number(targetRow.balance || 0) : 0);
       })
       .catch(() => {})
       .finally(() => {
@@ -596,10 +876,101 @@ export default function DashboardPage() {
     return () => {
       mounted = false;
     };
-  }, [isAdmin]);
+  }, [isAdmin, user?.id]);
 
   useEffect(() => {
-    if (!isAdmin) {
+    if (isAdmin) {
+      let mounted = true;
+      setMetaSummaryLoading(true);
+
+      const loadMetaSummary = async () => {
+        try {
+          const response = await fetch("/api/v1/meta/account?discover=1", {
+            cache: "no-store",
+          });
+          const d = await response.json();
+
+          if (!mounted || !d.success || !Array.isArray(d.data)) {
+            return;
+          }
+
+          const accounts = d.data as MetaAccountSummary[];
+          const total = accounts.reduce(
+            (sum: number, a) => sum + metaAmountToUsd(a.amount_spent),
+            0,
+          );
+          setTotalSpendBDT(total * BDT_RATE);
+
+          const accountIds = accounts
+            .map((a) => resolveAccountId(a))
+            .filter((id: string | null): id is string => Boolean(id));
+
+          if (accountIds.length === 0) {
+            setTotalAds(0);
+            setDailySpendUSD(0);
+            return;
+          }
+
+          const [allActiveCountsRes, perAccountSummaries] = await Promise.all([
+            fetch('/api/v1/meta/active-counts', { cache: 'no-store' })
+              .then((r) => r.json())
+              .catch(() => null),
+            Promise.allSettled(
+              accountIds.map(async (accountId: string) => {
+                const insightsRes = await fetch(
+                  `/api/v1/meta/insights?type=account&date_preset=today&account_id=${encodeURIComponent(accountId)}`,
+                  { cache: "no-store" },
+                ).then((r) => r.json());
+
+                let todaySpendUsd = 0;
+                if (insightsRes?.success && Array.isArray(insightsRes.data)) {
+                  todaySpendUsd = (insightsRes.data as InsightSpendRow[]).reduce((sum: number, row) => {
+                    const spend = Number.parseFloat(String(row?.spend ?? "0"));
+                    return sum + (Number.isFinite(spend) ? spend : 0);
+                  }, 0);
+                }
+
+                return { todaySpendUsd };
+              }),
+            ),
+          ]);
+
+          if (!mounted) return;
+
+          let adsTotal: number | null = null;
+          let dailySpendUsdTotal = 0;
+
+          if (
+            allActiveCountsRes?.success &&
+            typeof allActiveCountsRes?.data?.campaigns === 'number' &&
+            Number.isFinite(allActiveCountsRes.data.campaigns)
+          ) {
+            adsTotal = allActiveCountsRes.data.campaigns;
+          }
+
+          for (const item of perAccountSummaries) {
+            if (item.status !== "fulfilled") continue;
+            const { todaySpendUsd } = item.value;
+            if (Number.isFinite(todaySpendUsd)) dailySpendUsdTotal += todaySpendUsd;
+          }
+
+          setTotalAds(adsTotal);
+          setDailySpendUSD(dailySpendUsdTotal);
+        } catch {
+          // Keep null values when API is unavailable; overview cards will show dashes.
+        } finally {
+          if (mounted) setMetaSummaryLoading(false);
+        }
+      };
+
+      loadMetaSummary();
+
+      return () => {
+        mounted = false;
+      };
+    }
+
+    if (!user?.id) {
       setDailySpendUSD(0);
       setMetaSummaryLoading(false);
       return;
@@ -608,93 +979,76 @@ export default function DashboardPage() {
     let mounted = true;
     setMetaSummaryLoading(true);
 
-    const loadMetaSummary = async () => {
+    const loadUserSpend = async () => {
       try {
-        const response = await fetch("/api/v1/meta/account?discover=1", {
-          cache: "no-store",
-        });
-        const d = await response.json();
-
-        if (!mounted || !d.success || !Array.isArray(d.data)) {
-          return;
-        }
-
-        const accounts = d.data as MetaAccountSummary[];
-        const total = accounts.reduce(
-          (sum: number, a) => sum + metaAmountToUsd(a.amount_spent),
-          0,
+        const assignedRes = await fetch(
+          `/api/v1/admin/meta-assignments/users/${encodeURIComponent(user.id)}`,
+          { cache: "no-store" },
         );
-        setTotalSpendBDT(total * BDT_RATE);
+        const assignedData = await assignedRes.json();
 
-        const accountIds = accounts
-          .map((a) => resolveAccountId(a))
-          .filter((id: string | null): id is string => Boolean(id));
-
-        if (accountIds.length === 0) {
-          setTotalAds(0);
+        if (!mounted || !assignedData?.success) {
           setDailySpendUSD(0);
           return;
         }
 
-        const [allActiveCountsRes, perAccountSummaries] = await Promise.all([
-          fetch('/api/v1/meta/active-counts', { cache: 'no-store' })
-            .then((r) => r.json())
-            .catch(() => null),
-          Promise.allSettled(
-            accountIds.map(async (accountId: string) => {
-              const insightsRes = await fetch(
-                `/api/v1/meta/insights?type=account&date_preset=today&account_id=${encodeURIComponent(accountId)}`,
-                { cache: "no-store" },
-              ).then((r) => r.json());
+        const campaigns = Array.isArray(assignedData?.data?.campaigns)
+          ? (assignedData.data.campaigns as AssignedCampaignLite[])
+          : [];
 
-              let todaySpendUsd = 0;
-              if (insightsRes?.success && Array.isArray(insightsRes.data)) {
-                todaySpendUsd = (insightsRes.data as InsightSpendRow[]).reduce((sum: number, row) => {
-                  const spend = Number.parseFloat(String(row?.spend ?? "0"));
-                  return sum + (Number.isFinite(spend) ? spend : 0);
-                }, 0);
-              }
+        if (campaigns.length === 0) {
+          setDailySpendUSD(0);
+          return;
+        }
 
-              return { todaySpendUsd };
-            }),
-          ),
-        ]);
+        const campaignsByAccount = new Map<string, Set<string>>();
+        for (const campaign of campaigns) {
+          if (!campaign.metaAccountId || !campaign.metaObjectId) continue;
+          const ids = campaignsByAccount.get(campaign.metaAccountId) ?? new Set<string>();
+          ids.add(campaign.metaObjectId);
+          campaignsByAccount.set(campaign.metaAccountId, ids);
+        }
+
+        const accountResults = await Promise.all(
+          Array.from(campaignsByAccount.entries()).map(async ([accountId, campaignIds]) => {
+            const params = new URLSearchParams({
+              type: 'campaigns',
+              account_id: accountId,
+              date_preset: 'today',
+            });
+
+            const insightsRes = await fetch(`/api/v1/meta/insights?${params.toString()}`, {
+              cache: 'no-store',
+            });
+            const insightsData = await insightsRes.json();
+
+            if (!insightsData?.success || !Array.isArray(insightsData?.data)) return 0;
+
+            return insightsData.data
+              .filter((row: { campaign_id?: string }) => row.campaign_id && campaignIds.has(String(row.campaign_id)))
+              .reduce((sum: number, row: InsightSpendRow) => {
+                const spend = Number.parseFloat(String(row?.spend ?? '0'));
+                return sum + (Number.isFinite(spend) ? spend : 0);
+              }, 0);
+          }),
+        );
 
         if (!mounted) return;
-
-        let adsTotal: number | null = null;
-        let dailySpendUsdTotal = 0;
-
-        if (
-          allActiveCountsRes?.success &&
-          typeof allActiveCountsRes?.data?.campaigns === 'number' &&
-          Number.isFinite(allActiveCountsRes.data.campaigns)
-        ) {
-          // Keep the same active metric users see in /dashboard/meta summary.
-          adsTotal = allActiveCountsRes.data.campaigns;
-        }
-
-        for (const item of perAccountSummaries) {
-          if (item.status !== "fulfilled") continue;
-          const { todaySpendUsd } = item.value;
-          if (Number.isFinite(todaySpendUsd)) dailySpendUsdTotal += todaySpendUsd;
-        }
-
-        setTotalAds(adsTotal);
+        const dailySpendUsdTotal = accountResults.reduce((sum, val) => sum + (Number.isFinite(val) ? val : 0), 0);
         setDailySpendUSD(dailySpendUsdTotal);
       } catch {
-        // Keep null values when API is unavailable; overview cards will show dashes.
+        setDailySpendUSD(0);
       } finally {
         if (mounted) setMetaSummaryLoading(false);
       }
     };
 
-    loadMetaSummary();
+    loadUserSpend();
 
     return () => {
       mounted = false;
     };
-  }, [isAdmin]);
+  }, [isAdmin, user?.id]);
 
   const advanceUSD =
     clientNetBalanceUSD != null && Number.isFinite(clientNetBalanceUSD) && clientNetBalanceUSD > 0
@@ -813,7 +1167,7 @@ export default function DashboardPage() {
   if (!isAdmin) {
     return (
       <AdminShell>
-        <UserOverview statCards={clientStatCards} />
+        <UserOverview statCards={clientStatCards} userId={user?.id} />
       </AdminShell>
     );
   }
