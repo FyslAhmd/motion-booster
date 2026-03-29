@@ -30,33 +30,39 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
   const d = payload[0]?.payload as ChartRow;
   return (
-    <div className="rounded-xl border border-gray-100 bg-white  shadow-lg min-w-40">
-      <p className="text-xs font-semibold text-gray-700 mb-2">
+    <div className="min-w-[170px] max-w-[220px] rounded-xl border border-gray-100 bg-white p-3 shadow-lg">
+      <p className="mb-2 text-xs font-semibold text-gray-700">
         {new Date(String(label)).toLocaleDateString('en-US', {
           month: 'short', day: 'numeric', year: 'numeric',
         })}
       </p>
       <div className="space-y-1.5">
-        <div className="flex items-center justify-between gap-4">
-          <span className="text-xs text-gray-400 flex items-center gap-1">
+        <div className="flex items-start justify-between gap-3">
+          <span className="flex min-w-0 items-center gap-1 text-xs text-gray-400">
             <span className="inline-block w-2 h-2 rounded-full bg-red-400" />
             Spend
           </span>
-          <span className="text-xs font-bold text-gray-900">${d.spend.toFixed(2)}</span>
+          <span className="shrink-0 text-xs font-bold text-gray-900 whitespace-nowrap">
+            ${d.spend.toFixed(2)}
+          </span>
         </div>
-        <div className="flex items-center justify-between gap-4">
-          <span className="text-xs text-gray-400 flex items-center gap-1">
+        <div className="flex items-start justify-between gap-3">
+          <span className="flex min-w-0 items-center gap-1 text-xs text-gray-400">
             <span className="inline-block w-2 h-2 rounded-full bg-blue-400" />
             Reach
           </span>
-          <span className="text-xs font-semibold text-gray-700">{d.reach.toLocaleString()}</span>
+          <span className="shrink-0 text-xs font-semibold text-gray-700 whitespace-nowrap">
+            {d.reach.toLocaleString()}
+          </span>
         </div>
-        <div className="flex items-center justify-between gap-4">
-          <span className="text-xs text-gray-400 flex items-center gap-1">
+        <div className="flex items-start justify-between gap-3">
+          <span className="flex min-w-0 items-center gap-1 text-xs text-gray-400">
             <span className="inline-block w-2 h-2 rounded-full bg-indigo-400" />
             Impressions
           </span>
-          <span className="text-xs font-semibold text-gray-700">{d.impressions.toLocaleString()}</span>
+          <span className="shrink-0 text-xs font-semibold text-gray-700 whitespace-nowrap">
+            {d.impressions.toLocaleString()}
+          </span>
         </div>
       </div>
     </div>

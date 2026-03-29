@@ -68,25 +68,23 @@ export default function PortfolioPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-8 md:pt-6 md:pb-12">
-        {/* Category Filters */}
-        <div className="flex flex-wrap gap-2 mb-8 md:mb-10">
-          {categories.map(cat => (
-            <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${activeCategory === cat
-                ? 'bg-red-500 text-white shadow-md shadow-red-200'
-                : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+        {/* Category Filters (Team page style) */}
+        <div className="mb-8 md:mb-10">
+          <div className="flex gap-2 overflow-x-auto no-scrollbar whitespace-nowrap">
+            {categories.map(cat => (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                  activeCategory === cat
+                    ? 'bg-white text-red-500 border-red-500'
+                    : 'text-gray-500 border-gray-200 bg-white hover:border-red-300'
                 }`}
-            >
-              {cat === 'all' ? (isBN ? 'সব' : 'All') : getCategoryLabel(cat)}
-              {cat !== 'all' && (
-                <span className={`ml-1.5 text-xs ${activeCategory === cat ? 'text-red-200' : 'text-gray-400'}`}>
-                  ({items.filter(i => i.category === cat).length})
-                </span>
-              )}
-            </button>
-          ))}
+              >
+                {cat === 'all' ? (isBN ? 'সব' : 'All') : getCategoryLabel(cat)}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Grid */}

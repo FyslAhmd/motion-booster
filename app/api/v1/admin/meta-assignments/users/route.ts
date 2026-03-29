@@ -14,14 +14,18 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Group assignments by userId + metaObjectType to get counts
-    const grouped = await prisma.metaAdAssignment.groupBy({
-      by: ['userId', 'metaObjectType'],
-      _count: { id: true },
+    // Read distinct assignment rows so duplicate mapping rows don't inflate counts
+    const assignments = await prisma.metaAdAssignment.findMany({
+      select: {
+        userId: true,
+        metaObjectType: true,
+        metaObjectId: true,
+      },
+      distinct: ['userId', 'metaObjectType', 'metaObjectId'],
     });
 
     // Collect unique user IDs
-    const userIds = [...new Set(grouped.map((g) => g.userId))];
+    const userIds = [...new Set(assignments.map((a) => a.userId))];
 
     if (userIds.length === 0) {
       return NextResponse.json({ success: true, data: [] });
@@ -41,12 +45,19 @@ export async function GET(req: NextRequest) {
       },
     });
 
+    const countsByUser = new Map<string, { campaigns: number; adSets: number; ads: number }>();
+    for (const assignment of assignments) {
+      const current = countsByUser.get(assignment.userId) ?? { campaigns: 0, adSets: 0, ads: 0 };
+      if (assignment.metaObjectType === 'CAMPAIGN') current.campaigns += 1;
+      else if (assignment.metaObjectType === 'ADSET') current.adSets += 1;
+      else if (assignment.metaObjectType === 'AD') current.ads += 1;
+      countsByUser.set(assignment.userId, current);
+    }
+
     // Build response: user details + counts
     const data = users.map((user) => {
-      const userGroups = grouped.filter((g) => g.userId === user.id);
-      const campaigns = userGroups.find((g) => g.metaObjectType === 'CAMPAIGN')?._count.id ?? 0;
-      const adSets = userGroups.find((g) => g.metaObjectType === 'ADSET')?._count.id ?? 0;
-      const ads = userGroups.find((g) => g.metaObjectType === 'AD')?._count.id ?? 0;
+      const counts = countsByUser.get(user.id) ?? { campaigns: 0, adSets: 0, ads: 0 };
+      const { campaigns, adSets, ads } = counts;
 
       return {
         ...user,

@@ -48,16 +48,27 @@ export async function GET(
       orderBy: { assignedAt: 'desc' },
     });
 
-    // Group by type
-    const campaignIds = assignments
-      .filter((a) => a.metaObjectType === 'CAMPAIGN')
-      .map((a) => ({ metaObjectId: a.metaObjectId, metaAccountId: a.metaAccountId }));
-    const adSetIds = assignments
-      .filter((a) => a.metaObjectType === 'ADSET')
-      .map((a) => ({ metaObjectId: a.metaObjectId, metaAccountId: a.metaAccountId }));
-    const adIds = assignments
-      .filter((a) => a.metaObjectType === 'AD')
-      .map((a) => ({ metaObjectId: a.metaObjectId, metaAccountId: a.metaAccountId }));
+    // Group by type and dedupe by object ID so repeated assignment rows do not duplicate UI entries
+    const uniqByObjectId = (
+      rows: typeof assignments,
+      type: 'CAMPAIGN' | 'ADSET' | 'AD',
+    ) => {
+      const seen = new Set<string>();
+      const list: Array<{ metaObjectId: string; metaAccountId: string }> = [];
+
+      for (const row of rows) {
+        if (row.metaObjectType !== type) continue;
+        if (seen.has(row.metaObjectId)) continue;
+        seen.add(row.metaObjectId);
+        list.push({ metaObjectId: row.metaObjectId, metaAccountId: row.metaAccountId });
+      }
+
+      return list;
+    };
+
+    const campaignIds = uniqByObjectId(assignments, 'CAMPAIGN');
+    const adSetIds = uniqByObjectId(assignments, 'ADSET');
+    const adIds = uniqByObjectId(assignments, 'AD');
 
     return NextResponse.json({
       success: true,

@@ -1763,13 +1763,19 @@ export default function MessagesPage() {
             <div className="bg-white border-t border-gray-100 px-3 md:px-8 py-3 md:py-4">
               {/* Boost Post CTA — visible only for non-admin users */}
               {user?.role !== 'ADMIN' && (
-                <button
-                  onClick={openBoostForm}
-                  className="w-full mb-3 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-linear-to-r from-orange-500 via-red-500 to-pink-500 text-white text-sm font-semibold shadow-lg shadow-red-300/40 hover:shadow-red-400/50 hover:scale-[1.01] active:scale-[0.99] transition-all animate-pulse hover:animate-none"
-                >
-                  <Rocket className="w-4 h-4" />
-                  Boost Request 🚀
-                </button>
+                <div className="-mt-6 mb-20 flex justify-start">
+                  <button
+                    onClick={openBoostForm}
+                    aria-label="Boost Request"
+                    title="Boost Request"
+                    className="relative inline-flex h-16 w-16 items-center justify-center rounded-full shadow-lg shadow-red-300/50 transition-transform hover:scale-105 active:scale-95"
+                  >
+                    <span className="absolute inset-0 rounded-full bg-red-400/45 animate-ping" />
+                    <span className="relative inline-flex h-full w-full items-center justify-center rounded-full bg-linear-to-r from-orange-500 via-red-500 to-pink-500 text-white animate-pulse">
+                      <MessageSquarePlus className="h-7 w-7" />
+                    </span>
+                  </button>
+                </div>
               )}
 
               {/* Hidden file input */}
@@ -1785,9 +1791,11 @@ export default function MessagesPage() {
               {pendingFile && (
                 <div className="mb-3 flex items-center gap-3 bg-gray-50 rounded-xl p-3">
                   {pendingFile.messageType === 'IMAGE' && pendingFile.preview ? (
-                    <img
+                    <Image
                       src={pendingFile.preview}
                       alt="Preview"
+                      width={64}
+                      height={64}
                       className="w-16 h-16 object-cover rounded-lg"
                     />
                   ) : (
@@ -1912,7 +1920,6 @@ export default function MessagesPage() {
         )}
       </div>
     </div>
-
     </AdminShell>
   );
 }

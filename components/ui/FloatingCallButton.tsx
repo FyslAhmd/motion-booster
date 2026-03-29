@@ -12,7 +12,12 @@ export const FloatingCallButton = () => {
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 200);
+    // Use hysteresis so tiny scroll fluctuations don't constantly toggle button state.
+    const handleScroll = () => {
+      const y = window.scrollY;
+      setScrolled((prev) => (prev ? y > 140 : y > 220));
+    };
+    handleScroll();
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);

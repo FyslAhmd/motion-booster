@@ -305,6 +305,7 @@ function AdminView() {
 function UserOwnView({ userId }: { userId: string }) {
   const { accessToken, refreshSession } = useAuth();
   const { confirm } = useConfirm();
+  const BY_IDS_CHUNK_SIZE = 40;
 
   // ─── Fetch wrapper: auto-refresh on 401 & retry once ──
   const authFetch = useCallback(async (url: string, options: RequestInit = {}): Promise<Response> => {
@@ -322,6 +323,28 @@ function UserOwnView({ userId }: { userId: string }) {
     }
     return res;
   }, [accessToken, refreshSession]);
+
+  const fetchMetaByIdsChunked = useCallback(async <T,>(
+    type: 'CAMPAIGN' | 'ADSET' | 'AD',
+    refs: AssignmentRef[],
+  ): Promise<T[]> => {
+    const ids = Array.from(new Set(refs.map((r) => r.metaObjectId).filter(Boolean)));
+    if (ids.length === 0) return [];
+
+    const all: T[] = [];
+
+    for (let i = 0; i < ids.length; i += BY_IDS_CHUNK_SIZE) {
+      const chunk = ids.slice(i, i + BY_IDS_CHUNK_SIZE);
+      const params = new URLSearchParams({ type, ids: chunk.join(',') });
+      const res = await authFetch(`/api/v1/meta/by-ids?${params.toString()}`);
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data)) {
+        all.push(...json.data);
+      }
+    }
+
+    return all;
+  }, [authFetch]);
 
   const [tab, setTab] = useState<Tab>('campaigns');
   const [loading, setLoading] = useState(true);
@@ -360,36 +383,36 @@ function UserOwnView({ userId }: { userId: string }) {
   // Step 2: Fetch actual Meta objects when refs change
   useEffect(() => {
     if (campaignRefs.length === 0) { setCampaigns([]); return; }
+    let cancelled = false;
     setLoadingCampaigns(true);
-    const ids = campaignRefs.map((r) => r.metaObjectId).join(',');
-    authFetch(`/api/v1/meta/by-ids?type=CAMPAIGN&ids=${ids}`)
-      .then((r) => r.json())
-      .then((json) => { if (json.success) setCampaigns(json.data); })
+    fetchMetaByIdsChunked<Campaign>('CAMPAIGN', campaignRefs)
+      .then((data) => { if (!cancelled) setCampaigns(data); })
       .catch(() => {})
-      .finally(() => setLoadingCampaigns(false));
-  }, [campaignRefs, authFetch]);
+      .finally(() => { if (!cancelled) setLoadingCampaigns(false); });
+    return () => { cancelled = true; };
+  }, [campaignRefs, fetchMetaByIdsChunked]);
 
   useEffect(() => {
     if (adSetRefs.length === 0) { setAdSets([]); return; }
+    let cancelled = false;
     setLoadingAdSets(true);
-    const ids = adSetRefs.map((r) => r.metaObjectId).join(',');
-    authFetch(`/api/v1/meta/by-ids?type=ADSET&ids=${ids}`)
-      .then((r) => r.json())
-      .then((json) => { if (json.success) setAdSets(json.data); })
+    fetchMetaByIdsChunked<AdSet>('ADSET', adSetRefs)
+      .then((data) => { if (!cancelled) setAdSets(data); })
       .catch(() => {})
-      .finally(() => setLoadingAdSets(false));
-  }, [adSetRefs, authFetch]);
+      .finally(() => { if (!cancelled) setLoadingAdSets(false); });
+    return () => { cancelled = true; };
+  }, [adSetRefs, fetchMetaByIdsChunked]);
 
   useEffect(() => {
     if (adRefs.length === 0) { setAds([]); return; }
+    let cancelled = false;
     setLoadingAds(true);
-    const ids = adRefs.map((r) => r.metaObjectId).join(',');
-    authFetch(`/api/v1/meta/by-ids?type=AD&ids=${ids}`)
-      .then((r) => r.json())
-      .then((json) => { if (json.success) setAds(json.data); })
+    fetchMetaByIdsChunked<Ad>('AD', adRefs)
+      .then((data) => { if (!cancelled) setAds(data); })
       .catch(() => {})
-      .finally(() => setLoadingAds(false));
-  }, [adRefs, authFetch]);
+      .finally(() => { if (!cancelled) setLoadingAds(false); });
+    return () => { cancelled = true; };
+  }, [adRefs, fetchMetaByIdsChunked]);
 
   // Toggle campaign status between ACTIVE and PAUSED
   const toggleStatus = async (campaign: Campaign) => {

@@ -58,6 +58,9 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ success: true, data: [] });
     }
 
+    // Keep requested order, but avoid duplicate fetches
+    ids = Array.from(new Set(ids));
+
     // Non-admin users: only allow IDs that are assigned to them
     if (auth.role !== 'ADMIN') {
       const assigned = await prisma.metaAdAssignment.findMany({
@@ -71,26 +74,32 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // Limit to 50 per request to prevent abuse
-    const limitedIds = ids.slice(0, 50);
     const fields = FIELDS_MAP[type];
+    const chunkSize = 50;
+    const data: unknown[] = [];
 
-    // Fetch all objects in parallel
-    const results = await Promise.allSettled(
-      limitedIds.map((id) =>
-        metaFetch(`/${id}`, { fields }),
-      ),
-    );
+    // Fetch all objects chunk-by-chunk so large assignment sets are fully returned
+    for (let i = 0; i < ids.length; i += chunkSize) {
+      const chunk = ids.slice(i, i + chunkSize);
+      const results = await Promise.allSettled(
+        chunk.map((id) =>
+          metaFetch(`/${id}`, { fields }),
+        ),
+      );
 
-    const data = results
-      .filter((r): r is PromiseFulfilledResult<any> => r.status === 'fulfilled')
-      .map((r) => r.value);
+      const chunkData = results
+        .filter((r): r is PromiseFulfilledResult<unknown> => r.status === 'fulfilled')
+        .map((r) => r.value);
+
+      data.push(...chunkData);
+    }
 
     return NextResponse.json({ success: true, data });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[meta/by-ids GET]', err);
+    const errorMessage = err instanceof Error ? err.message : 'Failed to fetch objects';
     return NextResponse.json(
-      { success: false, error: err.message || 'Failed to fetch objects' },
+      { success: false, error: errorMessage },
       { status: 500 },
     );
   }

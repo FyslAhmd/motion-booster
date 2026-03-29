@@ -1,7 +1,7 @@
 'use client';
 
 import { notFound, useRouter } from 'next/navigation';
-import { use, useEffect, useState } from 'react';
+import { use, useEffect, useLayoutEffect, useState } from 'react';
 import { ChevronLeft, CheckCircle2, Building2 } from 'lucide-react';
 import { TeamMemberItem } from '@/lib/admin/store';
 import { useLanguage } from '@/lib/lang/LanguageContext';
@@ -23,7 +23,32 @@ export default function TeamMemberPage({ params }: { params: Promise<{ id: strin
 
   const normalizeName = (value: string) => value.trim().toLowerCase().replace(/\s+/g, ' ');
 
+  useLayoutEffect(() => {
+    const html = document.documentElement;
+    const prevScrollBehavior = html.style.scrollBehavior;
+    html.style.scrollBehavior = 'auto';
+
+    const forceTop = () => {
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+      document.body.scrollTop = 0;
+      html.scrollTop = 0;
+    };
+
+    forceTop();
+    const t1 = window.setTimeout(forceTop, 0);
+    const t2 = window.setTimeout(forceTop, 120);
+    const t3 = window.setTimeout(forceTop, 280);
+
+    return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+      window.clearTimeout(t3);
+      html.style.scrollBehavior = prevScrollBehavior;
+    };
+  }, [id]);
+
   useEffect(() => {
+
     fetch(`/api/v1/cms/team/${id}`)
       .then(r => r.ok ? r.json() : null)
       .then(data => setMember(data ?? null))

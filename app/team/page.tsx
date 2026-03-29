@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ChevronLeft } from 'lucide-react';
 import { TeamMemberItem } from '@/lib/admin/store';
 import { TeamPageCardsSkeleton } from '@/components/ui/PublicPageLoadingSkeleton';
@@ -9,6 +10,7 @@ import { useLanguage } from '@/lib/lang/LanguageContext';
 import { pickLocalizedText } from '@/lib/lang/localize';
 
 export default function TeamPage() {
+  const router = useRouter();
   const { language } = useLanguage();
   const isBN = language === 'BN';
   const [team, setTeam] = useState<TeamMemberItem[]>([]);
@@ -35,6 +37,10 @@ export default function TeamPage() {
 
   const featured = filtered.find(m => m.featured) ?? filtered[0];
   const rest = filtered.filter(m => m.id !== featured?.id);
+  const openMember = (memberId: string) => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    router.push(`/team/${memberId}`, { scroll: true });
+  };
 
   return (
     <main className="min-h-screen bg-gray-50 pb-[calc(2.2rem+env(safe-area-inset-bottom))] lg:pb-0 lg:pt-32 page-reveal">
@@ -85,7 +91,11 @@ export default function TeamPage() {
           <>
             {/* Featured Card */}
             {featured && (
-              <Link href={`/team/${featured.id}`} className="block bg-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow card-reveal-left">
+              <button
+                type="button"
+                onClick={() => openMember(featured.id)}
+                className="block bg-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow card-reveal-left"
+              >
                 <div className="flex items-center gap-4 p-4">
                   {/* Avatar */}
                   <div className="w-28 h-28 shrink-0 rounded-xl bg-gray-200 overflow-hidden flex items-center justify-center">
@@ -118,15 +128,16 @@ export default function TeamPage() {
                     </div>
                   </div>
                 </div>
-              </Link>
+              </button>
             )}
 
             {/* Team Grid */}
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
               {rest.map((member, index) => (
-                <Link
+                <button
+                  type="button"
                   key={member.id}
-                  href={`/team/${member.id}`}
+                  onClick={() => openMember(member.id)}
                   className={`block bg-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow ${index % 2 === 0 ? 'card-reveal-right' : 'card-reveal-left'}`}
                   style={{ animationDelay: `${Math.min(index, 8) * 70}ms` }}
                 >
@@ -163,7 +174,7 @@ export default function TeamPage() {
                       </div>
                     </div>
                   </div>
-                </Link>
+                </button>
               ))}
             </div>
           </>

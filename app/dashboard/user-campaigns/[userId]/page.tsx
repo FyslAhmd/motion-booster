@@ -78,6 +78,10 @@ interface Ad {
   };
 }
 
+const BY_IDS_CHUNK_SIZE = 40;
+const META_PAGE_LIMIT = 50;
+const MAX_META_PAGES = 200;
+
 /* ─── Status badge styles ─────────────────────────────────────── */
 
 const STATUS_STYLES: Record<string, { color: string; label: string }> = {
@@ -114,6 +118,57 @@ function formatShortRange(start?: string, end?: string) {
     ? new Date(end).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
     : 'Ongoing';
   return s ? `${s} - ${e}` : '—';
+}
+
+async function fetchMetaByIdsChunked<T>(type: 'CAMPAIGN' | 'ADSET' | 'AD', refs: AssignmentRef[]): Promise<T[]> {
+  const ids = Array.from(new Set(refs.map((r) => r.metaObjectId).filter(Boolean)));
+  if (ids.length === 0) return [];
+
+  const all: T[] = [];
+  for (let i = 0; i < ids.length; i += BY_IDS_CHUNK_SIZE) {
+    const chunk = ids.slice(i, i + BY_IDS_CHUNK_SIZE);
+    const params = new URLSearchParams({ type, ids: chunk.join(',') });
+    const res = await fetch(`/api/v1/meta/by-ids?${params.toString()}`);
+    const json = await res.json();
+    if (json.success && Array.isArray(json.data)) {
+      all.push(...json.data);
+    }
+  }
+
+  return all;
+}
+
+async function fetchAllMetaPages<T>({
+  endpoint,
+  baseQuery,
+}: {
+  endpoint: '/api/v1/meta/adsets' | '/api/v1/meta/ads';
+  baseQuery: URLSearchParams;
+}): Promise<T[]> {
+  const all: T[] = [];
+  let after: string | null = null;
+
+  for (let page = 0; page < MAX_META_PAGES; page += 1) {
+    const query = new URLSearchParams(baseQuery);
+    query.set('limit', String(META_PAGE_LIMIT));
+    if (after) query.set('after', after);
+
+    const res = await fetch(`${endpoint}?${query.toString()}`);
+    const json = await res.json();
+    if (!json.success) {
+      throw new Error(json.error || `Failed to load ${endpoint}`);
+    }
+
+    if (Array.isArray(json.data)) {
+      all.push(...json.data);
+    }
+
+    const nextAfter = json?.paging?.hasNext ? json?.paging?.cursors?.after : null;
+    if (!nextAfter) break;
+    after = nextAfter;
+  }
+
+  return all;
 }
 
 function DetailModal({
@@ -230,15 +285,19 @@ export default function UserCampaignDetailPage({
       setCampaigns([]);
       return;
     }
+    let cancelled = false;
     setLoadingCampaigns(true);
-    const ids = campaignRefs.map((r) => r.metaObjectId).join(',');
-    fetch(`/api/v1/meta/by-ids?type=CAMPAIGN&ids=${ids}`)
-      .then((r) => r.json())
-      .then((json) => {
-        if (json.success) setCampaigns(json.data);
+    fetchMetaByIdsChunked<Campaign>('CAMPAIGN', campaignRefs)
+      .then((data) => {
+        if (!cancelled) setCampaigns(data);
       })
       .catch(() => {})
-      .finally(() => setLoadingCampaigns(false));
+      .finally(() => {
+        if (!cancelled) setLoadingCampaigns(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [campaignRefs]);
 
   useEffect(() => {
@@ -246,15 +305,19 @@ export default function UserCampaignDetailPage({
       setAdSets([]);
       return;
     }
+    let cancelled = false;
     setLoadingAdSetsInModal(true);
-    const ids = adSetRefs.map((r) => r.metaObjectId).join(',');
-    fetch(`/api/v1/meta/by-ids?type=ADSET&ids=${ids}`)
-      .then((r) => r.json())
-      .then((json) => {
-        if (json.success) setAdSets(json.data);
+    fetchMetaByIdsChunked<AdSet>('ADSET', adSetRefs)
+      .then((data) => {
+        if (!cancelled) setAdSets(data);
       })
       .catch(() => {})
-      .finally(() => setLoadingAdSetsInModal(false));
+      .finally(() => {
+        if (!cancelled) setLoadingAdSetsInModal(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [adSetRefs]);
 
   useEffect(() => {
@@ -262,15 +325,19 @@ export default function UserCampaignDetailPage({
       setAds([]);
       return;
     }
+    let cancelled = false;
     setLoadingAdsInModal(true);
-    const ids = adRefs.map((r) => r.metaObjectId).join(',');
-    fetch(`/api/v1/meta/by-ids?type=AD&ids=${ids}`)
-      .then((r) => r.json())
-      .then((json) => {
-        if (json.success) setAds(json.data);
+    fetchMetaByIdsChunked<Ad>('AD', adRefs)
+      .then((data) => {
+        if (!cancelled) setAds(data);
       })
       .catch(() => {})
-      .finally(() => setLoadingAdsInModal(false));
+      .finally(() => {
+        if (!cancelled) setLoadingAdsInModal(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [adRefs]);
 
   if (loading) {
@@ -422,16 +489,13 @@ function CampaignsSection({
       setModalAdsByAdSet({});
 
       try {
-        const adSetQuery = new URLSearchParams({ campaign_id: selectedCampaign.id, limit: '20' });
+        const adSetQuery = new URLSearchParams({ campaign_id: selectedCampaign.id });
         const accountId = campaignAccountById[selectedCampaign.id];
         if (accountId) adSetQuery.set('account_id', accountId);
-
-        const adSetRes = await fetch(`/api/v1/meta/adsets?${adSetQuery.toString()}`);
-        const adSetJson = await adSetRes.json();
-
-        if (!adSetJson.success) throw new Error(adSetJson.error || 'Failed to load ad sets');
-
-        const loadedAdSets = (Array.isArray(adSetJson.data) ? adSetJson.data : []) as AdSet[];
+        const loadedAdSets = await fetchAllMetaPages<AdSet>({
+          endpoint: '/api/v1/meta/adsets',
+          baseQuery: adSetQuery,
+        });
         if (cancelled) return;
         setModalAdSets(loadedAdSets);
 
@@ -441,13 +505,14 @@ function CampaignsSection({
         }
 
         const adFetches = loadedAdSets.map(async (adSet) => {
-          const adsQuery = new URLSearchParams({ adset_id: adSet.id, limit: '12' });
+          const adsQuery = new URLSearchParams({ adset_id: adSet.id });
           if (accountId) adsQuery.set('account_id', accountId);
-          const adsRes = await fetch(`/api/v1/meta/ads?${adsQuery.toString()}`);
-          const adsJson = await adsRes.json();
           return {
             adSetId: adSet.id,
-            ads: (adsJson.success && Array.isArray(adsJson.data) ? adsJson.data : []) as Ad[],
+            ads: await fetchAllMetaPages<Ad>({
+              endpoint: '/api/v1/meta/ads',
+              baseQuery: adsQuery,
+            }),
           };
         });
 
