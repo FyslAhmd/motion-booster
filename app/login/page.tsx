@@ -19,7 +19,7 @@ interface FieldErrors {
 interface LoginResponse {
   data?: {
     accessToken?: string;
-    user?: ({ role?: string } & Record<string, unknown>) | null;
+    user?: Record<string, unknown> | null;
   };
   error?: {
     message?: string;
@@ -28,6 +28,19 @@ interface LoginResponse {
     };
   };
   message?: string;
+}
+
+function isAuthUser(value: unknown): value is Parameters<ReturnType<typeof useAuth>['login']>[1] {
+  if (!value || typeof value !== 'object') return false;
+  const user = value as Record<string, unknown>;
+  return (
+    typeof user.id === 'string' &&
+    typeof user.username === 'string' &&
+    typeof user.email === 'string' &&
+    typeof user.fullName === 'string' &&
+    typeof user.phone === 'string' &&
+    typeof user.role === 'string'
+  );
 }
 
 export default function LoginPage() {
@@ -154,8 +167,8 @@ export default function LoginPage() {
       }
 
       // Store auth state and redirect
-      if (data?.data?.accessToken && data?.data?.user) {
-        login(data.data.accessToken, data.data.user as Parameters<typeof login>[1]);
+      if (data?.data?.accessToken && isAuthUser(data?.data?.user)) {
+        login(data.data.accessToken, data.data.user);
       }
 
       toast.success(isBN ? 'লগইন সফল হয়েছে' : 'Login successful');
