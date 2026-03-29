@@ -461,7 +461,7 @@ function UserOverview({ statCards, userId }: UserOverviewProps) {
       </div>
 
       <div className="space-y-4 px-3 py-4 sm:px-4">
-        <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+        <div>
           <h3 className="text-sm font-semibold text-gray-900">Performance & Accounts spotlight</h3>
           <div className="mt-3 grid grid-cols-2 gap-3">
             {statCards.map((card) => {
@@ -498,7 +498,7 @@ function UserOverview({ statCards, userId }: UserOverviewProps) {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+        <div>
           <p className="text-sm font-semibold text-gray-900">Meta Ads Performance</p>
           <div className="mt-3 flex items-center gap-2">
             <button
@@ -560,7 +560,7 @@ function UserOverview({ statCards, userId }: UserOverviewProps) {
           )}
         </div>
 
-        <div ref={secondScreenRef} className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+        <div ref={secondScreenRef}>
           {performanceError && (
             <div className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
               {performanceError}
