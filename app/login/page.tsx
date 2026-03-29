@@ -242,6 +242,7 @@ export default function LoginPage() {
                     width={20}
                     height={14}
                     className="rounded-sm object-cover"
+                    style={{ height: 'auto' }}
                     unoptimized
                   />
                   <span className="text-sm text-gray-700 font-medium">

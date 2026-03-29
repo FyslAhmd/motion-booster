@@ -267,64 +267,145 @@ interface UserBudgetSummaryRow {
 }
 
 interface UserOverviewProps {
-  userName: string;
   statCards: StatCard[];
-  userEmail?: string;
 }
 
-function UserOverview({ statCards }: Pick<UserOverviewProps, "statCards">) {
+function UserOverview({ statCards }: UserOverviewProps) {
+  const [activeMetric, setActiveMetric] = useState<"Spend" | "Reach" | "Impression">("Spend");
+  const secondScreenRef = useRef<HTMLDivElement | null>(null);
+
+  const totalSpendValue = String(statCards.find((c) => c.label === "Daily Spend")?.value ?? "—");
+  const activeAdsValue = String(statCards.find((c) => c.label === "Active Ads")?.value ?? "—");
+  const unseenValue = String(statCards.find((c) => c.label === "Unseen Messages")?.value ?? "—");
+
   return (
     <div className="w-full overflow-x-hidden bg-gray-50 pb-6">
-      {/* Promo banner slider — full width top */}
-      <div className="px-3 sm:px-4 pt-3 lg:hidden">
+      <div className="px-3 pt-3 sm:px-4 lg:hidden">
         <PromoSlider />
       </div>
 
-      <div className="px-3 sm:px-4 py-4 space-y-3">
-        {/* Stat cards */}
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {statCards.map((card) => {
-            const Icon = card.icon;
-            const hasNewBadge =
-              (card.label === "Unseen Messages" || card.label === "Unread Messages") &&
-              Number(card.value) > 0;
-            const inner = (
-              <>
-                {hasNewBadge && (
-                  <span className="absolute right-3 top-3 inline-flex items-center rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-semibold text-orange-600">
-                    New
-                  </span>
-                )}
-                <div
-                  className={`w-8 h-8 rounded-lg ${card.bg} flex items-center justify-center`}
-                >
-                  <Icon className={`h-4 w-4 ${card.color}`} />
+      <div className="space-y-4 px-3 py-4 sm:px-4">
+        <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+          <h3 className="text-sm font-semibold text-gray-900">Performance & Accounts spotlight</h3>
+          <div className="mt-3 grid grid-cols-2 gap-3">
+            {statCards.map((card) => {
+              const Icon = card.icon;
+              const hasNewBadge =
+                (card.label === "Unseen Messages" || card.label === "Unread Messages") &&
+                Number(card.value) > 0;
+              const inner = (
+                <>
+                  {hasNewBadge && (
+                    <span className="absolute right-2.5 top-2.5 inline-flex items-center rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-semibold text-orange-600">
+                      New
+                    </span>
+                  )}
+                  <div className={`inline-flex h-8 w-8 items-center justify-center rounded-lg ${card.bg}`}>
+                    <Icon className={`h-4 w-4 ${card.color}`} />
+                  </div>
+                  <p className="mt-2 text-lg font-bold text-gray-900">{card.value}</p>
+                  <p className="text-xs text-gray-600">{card.label}</p>
+                </>
+              );
+              const cls = `relative rounded-xl border border-gray-200 bg-white px-3 py-3 shadow-sm transition hover:shadow-md${card.href ? " cursor-pointer" : ""}`;
+
+              return card.href ? (
+                <Link key={card.label} href={card.href} className={cls}>
+                  {inner}
+                </Link>
+              ) : (
+                <div key={card.label} className={cls}>
+                  {inner}
                 </div>
-                <div>
-                  <p className="text-xl font-bold text-gray-900">
-                    {card.value}
-                  </p>
-                  <p className="text-[11px] text-gray-500 mt-0.5">
-                    {card.label}
-                  </p>
-                </div>
-              </>
-            );
-            const cls = `relative rounded-xl border border-gray-100 bg-white p-4 flex flex-col gap-3 shadow-sm active:scale-95 transition-transform${card.href ? " cursor-pointer hover:shadow-md" : ""}`;
-            return card.href ? (
-              <Link key={card.label} href={card.href} className={cls}>
-                {inner}
-              </Link>
-            ) : (
-              <div key={card.label} className={cls}>
-                {inner}
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
 
-        {/* Meta Ads Performance */}
-        <MetaOverviewSection />
+        <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+          <p className="text-sm font-semibold text-gray-900">Meta Ads Performance</p>
+          <div className="mt-3 flex items-center gap-2">
+            <button
+              type="button"
+              className="flex-1 rounded-lg border border-rose-200 bg-rose-100/70 px-3 py-2 text-left text-xs font-medium text-gray-700"
+            >
+              Custom date range ^
+            </button>
+            <button
+              type="button"
+              onClick={() => secondScreenRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
+              className="h-9 w-12 rounded-lg border border-rose-200 bg-rose-100/70 text-xs font-semibold text-gray-700 transition hover:bg-rose-200/70"
+              aria-label="Open performance details"
+              title="Open performance details"
+              >
+              {">"}
+            </button>
+          </div>
+        </div>
+
+        <div ref={secondScreenRef} className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="mb-4 grid grid-cols-2 gap-3">
+            <div>
+              <p className="text-sm font-semibold text-gray-900">Total Spend</p>
+              <p className="mt-1 text-lg font-bold text-gray-900">{totalSpendValue}</p>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-gray-900">Join Date</p>
+              <p className="mt-1 text-sm font-semibold text-gray-900">—</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2.5">
+            <div className="rounded-xl border border-gray-300 bg-gray-50 px-3 py-3 text-center">
+              <p className="text-xs text-gray-500">Spend</p>
+              <p className="mt-1 text-sm font-semibold text-gray-900">{totalSpendValue}</p>
+            </div>
+            <div className="rounded-xl border border-gray-300 bg-gray-50 px-3 py-3 text-center">
+              <p className="text-xs text-gray-500">Reach</p>
+              <p className="mt-1 text-sm font-semibold text-gray-900">{activeAdsValue}</p>
+            </div>
+            <div className="rounded-xl border border-gray-300 bg-gray-50 px-3 py-3 text-center">
+              <p className="text-xs text-gray-500">Impression</p>
+              <p className="mt-1 text-sm font-semibold text-gray-900">{unseenValue}</p>
+            </div>
+            <div className="rounded-xl border border-gray-300 bg-gray-50 px-3 py-3 text-center">
+              <p className="text-xs text-gray-500">CTR</p>
+              <p className="mt-1 text-sm font-semibold text-gray-900">—</p>
+            </div>
+          </div>
+
+          <div className="mt-5">
+            <p className="text-sm font-semibold text-gray-900">Ads Performance</p>
+            <div className="mt-2 grid grid-cols-3 overflow-hidden rounded-lg border border-rose-200">
+              {(["Spend", "Reach", "Impression"] as const).map((metric) => (
+                <button
+                  key={metric}
+                  type="button"
+                  onClick={() => setActiveMetric(metric)}
+                  className={`border-r border-rose-200 px-2 py-2 text-xs font-medium last:border-r-0 ${activeMetric === metric ? "bg-rose-100 text-gray-900" : "bg-white text-gray-600 hover:bg-rose-50"}`}
+                >
+                  {metric}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-4 rounded-xl border border-gray-200 bg-white p-3">
+            <svg viewBox="0 0 320 170" className="h-44 w-full" aria-label="Performance graph">
+              <line x1="16" y1="150" x2="304" y2="150" stroke="#111827" strokeWidth="2" />
+              <line x1="16" y1="150" x2="16" y2="20" stroke="#111827" strokeWidth="2" />
+              <path
+                d={activeMetric === "Spend" ? "M20 145 C 48 103, 74 96, 102 114 C 132 133, 165 85, 194 64 C 221 45, 257 37, 300 28" : activeMetric === "Reach" ? "M20 146 C 52 136, 86 112, 116 92 C 146 73, 181 70, 214 57 C 244 45, 274 38, 300 30" : "M20 145 C 48 126, 78 133, 109 106 C 141 78, 173 90, 205 76 C 238 62, 267 52, 300 43"}
+                fill="none"
+                stroke="#111827"
+                strokeWidth="3"
+                strokeLinecap="round"
+              />
+              <path d="M284 34 L300 28 L292 44" fill="none" stroke="#111827" strokeWidth="3" strokeLinecap="round" />
+            </svg>
+          </div>
+        </div>
+
       </div>
     </div>
   );
@@ -439,6 +520,8 @@ export default function DashboardPage() {
       return;
     }
 
+    setUnseenMessages(0);
+    setPendingBoostRequests(0);
     setAdminStatsLoading(false);
   }, [isAdmin]);
 
@@ -455,6 +538,7 @@ export default function DashboardPage() {
               0,
             );
             setClientUnread(unread);
+            setUnseenMessages(unread);
           }
         })
         .catch(() => {});
@@ -462,7 +546,23 @@ export default function DashboardPage() {
   }, [isAdmin]);
 
   useEffect(() => {
+    if (isAdmin || !user?.id) return;
+
+    fetch(`/api/v1/admin/meta-assignments/users/${encodeURIComponent(user.id)}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (!d?.success) return;
+        const campaigns = Array.isArray(d?.data?.campaigns) ? d.data.campaigns.length : 0;
+        setTotalAds(campaigns);
+      })
+      .catch(() => {
+        setTotalAds(0);
+      });
+  }, [isAdmin, user?.id]);
+
+  useEffect(() => {
     if (!isAdmin) {
+      setClientNetBalanceUSD(0);
       setBudgetSummaryLoading(false);
       return;
     }
@@ -500,6 +600,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!isAdmin) {
+      setDailySpendUSD(0);
       setMetaSummaryLoading(false);
       return;
     }
@@ -663,18 +764,49 @@ export default function DashboardPage() {
 
   const clientStatCards: StatCard[] = [
     {
-      label: "Active Chats",
-      value: clientChats ?? "—",
-      icon: MessageCircle,
-      color: "text-blue-600",
-      bg: "bg-blue-50",
+      label: "Active Ads",
+      value: totalAds ?? "—",
+      icon: Megaphone,
+      color: "text-red-600",
+      bg: "bg-red-50",
+      href: "/dashboard/user-campaigns",
     },
     {
-      label: "Unread Messages",
+      label: "Daily Spend",
+      value: dailySpendUSD != null ? fmtUSD(dailySpendUSD) : "—",
+      icon: TrendingUp,
+      color: "text-green-600",
+      bg: "bg-green-50",
+    },
+    {
+      label: "Advance Payment",
+      value: advanceValue,
+      icon: TakaIcon,
+      color: "text-green-600",
+      bg: "bg-green-50",
+    },
+    {
+      label: "Due Amount",
+      value: dueValue,
+      icon: TakaIcon,
+      color: "text-red-600",
+      bg: "bg-red-50",
+    },
+    {
+      label: "Send Ads Request",
+      value: pendingBoostRequests ?? "—",
+      icon: CalendarDays,
+      color: "text-violet-600",
+      bg: "bg-violet-50",
+      href: "/dashboard/chat",
+    },
+    {
+      label: "Unseen Messages",
       value: clientUnread ?? "—",
       icon: MessageCircle,
       color: clientUnread ? "text-orange-600" : "text-gray-400",
       bg: clientUnread ? "bg-orange-50" : "bg-gray-50",
+      href: "/dashboard/chat",
     },
   ];
 

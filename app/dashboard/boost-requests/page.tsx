@@ -647,15 +647,22 @@ export default function BoostRequestsPage() {
 
       {/* Detail Modal */}
       {mounted && selected && createPortal(
-        <div className="fixed inset-0 z-100 flex items-end sm:items-center justify-center p-3 sm:p-4" onClick={() => { setSetupDraft(null); setSelected(null); }}>
-          <div className="absolute inset-0 bg-black/65 backdrop-blur-[1px]" aria-hidden="true" />
-          <div className="relative bg-white rounded-3xl w-full max-w-[calc(100vw-1.5rem)] sm:max-w-3xl h-[92dvh] sm:h-auto sm:max-h-[90vh] overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden border border-white/40 shadow-[0_35px_90px_-28px_rgba(0,0,0,0.65)]" onClick={e => e.stopPropagation()}>
-            <div className="p-5 border-b border-gray-100 flex items-center justify-between">
-              <h2 className="text-base sm:text-lg font-bold text-gray-900">Boost Request Details</h2>
-              <button onClick={() => { setSetupDraft(null); setSelected(null); }} className="p-2 hover:bg-gray-100 rounded-lg"><span className="text-lg leading-none text-gray-400">×</span></button>
+        <div className="fixed inset-0 z-120 flex items-center justify-center bg-black/60 p-3 sm:p-4" onClick={() => { setSetupDraft(null); setSelected(null); }}>
+          <div
+            className="w-full max-w-[min(1100px,96vw)] max-h-[90vh] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-[0_28px_90px_-30px_rgba(0,0,0,0.65)]"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="sticky top-0 z-10 border-b border-gray-100 bg-linear-to-r from-slate-50 via-white to-red-50/60 px-5 py-4 sm:px-6 sm:py-5">
+              <div className="flex items-start justify-between">
+                <div className="min-w-0 pr-4">
+                  <h2 className="truncate text-base font-semibold text-gray-900 sm:text-lg">Boost Request Details</h2>
+                </div>
+                <button onClick={() => { setSetupDraft(null); setSelected(null); }} className="rounded-lg px-2 py-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700">×</button>
+              </div>
             </div>
 
-            <div className="p-4 sm:p-6 pb-8 sm:pb-8 space-y-5 bg-linear-to-b from-white via-white to-slate-50/70">
+            <div className="max-h-[calc(90vh-88px)] overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+              <div className="space-y-5 bg-linear-to-b from-white via-white to-slate-50/70 p-4 pb-8 sm:p-6 sm:pb-8">
               {(() => {
                 const audienceProfile = buildAudienceProfile(selected.targetAudience);
                 const targetingChips = uniqueValues([
@@ -980,6 +987,7 @@ export default function BoostRequestsPage() {
                   </>
                 );
               })()}
+              </div>
             </div>
           </div>
         </div>,

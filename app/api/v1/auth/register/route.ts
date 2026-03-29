@@ -8,6 +8,7 @@ import { getClientIp, logActivity } from '@/lib/server/activity-history';
 
 export async function POST(request: NextRequest) {
   const requestId = crypto.randomUUID();
+  const requireEmailVerification = process.env.REQUIRE_EMAIL_VERIFICATION === 'true';
 
   try {
     // 1. Parse request body
@@ -78,7 +79,7 @@ export async function POST(request: NextRequest) {
         passwordHash,
         role: 'USER',
         status: 'ACTIVE',
-        emailVerified: false,
+        emailVerified: !requireEmailVerification,
       },
       select: {
         id: true,
@@ -113,8 +114,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: true,
-        message:
-          'Account created successfully. You can now log in.',
+        message: requireEmailVerification
+          ? 'Account created successfully. Please verify your email to log in.'
+          : 'Account created successfully. You can now log in.',
         data: { user },
         requestId,
       },

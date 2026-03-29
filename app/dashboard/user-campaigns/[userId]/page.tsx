@@ -171,6 +171,23 @@ async function fetchAllMetaPages<T>({
   return all;
 }
 
+async function fetchCampaignChildCounts(campaignId: string, accountId?: string): Promise<{ adSets: number; ads: number }> {
+  const query = new URLSearchParams({ campaign_id: campaignId });
+  if (accountId) query.set('account_id', accountId);
+
+  const res = await fetch(`/api/v1/meta/campaign-children-count?${query.toString()}`);
+  const json = await res.json();
+
+  if (!json.success) {
+    throw new Error(json.error || 'Failed to fetch campaign child counts');
+  }
+
+  return {
+    adSets: Number(json?.data?.adSets ?? 0),
+    ads: Number(json?.data?.ads ?? 0),
+  };
+}
+
 function DetailModal({
   title,
   subtitle,
@@ -462,6 +479,7 @@ function CampaignsSection({
   const [modalAdsByAdSet, setModalAdsByAdSet] = useState<Record<string, Ad[]>>({});
   const [modalDetailsLoading, setModalDetailsLoading] = useState(false);
   const [modalDetailsError, setModalDetailsError] = useState('');
+  const [campaignChildCounts, setCampaignChildCounts] = useState<Record<string, { adSets: number; ads: number }>>({});
 
   useEffect(() => {
     if (!selectedCampaign) return;
@@ -476,6 +494,42 @@ function CampaignsSection({
       document.body.style.overflow = prevBodyOverflow;
     };
   }, [selectedCampaign]);
+  useEffect(() => {
+    if (campaigns.length === 0) {
+      setCampaignChildCounts({});
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadCampaignChildCounts = async () => {
+      const entries = await Promise.all(
+        campaigns.map(async (campaign) => {
+          const fallback = {
+            adSets: adSets.filter((a) => a.campaign_id === campaign.id).length,
+            ads: ads.filter((ad) => ad.campaign_id === campaign.id).length,
+          };
+
+          try {
+            const accountId = campaignAccountById[campaign.id];
+            const counts = await fetchCampaignChildCounts(campaign.id, accountId);
+            return [campaign.id, counts] as const;
+          } catch {
+            return [campaign.id, fallback] as const;
+          }
+        }),
+      );
+
+      if (cancelled) return;
+      setCampaignChildCounts(Object.fromEntries(entries));
+    };
+
+    loadCampaignChildCounts();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [campaigns, campaignAccountById, adSets, ads]);
 
   useEffect(() => {
     if (!selectedCampaign) return;
@@ -562,6 +616,10 @@ function CampaignsSection({
                 const budget = formatBudgetValue(c.daily_budget, c.lifetime_budget);
                 const dateRange = formatShortRange(c.start_time, c.stop_time);
                 const isActive = (c.effective_status || c.status || '').toUpperCase() === 'ACTIVE';
+                const summary = campaignChildCounts[c.id] ?? {
+                  adSets: adSets.filter((a) => a.campaign_id === c.id).length,
+                  ads: ads.filter((ad) => ad.campaign_id === c.id).length,
+                };
 
                 return (
                   <button
@@ -593,9 +651,14 @@ function CampaignsSection({
                     </div>
 
                     <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 border-t border-gray-100 pt-2.5">
-                      <span className="rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[11px] text-gray-600">
-                        {adSets.filter((a) => a.campaign_id === c.id).length} ad sets
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[11px] text-gray-600">
+                          {summary.adSets} ad sets
+                        </span>
+                        <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] text-emerald-700">
+                          {summary.ads} ads
+                        </span>
+                      </div>
                       <div className="inline-flex items-center gap-1.5">
                         <span className="text-xs text-gray-500">Active</span>
                         <span className={`inline-flex h-5 w-9 items-center rounded-full ${isActive ? 'bg-green-500' : 'bg-gray-300'}`}>
@@ -616,6 +679,10 @@ function CampaignsSection({
                 const budget = formatBudgetValue(c.daily_budget, c.lifetime_budget);
                 const dateRange = formatShortRange(c.start_time, c.stop_time);
                 const isActive = (c.effective_status || c.status || '').toUpperCase() === 'ACTIVE';
+                const summary = campaignChildCounts[c.id] ?? {
+                  adSets: adSets.filter((a) => a.campaign_id === c.id).length,
+                  ads: ads.filter((ad) => ad.campaign_id === c.id).length,
+                };
 
                 return (
                   <button
@@ -654,9 +721,14 @@ function CampaignsSection({
                     </div>
 
                     <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-gray-100 pt-3">
-                      <span className="rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-xs text-gray-600">
-                        {adSets.filter((a) => a.campaign_id === c.id).length} ad sets
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-xs text-gray-600">
+                          {summary.adSets} ad sets
+                        </span>
+                        <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs text-emerald-700">
+                          {summary.ads} ads
+                        </span>
+                      </div>
                       <div className="inline-flex items-center gap-2 shrink-0">
                         <span className="text-sm text-gray-500">Active</span>
                         <span className={`inline-flex h-5 w-9 items-center rounded-full ${isActive ? 'bg-green-500' : 'bg-gray-300'}`}>
@@ -679,8 +751,13 @@ function CampaignsSection({
         const modalAds = Object.values(modalAdsByAdSet).flat();
         const fallbackAds = ads.filter((ad) => ad.campaign_id === selectedCampaign.id || relatedAdSetIds.has(ad.adset_id));
         const relatedAds = modalAds.length > 0 ? modalAds : fallbackAds;
-        const adSetCount = relatedAdSets.length;
-        const adCount = relatedAds.length;
+        const summary = campaignChildCounts[selectedCampaign.id];
+        const adSetCount = (loadingRelated || modalDetailsLoading)
+          ? (summary?.adSets ?? fallbackAdSets.length)
+          : relatedAdSets.length;
+        const adCount = (loadingRelated || modalDetailsLoading)
+          ? (summary?.ads ?? fallbackAds.length)
+          : relatedAds.length;
 
         return (
           <DetailModal

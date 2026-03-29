@@ -34,6 +34,47 @@ interface AssignedUser {
   };
 }
 
+function toCount(value: unknown): number {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function normalizeAssignedUsers(payload: unknown): AssignedUser[] {
+  if (!Array.isArray(payload)) return [];
+
+  return payload
+    .map((item) => {
+      const user = (item ?? {}) as Record<string, unknown>;
+      const counts = ((user.counts ?? {}) as Record<string, unknown>);
+
+      const campaigns = toCount(
+        counts.campaigns ?? counts.campaignCount ?? counts.campaignsCount ?? user.campaigns,
+      );
+      const adSets = toCount(
+        counts.adSets ?? counts.adsets ?? counts.ad_sets ?? counts.adSet ?? user.adSets ?? user.adsets,
+      );
+      const ads = toCount(
+        counts.ads ?? counts.adsCount ?? counts.ad_count ?? user.ads,
+      );
+
+      return {
+        id: String(user.id ?? ''),
+        fullName: String(user.fullName ?? ''),
+        phone: String(user.phone ?? ''),
+        username: String(user.username ?? ''),
+        email: String(user.email ?? ''),
+        createdAt: String(user.createdAt ?? ''),
+        avatarUrl: typeof user.avatarUrl === 'string' ? user.avatarUrl : null,
+        counts: {
+          campaigns,
+          adSets,
+          ads,
+          total: campaigns + adSets + ads,
+        },
+      };
+    })
+    .filter((user) => user.id.length > 0);
+}
 /* ─── Interfaces for the user's own detail view ─── */
 
 interface AssignmentRef {
@@ -170,7 +211,7 @@ function AdminView() {
       .then((r) => r.json())
       .then((json) => {
         if (json.success) {
-          setUsers(json.data);
+          setUsers(normalizeAssignedUsers(json.data));
         } else {
           setError(json.error || 'Failed to load');
         }

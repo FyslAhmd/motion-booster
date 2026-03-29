@@ -12,6 +12,7 @@ import { ZodError } from 'zod';
 
 export async function POST(request: NextRequest) {
   const requestId = crypto.randomUUID();
+  const requireEmailVerification = process.env.REQUIRE_EMAIL_VERIFICATION === 'true';
 
   try {
     // 1. Parse request body
@@ -66,8 +67,8 @@ export async function POST(request: NextRequest) {
       throw new AppError('AUTH_001');
     }
 
-    // 5. Check email verification
-    if (!user.emailVerified) {
+    // 5. Check email verification only when explicitly enabled
+    if (requireEmailVerification && !user.emailVerified) {
       throw new AppError('AUTH_010');
     }
 
