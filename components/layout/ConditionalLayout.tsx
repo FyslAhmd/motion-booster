@@ -13,10 +13,13 @@ export const ConditionalLayout = ({ children }: { children: React.ReactNode }) =
   const isDashboard = pathname?.startsWith('/dashboard');
   const isAdmin = pathname?.startsWith('/admin');
   const isForgotPassword = pathname?.startsWith('/forgot-password');
+  const isAuthPage = pathname === '/login' || pathname === '/register';
   const isInvoice = pathname === '/invoice';
 
   const shouldHideLayout = isDashboard || isAdmin || isForgotPassword || isInvoice;
   const isHandledByAdminShell = isDashboard || isAdmin || isInvoice;
+  const shouldHideFooter = shouldHideLayout;
+  const shouldHideFloaters = isDashboard || isAuthPage;
   const content = isHandledByAdminShell ? (
     children
   ) : (
@@ -26,10 +29,10 @@ export const ConditionalLayout = ({ children }: { children: React.ReactNode }) =
   return (
     <>
       {!shouldHideLayout && <Header />}
-      {!isDashboard && <FloatingSocialButtons />}
-      {!isDashboard && <FloatingCallButton />}
+      {!shouldHideFloaters && <FloatingSocialButtons />}
+      {!shouldHideFloaters && <FloatingCallButton />}
       {content}
-      {!shouldHideLayout && <Footer />}
+      {!shouldHideFooter && <Footer />}
     </>
   );
 };
