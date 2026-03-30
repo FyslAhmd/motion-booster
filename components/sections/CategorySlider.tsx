@@ -97,7 +97,7 @@ export const CategorySlider = () => {
                       dragMovedRef.current = false;
                     }}
                     onDragStart={(e) => e.preventDefault()}
-                    className="category-card group shrink-0 flex flex-col items-center justify-center w-28 h-24 sm:w-36 sm:h-30 md:w-40 md:h-32 bg-white border border-gray-100 rounded-xl sm:rounded-2xl shadow-sm hover:shadow-xl hover:border-red-200 transition-all duration-300 px-2 sm:px-4"
+                    className="category-card group shrink-0 flex flex-col items-center justify-center w-28 h-24 sm:w-36 sm:h-30 md:w-40 md:h-32 bg-white border border-gray-100 rounded-xl sm:rounded-2xl hover:border-red-200 transition-all duration-300 px-2 sm:px-4"
                   >
                     <div
                       className={`mb-1.5 sm:mb-3 w-9 h-9 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center ${
