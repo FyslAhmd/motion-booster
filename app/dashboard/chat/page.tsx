@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useAuth } from '@/lib/auth/context';
 import { useSocket, type ChatMessage, type MessageType } from '@/lib/chat/use-socket';
+import { COUNTRY_CODES } from '@/lib/data/country-codes';
 import { toast } from 'sonner';
 import { AdminSectionSkeleton } from '@/components/ui/AdminSectionSkeleton';
 import {
@@ -69,8 +70,8 @@ interface PendingFile {
 }
 
 type BoostPlacement = 'facebook' | 'instagram' | 'whatsapp';
-type BoostLocation = 'all_country' | 'bangladesh';
-type BoostGender = 'male' | 'female';
+type BoostLocation = string;
+type BoostGender = 'male' | 'female' | 'both';
 type BoostAudienceLanguage = 'en' | 'bn' | 'hindi';
 
 interface BoostFormData {
@@ -90,12 +91,12 @@ const DEFAULT_BOOST_DATA: BoostFormData = {
   postLink: '',
   totalBudget: '',
   dailyBudget: '',
-  placements: ['facebook', 'instagram'],
-  location: 'bangladesh',
+  placements: [],
+  location: 'Bangladesh',
   minAge: '18',
   maxAge: '65',
   gender: 'male',
-  audienceLanguages: ['en', 'bn'],
+  audienceLanguages: [],
   notes: '',
 };
 
@@ -873,13 +874,17 @@ export default function MessagesPage() {
   ];
 
   const locationOptions: Array<{ value: BoostLocation; label: string }> = [
-    { value: 'all_country', label: 'All Country' },
-    { value: 'bangladesh', label: 'Bangladesh (BD)' },
+    { value: 'All Country', label: 'All Country' },
+    ...COUNTRY_CODES.map((country) => ({
+      value: country.name,
+      label: `${country.name} (${country.code})`,
+    })),
   ];
 
   const genderOptions: Array<{ value: BoostGender; label: string }> = [
     { value: 'male', label: 'Male' },
     { value: 'female', label: 'Female' },
+    { value: 'both', label: 'Both' },
   ];
 
   const audienceLanguageOptions: Array<{ value: BoostAudienceLanguage; label: string }> = [
@@ -950,8 +955,8 @@ export default function MessagesPage() {
     const selectedLanguageLabels = audienceLanguageOptions
       .filter((option) => boostData.audienceLanguages.includes(option.value))
       .map((option) => option.label);
-    const selectedLocationLabel = locationOptions.find((option) => option.value === boostData.location)?.label || 'Bangladesh (BD)';
-    const selectedGenderLabel = genderOptions.find((option) => option.value === boostData.gender)?.label || 'Male';
+    const selectedLocationLabel = locationOptions.find((option) => option.value === boostData.location)?.label || boostData.location || 'Bangladesh (BD)';
+    const selectedGenderLabel = genderOptions.find((option) => option.value === boostData.gender)?.label || 'Both';
 
     const targetAudience = [
       boostData.postLink.trim() ? `Facebook Boost Link: ${boostData.postLink.trim()}` : '',
@@ -1646,7 +1651,7 @@ export default function MessagesPage() {
                                 </div>
                               </div>
                               <div>
-                                <label className="block text-xs font-medium text-gray-700 mb-1">{boostFieldLabels.minAge} / {boostFieldLabels.maxAge} <span className="text-red-500">*</span></label>
+                                <label className="block text-xs font-medium text-gray-700 mb-1 whitespace-nowrap">{boostFieldLabels.minAge} / {boostFieldLabels.maxAge} <span className="text-red-500">*</span></label>
                                 <div className="grid grid-cols-2 gap-2">
                                   <div className="relative">
                                     <select

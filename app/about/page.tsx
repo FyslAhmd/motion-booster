@@ -173,9 +173,9 @@ export default function AboutPage() {
       ];
 
   return (
-    <div className="min-h-screen bg-red-50 pt-10 sm:pt-12 md:bg-white md:pt-40">
+    <div className="min-h-screen bg-red-50 pt-10 sm:pt-12 md:pt-0">
       {/* Hero Section */}
-      <section className="pt-0 pb-10 sm:pt-2 sm:pb-12 lg:pt-0 lg:pb-16 bg-linear-to-br from-red-50 via-rose-50 to-rose-100">
+      <section className="pt-0 pb-10 sm:pt-2 md:pt-40 sm:pb-12 lg:pt-40 lg:pb-16 bg-linear-to-br from-red-50 via-rose-50 to-rose-100">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="text-center max-w-4xl mx-auto page-reveal">
             <h1 className="text-xl lg:text-3xl font-bold text-gray-900 mb-3">
@@ -269,7 +269,7 @@ export default function AboutPage() {
             <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
               {isBN ? 'আমাদের মূল মূল্যবোধ' : 'Our Core Values'}
             </h2>
-              <p className="text-xl text-gray-600 text-wave">
+              <p className="text-base sm:text-xl text-gray-600 text-wave whitespace-nowrap">
               {isBN ? 'যে মূল্যবোধ আমাদের প্রতিটি কাজকে পরিচালিত করে' : 'Values that guide every decision we make'}
             </p>
           </div>

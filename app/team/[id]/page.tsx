@@ -13,6 +13,51 @@ type CompanyItem = {
   logo_image?: string | null;
 };
 
+function TeamMemberDetailsSkeleton() {
+  return (
+    <main className="min-h-screen bg-white pb-[calc(1.25rem+env(safe-area-inset-bottom))] lg:pb-0 lg:pt-32">
+      <div className="lg:hidden bg-white sticky top-0 z-30 border-b border-gray-100">
+        <div className="flex items-center gap-3 px-4 py-4">
+          <div className="h-6 w-6 rounded bg-gray-200 skeleton-breathe" />
+          <div className="h-6 w-36 rounded bg-gray-200 skeleton-breathe" />
+        </div>
+      </div>
+
+      <div className="px-4 pt-6 pb-2 max-w-xl mx-auto lg:max-w-3xl space-y-4">
+        <div className="flex items-center gap-4">
+          <div className="h-20 w-20 rounded-full bg-gray-200 skeleton-breathe" />
+          <div className="space-y-2 flex-1">
+            <div className="h-6 w-48 rounded bg-gray-200 skeleton-breathe" />
+            <div className="h-4 w-56 rounded bg-gray-200 skeleton-breathe" />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-[#f5f4ef] rounded-xl p-4">
+            <div className="h-3 w-20 rounded bg-gray-200 skeleton-breathe" />
+            <div className="mt-3 h-7 w-20 rounded bg-gray-200 skeleton-breathe" />
+          </div>
+          <div className="bg-[#f5f4ef] rounded-xl p-4">
+            <div className="h-3 w-28 rounded bg-gray-200 skeleton-breathe" />
+            <div className="mt-3 h-7 w-16 rounded bg-gray-200 skeleton-breathe" />
+          </div>
+        </div>
+
+        {Array.from({ length: 3 }).map((_, idx) => (
+          <div key={`team-member-card-skeleton-${idx}`} className="bg-[#f5f4ef] rounded-2xl p-5">
+            <div className="h-6 w-40 rounded bg-gray-200 skeleton-breathe" />
+            <div className="mt-4 space-y-3">
+              <div className="h-4 w-11/12 rounded bg-gray-200 skeleton-breathe" />
+              <div className="h-4 w-10/12 rounded bg-gray-200 skeleton-breathe" />
+              <div className="h-4 w-9/12 rounded bg-gray-200 skeleton-breathe" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </main>
+  );
+}
+
 export default function TeamMemberPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
@@ -26,7 +71,9 @@ export default function TeamMemberPage({ params }: { params: Promise<{ id: strin
   useLayoutEffect(() => {
     const html = document.documentElement;
     const prevScrollBehavior = html.style.scrollBehavior;
+    const prevScrollRestoration = history.scrollRestoration;
     html.style.scrollBehavior = 'auto';
+    history.scrollRestoration = 'manual';
 
     const forceTop = () => {
       window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
@@ -44,8 +91,16 @@ export default function TeamMemberPage({ params }: { params: Promise<{ id: strin
       window.clearTimeout(t2);
       window.clearTimeout(t3);
       html.style.scrollBehavior = prevScrollBehavior;
+      history.scrollRestoration = prevScrollRestoration;
     };
   }, [id]);
+
+  useEffect(() => {
+    if (!member) return;
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, [member?.id]);
 
   useEffect(() => {
 
@@ -80,7 +135,7 @@ export default function TeamMemberPage({ params }: { params: Promise<{ id: strin
       .catch(() => setCompanyLogoByName({}));
   }, [id]);
 
-  if (member === undefined) return null; // loading
+  if (member === undefined) return <TeamMemberDetailsSkeleton />; // loading
   if (member === null) return notFound();
 
   const localizedWorkExperience = pickLocalizedList(language, member.workExperience, member.workExperienceBn).filter(Boolean);
@@ -130,11 +185,11 @@ export default function TeamMemberPage({ params }: { params: Promise<{ id: strin
 
         {/* Stats */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-[#f5f4ef] rounded-xl p-4">
+          <div className="bg-[#f5f4ef] rounded-xl p-4 transition-transform duration-200 hover:scale-[1.02] active:scale-[0.99]">
             <p className="text-gray-500 text-xs mb-1">{isBN ? 'অভিজ্ঞতা' : 'Experience'}</p>
             <p className="text-red-500 font-bold text-xl">{pickLocalizedText(language, member.experience, member.experienceBn)}</p>
           </div>
-          <div className="bg-[#f5f4ef] rounded-xl p-4">
+          <div className="bg-[#f5f4ef] rounded-xl p-4 transition-transform duration-200 hover:scale-[1.02] active:scale-[0.99]">
             <p className="text-gray-500 text-xs mb-1">{isBN ? 'সম্পন্ন প্রজেক্ট' : 'Completed Projects'}</p>
             <p className="text-red-500 font-bold text-xl">{pickLocalizedText(language, member.projects, member.projectsBn)}</p>
           </div>
@@ -142,7 +197,7 @@ export default function TeamMemberPage({ params }: { params: Promise<{ id: strin
 
         {/* Work Experience */}
         {localizedWorkExperience.length > 0 && (
-          <div className="bg-[#f5f4ef] rounded-2xl p-5">
+          <div className="bg-[#f5f4ef] rounded-2xl p-5 transition-transform duration-200 hover:scale-[1.02] active:scale-[0.99]">
             <h3 className="text-base font-bold text-gray-900 mb-4">{isBN ? 'কর্ম অভিজ্ঞতা' : 'Work Experience'}</h3>
             <div className="space-y-3">
               {localizedWorkExperience.map((item, i) => (
@@ -157,7 +212,7 @@ export default function TeamMemberPage({ params }: { params: Promise<{ id: strin
 
         {/* Specialized Area */}
         {localizedSpecializedArea.length > 0 && (
-          <div className="bg-[#f5f4ef] rounded-2xl p-5">
+          <div className="bg-[#f5f4ef] rounded-2xl p-5 transition-transform duration-200 hover:scale-[1.02] active:scale-[0.99]">
             <h3 className="text-base font-bold text-gray-900 mb-4">{isBN ? 'বিশেষ দক্ষতার ক্ষেত্র' : 'Specialized Areas'}</h3>
             <div className="space-y-3">
               {localizedSpecializedArea.map((item, i) => (
@@ -172,7 +227,7 @@ export default function TeamMemberPage({ params }: { params: Promise<{ id: strin
 
         {/* Education */}
         {localizedEducation.length > 0 && (
-          <div className="bg-[#f5f4ef] rounded-2xl p-5">
+          <div className="bg-[#f5f4ef] rounded-2xl p-5 transition-transform duration-200 hover:scale-[1.02] active:scale-[0.99]">
             <h3 className="text-base font-bold text-gray-900 mb-4">{isBN ? 'শিক্ষাগত যোগ্যতা' : 'Education'}</h3>
             <div className="space-y-3">
               {localizedEducation.map((item, i) => (
@@ -187,7 +242,7 @@ export default function TeamMemberPage({ params }: { params: Promise<{ id: strin
 
         {/* Work Places */}
         {localizedWorkPlaces.length > 0 && (
-          <div className="bg-[#f5f4ef] rounded-2xl p-5">
+          <div className="bg-[#f5f4ef] rounded-2xl p-5 transition-transform duration-200 hover:scale-[1.02] active:scale-[0.99]">
             <h3 className="text-base font-bold text-gray-900 mb-4">{isBN ? 'কর্মস্থল' : 'Work Places'}</h3>
             <div className="grid grid-cols-2 gap-3">
               {localizedWorkPlaces.map((place, i) => {
@@ -196,7 +251,7 @@ export default function TeamMemberPage({ params }: { params: Promise<{ id: strin
                 return (
                 <div
                   key={i}
-                  className="bg-white rounded-xl p-4 flex items-center gap-3 shadow-sm"
+                  className="bg-white rounded-xl p-4 flex items-center gap-3 shadow-sm transition-transform duration-200 hover:scale-[1.02] active:scale-[0.99]"
                 >
                   {logoSrc ? (
                     // eslint-disable-next-line @next/next/no-img-element

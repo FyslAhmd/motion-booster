@@ -172,14 +172,14 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
       </aside>
 
       {/* Top bar */}
-      <header className="shrink-0 z-20 bg-white border-b border-gray-100 h-14 flex items-center px-4 justify-between shadow-sm">
+      <header className="shrink-0 z-20 bg-white border-b border-gray-100 h-18.5 flex items-center px-4 justify-between shadow-sm">
         <Link href="/dashboard" className="lg:hidden">
           <Image
             src="/Motion Booster Black Logo-01.svg"
             alt="Motion Booster"
             width={130}
             height={40}
-            className="h-8 w-auto"
+            className="h-12 w-auto"
             priority
           />
         </Link>
@@ -188,9 +188,9 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
           <span className="hidden sm:block lg:hidden">{activeLabel}</span>
           <Link href="/dashboard/profile">
             {avatarUrl ? (
-              <Image src={avatarUrl} alt="avatar" width={32} height={32} className="w-8 h-8 rounded-full object-cover" />
+              <Image src={avatarUrl} alt="avatar" width={36} height={36} className="w-9 h-9 rounded-full object-cover" />
             ) : (
-              <div className="w-8 h-8 rounded-full bg-linear-to-br from-red-500 to-red-700 flex items-center justify-center text-white text-xs font-bold">
+              <div className="w-9 h-9 rounded-full bg-linear-to-br from-red-500 to-red-700 flex items-center justify-center text-white text-xs font-bold">
                 {userName.slice(0, 2).toUpperCase()}
               </div>
             )}
@@ -429,17 +429,18 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
         }`}
       >
         {/* Logo */}
-        <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-          <Link href="/dashboard" onClick={() => setSidebarOpen(false)}>
-            <Image
-              src="/Motion Booster Black Logo-01.svg"
-              alt="Motion Booster"
-              width={160}
-              height={48}
-              className="h-9 w-auto"
-              priority
-            />
-            <div className="text-gray-400 text-xs mt-1 pl-0.5 font-medium tracking-wide uppercase">{isAdmin ? 'Admin Panel' : 'Dashboard'}</div>
+        <div className="h-18.5 px-5 border-b border-gray-100 flex items-center justify-between">
+          <Link href="/dashboard" onClick={() => setSidebarOpen(false)} className="flex h-full flex-col justify-center">
+            <div className="relative w-40 h-9">
+              <Image
+                src="/Motion Booster Black Logo-01.svg"
+                alt="Motion Booster"
+                fill
+                className="object-contain"
+                priority
+              />
+            </div>
+            <div className="pl-0.5 pt-0.5 text-[12px] leading-3 font-medium uppercase tracking-wide text-gray-400">{isAdmin ? 'Admin Panel' : 'Dashboard'}</div>
           </Link>
           <button
             onClick={() => setSidebarOpen(false)}
@@ -564,7 +565,7 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         {/* Top bar — mobile only */}
-        <header className="lg:hidden sticky top-0 z-10 bg-white border-b border-gray-100 px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
+        <header className="lg:hidden sticky top-0 z-10 bg-white border-b border-gray-100 px-4 sm:px-6 h-18.5 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setSidebarOpen(true)}
@@ -583,9 +584,9 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
             <div className="text-xs text-gray-400 hidden sm:block">{adminName}</div>
             <Link href="/dashboard/profile">
               {adminAvatar ? (
-                <Image src={adminAvatar} alt="avatar" width={28} height={28} className="w-7 h-7 rounded-full object-cover" />
+                <Image src={adminAvatar} alt="avatar" width={36} height={36} className="w-9 h-9 rounded-full object-cover" />
               ) : (
-                <div className="w-7 h-7 rounded-full bg-linear-to-br from-red-500 to-red-700 flex items-center justify-center text-white text-xs font-bold">
+                <div className="w-9 h-9 rounded-full bg-linear-to-br from-red-500 to-red-700 flex items-center justify-center text-white text-xs font-bold">
                   {adminName.slice(0, 2).toUpperCase()}
                 </div>
               )}

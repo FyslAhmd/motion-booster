@@ -32,6 +32,30 @@ export default function ContactPage() {
   });
   const [errors, setErrors] = useState<ContactFormErrors>({});
 
+  const handleEmailIconClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    const email = 'hello@motionbooster.com';
+    const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+    const isAndroid = /Android/i.test(ua);
+    const isIOS = /iPhone|iPad|iPod/i.test(ua);
+
+    if (!isAndroid && !isIOS) return;
+
+    e.preventDefault();
+
+    if (isAndroid) {
+      window.location.href = `intent://compose?to=${encodeURIComponent(email)}#Intent;scheme=mailto;package=com.google.android.gm;end`;
+      window.setTimeout(() => {
+        window.location.href = `mailto:${email}`;
+      }, 350);
+      return;
+    }
+
+    window.location.href = `googlegmail://co?to=${encodeURIComponent(email)}`;
+    window.setTimeout(() => {
+      window.location.href = `mailto:${email}`;
+    }, 350);
+  };
+
   const validateField = (name: keyof ContactFormData, value: string): string => {
     const trimmed = value.trim();
 
@@ -171,9 +195,8 @@ export default function ContactPage() {
 
             <div className="bg-white p-5 md:p-7 rounded-2xl border border-gray-100 hover:shadow-lg hover:border-red-100 transition-all card-reveal-right page-delay-2">
               <a
-                href="https://mail.google.com/mail/?view=cm&fs=1&to=hello@motionbooster.com"
-                target="_blank"
-                rel="noopener noreferrer"
+                href="mailto:hello@motionbooster.com"
+                onClick={handleEmailIconClick}
                 aria-label={isBN ? 'জিমেইল কম্পোজ খুলুন' : 'Open Gmail compose'}
                 className="w-14 h-14 bg-red-500 rounded-xl flex items-center justify-center mx-auto mb-5"
               >
@@ -237,7 +260,13 @@ export default function ContactPage() {
               />
 
               {/* Floating info card on map */}
-              <div className="absolute bottom-4 left-4 bg-white rounded-xl shadow-lg px-4 py-3 flex items-center gap-3 max-w-xs">
+              <a
+                href="https://maps.app.goo.gl/gLuPnr3LnoiqzyDH7"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={isBN ? 'গুগল ম্যাপে Motion Booster লোকেশন খুলুন' : 'Open Motion Booster location in Google Maps'}
+                className="absolute bottom-4 left-4 bg-white rounded-xl shadow-lg px-4 py-3 flex items-center gap-3 max-w-xs transition-transform duration-200 hover:scale-[1.02] active:scale-[0.99]"
+              >
                 <div className="w-9 h-9 bg-red-500 rounded-lg flex items-center justify-center shrink-0">
                   <MapPin className="w-5 h-5 text-white" />
                 </div>
@@ -247,7 +276,7 @@ export default function ContactPage() {
                     {isBN ? 'নিউ মার্কেট, ঢাকা-১২০৫, বাংলাদেশ।' : 'New Market, Dhaka-1205, Bangladesh.'}
                   </p>
                 </div>
-              </div>
+              </a>
             </div>
 
             {/* Info rows */}

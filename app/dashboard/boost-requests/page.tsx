@@ -3,9 +3,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import AdminShell from '../_components/AdminShell';
 import { useAuth } from '@/lib/auth/context';
-import { Search, ChevronLeft, ChevronRight, Calendar, Wallet, Clock3, Target, Users2 } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, Calendar, Wallet, Clock3, Target, Users2, ExternalLink } from 'lucide-react';
 import { AdminSectionSkeleton } from '@/components/ui/AdminSectionSkeleton';
 import { createPortal } from 'react-dom';
+import { COUNTRY_CODES } from '@/lib/data/country-codes';
 
 type BoostRequestStatus = 'PENDING' | 'COMPLETED' | 'CANCELLED';
 
@@ -21,6 +22,7 @@ interface BoostRequestUser {
 interface BoostRequestItem {
   id: string;
   language: string;
+  postLink?: string | null;
   totalBudget: string;
   dailyBudget: string;
   targetAudience: string;
@@ -51,8 +53,8 @@ interface AudienceProfile {
 }
 
 type PlacementValue = 'facebook' | 'whatsapp' | 'instagram';
-type LocationValue = 'all_country' | 'bangladesh';
-type GenderValue = 'male' | 'female';
+type LocationValue = string;
+type GenderValue = 'male' | 'female' | 'both';
 
 interface BoostSetupDraft {
   placements: PlacementValue[];
@@ -72,6 +74,14 @@ const PLACEMENT_OPTIONS: Array<{ value: PlacementValue; label: string }> = [
   { value: 'facebook', label: 'Facebook' },
   { value: 'whatsapp', label: 'WhatsApp' },
   { value: 'instagram', label: 'Instagram' },
+];
+
+const LOCATION_OPTIONS: Array<{ value: LocationValue; label: string }> = [
+  { value: 'All Country', label: 'All Country' },
+  ...COUNTRY_CODES.map((country) => ({
+    value: country.name,
+    label: `${country.name} (${country.code})`,
+  })),
 ];
 
 const AGE_OPTIONS = Array.from({ length: 48 }, (_, i) => 18 + i);
@@ -227,6 +237,15 @@ export default function BoostRequestsPage() {
     const match = item.targetAudience.match(/placement[s]?\s*[:\-]\s*([^\n]+)/i);
     const placementFromAudience = match?.[1]?.trim();
     return placementFromAudience ? `${placementFromAudience} Campaign` : 'Boost Campaign';
+  };
+
+  const getPostLink = (item: BoostRequestItem) => {
+    const direct = item.postLink?.trim();
+    if (direct) return direct;
+
+    const extracted = item.targetAudience.match(/facebook\s*(?:boost)?\s*link\s*[:\-]\s*(https?:\/\/\S+)/i)?.[1]?.trim();
+    if (!extracted) return null;
+    return extracted.replace(/[),.;]+$/, '');
   };
 
   const uniqueValues = (values: string[]) =>
@@ -401,12 +420,23 @@ export default function BoostRequestsPage() {
 
   const resolveSelectedLocation = (locations: string[], rawAudience: string): LocationValue => {
     const source = `${locations.join(', ')} ${rawAudience}`.toLowerCase();
-    if (source.includes('all country') || source.includes('all countries')) return 'all_country';
-    return 'bangladesh';
+    if (source.includes('all country') || source.includes('all countries')) return 'All Country';
+
+    const matchedCountry = COUNTRY_CODES.find((country) => {
+      const name = country.name.toLowerCase();
+      const code = country.code.toLowerCase();
+      return source.includes(name) || source.includes(`(${code})`) || source.includes(` ${code} `);
+    });
+
+    if (matchedCountry) return matchedCountry.name;
+    return locations[0] || 'Bangladesh';
   };
 
   const resolveSelectedGender = (genders: string[], rawAudience: string): GenderValue => {
     const source = `${genders.join(', ')} ${rawAudience}`.toLowerCase();
+    if (source.includes('both') || source.includes('all genders') || source.includes('all gender') || source.includes('everyone')) {
+      return 'both';
+    }
     if (source.includes('female') || source.includes('women') || source.includes('girl') || source.includes('নারী') || source.includes('মহিলা')) {
       return 'female';
     }
@@ -612,6 +642,23 @@ export default function BoostRequestsPage() {
                       <span className="text-gray-400">Target audience</span>
                       <p className="font-medium text-gray-800 line-clamp-2">{item.targetAudience || '—'}</p>
                     </div>
+                    <div className="col-span-2 bg-gray-50 rounded-lg p-2">
+                      <span className="text-gray-400">Facebook Post Link</span>
+                      {getPostLink(item) ? (
+                        <a
+                          href={getPostLink(item) || '#'}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="mt-0.5 inline-flex max-w-full items-center gap-1.5 truncate font-medium text-blue-600 hover:text-blue-700"
+                        >
+                          <span className="truncate">{getPostLink(item)}</span>
+                          <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+                        </a>
+                      ) : (
+                        <p className="font-medium text-gray-800">—</p>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
@@ -716,6 +763,18 @@ export default function BoostRequestsPage() {
                             Request ID: {selected.id.slice(0, 8).toUpperCase()}
                           </p>
 
+                          {getPostLink(selected) && (
+                            <a
+                              href={getPostLink(selected) || '#'}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="mt-2 inline-flex max-w-full items-center gap-1.5 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700"
+                            >
+                              <span className="truncate">{getPostLink(selected)}</span>
+                              <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+                            </a>
+                          )}
+
                           <div className="mt-4 flex flex-wrap gap-2 text-xs text-gray-700">
                             <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-white/80 bg-white/80 px-3 py-1.5 shadow-sm">
                               <Calendar className="h-3.5 w-3.5" />
@@ -808,8 +867,9 @@ export default function BoostRequestsPage() {
                             onChange={(e) => setSetupDraft((prev) => (prev ? { ...prev, location: e.target.value as LocationValue } : prev))}
                             className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
                           >
-                            <option value="all_country">All Country</option>
-                            <option value="bangladesh">Bangladesh (BD)</option>
+                            {LOCATION_OPTIONS.map((option) => (
+                              <option key={`location-${option.value}`} value={option.value}>{option.label}</option>
+                            ))}
                           </select>
                         </div>
 
@@ -862,6 +922,7 @@ export default function BoostRequestsPage() {
                           >
                             <option value="male">Male</option>
                             <option value="female">Female</option>
+                            <option value="both">Both</option>
                           </select>
                         </div>
                       </div>
