@@ -107,7 +107,7 @@ function getStatusStyle(status: string) {
 function formatBudgetValue(daily?: string, lifetime?: string) {
   if (daily) return `$${(parseInt(daily, 10) / 100).toFixed(2)}/day`;
   if (lifetime) return `$${(parseInt(lifetime, 10) / 100).toFixed(2)} total`;
-  return '—';
+  return 'N/A';
 }
 
 function formatShortRange(start?: string, end?: string) {
@@ -117,7 +117,7 @@ function formatShortRange(start?: string, end?: string) {
   const e = end
     ? new Date(end).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
     : 'Ongoing';
-  return s ? `${s} - ${e}` : '—';
+  return s ? `${s} - ${e}` : 'N/A';
 }
 
 async function fetchMetaByIdsChunked<T>(type: 'CAMPAIGN' | 'ADSET' | 'AD', refs: AssignmentRef[]): Promise<T[]> {
@@ -221,7 +221,7 @@ function DetailModal({
               <h3 className="truncate text-base font-semibold text-gray-900 sm:text-lg">{title}</h3>
               {subtitle && <p className="mt-1 text-xs text-gray-500">{subtitle}</p>}
             </div>
-            <button onClick={onClose} className="rounded-lg px-2 py-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700">×</button>
+            <button onClick={onClose} className="rounded-lg px-2 py-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700">ï¿½</button>
           </div>
         </div>
 
@@ -230,7 +230,7 @@ function DetailModal({
             {rows.map((row) => (
               <div key={row.label} className="rounded-xl border border-gray-200 bg-white px-3 py-2.5 shadow-sm">
                 <p className="text-[11px] uppercase tracking-wide text-gray-500">{row.label}</p>
-                <p className="mt-1 wrap-break-word text-sm font-medium text-gray-900">{row.value || '—'}</p>
+                <p className="mt-1 wrap-break-word text-sm font-medium text-gray-900">{row.value || 'ï¿½'}</p>
               </div>
             ))}
           </div>
@@ -442,7 +442,7 @@ export default function UserCampaignDetailPage({
 }
 
 /* ---------------------------------------------------------------
-   Section Components — mirrors /dashboard/meta table designs
+   Section Components ï¿½ mirrors /dashboard/meta table designs
    --------------------------------------------------------------- */
 
 function Spinner() {
@@ -766,7 +766,7 @@ function CampaignsSection({
             onClose={() => setSelectedCampaign(null)}
             rows={[
               { label: 'Status', value: getStatusStyle(selectedCampaign.effective_status).label },
-              { label: 'Objective', value: selectedCampaign.objective?.replace(/_/g, ' ').toLowerCase() || '—' },
+              { label: 'Objective', value: selectedCampaign.objective?.replace(/_/g, ' ').toLowerCase() || 'ï¿½' },
               { label: 'Budget', value: formatBudgetValue(selectedCampaign.daily_budget, selectedCampaign.lifetime_budget) },
               { label: 'Date Range', value: formatShortRange(selectedCampaign.start_time, selectedCampaign.stop_time) },
               { label: 'Created', value: new Date(selectedCampaign.created_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) },
