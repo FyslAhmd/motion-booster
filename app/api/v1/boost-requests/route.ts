@@ -3,8 +3,8 @@ import { prisma } from '@/lib/db/prisma';
 import { validateRequest } from '@/lib/auth/validate-request';
 
 type PlacementValue = 'facebook' | 'instagram' | 'whatsapp';
-type LocationValue = 'all_country' | 'bangladesh';
-type GenderValue = 'male' | 'female';
+type LocationValue = string;
+type GenderValue = 'male' | 'female' | 'both';
 type AudienceLanguageValue = 'en' | 'bn' | 'hindi';
 
 type NormalizedBoostSetup = {
@@ -24,14 +24,10 @@ const PLACEMENT_LABELS: Record<PlacementValue, string> = {
   whatsapp: 'WhatsApp',
 };
 
-const LOCATION_LABELS: Record<LocationValue, string> = {
-  all_country: 'All Country',
-  bangladesh: 'Bangladesh (BD)',
-};
-
 const GENDER_LABELS: Record<GenderValue, string> = {
   male: 'Male',
   female: 'Female',
+  both: 'Both',
 };
 
 const AUDIENCE_LANGUAGE_LABELS: Record<AudienceLanguageValue, string> = {
@@ -65,15 +61,18 @@ const normalizePlacement = (value: unknown): PlacementValue | null => {
 
 const normalizeLocation = (value: unknown): LocationValue | null => {
   if (typeof value !== 'string') return null;
-  const normalized = value.toLowerCase().trim();
-  if (normalized === 'all_country' || normalized === 'bangladesh') return normalized;
-  return null;
+  const raw = value.trim();
+  if (!raw) return null;
+  const normalized = raw.toLowerCase();
+  if (normalized === 'all_country' || normalized === 'all country' || normalized === 'all countries') return 'All Country';
+  if (normalized === 'bangladesh' || normalized === 'bangladesh (bd)' || normalized === 'bd') return 'Bangladesh (BD)';
+  return raw.slice(0, 120);
 };
 
 const normalizeGender = (value: unknown): GenderValue | null => {
   if (typeof value !== 'string') return null;
   const normalized = value.toLowerCase().trim();
-  if (normalized === 'male' || normalized === 'female') return normalized;
+  if (normalized === 'male' || normalized === 'female' || normalized === 'both') return normalized;
   return null;
 };
 
@@ -143,7 +142,7 @@ const buildTargetAudienceFromSetup = (setup: NormalizedBoostSetup, fallbackAudie
   }
 
   if (setup.location) {
-    lines.push(`Location: ${LOCATION_LABELS[setup.location]}`);
+    lines.push(`Location: ${setup.location}`);
   }
 
   if (setup.minAge !== null) {
