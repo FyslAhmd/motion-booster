@@ -186,7 +186,7 @@ export const translations = {
     testimonials_subtext: 'Real feedback from businesses we have worked with',
 
     // ── Floating Call Button ────────────────────────────────────────────
-    floating_call_title: 'Need Help?',
+    floating_call_title: 'Contact Us',
     floating_call_desc: 'Chat with our support team',
     floating_call_close: 'Close',
     floating_call_message: 'Send Message',
