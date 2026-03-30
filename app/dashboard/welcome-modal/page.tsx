@@ -9,15 +9,11 @@ import { toast } from 'sonner';
 type WelcomeSettingsForm = {
   welcomeModalImage: string;
   welcomeModalExploreLink: string;
-  welcomeModalTitle: string;
-  welcomeModalBody: string;
 };
 
 const DEFAULT_WELCOME_SETTINGS: WelcomeSettingsForm = {
   welcomeModalImage: '',
   welcomeModalExploreLink: '/service',
-  welcomeModalTitle: 'Welcome to Motion Booster! 👋',
-  welcomeModalBody: 'We help businesses grow with creative branding, motion graphics, web development & digital marketing.',
 };
 
 const WELCOME_SETTINGS_CACHE_KEY = 'mb_welcome_modal_settings_v1';
@@ -33,14 +29,6 @@ function WelcomeModalCardsSkeleton() {
         </div>
         <div className="rounded-2xl border border-gray-100 bg-white p-5 space-y-4">
           <div className="h-4 w-24 animate-pulse rounded bg-gray-200" />
-          <div className="space-y-2">
-            <div className="h-3 w-16 animate-pulse rounded bg-gray-200" />
-            <div className="h-10 w-full animate-pulse rounded-xl bg-gray-200" />
-          </div>
-          <div className="space-y-2">
-            <div className="h-3 w-20 animate-pulse rounded bg-gray-200" />
-            <div className="h-20 w-full animate-pulse rounded-xl bg-gray-200" />
-          </div>
           <div className="space-y-2">
             <div className="h-3 w-28 animate-pulse rounded bg-gray-200" />
             <div className="h-10 w-full animate-pulse rounded-xl bg-gray-200" />
@@ -80,8 +68,6 @@ export default function WelcomeModalPage() {
         setSettings({
           welcomeModalImage: data?.welcomeModalImage || '',
           welcomeModalExploreLink: data?.welcomeModalExploreLink || '/service',
-          welcomeModalTitle: data?.welcomeModalTitle || DEFAULT_WELCOME_SETTINGS.welcomeModalTitle,
-          welcomeModalBody: data?.welcomeModalBody || DEFAULT_WELCOME_SETTINGS.welcomeModalBody,
         });
       } catch {
         if (!cancelled) {
@@ -114,8 +100,8 @@ export default function WelcomeModalPage() {
         body: JSON.stringify({
           welcomeModalImage: settings.welcomeModalImage || null,
           welcomeModalExploreLink: settings.welcomeModalExploreLink || '/service',
-          welcomeModalTitle: settings.welcomeModalTitle || DEFAULT_WELCOME_SETTINGS.welcomeModalTitle,
-          welcomeModalBody: settings.welcomeModalBody || DEFAULT_WELCOME_SETTINGS.welcomeModalBody,
+          welcomeModalTitle: null,
+          welcomeModalBody: null,
         }),
       });
 
@@ -127,8 +113,6 @@ export default function WelcomeModalPage() {
       const normalized = {
         welcomeModalImage: data?.welcomeModalImage || '',
         welcomeModalExploreLink: data?.welcomeModalExploreLink || '/service',
-        welcomeModalTitle: data?.welcomeModalTitle || DEFAULT_WELCOME_SETTINGS.welcomeModalTitle,
-        welcomeModalBody: data?.welcomeModalBody || DEFAULT_WELCOME_SETTINGS.welcomeModalBody,
       };
       setSettings(normalized);
 
@@ -147,26 +131,15 @@ export default function WelcomeModalPage() {
   };
 
   const handleImageUpload = (file: File) => {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d')!;
-    const img = new window.Image();
-    img.onload = () => {
-      const maxW = 640;
-      const maxH = 360;
-      const scale = Math.min(maxW / img.width, maxH / img.height, 1);
-      canvas.width = Math.round(img.width * scale);
-      canvas.height = Math.round(img.height * scale);
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      const b64 = canvas.toDataURL('image/jpeg', 0.75);
+    const reader = new FileReader();
+    reader.onload = () => {
+      const b64 = typeof reader.result === 'string' ? reader.result : '';
       setSettings(prev => ({ ...prev, welcomeModalImage: b64 }));
-      URL.revokeObjectURL(img.src);
     };
-    img.src = URL.createObjectURL(file);
+    reader.readAsDataURL(file);
   };
 
   const currentImage = settings.welcomeModalImage || '';
-  const currentTitle = settings.welcomeModalTitle || 'Welcome to Motion Booster! 👋';
-  const currentBody = settings.welcomeModalBody || 'We help businesses grow with creative branding, motion graphics, web development & digital marketing.';
   const currentLink = settings.welcomeModalExploreLink || '/service';
 
   return (
@@ -182,7 +155,7 @@ export default function WelcomeModalPage() {
             <p className="text-white/60 text-xs text-center mb-3">Click anywhere outside to close preview</p>
 
             {/* Simulated modal */}
-            <div className="relative bg-white rounded-2xl overflow-hidden shadow-2xl w-80">
+            <div className="relative w-80 rounded-2xl bg-transparent p-4 shadow-2xl">
               <button
                 onClick={() => setPreview(false)}
                 className="absolute top-2 right-2 z-10 w-6 h-6 bg-white/80 rounded-full flex items-center justify-center text-gray-500 shadow hover:bg-white"
@@ -193,10 +166,10 @@ export default function WelcomeModalPage() {
               {/* Banner */}
               {currentImage ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={currentImage} alt="banner" className="w-full h-48 object-cover" />
+                <img src={currentImage} alt="banner" className="w-full h-64 object-contain" />
               ) : (
                 <div
-                  className="w-full h-48 flex items-center justify-center"
+                  className="w-full h-64 flex items-center justify-center rounded-xl"
                   style={{ background: 'linear-gradient(214.38deg, #ff8079 -2.24%, #ff1e1e 59.38%)' }}
                 >
                   <div className="text-center px-4">
@@ -207,20 +180,10 @@ export default function WelcomeModalPage() {
                 </div>
               )}
 
-              {/* Content */}
-              <div className="px-5 pt-4 pb-5">
-                <h3 className="text-gray-900 text-base font-bold mb-1.5">{currentTitle}</h3>
-                <p className="text-gray-500 text-sm leading-relaxed mb-4">{currentBody}</p>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-8 h-8 rounded-full border-2 border-red-400 flex items-center justify-center">
-                      <span className="text-red-500 font-bold text-xs">8</span>
-                    </div>
-                    <span className="text-xs text-gray-400">Auto close</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 bg-red-500 text-white px-4 py-2 rounded-full text-sm font-semibold">
-                    Explore →
-                  </div>
+              {/* CTA below image */}
+              <div className="mt-4 flex items-center justify-center">
+                <div className="flex items-center gap-1.5 bg-red-500 px-6 py-3 rounded-full text-base font-bold text-white shadow-xl">
+                  Explore →
                 </div>
               </div>
             </div>
@@ -267,7 +230,7 @@ export default function WelcomeModalPage() {
             {currentImage ? (
               <div className="relative rounded-xl overflow-hidden mb-3 border border-gray-100">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={currentImage} alt="Modal banner" className="w-full h-36 object-cover" />
+                <img src={currentImage} alt="Modal banner" className="w-full h-48 object-contain bg-transparent" />
                 <button
                   onClick={() => setSettings(prev => ({ ...prev, welcomeModalImage: '' }))}
                   className="absolute top-2 right-2 w-7 h-7 bg-white rounded-full flex items-center justify-center text-red-500 hover:bg-red-50 shadow"
@@ -278,11 +241,11 @@ export default function WelcomeModalPage() {
             ) : (
               <div
                 onClick={() => fileRef.current?.click()}
-                className="border-2 border-dashed border-gray-200 rounded-xl h-36 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-red-300 hover:bg-red-50/30 transition-colors mb-3"
+                className="border-2 border-dashed border-gray-200 rounded-xl h-48 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-red-300 hover:bg-red-50/30 transition-colors mb-3"
               >
                 <ImagePlus className="w-6 h-6 text-gray-300" />
-                <p className="text-xs text-gray-400">Click to upload banner image</p>
-                <p className="text-[10px] text-gray-300">JPG, PNG, WebP — 800×400px recommended</p>
+                <p className="text-xs text-gray-400">Click to upload no-background image</p>
+                <p className="text-[10px] text-gray-300">PNG/WebP with transparent background recommended</p>
               </div>
             )}
 
@@ -306,35 +269,13 @@ export default function WelcomeModalPage() {
               </button>
             )}
             <p className="text-[11px] text-gray-400 mt-2">
-              Leave empty to show the default red gradient banner with the 🚀 icon.
+              Transparent PNG will be preserved exactly as uploaded.
             </p>
           </div>
 
-          {/* Text */}
+          {/* Link */}
           <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
-            <h2 className="text-sm font-semibold text-gray-700">Modal Text</h2>
-
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">Heading</label>
-              <input
-                type="text"
-                value={settings.welcomeModalTitle || ''}
-                onChange={e => set('welcomeModalTitle')(e.target.value)}
-                placeholder="Welcome to Motion Booster! 👋"
-                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">Description</label>
-              <textarea
-                value={settings.welcomeModalBody || ''}
-                onChange={e => set('welcomeModalBody')(e.target.value)}
-                rows={3}
-                placeholder="We help businesses grow..."
-                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 resize-none"
-              />
-            </div>
+            <h2 className="text-sm font-semibold text-gray-700">Explore Button</h2>
 
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1.5">Explore Button Link</label>
@@ -356,7 +297,7 @@ export default function WelcomeModalPage() {
             <h2 className="text-sm font-semibold text-gray-700 mb-4">Live Preview</h2>
             <div className="flex items-center justify-center bg-gray-800/80 rounded-xl p-6 min-h-80">
               {/* Mock modal */}
-              <div className="relative bg-white rounded-2xl overflow-hidden shadow-2xl w-full max-w-65">
+              <div className="relative w-full max-w-65 rounded-2xl bg-transparent p-3 shadow-2xl">
                 {/* close btn */}
                 <div className="absolute top-2 right-2 z-10 w-6 h-6 bg-white/80 rounded-full flex items-center justify-center text-gray-500 shadow">
                   <span className="text-[10px] font-bold">✕</span>
@@ -365,10 +306,10 @@ export default function WelcomeModalPage() {
                 {/* banner */}
                 {currentImage ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={currentImage} alt="banner" className="w-full h-32 object-cover" />
+                  <img src={currentImage} alt="banner" className="w-full h-64 object-contain" />
                 ) : (
                   <div
-                    className="w-full h-32 flex items-center justify-center"
+                    className="w-full h-64 flex items-center justify-center rounded-xl"
                     style={{ background: 'linear-gradient(214.38deg, #ff8079 -2.24%, #ff1e1e 59.38%)' }}
                   >
                     <div className="text-center px-4">
@@ -379,20 +320,10 @@ export default function WelcomeModalPage() {
                   </div>
                 )}
 
-                {/* content */}
-                <div className="px-4 pt-3 pb-4">
-                  <h3 className="text-gray-900 text-sm font-bold mb-1">{currentTitle}</h3>
-                  <p className="text-gray-500 text-[11px] leading-relaxed mb-3">{currentBody}</p>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1">
-                      <div className="w-7 h-7 rounded-full border-2 border-red-400 flex items-center justify-center">
-                        <span className="text-red-500 font-bold text-[10px]">8</span>
-                      </div>
-                      <span className="text-[10px] text-gray-400">Auto close</span>
-                    </div>
-                    <div className="flex items-center gap-1 bg-red-500 text-white px-3 py-1.5 rounded-full text-[11px] font-semibold">
-                      Explore →
-                    </div>
+                {/* button below image */}
+                <div className="mt-4 flex items-center justify-center">
+                  <div className="flex items-center gap-1 bg-red-500 text-white px-5 py-2.5 rounded-full text-sm font-bold shadow-xl">
+                    Explore →
                   </div>
                 </div>
               </div>
@@ -404,7 +335,7 @@ export default function WelcomeModalPage() {
             <NotebookPen className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
             <div>
               <p className="font-medium mb-1">How it works</p>
-              <p>The popup shows automatically 0.5 seconds after a visitor lands on the site. It only appears once per browser session.</p>
+              <p>The popup shows automatically 0.5 seconds after a visitor lands on the site, then auto-closes after 10 seconds. It appears once per browser session.</p>
             </div>
           </div>
         </div>
