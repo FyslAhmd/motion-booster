@@ -2,15 +2,6 @@
 
 import { useState, useEffect, useRef, useCallback, type ComponentType } from "react";
 import {
-  CartesianGrid,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
-import {
   BarChart2,
   MessageCircle,
   TrendingUp,
@@ -30,7 +21,6 @@ import {
   DashboardQuickStatsSkeleton,
 } from "./_components/OverviewSectionSkeletons";
 import { useAuth } from "@/lib/auth/context";
-import { Slider, SlideData } from "@/components/ui";
 import Link from "next/link";
 
 // ── How many seconds the spend stays revealed before auto-hiding ──────────
@@ -207,41 +197,6 @@ function SpendPasswordModal({
   );
 }
 
-function PromoSlider() {
-  const [slides, setSlides] = useState<SlideData[]>([]);
-
-  useEffect(() => {
-    fetch("/api/v1/cms/hero-slides")
-      .then((r) => r.json())
-      .then((data) => {
-        if (!Array.isArray(data)) return;
-        setSlides(
-          data.map((s, i) => ({
-            id: i + 1,
-            image: s.customImage || s.image,
-            title: "",
-            description: "",
-            ctaLink: s.ctaLink,
-          })),
-        );
-      })
-      .catch(() => {});
-  }, []);
-
-  if (slides.length === 0) return null;
-
-  return (
-    <Slider
-      slides={slides}
-      autoPlay={true}
-      autoPlayInterval={5000}
-      showControls={false}
-      showIndicators={true}
-      height="h-[200px]"
-    />
-  );
-}
-
 interface StatCard {
   label: string;
   value: number | string;
@@ -261,10 +216,6 @@ interface MetaAccountSummary {
   amount_spent?: string;
 }
 
-interface ConversationSummary {
-  unreadCount?: number;
-}
-
 interface InsightSpendRow {
   spend?: string;
 }
@@ -278,398 +229,6 @@ interface UserBudgetSummaryRow {
   totalBudget?: number;
   totalSpent?: number;
   balance?: number;
-}
-
-interface UserOverviewProps {
-  statCards: StatCard[];
-  userId?: string;
-}
-
-interface AssignedCampaign {
-  metaObjectId: string;
-  metaAccountId: string;
-}
-
-interface CampaignInsightRow {
-  campaign_id?: string;
-  campaign_name?: string;
-  spend?: string;
-  reach?: string;
-  impressions?: string;
-}
-
-interface CampaignPerformanceRow {
-  campaignId: string;
-  campaignName: string;
-  spend: number;
-  reach: number;
-  impressions: number;
-}
-
-function UserOverview({ statCards, userId }: UserOverviewProps) {
-  const [activeMetric, setActiveMetric] = useState<"Spend" | "Reach" | "Impression">("Spend");
-  const [isDateRangeOpen, setIsDateRangeOpen] = useState(false);
-  const [isMetaActive, setIsMetaActive] = useState(true);
-  const [isLoadingPerformance, setIsLoadingPerformance] = useState(false);
-  const [performanceError, setPerformanceError] = useState<string | null>(null);
-  const [campaignPerformance, setCampaignPerformance] = useState<CampaignPerformanceRow[]>([]);
-  const [fromDate, setFromDate] = useState(() => {
-    const d = new Date();
-    d.setDate(d.getDate() - 6);
-    return d.toISOString().slice(0, 10);
-  });
-  const [toDate, setToDate] = useState(() => new Date().toISOString().slice(0, 10));
-  const secondScreenRef = useRef<HTMLDivElement | null>(null);
-
-  const totalSpendValue = String(statCards.find((c) => c.label === "Daily Spend")?.value ?? "—");
-  const activeAdsValue = String(statCards.find((c) => c.label === "Active Ads")?.value ?? "—");
-  const unseenValue = String(statCards.find((c) => c.label === "Unseen Messages")?.value ?? "—");
-  const formatShortDate = (dateValue: string) => {
-    if (!dateValue) return "";
-    return new Date(`${dateValue}T00:00:00`).toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
-  };
-  const dateRangeLabel = fromDate && toDate
-    ? `${formatShortDate(fromDate)} - ${formatShortDate(toDate)}`
-    : "Custom date range";
-
-  useEffect(() => {
-    if (!userId || !isMetaActive) return;
-
-    let mounted = true;
-    const loadCampaignPerformance = async () => {
-      setIsLoadingPerformance(true);
-      setPerformanceError(null);
-
-      try {
-        const assignedRes = await fetch(
-          `/api/v1/admin/meta-assignments/users/${encodeURIComponent(userId)}`,
-          { cache: "no-store" },
-        );
-        const assignedData = await assignedRes.json();
-
-        if (!assignedData?.success) {
-          throw new Error("Failed to load assigned campaigns");
-        }
-
-        const campaigns = Array.isArray(assignedData?.data?.campaigns)
-          ? (assignedData.data.campaigns as AssignedCampaign[])
-          : [];
-
-        if (campaigns.length === 0) {
-          if (mounted) setCampaignPerformance([]);
-          return;
-        }
-
-        const campaignsByAccount = new Map<string, Set<string>>();
-        for (const campaign of campaigns) {
-          if (!campaign.metaAccountId || !campaign.metaObjectId) continue;
-          const ids = campaignsByAccount.get(campaign.metaAccountId) ?? new Set<string>();
-          ids.add(campaign.metaObjectId);
-          campaignsByAccount.set(campaign.metaAccountId, ids);
-        }
-
-        const accountResults = await Promise.all(
-          Array.from(campaignsByAccount.entries()).map(async ([accountId, campaignIds]) => {
-            const params = new URLSearchParams({
-              type: "campaigns",
-              account_id: accountId,
-              since: fromDate,
-              until: toDate,
-            });
-
-            const insightsRes = await fetch(`/api/v1/meta/insights?${params.toString()}`, {
-              cache: "no-store",
-            });
-            const insightsData = await insightsRes.json();
-
-            if (!insightsData?.success || !Array.isArray(insightsData?.data)) return [];
-
-            return (insightsData.data as CampaignInsightRow[])
-              .filter((row) => row.campaign_id && campaignIds.has(String(row.campaign_id)))
-              .map((row) => ({
-                campaignId: String(row.campaign_id),
-                campaignName: String(row.campaign_name || row.campaign_id || "Unnamed campaign"),
-                spend: Number.parseFloat(String(row.spend ?? "0")) || 0,
-                reach: Number.parseFloat(String(row.reach ?? "0")) || 0,
-                impressions: Number.parseFloat(String(row.impressions ?? "0")) || 0,
-              }));
-          }),
-        );
-
-        const merged = accountResults.flat();
-        const byCampaign = new Map<string, CampaignPerformanceRow>();
-
-        for (const row of merged) {
-          const existing = byCampaign.get(row.campaignId);
-          if (!existing) {
-            byCampaign.set(row.campaignId, row);
-            continue;
-          }
-
-          byCampaign.set(row.campaignId, {
-            ...existing,
-            spend: existing.spend + row.spend,
-            reach: existing.reach + row.reach,
-            impressions: existing.impressions + row.impressions,
-          });
-        }
-
-        if (!mounted) return;
-        setCampaignPerformance(Array.from(byCampaign.values()));
-      } catch {
-        if (!mounted) return;
-        setPerformanceError("Campaign performance data load korte problem hocche.");
-      } finally {
-        if (mounted) setIsLoadingPerformance(false);
-      }
-    };
-
-    loadCampaignPerformance();
-
-    return () => {
-      mounted = false;
-    };
-  }, [fromDate, isMetaActive, toDate, userId]);
-
-  const totalSpend = campaignPerformance.reduce((sum, row) => sum + row.spend, 0);
-  const totalReach = campaignPerformance.reduce((sum, row) => sum + row.reach, 0);
-  const totalImpression = campaignPerformance.reduce((sum, row) => sum + row.impressions, 0);
-
-  const metricKey =
-    activeMetric === "Spend" ? "spend" : activeMetric === "Reach" ? "reach" : "impressions";
-
-  const chartData = campaignPerformance
-    .slice()
-    .sort((a, b) => b[metricKey] - a[metricKey])
-    .slice(0, 8)
-    .map((row) => ({
-      name: row.campaignName.length > 16 ? `${row.campaignName.slice(0, 16)}...` : row.campaignName,
-      fullName: row.campaignName,
-      spend: Number(row.spend.toFixed(2)),
-      reach: Math.round(row.reach),
-      impressions: Math.round(row.impressions),
-    }));
-
-  return (
-    <div className="w-full overflow-x-hidden bg-gray-50 pb-6">
-      <div className="px-3 pt-3 sm:px-4 lg:hidden">
-        <PromoSlider />
-      </div>
-
-      <div className="space-y-4 px-3 py-4 sm:px-4">
-        <div>
-          <h3 className="text-sm font-semibold text-gray-900">Performance & Accounts spotlight</h3>
-          <div className="mt-3 grid grid-cols-2 gap-3">
-            {statCards.map((card) => {
-              const Icon = card.icon;
-              const hasNewBadge =
-                (card.label === "Unseen Messages" || card.label === "Unread Messages") &&
-                Number(card.value) > 0;
-              const inner = (
-                <>
-                  {hasNewBadge && (
-                    <span className="absolute right-2.5 top-2.5 inline-flex items-center rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-semibold text-orange-600">
-                      New
-                    </span>
-                  )}
-                  <div className={`inline-flex h-8 w-8 items-center justify-center rounded-lg ${card.bg}`}>
-                    <Icon className={`h-4 w-4 ${card.color}`} />
-                  </div>
-                  <p className="mt-2 text-lg font-bold text-gray-900">{card.value}</p>
-                  <p className="text-xs text-gray-600">{card.label}</p>
-                </>
-              );
-              const cls = `relative rounded-xl border border-gray-200 bg-white px-3 py-3 shadow-sm transition hover:shadow-md${card.href ? " cursor-pointer" : ""}`;
-
-              return card.href ? (
-                <Link key={card.label} href={card.href} className={cls}>
-                  {inner}
-                </Link>
-              ) : (
-                <div key={card.label} className={cls}>
-                  {inner}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        <div>
-          <p className="text-sm font-semibold text-gray-900">Meta Ads Performance</p>
-          <div className="mt-3 flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setIsDateRangeOpen((prev) => !prev)}
-              disabled={!isMetaActive}
-              className={`flex-1 rounded-lg border px-3 py-2 text-left text-xs font-medium transition ${isMetaActive ? "border-red-200 bg-red-50 text-gray-700 hover:bg-red-100" : "cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400"}`}
-            >
-              {dateRangeLabel} {isDateRangeOpen ? "^" : "v"}
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsMetaActive((prev) => !prev)}
-              className={`h-9 min-w-24 rounded-lg border px-3 text-xs font-semibold transition ${isMetaActive ? "border-red-200 bg-red-50 text-red-700 hover:bg-red-100" : "border-gray-300 bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
-              aria-label={isMetaActive ? "Deactivate performance controls" : "Activate performance controls"}
-              title={isMetaActive ? "Deactivate performance controls" : "Activate performance controls"}
-            >
-              {isMetaActive ? "Deactivate" : "Activate"}
-            </button>
-          </div>
-
-          {isDateRangeOpen && (
-            <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-              <label className="text-xs font-medium text-gray-600">
-                From
-                <input
-                  type="date"
-                  value={fromDate}
-                  max={toDate}
-                  onChange={(e) => {
-                    const nextFrom = e.target.value;
-                    setFromDate(nextFrom);
-                    if (toDate && nextFrom > toDate) {
-                      setToDate(nextFrom);
-                    }
-                  }}
-                  disabled={!isMetaActive}
-                  className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-2.5 py-2 text-xs text-gray-700 outline-none transition focus:border-red-300 focus:ring-2 focus:ring-red-100 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400"
-                />
-              </label>
-              <label className="text-xs font-medium text-gray-600">
-                To
-                <input
-                  type="date"
-                  value={toDate}
-                  min={fromDate}
-                  onChange={(e) => {
-                    const nextTo = e.target.value;
-                    setToDate(nextTo);
-                    if (fromDate && nextTo < fromDate) {
-                      setFromDate(nextTo);
-                    }
-                  }}
-                  disabled={!isMetaActive}
-                  className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-2.5 py-2 text-xs text-gray-700 outline-none transition focus:border-red-300 focus:ring-2 focus:ring-red-100 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400"
-                />
-              </label>
-            </div>
-          )}
-        </div>
-
-        <div ref={secondScreenRef}>
-          {performanceError && (
-            <div className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
-              {performanceError}
-            </div>
-          )}
-
-          <div className="mb-4 grid grid-cols-2 gap-3">
-            <div>
-              <p className="text-sm font-semibold text-gray-900">Total Spend</p>
-              <p className="mt-1 text-lg font-bold text-gray-900">
-                {isLoadingPerformance ? "Loading..." : fmtUSD(totalSpend)}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-gray-900">Assigned Campaigns</p>
-              <p className="mt-1 text-sm font-semibold text-gray-900">
-                {isLoadingPerformance ? "..." : campaignPerformance.length}
-              </p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2.5">
-            <div className="rounded-xl border border-gray-300 bg-gray-50 px-3 py-3 text-center">
-              <p className="text-xs text-gray-500">Spend</p>
-              <p className="mt-1 text-sm font-semibold text-gray-900">
-                {isLoadingPerformance ? "..." : fmtUSD(totalSpend)}
-              </p>
-            </div>
-            <div className="rounded-xl border border-gray-300 bg-gray-50 px-3 py-3 text-center">
-              <p className="text-xs text-gray-500">Reach</p>
-              <p className="mt-1 text-sm font-semibold text-gray-900">
-                {isLoadingPerformance ? "..." : totalReach.toLocaleString("en-US")}
-              </p>
-            </div>
-            <div className="rounded-xl border border-gray-300 bg-gray-50 px-3 py-3 text-center">
-              <p className="text-xs text-gray-500">Impression</p>
-              <p className="mt-1 text-sm font-semibold text-gray-900">
-                {isLoadingPerformance ? "..." : totalImpression.toLocaleString("en-US")}
-              </p>
-            </div>
-            <div className="rounded-xl border border-gray-300 bg-gray-50 px-3 py-3 text-center">
-              <p className="text-xs text-gray-500">Active Ads</p>
-              <p className="mt-1 text-sm font-semibold text-gray-900">{activeAdsValue}</p>
-            </div>
-          </div>
-
-          <div className="mt-5">
-            <p className="text-sm font-semibold text-gray-900">Ads Performance</p>
-            <div className="mt-2 grid grid-cols-3 overflow-hidden rounded-lg border border-rose-200">
-              {(["Spend", "Reach", "Impression"] as const).map((metric) => (
-                <button
-                  key={metric}
-                  type="button"
-                  onClick={() => setActiveMetric(metric)}
-                  className={`border-r border-rose-200 px-2 py-2 text-xs font-medium last:border-r-0 ${activeMetric === metric ? "bg-rose-100 text-gray-900" : "bg-white text-gray-600 hover:bg-rose-50"}`}
-                >
-                  {metric}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="mt-4 rounded-xl border border-gray-200 bg-white p-3">
-            {isLoadingPerformance ? (
-              <div className="flex h-44 items-center justify-center text-xs font-medium text-gray-500">
-                Loading chart data...
-              </div>
-            ) : chartData.length === 0 ? (
-              <div className="flex h-44 items-center justify-center text-xs font-medium text-gray-500">
-                No campaign data for selected date range.
-              </div>
-            ) : (
-              <div className="h-44 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={chartData} margin={{ top: 8, right: 12, left: 0, bottom: 8 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                    <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#6b7280" }} interval={0} angle={-20} textAnchor="end" height={48} />
-                    <YAxis tick={{ fontSize: 10, fill: "#6b7280" }} width={36} />
-                    <Tooltip
-                      formatter={(value: unknown) =>
-                        activeMetric === "Spend"
-                          ? fmtUSD(Number(value ?? 0))
-                          : Number(value ?? 0).toLocaleString("en-US")
-                      }
-                      labelFormatter={(_, payload) =>
-                        Array.isArray(payload) && payload[0]?.payload?.fullName
-                          ? String(payload[0].payload.fullName)
-                          : ""
-                      }
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey={metricKey}
-                      stroke="#dc2626"
-                      strokeWidth={2.5}
-                      dot={{ r: 3, fill: "#dc2626" }}
-                      activeDot={{ r: 4 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-          </div>
-
-        </div>
-
-      </div>
-    </div>
-  );
 }
 
 // ── Meta account summary card (shown on admin overview) ─────────────────
@@ -761,10 +320,6 @@ export default function DashboardPage() {
     setRevealCountdown(0);
   }, []);
 
-  // Client-specific: unread messages + active chat count
-  const [clientUnread, setClientUnread] = useState<number | null>(null);
-  const [clientChats, setClientChats] = useState<number | null>(null);
-
   useEffect(() => {
     if (isAdmin) {
       setAdminStatsLoading(true);
@@ -805,13 +360,10 @@ export default function DashboardPage() {
         .then((r) => r.json())
         .then((d) => {
           if (Array.isArray(d.conversations)) {
-            setClientChats(d.conversations.length);
-            const conversations = d.conversations as ConversationSummary[];
-            const unread = conversations.reduce(
-              (sum, c) => sum + (c.unreadCount || 0),
+            const unread = d.conversations.reduce(
+              (sum: number, c: { unreadCount?: number }) => sum + (c.unreadCount || 0),
               0,
             );
-            setClientUnread(unread);
             setUnseenMessages(unread);
           }
         })
@@ -1115,62 +667,6 @@ export default function DashboardPage() {
       href: "/dashboard/boost-requests",
     },
   ];
-
-  const clientStatCards: StatCard[] = [
-    {
-      label: "Active Ads",
-      value: totalAds ?? "—",
-      icon: Megaphone,
-      color: "text-red-600",
-      bg: "bg-red-50",
-      href: "/dashboard/user-campaigns",
-    },
-    {
-      label: "Daily Spend",
-      value: dailySpendUSD != null ? fmtUSD(dailySpendUSD) : "—",
-      icon: TrendingUp,
-      color: "text-green-600",
-      bg: "bg-green-50",
-    },
-    {
-      label: "Advance Payment",
-      value: advanceValue,
-      icon: TakaIcon,
-      color: "text-green-600",
-      bg: "bg-green-50",
-    },
-    {
-      label: "Due Amount",
-      value: dueValue,
-      icon: TakaIcon,
-      color: "text-red-600",
-      bg: "bg-red-50",
-    },
-    {
-      label: "Send Ads Request",
-      value: pendingBoostRequests ?? "—",
-      icon: CalendarDays,
-      color: "text-violet-600",
-      bg: "bg-violet-50",
-      href: "/dashboard/chat",
-    },
-    {
-      label: "Unseen Messages",
-      value: clientUnread ?? "—",
-      icon: MessageCircle,
-      color: clientUnread ? "text-orange-600" : "text-gray-400",
-      bg: clientUnread ? "bg-orange-50" : "bg-gray-50",
-      href: "/dashboard/chat",
-    },
-  ];
-
-  if (!isAdmin) {
-    return (
-      <AdminShell>
-        <UserOverview statCards={clientStatCards} userId={user?.id} />
-      </AdminShell>
-    );
-  }
 
   return (
     <AdminShell>
