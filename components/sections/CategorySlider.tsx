@@ -7,6 +7,14 @@ import { ServiceCategoryItem } from '@/lib/admin/store';
 import { CategoryIcon } from '@/lib/admin/categoryIcons';
 import { pickLocalizedText } from '@/lib/lang/localize';
 
+const SERVICE_CATEGORIES_CACHE_KEY = 'serviceCategories:v1';
+const SERVICE_CATEGORIES_TTL_MS = 5 * 60 * 1000;
+
+let serviceCategoriesMemoryCache: {
+  at: number;
+  rows: ServiceCategoryItem[];
+} | null = null;
+
 function SkeletonCard() {
   return (
     <div className="shrink-0 flex flex-col items-center justify-center w-28 h-24 sm:w-36 sm:h-30 md:w-40 md:h-32 bg-white border border-gray-100 rounded-xl sm:rounded-2xl px-2 sm:px-4">
@@ -29,12 +37,59 @@ export const CategorySlider = () => {
   const dragMovedRef = useRef(false);
 
   useEffect(() => {
-    fetch('/api/v1/cms/service-categories', { cache: 'no-store' })
-      .then(r => r.json())
-      .then((data) => { if (Array.isArray(data)) setCategories(data); })
+    let cancelled = false;
+    const now = Date.now();
+
+    const hydrateFromCache = () => {
+      if (serviceCategoriesMemoryCache && now - serviceCategoriesMemoryCache.at < SERVICE_CATEGORIES_TTL_MS) {
+        setCategories(serviceCategoriesMemoryCache.rows);
+        setLoading(false);
+        return true;
+      }
+
+      try {
+        const raw = sessionStorage.getItem(SERVICE_CATEGORIES_CACHE_KEY);
+        if (!raw) return false;
+        const parsed = JSON.parse(raw) as { at: number; rows: ServiceCategoryItem[] };
+
+        if (!Array.isArray(parsed?.rows) || now - parsed.at >= SERVICE_CATEGORIES_TTL_MS) {
+          return false;
+        }
+
+        serviceCategoriesMemoryCache = parsed;
+        setCategories(parsed.rows);
+        setLoading(false);
+        return true;
+      } catch {
+        return false;
+      }
+    };
+
+    const hasWarmCache = hydrateFromCache();
+    if (!hasWarmCache) setLoading(true);
+
+    fetch('/api/v1/cms/service-categories')
+      .then((r) => r.json())
+      .then((data) => {
+        if (cancelled || !Array.isArray(data)) return;
+        const payload = { at: Date.now(), rows: data as ServiceCategoryItem[] };
+        serviceCategoriesMemoryCache = payload;
+        try {
+          sessionStorage.setItem(SERVICE_CATEGORIES_CACHE_KEY, JSON.stringify(payload));
+        } catch {
+          // Ignore storage quota/unavailable errors.
+        }
+        setCategories(payload.rows);
+      })
       .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [language]);
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollRef.current) {

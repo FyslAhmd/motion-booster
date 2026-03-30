@@ -6,7 +6,7 @@ import Autoplay from 'embla-carousel-autoplay';
 import Image from 'next/image';
 
 export interface SlideData {
-  id: number;
+  id: number | string;
   image: string;
   title: string;
   description: string;
@@ -78,31 +78,44 @@ export const Slider: React.FC<SliderProps> = ({
   if (!slides.length) return null;
 
   return (
-    <div className={`relative w-full ${height} overflow-hidden rounded-xl`}>
+    <div className={`relative w-full overflow-hidden rounded-xl ${height}`}>
       {/* VIEWPORT */}
-      <div className="overflow-hidden" ref={emblaRef}>
+      <div className="h-full overflow-hidden" ref={emblaRef}>
         {/* CONTAINER */}
         <div className="flex h-full">
           {slides.map((slide, index) => (
             <div
               key={slide.id}
-              className="relative min-w-full h-full flex-[0_0_100%]"
+              className="relative h-full min-h-full min-w-full flex-[0_0_100%]"
             >
-              {slide.image.startsWith('data:') ? (
-                <img
-                  src={slide.image}
-                  className="w-full h-full object-cover select-none pointer-events-none"
-                />
-              ) : (
-                <Image
-                  src={slide.image}
-                  alt={slide.title || ''}
-                  fill
-                  sizes="100vw"
-                  className="object-cover select-none pointer-events-none"
-                  priority={index === 0}
-                />
-              )}
+              {(() => {
+                const src = slide.image || '';
+                const isDataOrBlob = src.startsWith('data:') || src.startsWith('blob:');
+                const isLocalPath = src.startsWith('/');
+
+                // Use native img for external/data/blob sources so CMS URLs are never blocked by next/image host restrictions.
+                if (isDataOrBlob || !isLocalPath) {
+                  return (
+                    <img
+                      src={src}
+                      alt={slide.title || ''}
+                      className="w-full h-full object-cover select-none pointer-events-none"
+                      loading={index === 0 ? 'eager' : 'lazy'}
+                    />
+                  );
+                }
+
+                return (
+                  <Image
+                    src={src}
+                    alt={slide.title || ''}
+                    fill
+                    sizes="100vw"
+                    className="object-cover select-none pointer-events-none"
+                    priority={index === 0}
+                  />
+                );
+              })()}
             </div>
           ))}
         </div>

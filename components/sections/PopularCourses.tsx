@@ -10,6 +10,22 @@ import 'swiper/css';
 import { PopularServiceItem } from '@/lib/admin/store';
 import { pickLocalizedList, pickLocalizedText } from '@/lib/lang/localize';
 
+type ServiceCategoryLite = {
+  title?: string;
+  titleBn?: string;
+  slug?: string;
+  iconType?: string;
+};
+
+const POPULAR_COURSES_CACHE_KEY = 'popularCourses:v1';
+const POPULAR_COURSES_TTL_MS = 5 * 60 * 1000;
+
+let popularCoursesMemoryCache: {
+  at: number;
+  services: PopularServiceItem[];
+  categories: ServiceCategoryLite[];
+} | null = null;
+
 const SERVICE_IMAGE_ALIASES: Record<string, string> = {
   '/service-web-development.jpg': '/service-web-dev.jpg',
   '/service-software-development.jpg': '/service-software-dev.jpg',
@@ -51,35 +67,93 @@ export const PopularCourses = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const tabsScrollRef = useRef<HTMLDivElement>(null);
 
+  const toCategoryLabelMap = (categories: ServiceCategoryLite[]) => {
+    const nextMap: Record<string, string> = {};
+    categories.forEach((cat) => {
+      const title = pickLocalizedText(language, cat.title, cat.titleBn);
+      if (!title) return;
+      [cat.slug, cat.iconType, cat.title].forEach((key) => {
+        if (!key?.trim()) return;
+        nextMap[key] = title;
+        nextMap[key.toLowerCase()] = title;
+      });
+    });
+    return nextMap;
+  };
+
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
+    const now = Date.now();
+
+    const hydrateFromCache = () => {
+      if (popularCoursesMemoryCache && now - popularCoursesMemoryCache.at < POPULAR_COURSES_TTL_MS) {
+        setAllServices(popularCoursesMemoryCache.services);
+        setCategoryLabels(toCategoryLabelMap(popularCoursesMemoryCache.categories));
+        setLoading(false);
+        return true;
+      }
+
+      try {
+        const raw = sessionStorage.getItem(POPULAR_COURSES_CACHE_KEY);
+        if (!raw) return false;
+        const parsed = JSON.parse(raw) as {
+          at: number;
+          services: PopularServiceItem[];
+          categories: ServiceCategoryLite[];
+        };
+
+        if (
+          !Array.isArray(parsed?.services) ||
+          !Array.isArray(parsed?.categories) ||
+          now - parsed.at >= POPULAR_COURSES_TTL_MS
+        ) {
+          return false;
+        }
+
+        popularCoursesMemoryCache = parsed;
+        setAllServices(parsed.services);
+        setCategoryLabels(toCategoryLabelMap(parsed.categories));
+        setLoading(false);
+        return true;
+      } catch {
+        return false;
+      }
+    };
+
+    const hasWarmCache = hydrateFromCache();
+    if (!hasWarmCache) setLoading(true);
 
     const load = async () => {
       const [servicesResult, categoriesResult] = await Promise.allSettled([
-        fetch('/api/v1/cms/popular-services', { cache: 'no-store' }).then((r) => r.json()),
-        fetch('/api/v1/cms/service-categories', { cache: 'no-store' }).then((r) => r.json()),
+        fetch('/api/v1/cms/popular-services').then((r) => r.json()),
+        fetch('/api/v1/cms/service-categories').then((r) => r.json()),
       ]);
 
-      if (!cancelled && servicesResult.status === 'fulfilled' && Array.isArray(servicesResult.value)) {
-        setAllServices(servicesResult.value);
+      const services =
+        servicesResult.status === 'fulfilled' && Array.isArray(servicesResult.value)
+          ? (servicesResult.value as PopularServiceItem[])
+          : [];
+      const categories =
+        categoriesResult.status === 'fulfilled' && Array.isArray(categoriesResult.value)
+          ? (categoriesResult.value as ServiceCategoryLite[])
+          : [];
+
+      if (cancelled) return;
+
+      if (services.length) setAllServices(services);
+      if (categories.length) setCategoryLabels(toCategoryLabelMap(categories));
+
+      if (services.length || categories.length) {
+        const payload = { at: Date.now(), services, categories };
+        popularCoursesMemoryCache = payload;
+        try {
+          sessionStorage.setItem(POPULAR_COURSES_CACHE_KEY, JSON.stringify(payload));
+        } catch {
+          // Ignore storage quota/unavailable errors.
+        }
       }
 
-      if (!cancelled && categoriesResult.status === 'fulfilled' && Array.isArray(categoriesResult.value)) {
-        const nextMap: Record<string, string> = {};
-        categoriesResult.value.forEach((cat: { title?: string; titleBn?: string; slug?: string; iconType?: string }) => {
-          const title = pickLocalizedText(language, cat.title, cat.titleBn);
-          if (!title) return;
-          [cat.slug, cat.iconType, cat.title].forEach((key) => {
-            if (!key?.trim()) return;
-            nextMap[key] = title;
-            nextMap[key.toLowerCase()] = title;
-          });
-        });
-        setCategoryLabels(nextMap);
-      }
-
-      if (!cancelled) setLoading(false);
+      setLoading(false);
     };
 
     load().catch(() => {
