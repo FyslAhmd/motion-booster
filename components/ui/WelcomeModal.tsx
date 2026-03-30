@@ -105,7 +105,7 @@ export const WelcomeModal = () => {
 
   return createPortal(
     <div
-      className="fixed inset-0 z-200 flex items-center justify-center bg-black/65 px-4"
+      className="fixed inset-0 z-200 flex items-center justify-center bg-transparent px-4"
       onClick={handleClose}
     >
       <div className="relative z-10 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
@@ -116,13 +116,13 @@ export const WelcomeModal = () => {
           <X className="mx-auto h-4 w-4" />
         </button>
 
-        <div className="w-full rounded-2xl bg-transparent p-4 shadow-2xl backdrop-blur-[1px]">
+        <div className="w-full bg-transparent p-0">
           {modalImage ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={modalImage}
               alt="Welcome"
-              className={`mx-auto h-64 w-full object-contain transition-opacity duration-200 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+              className={`mx-auto h-64 w-full border-0 bg-transparent object-contain shadow-none transition-opacity duration-200 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
               loading="eager"
               decoding="async"
               fetchPriority="high"

@@ -269,7 +269,7 @@ export default function AboutPage() {
             <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
               {isBN ? 'আমাদের মূল মূল্যবোধ' : 'Our Core Values'}
             </h2>
-              <p className="text-xl text-gray-600 text-wave">
+              <p className="text-base sm:text-xl text-gray-600 text-wave whitespace-nowrap">
               {isBN ? 'যে মূল্যবোধ আমাদের প্রতিটি কাজকে পরিচালিত করে' : 'Values that guide every decision we make'}
             </p>
           </div>
