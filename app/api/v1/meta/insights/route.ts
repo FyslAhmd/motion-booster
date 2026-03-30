@@ -14,6 +14,7 @@ export async function GET(req: Request) {
     const type = searchParams.get('type') || 'account'; // account | campaigns | daily | demographics
     const datePreset = searchParams.get('date_preset') || 'last_30d';
     const accountId = searchParams.get('account_id') || undefined;
+    const timeIncrement = searchParams.get('time_increment') || undefined;
 
     // Custom date range: since + until override date_preset
     const since = searchParams.get('since');
@@ -23,11 +24,11 @@ export async function GET(req: Request) {
 
     switch (type) {
       case 'account': {
-        const data = await fetchAccountInsights(datePreset, undefined, accountId, timeRange);
+        const data = await fetchAccountInsights(datePreset, timeIncrement, accountId, timeRange);
         return NextResponse.json({ success: true, data });
       }
       case 'campaigns': {
-        const data = await fetchCampaignInsights(datePreset, undefined, accountId, timeRange);
+        const data = await fetchCampaignInsights(datePreset, timeIncrement, accountId, timeRange);
         return NextResponse.json({ success: true, data });
       }
       case 'single_campaign': {
