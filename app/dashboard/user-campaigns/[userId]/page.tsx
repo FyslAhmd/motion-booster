@@ -1,16 +1,21 @@
 'use client';
 
-import { useState, useEffect, use, type ReactNode } from 'react';
+import { useState, useEffect, use, useMemo, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { createPortal } from 'react-dom';
 import AdminShell from '../../_components/AdminShell';
 import { useAuth } from '@/lib/auth/context';
+import { useConfirm } from '@/lib/admin/confirm';
 import { AdminSectionSkeleton } from '@/components/ui/AdminSectionSkeleton';
+import { toast } from 'sonner';
 import {
   ArrowLeft,
   Phone,
   Mail,
+  Search,
+  Filter,
+  X,
 } from 'lucide-react';
 
 /* --- Interfaces ------------------------------------------------ */
@@ -221,7 +226,9 @@ function DetailModal({
               <h3 className="truncate text-base font-semibold text-gray-900 sm:text-lg">{title}</h3>
               {subtitle && <p className="mt-1 text-xs text-gray-500">{subtitle}</p>}
             </div>
-            <button onClick={onClose} className="rounded-lg px-2 py-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700">�</button>
+            <button onClick={onClose} className="rounded-lg px-2 py-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700">
+              <X className="h-4 w-4" />
+            </button>
           </div>
         </div>
 
@@ -230,7 +237,7 @@ function DetailModal({
             {rows.map((row) => (
               <div key={row.label} className="rounded-xl border border-gray-200 bg-white px-3 py-2.5 shadow-sm">
                 <p className="text-[11px] uppercase tracking-wide text-gray-500">{row.label}</p>
-                <p className="mt-1 wrap-break-word text-sm font-medium text-gray-900">{row.value || '�'}</p>
+                <p className="mt-1 wrap-break-word text-sm font-medium text-gray-900">{row.value || 'N/A'}</p>
               </div>
             ))}
           </div>
@@ -378,7 +385,8 @@ export default function UserCampaignDetailPage({
       <div className="space-y-4 sm:space-y-5">
         {/* Back + Header */}
         {isAdmin ? (
-          <div className="flex items-start gap-4">
+          <div className="rounded-2xl border border-gray-200 bg-white p-3 sm:p-5">
+            <div className="flex items-start gap-4">
             <button
               onClick={() => router.push('/dashboard/user-campaigns')}
               className="mt-1 rounded-lg border border-gray-200 p-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-600"
@@ -418,9 +426,10 @@ export default function UserCampaignDetailPage({
                 </div>
               </div>
             </div>
+            </div>
           </div>
         ) : (
-          <div>
+          <div className="rounded-2xl border border-gray-200 bg-white p-3 sm:p-5">
             <h1 className="text-xl font-bold text-gray-900">My Campaigns</h1>
             <p className="mt-0.5 text-sm text-gray-500">
               Campaigns, ad sets, and ads assigned to you
@@ -474,12 +483,84 @@ function CampaignsSection({
   loading: boolean;
   loadingRelated: boolean;
 }) {
+  const { confirm } = useConfirm();
+  const [campaignRows, setCampaignRows] = useState<Campaign[]>(campaigns);
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
   const [modalAdSets, setModalAdSets] = useState<AdSet[]>([]);
   const [modalAdsByAdSet, setModalAdsByAdSet] = useState<Record<string, Ad[]>>({});
   const [modalDetailsLoading, setModalDetailsLoading] = useState(false);
   const [modalDetailsError, setModalDetailsError] = useState('');
   const [campaignChildCounts, setCampaignChildCounts] = useState<Record<string, { adSets: number; ads: number }>>({});
+  const [search, setSearch] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+
+  const normalizedSearch = search.trim().toLowerCase();
+
+  useEffect(() => {
+    setCampaignRows(campaigns);
+  }, [campaigns]);
+
+  const filteredCampaigns = useMemo(() => {
+    return campaignRows.filter((c) => {
+      const matchesSearch =
+        normalizedSearch.length === 0 ||
+        c.name.toLowerCase().includes(normalizedSearch) ||
+        (c.objective || '').toLowerCase().includes(normalizedSearch) ||
+        (c.status || '').toLowerCase().includes(normalizedSearch) ||
+        (c.effective_status || '').toLowerCase().includes(normalizedSearch);
+
+      if (!matchesSearch) return false;
+      if (filterStatus === 'all') return true;
+      return c.status === filterStatus || c.effective_status === filterStatus;
+    });
+  }, [campaignRows, normalizedSearch, filterStatus]);
+
+  const activeCampaignCount = useMemo(
+    () => filteredCampaigns.filter((c) => (c.effective_status || c.status || '').toUpperCase() === 'ACTIVE').length,
+    [filteredCampaigns],
+  );
+
+  const canToggle = (c: Campaign) =>
+    ['ACTIVE', 'PAUSED'].includes(c.status) &&
+    !['DELETED', 'ARCHIVED'].includes(c.effective_status);
+
+  const toggleStatus = async (campaign: Campaign) => {
+    if (!canToggle(campaign)) return;
+    const newStatus = campaign.status === 'ACTIVE' ? 'PAUSED' : 'ACTIVE';
+    const ok = await confirm({
+      title: newStatus === 'ACTIVE' ? 'Activate Campaign?' : 'Pause Campaign?',
+      message: `Are you sure you want to ${newStatus === 'ACTIVE' ? 'activate' : 'pause'} this campaign?`,
+      confirmLabel: newStatus === 'ACTIVE' ? 'Activate' : 'Pause',
+    });
+    if (!ok) return;
+
+    setTogglingId(campaign.id);
+    try {
+      const res = await fetch('/api/v1/meta/status', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: campaign.id, status: newStatus }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setCampaignRows((prev) =>
+          prev.map((c) =>
+            c.id === campaign.id
+              ? { ...c, status: newStatus, effective_status: newStatus }
+              : c,
+          ),
+        );
+        toast.success(`Campaign ${newStatus === 'ACTIVE' ? 'activated' : 'paused'} successfully`);
+      } else {
+        toast.error(`Failed: ${json.error}`);
+      }
+    } catch (e: any) {
+      toast.error(`Error: ${e.message}`);
+    } finally {
+      setTogglingId(null);
+    }
+  };
 
   useEffect(() => {
     if (!selectedCampaign) return;
@@ -495,7 +576,7 @@ function CampaignsSection({
     };
   }, [selectedCampaign]);
   useEffect(() => {
-    if (campaigns.length === 0) {
+    if (filteredCampaigns.length === 0) {
       setCampaignChildCounts({});
       return;
     }
@@ -504,7 +585,7 @@ function CampaignsSection({
 
     const loadCampaignChildCounts = async () => {
       const entries = await Promise.all(
-        campaigns.map(async (campaign) => {
+        filteredCampaigns.map(async (campaign) => {
           const fallback = {
             adSets: adSets.filter((a) => a.campaign_id === campaign.id).length,
             ads: ads.filter((ad) => ad.campaign_id === campaign.id).length,
@@ -529,7 +610,7 @@ function CampaignsSection({
     return () => {
       cancelled = true;
     };
-  }, [campaigns, campaignAccountById, adSets, ads]);
+  }, [filteredCampaigns, campaignAccountById, adSets, ads]);
 
   useEffect(() => {
     if (!selectedCampaign) return;
@@ -599,18 +680,67 @@ function CampaignsSection({
 
   return (
     <>
-      <div className="rounded-2xl border border-gray-200 bg-white">
-        <div className="border-b border-gray-100 px-4 py-4 sm:px-5">
-          <h3 className="text-sm font-semibold text-gray-800">Campaigns</h3>
+      <div className="rounded-2xl border border-gray-200 bg-white p-3 sm:p-5">
+        <h3 className="text-sm font-semibold text-gray-800">Campaigns</h3>
+
+        <div className="mt-3 flex items-center gap-2 sm:mt-4 sm:grid sm:grid-cols-[minmax(0,1fr)_170px_110px] sm:gap-2.5">
+          <label className="relative block min-w-0 flex-1 sm:flex-auto">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search campaigns"
+              className="h-11 w-full rounded-xl border border-gray-200 bg-white pl-9 pr-3 text-sm text-gray-700 outline-none transition focus:border-red-300 focus:ring-2 focus:ring-red-100"
+            />
+          </label>
+
+          <label className="relative block w-36 shrink-0 sm:w-auto">
+            <Filter className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="h-11 w-full appearance-none rounded-xl border border-gray-200 bg-white pl-9 pr-8 text-sm text-gray-700 outline-none transition focus:border-red-300 focus:ring-2 focus:ring-red-100"
+            >
+              <option value="all">All Status</option>
+              <option value="ACTIVE">Active</option>
+              <option value="PAUSED">Paused</option>
+              <option value="SCHEDULED">Scheduled</option>
+              <option value="IN_PROCESS">In Review</option>
+              <option value="PENDING_REVIEW">Pending Review</option>
+              <option value="DISAPPROVED">Disapproved</option>
+              <option value="NOT_DELIVERING">Not Delivering</option>
+              <option value="COMPLETED">Completed</option>
+              <option value="ARCHIVED">Archived</option>
+              <option value="DELETED">Deleted</option>
+            </select>
+          </label>
+
+          <div className="hidden h-11 items-center justify-center rounded-xl border border-green-200 bg-green-50 px-3 text-center sm:flex">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-green-700">Visible</p>
+              <p className="mt-0.5 text-lg font-bold leading-none text-green-700">{filteredCampaigns.length}</p>
+            </div>
+          </div>
         </div>
 
-        {campaigns.length === 0 ? (
+        <div className="mt-2 grid grid-cols-2 gap-2 sm:hidden">
+          <div className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-center">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-green-700">Visible</p>
+            <p className="mt-0.5 text-base font-bold leading-none text-green-700">{filteredCampaigns.length}</p>
+          </div>
+          <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-center">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-blue-700">Active</p>
+            <p className="mt-0.5 text-base font-bold leading-none text-blue-700">{activeCampaignCount}</p>
+          </div>
+        </div>
+
+        {filteredCampaigns.length === 0 ? (
           <div className="px-6 py-10 text-center text-sm text-gray-500">No campaigns found.</div>
         ) : (
           <>
             {/* Mobile cards */}
             <div className="space-y-3 p-3 md:hidden">
-              {campaigns.map((c) => {
+              {filteredCampaigns.map((c) => {
                 const st = getStatusStyle(c.effective_status);
                 const thumb = c.ads?.data?.[0]?.creative?.thumbnail_url;
                 const budget = formatBudgetValue(c.daily_budget, c.lifetime_budget);
@@ -659,12 +789,26 @@ function CampaignsSection({
                           {summary.ads} ads
                         </span>
                       </div>
-                      <div className="inline-flex items-center gap-1.5">
-                        <span className="text-xs text-gray-500">Active</span>
-                        <span className={`inline-flex h-5 w-9 items-center rounded-full ${isActive ? 'bg-green-500' : 'bg-gray-300'}`}>
-                          <span className={`h-3.5 w-3.5 rounded-full bg-white shadow ${isActive ? 'translate-x-5' : 'translate-x-0.5'}`} />
-                        </span>
-                      </div>
+                      {canToggle(c) ? (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            void toggleStatus(c);
+                          }}
+                          disabled={togglingId === c.id}
+                          className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-1 ${
+                            c.status === 'ACTIVE' ? 'bg-green-500' : 'bg-gray-300'
+                          } ${togglingId === c.id ? 'opacity-50' : ''}`}
+                        >
+                          <span
+                            className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
+                              c.status === 'ACTIVE' ? 'translate-x-4' : 'translate-x-1'
+                            }`}
+                          />
+                        </button>
+                      ) : null}
                     </div>
                   </button>
                 );
@@ -673,7 +817,7 @@ function CampaignsSection({
 
             {/* Desktop / tablet cards */}
             <div className="hidden gap-3 p-4 sm:p-5 md:grid md:grid-cols-2 xl:grid-cols-2">
-              {campaigns.map((c) => {
+              {filteredCampaigns.map((c) => {
                 const st = getStatusStyle(c.effective_status);
                 const thumb = c.ads?.data?.[0]?.creative?.thumbnail_url;
                 const budget = formatBudgetValue(c.daily_budget, c.lifetime_budget);
@@ -729,12 +873,26 @@ function CampaignsSection({
                           {summary.ads} ads
                         </span>
                       </div>
-                      <div className="inline-flex items-center gap-2 shrink-0">
-                        <span className="text-sm text-gray-500">Active</span>
-                        <span className={`inline-flex h-5 w-9 items-center rounded-full ${isActive ? 'bg-green-500' : 'bg-gray-300'}`}>
-                          <span className={`h-3.5 w-3.5 rounded-full bg-white shadow transition-transform ${isActive ? 'translate-x-5' : 'translate-x-0.5'}`} />
-                        </span>
-                      </div>
+                      {canToggle(c) ? (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            void toggleStatus(c);
+                          }}
+                          disabled={togglingId === c.id}
+                          className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-1 ${
+                            c.status === 'ACTIVE' ? 'bg-green-500' : 'bg-gray-300'
+                          } ${togglingId === c.id ? 'opacity-50' : ''}`}
+                        >
+                          <span
+                            className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
+                              c.status === 'ACTIVE' ? 'translate-x-4' : 'translate-x-1'
+                            }`}
+                          />
+                        </button>
+                      ) : null}
                     </div>
                   </button>
                 );
@@ -766,7 +924,7 @@ function CampaignsSection({
             onClose={() => setSelectedCampaign(null)}
             rows={[
               { label: 'Status', value: getStatusStyle(selectedCampaign.effective_status).label },
-              { label: 'Objective', value: selectedCampaign.objective?.replace(/_/g, ' ').toLowerCase() || '�' },
+              { label: 'Objective', value: selectedCampaign.objective?.replace(/_/g, ' ').toLowerCase() || 'N/A' },
               { label: 'Budget', value: formatBudgetValue(selectedCampaign.daily_budget, selectedCampaign.lifetime_budget) },
               { label: 'Date Range', value: formatShortRange(selectedCampaign.start_time, selectedCampaign.stop_time) },
               { label: 'Created', value: new Date(selectedCampaign.created_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) },
