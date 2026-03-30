@@ -65,12 +65,15 @@ export const Portfolio = () => {
 
         {/* Category Filter */}
         {!loading && (
-        <div className="flex flex-wrap justify-center gap-2 md:gap-3 mb-8 md:mb-10">
+        <div
+          className="no-scrollbar mb-8 flex gap-2 overflow-x-auto pb-1 md:mb-10 md:gap-3"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
           {availableCategories.map((category) => (
             <button
               key={category}
               onClick={() => setActiveCategory(category)}
-              className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
+              className={`shrink-0 whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold transition-all ${
                 activeCategory === category
                   ? 'bg-red-500 text-white shadow-md'
                   : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'

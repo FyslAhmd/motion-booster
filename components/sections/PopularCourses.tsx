@@ -205,9 +205,11 @@ export const PopularCourses = () => {
                 centeredSlides
                 loop={filteredServices.length > 1}
                 spaceBetween={12}
-                speed={560}
+                speed={420}
                 grabCursor
-                watchSlidesProgress
+                touchReleaseOnEdges
+                resistanceRatio={0.85}
+                threshold={4}
                 longSwipesRatio={0.2}
                 longSwipesMs={220}
                 className="popular-mobile-swiper"
@@ -346,30 +348,35 @@ export const PopularCourses = () => {
         .popular-mobile-swiper {
           padding-bottom: 30px;
           overflow: visible;
+          touch-action: pan-y;
         }
 
         .popular-mobile-swiper .swiper-wrapper {
           align-items: stretch;
           transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+          will-change: transform;
+          transform: translate3d(0, 0, 0);
         }
 
         .popular-mobile-slide {
           width: 74vw;
           max-width: 280px;
           backface-visibility: hidden;
-          transform: translateZ(0);
+          -webkit-backface-visibility: hidden;
+          transform: translate3d(0, 0, 0);
+          will-change: transform, opacity;
           transition: transform 560ms cubic-bezier(0.22, 1, 0.36, 1),
             opacity 560ms cubic-bezier(0.22, 1, 0.36, 1);
         }
 
         .popular-mobile-swiper .swiper-slide {
-          opacity: 0.88;
-          transform: scale(0.9) translateY(10px);
+          opacity: 0.9;
+          transform: scale(0.92);
         }
 
         .popular-mobile-swiper .swiper-slide-active {
           opacity: 1;
-          transform: scale(1) translateY(0);
+          transform: scale(1);
         }
 
       `}</style>
