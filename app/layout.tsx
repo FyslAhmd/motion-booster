@@ -7,8 +7,11 @@ import { LanguageProvider } from "@/lib/lang/LanguageContext";
 import { Toaster } from 'sonner';
 
 export const metadata: Metadata = {
-  title: "MotionBooster - Elevate Your Customer Relationships",
+  title: "Grow Your Business Identity with Motion Booster",
   description: "Enhance your customer interactions and streamline your sales processes with our powerful and intuitive CRM solution.",
+  icons: {
+    icon: "/BlackMonogram1.svg"
+  }
 };
 
 export default function RootLayout({
