@@ -22,7 +22,7 @@ export function InvoiceShell({
   return (
     <div
       data-invoice-root="true"
-      style={{ background: '#d9d9d9', padding: '12px 8px', fontFamily: 'sans-serif', minHeight: '100vh' }}
+      style={{ background: '#d9d9d9', padding: '12px 8px', fontFamily: 'sans-serif' }}
     >
       <div style={{ background: '#ececec', padding: '10px', margin: '0 auto', maxWidth: '780px' }}>
 

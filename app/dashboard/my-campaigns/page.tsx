@@ -397,75 +397,79 @@ export default function MyCampaignsPage() {
       import('jspdf'),
       import('html2canvas'),
     ]);
-
     const html2canvas = html2canvasModule.default;
 
-    // ── SVG → PNG rasterizer ────────────────────────────────────────────
-    // html2canvas CANNOT render SVG images — even as data:image/svg+xml URLs.
-    // The ONLY fix is to rasterize: fetch SVG text → Blob URL → drawImage on
-    // a temp <canvas> → export as PNG data URL. html2canvas renders PNGs fine.
-    const rasterizeSvg = (src: string, renderW: number, renderH: number): Promise<string> =>
+    // ── Helper: rasterize SVG to PNG (html2canvas can’t render SVGs) ────
+    const rasterizeSvg = (src: string, w: number, h: number): Promise<string> =>
       new Promise((resolve) => {
         fetch(src)
           .then((r) => r.text())
           .then((svgText) => {
             const blob = new Blob([svgText], { type: 'image/svg+xml;charset=utf-8' });
-            const blobUrl = URL.createObjectURL(blob);
-            const tempImg = new Image();
-            tempImg.onload = () => {
+            const url = URL.createObjectURL(blob);
+            const img = new Image();
+            img.onload = () => {
               const c = document.createElement('canvas');
-              c.width = renderW;
-              c.height = renderH;
-              const ctx = c.getContext('2d');
-              ctx?.drawImage(tempImg, 0, 0, c.width, c.height);
-              URL.revokeObjectURL(blobUrl);
+              c.width = w; c.height = h;
+              c.getContext('2d')?.drawImage(img, 0, 0, w, h);
+              URL.revokeObjectURL(url);
               resolve(c.toDataURL('image/png'));
             };
-            tempImg.onerror = () => {
-              URL.revokeObjectURL(blobUrl);
-              resolve(''); // fallback: leave blank rather than crash
-            };
-            tempImg.src = blobUrl;
+            img.onerror = () => { URL.revokeObjectURL(url); resolve(''); };
+            img.src = url;
           })
           .catch(() => resolve(''));
       });
 
-    // ── Swap image srcs to raster equivalents before capture ───────────────
-    const images = Array.from(reportInvoiceRef.current.querySelectorAll('img'));
+    const wrapper = reportInvoiceRef.current.parentElement as HTMLElement;
+    const el = reportInvoiceRef.current;
+
+    // ── Step 1: Move invoice ON-SCREEN so browser computes full layout ───
+    // When elements are at top:-9999px, the browser skips full font metric
+    // computation. html2canvas then reads wrong baselines → text at bottom.
+    // Fix: temporarily show it on-screen (invisible to user via opacity:0).
+    wrapper.style.position = 'fixed';
+    wrapper.style.top = '0';
+    wrapper.style.left = '0';
+    wrapper.style.zIndex = '-1';
+    wrapper.style.opacity = '0';
+    wrapper.style.pointerEvents = 'none';
+
+    // ── Step 2: Wait for fonts + layout to be fully computed ─────────────
+    await document.fonts.ready;
+    // Double rAF ensures the browser has painted at least one frame
+    await new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
+
+    // ── Step 3: Rasterize SVG images to PNG ──────────────────────────
+    const images = Array.from(el.querySelectorAll('img'));
     const originalSrcs = images.map((img) => img.src);
 
     await Promise.all(
       images.map(async (img) => {
         try {
           const src = img.src;
-          const isSvg =
-            src.toLowerCase().includes('.svg') ||
-            src.startsWith('data:image/svg');
-
-          // Use rendered pixel size (x2 for sharpness) as canvas dimensions
-          const renderW = (img.offsetWidth || 230) * 2;
-          const renderH = (img.offsetHeight || 40) * 2;
-
-          const pngSrc = isSvg
-            ? await rasterizeSvg(src, renderW, renderH)
-            : src; // non-SVG images are handled fine by useCORS
-
-          if (pngSrc) {
-            img.src = pngSrc;
-            // Wait for the new PNG src to be fully painted
-            await new Promise<void>((resolve) => {
-              if (img.complete) { resolve(); return; }
-              img.addEventListener('load', () => resolve(), { once: true });
-              img.addEventListener('error', () => resolve(), { once: true });
-            });
+          if (src.toLowerCase().includes('.svg') || src.startsWith('data:image/svg')) {
+            const w = (img.offsetWidth || 230) * 2;
+            const h = (img.offsetHeight || 40) * 2;
+            const png = await rasterizeSvg(src, w, h);
+            if (png) {
+              img.src = png;
+              await new Promise<void>((resolve) => {
+                if (img.complete) { resolve(); return; }
+                img.addEventListener('load', () => resolve(), { once: true });
+                img.addEventListener('error', () => resolve(), { once: true });
+              });
+            }
           }
-        } catch {
-          // Leave src unchanged if anything fails
-        }
+        } catch { /* skip */ }
       }),
     );
 
-    const canvas = await html2canvas(reportInvoiceRef.current, {
+    // One more rAF after image swap to ensure paint
+    await new Promise<void>((r) => requestAnimationFrame(() => r()));
+
+    // ── Step 4: Capture with html2canvas ─────────────────────────────
+    const canvas = await html2canvas(el, {
       scale: 2,
       useCORS: true,
       imageTimeout: 0,
@@ -473,9 +477,15 @@ export default function MyCampaignsPage() {
       logging: false,
     });
 
-    // Restore originals so live DOM is unchanged after capture
+    // ── Step 5: Restore original state ───────────────────────────────
     images.forEach((img, i) => { img.src = originalSrcs[i]; });
+    wrapper.style.position = 'absolute';
+    wrapper.style.top = '-9999px';
+    wrapper.style.left = '-9999px';
+    wrapper.style.zIndex = '-1';
+    wrapper.style.opacity = '';
 
+    // ── Step 6: Build PDF ──────────────────────────────────────────
     const imgData = canvas.toDataURL('image/png');
     const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
 
@@ -703,10 +713,19 @@ export default function MyCampaignsPage() {
       )}
 
       {reportRows.length > 0 && (
+        // ── Off-screen invoice for PDF capture ──────────────────────────────
+        // Use position:absolute (NOT fixed) so that height:100% on inner flex
+        // divs resolves correctly against the element, not the viewport.
+        // position:fixed causes html2canvas to miscompute child heights.
         <div
-          className="pointer-events-none fixed top-0"
-          style={{ left: -100000 }}
           aria-hidden="true"
+          style={{
+            position: 'absolute',
+            top: '-9999px',
+            left: '-9999px',
+            pointerEvents: 'none',
+            zIndex: -1,
+          }}
         >
           <div ref={reportInvoiceRef} style={{ width: 794 }}>
             <CampaignReportInvoice
