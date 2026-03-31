@@ -264,7 +264,7 @@ export default function UserCampaignDetailPage({
   // Non-admin users can only view their own assignments
   useEffect(() => {
     if (authUser && !isAdmin && authUser.id !== userId) {
-      router.replace('/dashboard/user-campaigns');
+      router.replace('/dashboard/my-campaigns');
     }
   }, [authUser, isAdmin, userId, router]);
 

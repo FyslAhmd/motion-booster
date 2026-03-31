@@ -249,7 +249,11 @@ export default function UserCampaignsPage() {
     );
   }
 
-  return isAdmin ? <AdminView /> : <UserOwnView userId={authUser.id} />;
+  if (!isAdmin) {
+    return null;
+  }
+
+  return <AdminView />;
 }
 
 /* -----------------------------------------------------------------
