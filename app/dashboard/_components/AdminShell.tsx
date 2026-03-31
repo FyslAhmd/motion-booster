@@ -30,7 +30,6 @@ import {
   Quote,
   Sparkles,
   User,
-  MoreHorizontal,
   Home,
   UserCheck,
   Rocket,
@@ -111,6 +110,7 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
     { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
     { href: '/dashboard/my-campaigns', label: 'My Campaign', icon: Megaphone },
     { href: '/dashboard/chat', label: 'Chat', icon: MessageCircle },
+    { href: '/dashboard/reports', label: 'Reports', icon: BarChart2 },
   ];
 
   const activeLabel = userNavItems.find(n => n.href === pathname)?.label ?? 'Dashboard';
@@ -254,15 +254,6 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
             </button>
           );
         })}
-
-        {/* More — opens client sidebar */}
-        <button
-          onClick={() => setSidebarOpen(true)}
-          className="flex flex-col items-center justify-center gap-1 px-4 py-2 flex-1 text-gray-500 hover:text-red-500 transition-colors"
-        >
-          <MoreHorizontal className="w-6 h-6" />
-          <span className="text-[10px] font-medium">More</span>
-        </button>
       </nav>
 
       {/* Client sidebar drawer */}
