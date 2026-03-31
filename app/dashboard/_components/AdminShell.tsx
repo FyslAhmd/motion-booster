@@ -59,6 +59,7 @@ interface UserNavItem {
   href: string;
   label: string;
   icon: typeof LayoutDashboard;
+  requiresCampaignAccess?: boolean;
 }
 
 const navItems: NavEntry[] = [
@@ -97,9 +98,10 @@ const navItems: NavEntry[] = [
 function UserShell({ children, userName, avatarUrl, noPadding }: { children: React.ReactNode; userName: string; avatarUrl?: string | null; noPadding?: boolean }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [hasAssignedCampaigns, setHasAssignedCampaigns] = useState<boolean | null>(null);
 
   const handleLogout = () => {
     logout();
@@ -107,11 +109,44 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
   };
 
   const userNavItems: UserNavItem[] = [
-    { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
-    { href: '/dashboard/my-campaigns', label: 'My Campaign', icon: Megaphone },
+    { href: '/dashboard', label: 'Overview', icon: LayoutDashboard, requiresCampaignAccess: true },
+    { href: '/dashboard/my-campaigns', label: 'My Campaign', icon: Megaphone, requiresCampaignAccess: true },
     { href: '/dashboard/chat', label: 'Chat', icon: MessageCircle },
-    { href: '/dashboard/reports', label: 'Reports', icon: BarChart2 },
+    { href: '/dashboard/reports', label: 'Reports', icon: BarChart2, requiresCampaignAccess: true },
   ];
+
+  const isNewClient = hasAssignedCampaigns === false;
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    let cancelled = false;
+    fetch(`/api/v1/admin/meta-assignments/users/${user.id}`)
+      .then((r) => r.json())
+      .then((json) => {
+        if (cancelled) return;
+        const campaigns = Array.isArray(json?.data?.campaigns) ? json.data.campaigns : [];
+        setHasAssignedCampaigns(campaigns.length > 0);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setHasAssignedCampaigns(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!isNewClient) return;
+
+    const isAllowed = pathname === '/dashboard/chat' || pathname.startsWith('/dashboard/chat/');
+    if (!isAllowed) {
+      router.replace('/dashboard/chat');
+    }
+  }, [isNewClient, pathname, router]);
 
   const activeLabel = userNavItems.find(n => n.href === pathname)?.label ?? 'Dashboard';
 
@@ -126,13 +161,24 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
         </div>
         <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto no-scrollbar">
           {userNavItems.map(({ href, label, icon: Icon }) => {
+            const disabled = isNewClient && href !== '/dashboard/chat';
             const active = pathname === href;
             return (
               <button
                 key={href}
                 type="button"
-                onClick={() => router.push(href)}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${active ? 'bg-red-600 text-white shadow-md shadow-red-500/20' : 'text-gray-500 hover:text-gray-900 hover:bg-red-50'}`}
+                onClick={() => {
+                  if (disabled) return;
+                  router.push(href);
+                }}
+                disabled={disabled}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                  disabled
+                    ? 'opacity-50 cursor-not-allowed text-gray-400'
+                    : active
+                      ? 'bg-red-600 text-white shadow-md shadow-red-500/20'
+                      : 'text-gray-500 hover:text-gray-900 hover:bg-red-50'
+                }`}
               >
                 <Icon className={`w-4 h-4 shrink-0 ${active ? 'text-white' : 'text-gray-400'}`} />
                 <span>{label}</span>
@@ -241,13 +287,24 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
       {/* Bottom nav — shrink-0 so it's always visible at bottom of flex column */}
       <nav className="lg:hidden shrink-0 z-30 bg-white border-t border-gray-200 shadow-lg flex justify-around items-center h-16 px-2">
         {userNavItems.map(({ href, label, icon: Icon }) => {
+          const disabled = isNewClient && href !== '/dashboard/chat';
           const active = pathname === href;
           return (
             <button
               key={href}
               type="button"
-              onClick={() => router.push(href)}
-              className={`flex flex-col items-center justify-center gap-1 px-4 py-2 flex-1 transition-colors ${active ? 'text-red-500' : 'text-gray-500 hover:text-red-500'}`}
+              onClick={() => {
+                if (disabled) return;
+                router.push(href);
+              }}
+              disabled={disabled}
+              className={`flex flex-col items-center justify-center gap-1 px-4 py-2 flex-1 transition-colors ${
+                disabled
+                  ? 'opacity-50 cursor-not-allowed text-gray-400'
+                  : active
+                    ? 'text-red-500'
+                    : 'text-gray-500 hover:text-red-500'
+              }`}
             >
               <Icon className="w-6 h-6" />
               <span className="whitespace-nowrap text-[10px] font-medium">{label}</span>
@@ -285,19 +342,24 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
             {/* Nav links */}
             <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto no-scrollbar">
               {userNavItems.map(({ href, label, icon: Icon }) => {
+                const disabled = isNewClient && href !== '/dashboard/chat';
                 const active = pathname === href;
                 return (
                   <button
                     key={href}
                     type="button"
                     onClick={() => {
+                      if (disabled) return;
                       setSidebarOpen(false);
                       router.push(href);
                     }}
+                    disabled={disabled}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                      active
-                        ? 'bg-red-600 text-white shadow-md shadow-red-500/20'
-                        : 'text-gray-500 hover:text-gray-900 hover:bg-red-50'
+                      disabled
+                        ? 'opacity-50 cursor-not-allowed text-gray-400'
+                        : active
+                          ? 'bg-red-600 text-white shadow-md shadow-red-500/20'
+                          : 'text-gray-500 hover:text-gray-900 hover:bg-red-50'
                     }`}
                   >
                     <Icon className={`w-4 h-4 shrink-0 ${active ? 'text-white' : 'text-gray-400'}`} />
