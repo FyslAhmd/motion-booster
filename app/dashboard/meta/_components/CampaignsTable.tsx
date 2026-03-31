@@ -524,6 +524,10 @@ export default function CampaignsTable({
       const entries = await Promise.all(
         data.map(async (campaign) => {
           try {
+            // Resolve the correct account ID: prefer the global prop, fall back to
+            // the per-campaign mapping (used in assigned/my-campaigns mode).
+            const resolvedAccountId = accountId || campaignAccountById?.[campaign.id];
+
             const insightQuery = new URLSearchParams({
               type: 'single_campaign',
               campaign_id: campaign.id,
@@ -533,9 +537,9 @@ export default function CampaignsTable({
               campaign_id: campaign.id,
               limit: '100',
             });
-            if (accountId) {
-              insightQuery.set('account_id', accountId);
-              adsetQuery.set('account_id', accountId);
+            if (resolvedAccountId) {
+              insightQuery.set('account_id', resolvedAccountId);
+              adsetQuery.set('account_id', resolvedAccountId);
             }
 
             const [insightRes, adsetRes] = await Promise.all([
@@ -593,7 +597,7 @@ export default function CampaignsTable({
     return () => {
       isCancelled = true;
     };
-  }, [data, accountId]);
+  }, [data, accountId, campaignAccountById]);
 
   const goNext = () => {
     if (assignedMode) {
