@@ -510,7 +510,7 @@ export default function MyCampaignsPage() {
                 type="button"
                 className="flex items-center justify-center gap-2 rounded-lg border border-emerald-200 bg-linear-to-b from-emerald-50 to-white px-3 py-2 text-sm font-semibold text-emerald-700 shadow-sm"
               >
-                <Activity className="h-4 w-4" />
+                {/* <Activity className="h-4 w-4" /> */}
                 {countsLoading ? 'Active ...' : `Active ${activeCampaignCount}`}
               </button>
 
@@ -522,7 +522,7 @@ export default function MyCampaignsPage() {
                 }}
                 className="flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
               >
-                <BarChart3 className="h-4 w-4 text-slate-500" />
+                {/* <BarChart3 className="h-4 w-4 text-slate-500" /> */}
                 Report
               </button>
 
@@ -595,46 +595,48 @@ export default function MyCampaignsPage() {
               </label>
             </div>
 
-            <div className="mt-4 flex flex-wrap items-center gap-2">
-              <div className="relative">
+            <div className="mt-4 flex flex-col gap-2">
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <button
+                    type="button"
+                    onClick={() => setColumnsDropdownOpen(!columnsDropdownOpen)}
+                    className="w-full rounded-lg border border-gray-200 bg-white px-3.5 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center justify-center gap-1"
+                  >
+                    Columns
+                  </button>
+                  {columnsDropdownOpen && (
+                    <div className="absolute top-full left-0 mt-1 w-full sm:w-56 rounded-lg bg-white shadow-xl border border-gray-200 p-2 z-10 flex flex-col gap-1 max-h-60 overflow-y-auto">
+                      {ALL_COLUMNS.map((col) => (
+                        <label key={col} className="flex items-center gap-2 px-2 py-1 hover:bg-gray-50 rounded cursor-pointer text-sm text-gray-700">
+                          <input
+                            type="checkbox"
+                            checked={selectedColumns.includes(col)}
+                            onChange={(e) => {
+                              if (e.target.checked) setSelectedColumns(prev => [...prev, col]);
+                              else setSelectedColumns(prev => prev.filter(c => c !== col));
+                            }}
+                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
+                          {COL_CONFIG[col].label}
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
                 <button
                   type="button"
-                  onClick={() => setColumnsDropdownOpen(!columnsDropdownOpen)}
-                  className="rounded-lg border border-gray-200 bg-white px-3.5 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center justify-center gap-1"
+                  onClick={() => {
+                    setColumnsDropdownOpen(false);
+                    buildReportRows();
+                  }}
+                  disabled={reportLoading}
+                  className="flex-1 rounded-lg border border-blue-200 bg-blue-50 px-3.5 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  Columns
+                  {reportLoading ? 'Generating...' : 'Generate Report'}
                 </button>
-                {columnsDropdownOpen && (
-                  <div className="absolute top-full left-0 mt-1 w-56 rounded-lg bg-white shadow-xl border border-gray-200 p-2 z-10 flex flex-col gap-1 max-h-60 overflow-y-auto">
-                    {ALL_COLUMNS.map((col) => (
-                      <label key={col} className="flex items-center gap-2 px-2 py-1 hover:bg-gray-50 rounded cursor-pointer text-sm text-gray-700">
-                        <input
-                          type="checkbox"
-                          checked={selectedColumns.includes(col)}
-                          onChange={(e) => {
-                            if (e.target.checked) setSelectedColumns(prev => [...prev, col]);
-                            else setSelectedColumns(prev => prev.filter(c => c !== col));
-                          }}
-                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                        />
-                        {COL_CONFIG[col].label}
-                      </label>
-                    ))}
-                  </div>
-                )}
               </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setColumnsDropdownOpen(false);
-                  buildReportRows();
-                }}
-                disabled={reportLoading}
-                className="rounded-lg border border-blue-200 bg-blue-50 px-3.5 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {reportLoading ? 'Generating...' : 'Generate Report'}
-              </button>
 
               <button
                 type="button"
@@ -643,7 +645,7 @@ export default function MyCampaignsPage() {
                   downloadReportPdf();
                 }}
                 disabled={reportRows.length === 0 || reportLoading}
-                className="rounded-lg border border-emerald-200 bg-emerald-50 px-3.5 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+                className="w-full rounded-lg border border-emerald-200 bg-emerald-50 px-3.5 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Download PDF (A4)
               </button>
