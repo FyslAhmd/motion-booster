@@ -12,6 +12,7 @@ interface CampaignLite {
   id: string;
   status?: string;
   effective_status?: string;
+  derived_status?: { key: string; label: string };
 }
 
 interface ReportCampaign extends CampaignLite {
@@ -260,7 +261,10 @@ export default function MyCampaignsPage() {
         }
 
         const activeCount = allCampaigns.filter(
-          (c) => c?.status === 'ACTIVE' || c?.effective_status === 'ACTIVE',
+          // Use derived_status.key (same as UI badge) — not raw status/effective_status.
+          // A Completed/Not Delivering campaign still has effective_status='ACTIVE' from
+          // Meta, but derived_status.key correctly reflects its true delivery state.
+          (c) => (c?.derived_status?.key || c?.effective_status) === 'ACTIVE',
         ).length;
 
         if (!cancelled) {
