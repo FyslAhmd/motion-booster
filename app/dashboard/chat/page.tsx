@@ -173,18 +173,6 @@ function formatDuration(seconds: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
-function getLastMessagePreview(msg: ConversationItem['lastMessage'], myId?: string): string {
-  if (!msg) return 'No messages yet';
-  const prefix = msg.sender.id === myId ? 'You: ' : '';
-  switch (msg.messageType) {
-    case 'IMAGE': return `${prefix}📷 Photo`;
-    case 'VIDEO': return `${prefix}🎬 Video`;
-    case 'FILE':  return `${prefix}📎 ${msg.fileName || 'File'}`;
-    case 'VOICE': return `${prefix}🎤 Voice message`;
-    default:      return `${prefix}${msg.content}`;
-  }
-}
-
 function getFileIcon(mimeType?: string | null) {
   if (!mimeType) return <FileText className="w-5 h-5" />;
   if (mimeType.startsWith('image/')) return <ImageIcon className="w-5 h-5" />;
@@ -1171,7 +1159,6 @@ export default function MessagesPage() {
             filteredDirectoryUsers.map((person) => {
               const conv = conversationByParticipantId.get(person.id);
               const isOnline = isUserShownOnline(person.id, person.role);
-              const hasConversation = Boolean(conv);
 
               return (
               <div
@@ -1217,19 +1204,12 @@ export default function MessagesPage() {
                         </span>
                       )}
                     </div>
-                    <p className="text-sm text-gray-600 truncate">
-                      {hasConversation
-                        ? getLastMessagePreview(conv?.lastMessage ?? null, user?.id)
-                        : 'Tap to start conversation'}
-                    </p>
+                    {(conv?.unreadCount ?? 0) > 0 && (
+                      <p className="text-sm font-semibold text-gray-900 truncate">
+                        {conv?.unreadCount} unread messages
+                      </p>
+                    )}
                   </div>
-                  {conv && conv.unreadCount > 0 && (
-                    <div className="absolute top-4 right-4">
-                      <span className="flex items-center justify-center w-5 h-5 bg-red-500 text-white text-xs font-medium rounded-full">
-                        {conv.unreadCount}
-                      </span>
-                    </div>
-                  )}
                 </div>
               </div>
             )})
@@ -1768,7 +1748,7 @@ export default function MessagesPage() {
             <div className="bg-white border-t border-gray-100 px-3 md:px-8 py-3 md:py-4">
               {/* Boost Post CTA — visible only for non-admin users */}
               {user?.role !== 'ADMIN' && (
-                <div className="-mt-6 mb-20 flex justify-start">
+                <div className="mb-4 ml-4 flex justify-start">
                   <button
                     onClick={openBoostForm}
                     aria-label="Boost Request"

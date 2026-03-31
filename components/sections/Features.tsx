@@ -29,7 +29,7 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, description, ico
       className="feature-card bg-white border border-gray-100 rounded-2xl sm:rounded-3xl p-4 sm:p-8 flex flex-col items-start text-left h-full hover:shadow-xl transition-all duration-300 group min-h-0 sm:min-h-70 hover:border-red-100"
       style={{ animationDelay: `${Math.round(delay * 1000)}ms` }}
       onMouseEnter={triggerIconFlip}
-      onClick={triggerIconFlip}
+      onTouchStart={triggerIconFlip}
     >
       {/* Icon */}
       <div className={`w-12 h-12 sm:w-16 sm:h-16 ${iconColor} rounded-xl sm:rounded-2xl flex items-center justify-center mb-3 sm:mb-6 transition-transform duration-300`}>
@@ -52,7 +52,12 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, description, ico
       </p>
 
       {/* Learn More Link */}
-      <Link href="/service" className="text-red-500 font-semibold flex items-center gap-2 hover:text-red-600 group-hover:gap-4 transition-all mt-1 sm:mt-auto">
+      <Link
+        href="/features"
+        scroll
+        onClick={(e) => e.stopPropagation()}
+        className="text-red-500 font-semibold flex items-center gap-2 hover:text-red-600 group-hover:gap-4 transition-all mt-1 sm:mt-auto"
+      >
         {t('features_learn_more')}
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />

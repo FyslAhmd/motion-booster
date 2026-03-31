@@ -30,7 +30,6 @@ import {
   Quote,
   Sparkles,
   User,
-  MoreHorizontal,
   Home,
   UserCheck,
   Rocket,
@@ -55,6 +54,13 @@ interface NavGroup {
 }
 
 type NavEntry = NavItem | NavGroup;
+
+interface UserNavItem {
+  href: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  requiresCampaignAccess?: boolean;
+}
 
 const navItems: NavEntry[] = [
   { href: '/dashboard', label: 'Overview', icon: LayoutDashboard, adminOnly: true },
@@ -88,32 +94,59 @@ const navItems: NavEntry[] = [
   { href: '/dashboard/settings', label: 'Site Settings', icon: Settings, adminOnly: true },
 ];
 
-// Routes accessible by normal users (no admin required)
-const USER_ALLOWED_ROUTES = [
-  '/dashboard',
-  '/dashboard/chat',
-  '/dashboard/meta',
-  '/dashboard/profile',
-  '/dashboard/user-campaigns',
-];
-
 // ── User Shell (non-admin layout) ─────────────────────────────────────────
 function UserShell({ children, userName, avatarUrl, noPadding }: { children: React.ReactNode; userName: string; avatarUrl?: string | null; noPadding?: boolean }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [hasAssignedCampaigns, setHasAssignedCampaigns] = useState<boolean | null>(null);
 
   const handleLogout = () => {
     logout();
     router.push('/login');
   };
 
-  const userNavItems = [
-    { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
-    { href: '/dashboard/user-campaigns', label: 'My Campaign', icon: Megaphone },
+  const userNavItems: UserNavItem[] = [
+    { href: '/dashboard', label: 'Overview', icon: LayoutDashboard, requiresCampaignAccess: true },
+    { href: '/dashboard/my-campaigns', label: 'My Campaign', icon: Megaphone, requiresCampaignAccess: true },
     { href: '/dashboard/chat', label: 'Chat', icon: MessageCircle },
+    { href: '/dashboard/reports', label: 'Reports', icon: BarChart2, requiresCampaignAccess: true },
   ];
+
+  const isNewClient = hasAssignedCampaigns === false;
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    let cancelled = false;
+    fetch(`/api/v1/admin/meta-assignments/users/${user.id}`)
+      .then((r) => r.json())
+      .then((json) => {
+        if (cancelled) return;
+        const campaigns = Array.isArray(json?.data?.campaigns) ? json.data.campaigns : [];
+        setHasAssignedCampaigns(campaigns.length > 0);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setHasAssignedCampaigns(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!isNewClient) return;
+
+    const isAllowed = pathname === '/dashboard/chat' || pathname.startsWith('/dashboard/chat/');
+    if (!isAllowed) {
+      router.replace('/dashboard/chat');
+    }
+  }, [isNewClient, pathname, router]);
 
   const activeLabel = userNavItems.find(n => n.href === pathname)?.label ?? 'Dashboard';
 
@@ -128,17 +161,29 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
         </div>
         <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto no-scrollbar">
           {userNavItems.map(({ href, label, icon: Icon }) => {
+            const disabled = isNewClient && href !== '/dashboard/chat';
             const active = pathname === href;
             return (
-              <Link
+              <button
                 key={href}
-                href={href}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${active ? 'bg-red-600 text-white shadow-md shadow-red-500/20' : 'text-gray-500 hover:text-gray-900 hover:bg-red-50'}`}
+                type="button"
+                onClick={() => {
+                  if (disabled) return;
+                  router.push(href);
+                }}
+                disabled={disabled}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                  disabled
+                    ? 'opacity-50 cursor-not-allowed text-gray-400'
+                    : active
+                      ? 'bg-red-600 text-white shadow-md shadow-red-500/20'
+                      : 'text-gray-500 hover:text-gray-900 hover:bg-red-50'
+                }`}
               >
                 <Icon className={`w-4 h-4 shrink-0 ${active ? 'text-white' : 'text-gray-400'}`} />
                 <span>{label}</span>
                 {active && <ChevronRight className="w-3 h-3 ml-auto text-white/70" />}
-              </Link>
+              </button>
             );
           })}
         </nav>
@@ -186,15 +231,49 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
         <span className="hidden lg:block text-base font-semibold text-gray-800">{activeLabel}</span>
         <div className="flex items-center gap-2 text-sm text-gray-500 font-medium">
           <span className="hidden sm:block lg:hidden">{activeLabel}</span>
-          <Link href="/dashboard/profile">
-            {avatarUrl ? (
-              <Image src={avatarUrl} alt="avatar" width={36} height={36} className="w-9 h-9 rounded-full object-cover" />
-            ) : (
-              <div className="w-9 h-9 rounded-full bg-linear-to-br from-red-500 to-red-700 flex items-center justify-center text-white text-xs font-bold">
-                {userName.slice(0, 2).toUpperCase()}
-              </div>
+          {/* Avatar dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setProfileDropdownOpen((o) => !o)}
+              className="flex items-center focus:outline-none"
+              aria-label="Profile menu"
+            >
+              {avatarUrl ? (
+                <Image src={avatarUrl} alt="avatar" width={36} height={36} className="w-9 h-9 rounded-full object-cover ring-2 ring-transparent hover:ring-red-300 transition-all" />
+              ) : (
+                <div className="w-9 h-9 rounded-full bg-linear-to-br from-red-500 to-red-700 flex items-center justify-center text-white text-xs font-bold ring-2 ring-transparent hover:ring-red-300 transition-all">
+                  {userName.slice(0, 2).toUpperCase()}
+                </div>
+              )}
+            </button>
+            {profileDropdownOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setProfileDropdownOpen(false)} />
+                <div className="absolute right-0 top-full mt-2 z-50 w-44 rounded-2xl bg-white border border-gray-100 shadow-xl overflow-hidden">
+                  <div className="px-4 py-3 border-b border-gray-100">
+                    <p className="text-xs font-semibold text-gray-900 truncate">{userName}</p>
+                    <p className="text-[10px] text-gray-400">My Account</p>
+                  </div>
+                  <div className="p-1.5 space-y-0.5">
+                    <button
+                      onClick={() => { setProfileDropdownOpen(false); router.push('/dashboard/profile'); }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors text-left"
+                    >
+                      <User className="w-4 h-4" />
+                      Profile
+                    </button>
+                    <button
+                      onClick={() => { setProfileDropdownOpen(false); logout(); router.push('/login'); }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors text-left"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Logout
+                    </button>
+                  </div>
+                </div>
+              </>
             )}
-          </Link>
+          </div>
         </div>
       </header>
 
@@ -208,27 +287,30 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
       {/* Bottom nav — shrink-0 so it's always visible at bottom of flex column */}
       <nav className="lg:hidden shrink-0 z-30 bg-white border-t border-gray-200 shadow-lg flex justify-around items-center h-16 px-2">
         {userNavItems.map(({ href, label, icon: Icon }) => {
+          const disabled = isNewClient && href !== '/dashboard/chat';
           const active = pathname === href;
           return (
-            <Link
+            <button
               key={href}
-              href={href}
-              className={`flex flex-col items-center justify-center gap-1 px-4 py-2 flex-1 transition-colors ${active ? 'text-red-500' : 'text-gray-500 hover:text-red-500'}`}
+              type="button"
+              onClick={() => {
+                if (disabled) return;
+                router.push(href);
+              }}
+              disabled={disabled}
+              className={`flex flex-col items-center justify-center gap-1 px-4 py-2 flex-1 transition-colors ${
+                disabled
+                  ? 'opacity-50 cursor-not-allowed text-gray-400'
+                  : active
+                    ? 'text-red-500'
+                    : 'text-gray-500 hover:text-red-500'
+              }`}
             >
               <Icon className="w-6 h-6" />
               <span className="whitespace-nowrap text-[10px] font-medium">{label}</span>
-            </Link>
+            </button>
           );
         })}
-
-        {/* More — opens client sidebar */}
-        <button
-          onClick={() => setSidebarOpen(true)}
-          className="flex flex-col items-center justify-center gap-1 px-4 py-2 flex-1 text-gray-500 hover:text-red-500 transition-colors"
-        >
-          <MoreHorizontal className="w-6 h-6" />
-          <span className="text-[10px] font-medium">More</span>
-        </button>
       </nav>
 
       {/* Client sidebar drawer */}
@@ -260,22 +342,30 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
             {/* Nav links */}
             <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto no-scrollbar">
               {userNavItems.map(({ href, label, icon: Icon }) => {
+                const disabled = isNewClient && href !== '/dashboard/chat';
                 const active = pathname === href;
                 return (
-                  <Link
+                  <button
                     key={href}
-                    href={href}
-                    onClick={() => setSidebarOpen(false)}
+                    type="button"
+                    onClick={() => {
+                      if (disabled) return;
+                      setSidebarOpen(false);
+                      router.push(href);
+                    }}
+                    disabled={disabled}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                      active
-                        ? 'bg-red-600 text-white shadow-md shadow-red-500/20'
-                        : 'text-gray-500 hover:text-gray-900 hover:bg-red-50'
+                      disabled
+                        ? 'opacity-50 cursor-not-allowed text-gray-400'
+                        : active
+                          ? 'bg-red-600 text-white shadow-md shadow-red-500/20'
+                          : 'text-gray-500 hover:text-gray-900 hover:bg-red-50'
                     }`}
                   >
                     <Icon className={`w-4 h-4 shrink-0 ${active ? 'text-white' : 'text-gray-400'}`} />
                     <span>{label}</span>
                     {active && <ChevronRight className="w-3 h-3 ml-auto text-white/70" />}
-                  </Link>
+                  </button>
                 );
               })}
             </nav>
@@ -331,6 +421,7 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [openGroup, setOpenGroup] = useState<string | null>('Home Page'); // open by default
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const adminName = user?.username || user?.email || 'User';
   const adminAvatar = user?.avatarUrl || '';
   const isAdmin = user?.role === 'ADMIN';
@@ -349,11 +440,8 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
   // Route guard: redirect non-admin users away from admin-only pages
   useEffect(() => {
     if (!isLoading && isAuthenticated && !isAdmin) {
-      const isAllowed = USER_ALLOWED_ROUTES.some(
-        (route) => pathname === route || pathname.startsWith(route + '/')
-      );
-      if (!isAllowed) {
-        router.replace('/dashboard/chat');
+      if (pathname === '/dashboard/user-campaigns' || pathname.startsWith('/dashboard/user-campaigns/')) {
+        router.replace('/dashboard/my-campaigns');
       }
     }
   }, [isLoading, isAuthenticated, isAdmin, pathname, router]);
@@ -582,15 +670,49 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
           </div>
           <div className="flex items-center gap-2">
             <div className="text-xs text-gray-400 hidden sm:block">{adminName}</div>
-            <Link href="/dashboard/profile">
-              {adminAvatar ? (
-                <Image src={adminAvatar} alt="avatar" width={36} height={36} className="w-9 h-9 rounded-full object-cover" />
-              ) : (
-                <div className="w-9 h-9 rounded-full bg-linear-to-br from-red-500 to-red-700 flex items-center justify-center text-white text-xs font-bold">
-                  {adminName.slice(0, 2).toUpperCase()}
-                </div>
+            {/* Avatar dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setProfileDropdownOpen((o) => !o)}
+                className="flex items-center focus:outline-none"
+                aria-label="Profile menu"
+              >
+                {adminAvatar ? (
+                  <Image src={adminAvatar} alt="avatar" width={36} height={36} className="w-9 h-9 rounded-full object-cover ring-2 ring-transparent hover:ring-red-300 transition-all" />
+                ) : (
+                  <div className="w-9 h-9 rounded-full bg-linear-to-br from-red-500 to-red-700 flex items-center justify-center text-white text-xs font-bold ring-2 ring-transparent hover:ring-red-300 transition-all">
+                    {adminName.slice(0, 2).toUpperCase()}
+                  </div>
+                )}
+              </button>
+              {profileDropdownOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setProfileDropdownOpen(false)} />
+                  <div className="absolute right-0 top-full mt-2 z-50 w-44 rounded-2xl bg-white border border-gray-100 shadow-xl overflow-hidden">
+                    <div className="px-4 py-3 border-b border-gray-100">
+                      <p className="text-xs font-semibold text-gray-900 truncate">{adminName}</p>
+                      <p className="text-[10px] text-gray-400">My Account</p>
+                    </div>
+                    <div className="p-1.5 space-y-0.5">
+                      <button
+                        onClick={() => { setProfileDropdownOpen(false); router.push('/dashboard/profile'); }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors text-left"
+                      >
+                        <User className="w-4 h-4" />
+                        Profile
+                      </button>
+                      <button
+                        onClick={() => { setProfileDropdownOpen(false); handleLogout(); }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors text-left"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        Logout
+                      </button>
+                    </div>
+                  </div>
+                </>
               )}
-            </Link>
+            </div>
           </div>
         </header>
 

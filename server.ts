@@ -16,6 +16,16 @@ const handle = app.getRequestHandler();
 
 const prisma = new PrismaClient();
 
+const ALLOWED_SOCKET_ORIGINS = [
+  'https://motionbooster.com',
+  'https://www.motionbooster.com',
+  'http://motionbooster.com',
+  'http://www.motionbooster.com',
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  'https://localhost:3000',
+].map((v) => v.replace(/\/$/, ''));
+
 // ─── JWT verification for socket auth ─────────────────
 function getAccessSecret(): Uint8Array {
   const secret = process.env.JWT_ACCESS_SECRET;
@@ -88,7 +98,17 @@ app.prepare().then(() => {
   const io = new SocketIOServer(httpServer, {
     path: '/api/socket',
     cors: {
-      origin: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+      origin: (origin, callback) => {
+        // Allow same-origin / server-to-server requests with no Origin header.
+        if (!origin) return callback(null, true);
+
+        const normalized = origin.replace(/\/$/, '');
+        if (ALLOWED_SOCKET_ORIGINS.includes(normalized)) {
+          return callback(null, true);
+        }
+
+        return callback(new Error(`Socket origin not allowed: ${origin}`));
+      },
       methods: ['GET', 'POST'],
       credentials: true,
     },

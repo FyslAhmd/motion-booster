@@ -276,6 +276,13 @@ function summarizeTargeting(t: any): string {
 
 interface CampaignsTableProps {
   accountId?: string;
+  searchValue?: string;
+  onSearchValueChange?: (value: string) => void;
+  statusFilterValue?: string;
+  onStatusFilterChange?: (value: string) => void;
+  hideControls?: boolean;
+  assignedCampaignIds?: string[];
+  campaignAccountById?: Record<string, string>;
 }
 
 interface AssignmentUser {
@@ -287,7 +294,16 @@ interface AssignmentUser {
 
 const PAGE_SIZE = 9;
 
-export default function CampaignsTable({ accountId }: CampaignsTableProps) {
+export default function CampaignsTable({
+  accountId,
+  searchValue,
+  onSearchValueChange,
+  statusFilterValue,
+  onStatusFilterChange,
+  hideControls = false,
+  assignedCampaignIds,
+  campaignAccountById,
+}: CampaignsTableProps) {
   const [data, setData] = useState<Campaign[]>([]);
   const [paging, setPaging] = useState<CursorPaging | null>(null);
   const [totalCount, setTotalCount] = useState<number | null>(null);
@@ -320,6 +336,71 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
 
   const searchTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
+  const controlledSearch = typeof searchValue === 'string';
+  const controlledFilter = typeof statusFilterValue === 'string';
+  const effectiveSearch = controlledSearch ? searchValue : search;
+  const effectiveFilterStatus = controlledFilter ? statusFilterValue : filterStatus;
+  const assignedMode = Array.isArray(assignedCampaignIds);
+
+  const [allAssignedCampaigns, setAllAssignedCampaigns] = useState<Campaign[]>([]);
+  const [assignedLoading, setAssignedLoading] = useState(false);
+  const isTableLoading = assignedMode ? assignedLoading : loading;
+
+  const fetchCampaignsByIds = useCallback(async (ids: string[]) => {
+    const uniqueIds = Array.from(new Set(ids.filter(Boolean)));
+    if (uniqueIds.length === 0) return [] as Campaign[];
+
+    const chunkSize = 40;
+    const all: Campaign[] = [];
+    for (let i = 0; i < uniqueIds.length; i += chunkSize) {
+      const chunk = uniqueIds.slice(i, i + chunkSize);
+      const params = new URLSearchParams({ type: 'CAMPAIGN', ids: chunk.join(',') });
+      const res = await fetch(`/api/v1/meta/by-ids?${params.toString()}`);
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data)) {
+        all.push(...json.data);
+      }
+    }
+    return all;
+  }, []);
+
+  useEffect(() => {
+    if (!assignedMode) return;
+
+    setLoading(false);
+
+    const ids = assignedCampaignIds ?? [];
+    if (ids.length === 0) {
+      setAllAssignedCampaigns([]);
+      setData([]);
+      setTotalCount(0);
+      setPaging({ hasNext: false, hasPrevious: false });
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadAssignedCampaigns = async () => {
+      setAssignedLoading(true);
+      setError('');
+      try {
+        const campaigns = await fetchCampaignsByIds(ids);
+        if (!cancelled) {
+          setAllAssignedCampaigns(campaigns);
+        }
+      } catch (e: any) {
+        if (!cancelled) setError(e?.message || 'Failed to load');
+      } finally {
+        if (!cancelled) setAssignedLoading(false);
+      }
+    };
+
+    loadAssignedCampaigns();
+    return () => {
+      cancelled = true;
+    };
+  }, [assignedMode, assignedCampaignIds, fetchCampaignsByIds]);
+
   const statusMeta = useCallback((key?: string, fallbackLabel?: string) => {
     const normalized = key || 'UNKNOWN';
     const color = STATUS_STYLES[normalized] || STATUS_STYLES.UNKNOWN;
@@ -338,6 +419,8 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
   }, []);
 
   useEffect(() => {
+    if (assignedMode) return;
+
     const controller = new AbortController();
 
     const doFetch = async () => {
@@ -346,9 +429,9 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
       try {
         const p = new URLSearchParams({ limit: String(PAGE_SIZE) });
         if (accountId) p.set('account_id', accountId);
-        if (search) p.set('search', search);
+        if (effectiveSearch) p.set('search', effectiveSearch);
         if (currentAfter) p.set('after', currentAfter);
-        if (filterStatus !== 'all') p.set('status', filterStatus);
+        if (effectiveFilterStatus !== 'all') p.set('status', effectiveFilterStatus);
 
         const res = await fetch(`/api/v1/meta/campaigns?${p}`, { signal: controller.signal });
         const json = await res.json();
@@ -368,7 +451,58 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
 
     doFetch();
     return () => controller.abort();
-  }, [currentAfter, search, filterStatus, accountId]);
+  }, [currentAfter, effectiveSearch, effectiveFilterStatus, accountId, assignedMode]);
+
+  useEffect(() => {
+    if (!assignedMode) return;
+
+    const normalized = effectiveSearch.trim().toLowerCase();
+
+    const filtered = allAssignedCampaigns.filter((c) => {
+      const name = (c.name || '').toLowerCase();
+      const objective = (c.objective || '').toLowerCase();
+
+      const matchesSearch =
+        normalized.length === 0 ||
+        name.includes(normalized) ||
+        objective.includes(normalized) ||
+        (c.status || '').toLowerCase().includes(normalized) ||
+        (c.effective_status || '').toLowerCase().includes(normalized);
+
+      if (!matchesSearch) return false;
+      if (effectiveFilterStatus === 'all') return true;
+
+      // derived_status.key is computed by deriveDeliveryStatus() — the same
+      // value shown in the UI badge (e.g. 'COMPLETED', 'NOT_DELIVERING',
+      // 'PAUSED', 'ACTIVE', 'SCHEDULED', etc.).
+      // This gives us filter parity with the /meta page which filters by
+      // effective_status on the Meta API, then derives richer labels.
+      const derivedKey = c.derived_status?.key || c.effective_status || c.status;
+
+      // 'PAUSED' filter: only truly paused campaigns (not completed etc.)
+      if (effectiveFilterStatus === 'PAUSED') return derivedKey === 'PAUSED';
+      // 'ACTIVE' filter: only genuinely active campaigns
+      if (effectiveFilterStatus === 'ACTIVE') return derivedKey === 'ACTIVE';
+      // All other filters: exact match on derived key
+      return derivedKey === effectiveFilterStatus;
+    });
+
+    const pages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+    const safePage = Math.min(pageNum, pages);
+    if (safePage !== pageNum) {
+      setPageNum(safePage);
+      return;
+    }
+
+    const start = (safePage - 1) * PAGE_SIZE;
+    setData(filtered.slice(start, start + PAGE_SIZE));
+    setTotalCount(filtered.length);
+    setPaging({
+      hasNext: safePage < pages,
+      hasPrevious: safePage > 1,
+      cursors: {},
+    });
+  }, [assignedMode, allAssignedCampaigns, effectiveSearch, effectiveFilterStatus, pageNum]);
 
   // Fetch assignments for current page of campaigns
   useEffect(() => {
@@ -389,7 +523,10 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
       .catch(() => {});
   }, [data, accountId]);
 
-  // Fetch spend + dynamic metric cards for currently visible campaigns
+  // Fetch spend + dynamic metric cards for currently visible campaigns.
+  // Process SEQUENTIALLY (not Promise.all) to avoid Meta API rate-limit (code 17).
+  // Each campaign still runs its 2 calls (insight + adsets) in parallel with each
+  // other, but campaigns queue one-at-a-time. Cards update progressively.
   useEffect(() => {
     if (!data.length) {
       setCampaignCardMetrics({});
@@ -398,22 +535,26 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
 
     let isCancelled = false;
 
-    const loadCardMetrics = async () => {
-      const entries = await Promise.all(
-        data.map(async (campaign) => {
-          try {
+    const fetchOneCard = async (campaign: Campaign): Promise<[string, CampaignCardMetric | null]> => {
+      try {
+        const resolvedAccountId = accountId || campaignAccountById?.[campaign.id];
+
             const insightQuery = new URLSearchParams({
               type: 'single_campaign',
               campaign_id: campaign.id,
               date_preset: 'maximum',
             });
+            // Use mode=by_campaign: queries /{campaignId}/adsets directly.
+            // This is account-agnostic — works for both /meta and /my-campaigns
+            // without needing account_id. The old approach (filtering through
+            // /{accountId}/adsets?filtering=[campaign.id=X]) was unreliable.
             const adsetQuery = new URLSearchParams({
+              mode: 'by_campaign',
               campaign_id: campaign.id,
-              limit: '100',
+              limit: '50',
             });
-            if (accountId) {
-              insightQuery.set('account_id', accountId);
-              adsetQuery.set('account_id', accountId);
+            if (resolvedAccountId) {
+              insightQuery.set('account_id', resolvedAccountId);
             }
 
             const [insightRes, adsetRes] = await Promise.all([
@@ -452,18 +593,20 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
               } satisfies CampaignCardMetric,
             ] as const;
           } catch {
-            return [campaign.id, null] as const;
+            return [campaign.id, null] as [string, null];
           }
-        }),
-      );
+    };
 
-      if (isCancelled) return;
-
-      const next: Record<string, CampaignCardMetric> = {};
-      for (const [campaignId, metric] of entries) {
-        if (metric) next[campaignId] = metric;
+    const loadCardMetrics = async () => {
+      // Sequential loop — prevents Meta API quota exhaustion (error 17)
+      for (const campaign of data) {
+        if (isCancelled) break;
+        const [id, metric] = await fetchOneCard(campaign);
+        if (isCancelled) break;
+        if (metric) {
+          setCampaignCardMetrics((prev) => ({ ...prev, [id]: metric }));
+        }
       }
-      setCampaignCardMetrics(next);
     };
 
     loadCardMetrics();
@@ -471,9 +614,16 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
     return () => {
       isCancelled = true;
     };
-  }, [data, accountId]);
+  }, [data, accountId, campaignAccountById]);
 
   const goNext = () => {
+    if (assignedMode) {
+      if (paging?.hasNext) {
+        setPageNum((p) => p + 1);
+      }
+      return;
+    }
+
     if (paging?.cursors?.after && paging.hasNext) {
       setCursorStack((prev) => [...prev, currentAfter || '__first__']);
       setCurrentAfter(paging.cursors.after);
@@ -482,6 +632,13 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
   };
 
   const goPrev = () => {
+    if (assignedMode) {
+      if (pageNum > 1) {
+        setPageNum((p) => Math.max(1, p - 1));
+      }
+      return;
+    }
+
     if (cursorStack.length > 0) {
       const stack = [...cursorStack];
       const prev = stack.pop()!;
@@ -492,14 +649,20 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
   };
 
   const handleSearch = (val: string) => {
-    setSearch(val);
+    if (!controlledSearch) {
+      setSearch(val);
+    }
+    onSearchValueChange?.(val);
     setCurrentAfter(undefined);
     setCursorStack([]);
     setPageNum(1);
   };
 
   const handleStatusFilter = (val: string) => {
-    setFilterStatus(val);
+    if (!controlledFilter) {
+      setFilterStatus(val);
+    }
+    onStatusFilterChange?.(val);
     setCurrentAfter(undefined);
     setCursorStack([]);
     setPageNum(1);
@@ -510,13 +673,13 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
     setCurrentAfter(undefined);
     setCursorStack([]);
     setPageNum(1);
-    setSearch('');
-    setFilterStatus('ACTIVE');
+    if (!controlledSearch) setSearch('');
+    if (!controlledFilter) setFilterStatus('ACTIVE');
   }, [accountId]);
 
   const hasNext = !!paging?.hasNext;
   const hasPrev = cursorStack.length > 0;
-  const totalPages = totalCount != null ? Math.ceil(totalCount / PAGE_SIZE) : null;
+  const totalPages = totalCount != null ? Math.max(1, Math.ceil(totalCount / PAGE_SIZE)) : null;
 
   const campaignBudgetLabel = (c: Campaign) =>
     c.daily_budget ? `${fmtBudget(c.daily_budget)}/day` : c.lifetime_budget ? `${fmtBudget(c.lifetime_budget)} lifetime` : '—';
@@ -672,7 +835,8 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
 
     try {
       const adSetQuery = new URLSearchParams({ campaign_id: campaign.id, limit: '12' });
-      if (accountId) adSetQuery.set('account_id', accountId);
+      const resolvedAccountId = accountId || campaignAccountById?.[campaign.id];
+      if (resolvedAccountId) adSetQuery.set('account_id', resolvedAccountId);
       const adSetRes = await fetch(`/api/v1/meta/adsets?${adSetQuery}`);
       const adSetJson = await adSetRes.json();
 
@@ -686,7 +850,7 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
       if (adSets.length > 0) {
         const adFetches = adSets.map(async (adSet) => {
           const adsQuery = new URLSearchParams({ adset_id: adSet.id, limit: '6' });
-          if (accountId) adsQuery.set('account_id', accountId);
+          if (resolvedAccountId) adsQuery.set('account_id', resolvedAccountId);
           const adsRes = await fetch(`/api/v1/meta/ads?${adsQuery}`);
           const adsJson = await adsRes.json();
           return {
@@ -709,7 +873,7 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
     } finally {
       setModalLoading(false);
     }
-  }, [accountId]);
+  }, [accountId, campaignAccountById]);
 
   useEffect(() => {
     if (!selectedCampaign) return;
@@ -731,47 +895,51 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
         <h3 className="text-sm font-semibold text-gray-700">
           Campaigns {pageNum > 1 && <span className="ml-1 text-xs text-gray-500">Page {pageNum}{totalPages ? `/${totalPages}` : ''}</span>}
         </h3>
-        <div className="flex w-full min-w-0 items-center gap-2 sm:w-auto">
-          <div className="relative min-w-0 flex-1 sm:flex-none">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => {
-                const val = e.target.value;
-                setSearch(val);
-                clearTimeout(searchTimerRef.current);
-                searchTimerRef.current = setTimeout(() => handleSearch(val), 400);
-              }}
-              placeholder="Search campaigns..."
-              className="w-full rounded-lg border border-gray-200 bg-gray-50 py-2 pl-9 pr-3 text-sm text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-red-400 focus:outline-none sm:w-52"
-            />
+        {!hideControls && (
+          <div className="flex w-full min-w-0 items-center gap-2 sm:w-auto">
+            <div className="relative min-w-0 flex-1 sm:flex-none">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+              <input
+                type="text"
+                value={effectiveSearch}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (!controlledSearch) {
+                    setSearch(val);
+                  }
+                  clearTimeout(searchTimerRef.current);
+                  searchTimerRef.current = setTimeout(() => handleSearch(val), 400);
+                }}
+                placeholder="Search campaigns..."
+                className="w-full rounded-lg border border-gray-200 bg-gray-50 py-2 pl-9 pr-3 text-sm text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-red-400 focus:outline-none sm:w-52"
+              />
+            </div>
+            <div className="relative shrink-0">
+              <Filter className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
+              <select
+                value={effectiveFilterStatus}
+                onChange={(e) => handleStatusFilter(e.target.value)}
+                className="appearance-none rounded-lg border border-gray-200 bg-white py-2 pl-8 pr-7 text-xs text-gray-700 focus:ring-2 focus:ring-red-400 focus:outline-none"
+              >
+                <option value="all">All statuses</option>
+                <option value="ACTIVE">Active</option>
+                <option value="PAUSED">Paused</option>
+                <option value="COMPLETED">Completed</option>
+                <option value="RECENTLY_COMPLETED">Recently Completed</option>
+                <option value="SCHEDULED">Scheduled</option>
+                <option value="NOT_DELIVERING">Not Delivering</option>
+                <option value="DELETED">Deleted</option>
+                <option value="ARCHIVED">Archived</option>
+                <option value="IN_PROCESS">In Review</option>
+                <option value="WITH_ISSUES">With Issues</option>
+              </select>
+            </div>
           </div>
-          <div className="relative shrink-0">
-            <Filter className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
-            <select
-              value={filterStatus}
-              onChange={(e) => handleStatusFilter(e.target.value)}
-              className="appearance-none rounded-lg border border-gray-200 bg-white py-2 pl-8 pr-7 text-xs text-gray-700 focus:ring-2 focus:ring-red-400 focus:outline-none"
-            >
-              <option value="all">All statuses</option>
-              <option value="ACTIVE">Active</option>
-              <option value="PAUSED">Paused</option>
-              <option value="COMPLETED">Completed</option>
-              <option value="RECENTLY_COMPLETED">Recently Completed</option>
-              <option value="SCHEDULED">Scheduled</option>
-              <option value="NOT_DELIVERING">Not Delivering</option>
-              <option value="DELETED">Deleted</option>
-              <option value="ARCHIVED">Archived</option>
-              <option value="IN_PROCESS">In Review</option>
-              <option value="WITH_ISSUES">With Issues</option>
-            </select>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Loading */}
-      {loading && (
+      {isTableLoading && (
         <div className="grid grid-cols-1 gap-3 p-3 sm:gap-4 sm:p-5 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={`campaign-skeleton-${i}`} className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
@@ -903,7 +1071,7 @@ export default function CampaignsTable({ accountId }: CampaignsTableProps) {
                             onAssigned={(users) => setAssignments((prev) => ({ ...prev, [c.id]: users }))}
                           />
 	                        ) : (
-	                          <span className="text-xs text-gray-400">No account selected</span>
+	                          <span className="text-xs text-gray-400"></span>
 	                        )}
 	                      </div>
 	                      <div className="flex items-center gap-2" data-no-modal="true">

@@ -114,8 +114,8 @@ export const HeroSlider = () => {
   if (slides.length === 0) return null;
 
   return (
-    <section className="pt-5 pb-4 md:pt-6 md:pb-6 page-reveal">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="page-reveal">
+      <div className="max-w-7xl mx-auto">
         <div className="card-reveal-left">
           <Slider
             slides={slides}

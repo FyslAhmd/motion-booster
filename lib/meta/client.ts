@@ -272,6 +272,25 @@ export function fetchAdSetsPage(opts: DirectPageOptions = {}) {
   );
 }
 
+/**
+ * Fetch adsets directly from the campaign node: /{campaignId}/adsets
+ * This is the canonical approach — no account_id needed, no filtering hacks.
+ * Used for goal detection where we just need optimization_goal values.
+ */
+export function fetchAdSetsByCampaign(campaignId: string, limit = 50) {
+  const params: Record<string, string> = {
+    fields: ADSET_FIELDS,
+    limit: String(Math.min(limit, 50)),
+  };
+  const cacheKey = `meta:campaign-adsets:${campaignId}:${limit}`;
+  // 10-minute TTL: optimization_goal virtually never changes mid-campaign.
+  // This prevents rate-limit hammering when many cards load simultaneously.
+  return cachedFetch(cacheKey, () =>
+    metaFetchPage(`/${campaignId}/adsets`, params),
+    10 * 60 * 1000,
+  );
+}
+
 /** Fetch one page of ads from Meta API directly */
 export function fetchAdsPage(opts: DirectPageOptions = {}) {
   const id = opts.accountId || getDefaultAccountId();

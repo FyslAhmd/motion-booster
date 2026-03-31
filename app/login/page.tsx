@@ -188,7 +188,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-[calc(100dvh-11rem)] md:min-h-screen bg-linear-to-br from-red-50 to-white flex items-start md:items-center justify-center px-4 pt-20 pb-12 md:py-12">
+    <div className="min-h-[calc(100dvh-8.625rem)] lg:min-h-[calc(100dvh-7.75rem)] bg-linear-to-br from-red-50 to-white flex items-center justify-center px-4 py-6 md:py-10">
       <div className="w-full max-w-md lg:mt-0">
         <div className="bg-white rounded-3xl shadow-md p-8 md:p-10">
           {/* Header */}
