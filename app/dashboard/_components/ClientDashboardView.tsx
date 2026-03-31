@@ -12,7 +12,6 @@ import {
   DashboardQuickStatsSkeleton,
 } from "./OverviewSectionSkeletons";
 import { useAuth } from "@/lib/auth/context";
-import Link from "next/link";
 import { HeroSlider } from "@/components/sections";
 import ClientMetaOverviewSection from "./ClientMetaOverviewSection";
 
@@ -22,7 +21,6 @@ interface StatCard {
   icon: ComponentType<{ className?: string }>;
   color: string;
   bg: string;
-  href?: string;
 }
 
 function TakaIcon({ className = "" }: { className?: string }) {
@@ -398,7 +396,6 @@ export default function ClientDashboardView() {
       icon: Megaphone,
       color: "text-red-600",
       bg: "bg-red-50",
-      href: "/dashboard/meta",
     },
     {
       label: "Daily Spend",
@@ -427,7 +424,6 @@ export default function ClientDashboardView() {
       icon: CalendarDays,
       color: "text-violet-600",
       bg: "bg-violet-50",
-      href: "/dashboard/boost-requests",
     },
     {
       label: "Unseen Messages",
@@ -435,7 +431,6 @@ export default function ClientDashboardView() {
       icon: MessageCircle,
       color: unseenMessages ? "text-orange-600" : "text-gray-400",
       bg: unseenMessages ? "bg-orange-50" : "bg-gray-50",
-      href: "/dashboard/chat",
     },
   ];
 
@@ -484,12 +479,8 @@ export default function ClientDashboardView() {
                     </div>
                   </>
                 );
-                const cls = `relative rounded-xl border border-gray-100 bg-white p-4 min-h-[132px] flex flex-col gap-3 shadow-sm hover:shadow-md transition-shadow${card.href ? " cursor-pointer" : ""}`;
-                return card.href ? (
-                  <Link key={card.label} href={card.href} className={cls}>
-                    {inner}
-                  </Link>
-                ) : (
+                const cls = "relative rounded-xl border border-gray-100 bg-white p-4 min-h-[132px] flex flex-col gap-3 shadow-sm";
+                return (
                   <div key={card.label} className={cls}>
                     {inner}
                   </div>

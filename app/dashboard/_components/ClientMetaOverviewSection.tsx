@@ -91,7 +91,6 @@ function formatJoinedDate(date: string | null) {
 function ClientOverviewCard({ summary }: { summary: SectionSummary }) {
   const infoItems = [
     { label: 'Total Spend', value: formatUsd(summary.totalSpend), highlight: true },
-    { label: 'Balance', value: summary.balance == null ? '-' : formatUsd(summary.balance), highlight: false },
     { label: 'Joined Date', value: formatJoinedDate(summary.joinedDate), highlight: false },
   ];
 
