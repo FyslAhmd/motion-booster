@@ -310,7 +310,8 @@ export default function MyCampaignsPage() {
   };
 
   const getDominantGoalForCampaign = async (campaignId: string) => {
-    const params = new URLSearchParams({ campaign_id: campaignId, limit: '50' });
+    // Use mode=by_campaign: queries /{campaignId}/adsets directly, no account_id needed
+    const params = new URLSearchParams({ mode: 'by_campaign', campaign_id: campaignId, limit: '50' });
     const res = await fetch(`/api/v1/meta/adsets?${params.toString()}`);
     const json = await res.json();
     const adSets = Array.isArray(json?.data) ? json.data : [];

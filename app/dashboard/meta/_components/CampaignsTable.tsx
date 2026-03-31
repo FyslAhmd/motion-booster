@@ -511,7 +511,10 @@ export default function CampaignsTable({
       .catch(() => {});
   }, [data, accountId]);
 
-  // Fetch spend + dynamic metric cards for currently visible campaigns
+  // Fetch spend + dynamic metric cards for currently visible campaigns.
+  // Process SEQUENTIALLY (not Promise.all) to avoid Meta API rate-limit (code 17).
+  // Each campaign still runs its 2 calls (insight + adsets) in parallel with each
+  // other, but campaigns queue one-at-a-time. Cards update progressively.
   useEffect(() => {
     if (!data.length) {
       setCampaignCardMetrics({});
@@ -520,26 +523,26 @@ export default function CampaignsTable({
 
     let isCancelled = false;
 
-    const loadCardMetrics = async () => {
-      const entries = await Promise.all(
-        data.map(async (campaign) => {
-          try {
-            // Resolve the correct account ID: prefer the global prop, fall back to
-            // the per-campaign mapping (used in assigned/my-campaigns mode).
-            const resolvedAccountId = accountId || campaignAccountById?.[campaign.id];
+    const fetchOneCard = async (campaign: Campaign): Promise<[string, CampaignCardMetric | null]> => {
+      try {
+        const resolvedAccountId = accountId || campaignAccountById?.[campaign.id];
 
             const insightQuery = new URLSearchParams({
               type: 'single_campaign',
               campaign_id: campaign.id,
               date_preset: 'maximum',
             });
+            // Use mode=by_campaign: queries /{campaignId}/adsets directly.
+            // This is account-agnostic — works for both /meta and /my-campaigns
+            // without needing account_id. The old approach (filtering through
+            // /{accountId}/adsets?filtering=[campaign.id=X]) was unreliable.
             const adsetQuery = new URLSearchParams({
+              mode: 'by_campaign',
               campaign_id: campaign.id,
-              limit: '100',
+              limit: '50',
             });
             if (resolvedAccountId) {
               insightQuery.set('account_id', resolvedAccountId);
-              adsetQuery.set('account_id', resolvedAccountId);
             }
 
             const [insightRes, adsetRes] = await Promise.all([
@@ -578,18 +581,20 @@ export default function CampaignsTable({
               } satisfies CampaignCardMetric,
             ] as const;
           } catch {
-            return [campaign.id, null] as const;
+            return [campaign.id, null] as [string, null];
           }
-        }),
-      );
+    };
 
-      if (isCancelled) return;
-
-      const next: Record<string, CampaignCardMetric> = {};
-      for (const [campaignId, metric] of entries) {
-        if (metric) next[campaignId] = metric;
+    const loadCardMetrics = async () => {
+      // Sequential loop — prevents Meta API quota exhaustion (error 17)
+      for (const campaign of data) {
+        if (isCancelled) break;
+        const [id, metric] = await fetchOneCard(campaign);
+        if (isCancelled) break;
+        if (metric) {
+          setCampaignCardMetrics((prev) => ({ ...prev, [id]: metric }));
+        }
       }
-      setCampaignCardMetrics(next);
     };
 
     loadCardMetrics();
