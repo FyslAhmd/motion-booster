@@ -67,6 +67,76 @@ function buildDateQuery(preset: DatePreset, since: string, until: string) {
   return `date_preset=${preset}`;
 }
 
+function toIsoDateLocal(date: Date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function getDateWindow(
+  preset: DatePreset,
+  customSince: string,
+  customUntil: string,
+  dailyRows: InsightRow[],
+) {
+  const today = new Date();
+  const end = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+  const daysBack = (days: number) => {
+    const start = new Date(end);
+    start.setDate(start.getDate() - (days - 1));
+    return { since: toIsoDateLocal(start), until: toIsoDateLocal(end) };
+  };
+
+  if (preset === 'custom' && customSince && customUntil) {
+    return { since: customSince, until: customUntil };
+  }
+
+  switch (preset) {
+    case 'today':
+      return { since: toIsoDateLocal(end), until: toIsoDateLocal(end) };
+    case 'yesterday': {
+      const d = new Date(end);
+      d.setDate(d.getDate() - 1);
+      const day = toIsoDateLocal(d);
+      return { since: day, until: day };
+    }
+    case 'last_7d':
+      return daysBack(7);
+    case 'last_14d':
+      return daysBack(14);
+    case 'last_30d':
+      return daysBack(30);
+    case 'last_90d':
+      return daysBack(90);
+    case 'this_month': {
+      const start = new Date(end.getFullYear(), end.getMonth(), 1);
+      return { since: toIsoDateLocal(start), until: toIsoDateLocal(end) };
+    }
+    case 'last_month': {
+      const start = new Date(end.getFullYear(), end.getMonth() - 1, 1);
+      const until = new Date(end.getFullYear(), end.getMonth(), 0);
+      return { since: toIsoDateLocal(start), until: toIsoDateLocal(until) };
+    }
+    case 'maximum': {
+      if (dailyRows.length === 0) {
+        return { since: toIsoDateLocal(end), until: toIsoDateLocal(end) };
+      }
+      const sorted = dailyRows
+        .map((r) => r.date_start)
+        .filter(Boolean)
+        .sort((a, b) => a.localeCompare(b));
+      return {
+        since: sorted[0] || toIsoDateLocal(end),
+        until: sorted[sorted.length - 1] || toIsoDateLocal(end),
+      };
+    }
+    default:
+      return daysBack(30);
+  }
+}
+
 function formatUsd(n: number | null | undefined) {
   if (n == null || !Number.isFinite(n)) return '-';
   return new Intl.NumberFormat('en-US', {
@@ -303,15 +373,26 @@ export default function ClientMetaOverviewSection() {
               },
             ];
 
-      const dailyRows: InsightRow[] = Array.from(dailyMap.entries())
-        .sort(([a], [b]) => a.localeCompare(b))
-        .map(([date, val]) => ({
+      const dateWindow = getDateWindow(datePreset, customSince, customUntil, flatDailyRows);
+      const startDate = new Date(`${dateWindow.since}T00:00:00`);
+      const endDate = new Date(`${dateWindow.until}T00:00:00`);
+
+      const normalizedDailyRows: InsightRow[] = [];
+      for (
+        const d = new Date(startDate);
+        d.getTime() <= endDate.getTime();
+        d.setDate(d.getDate() + 1)
+      ) {
+        const date = toIsoDateLocal(d);
+        const val = dailyMap.get(date) ?? { spend: 0, reach: 0, impressions: 0 };
+        normalizedDailyRows.push({
           date_start: date,
           date_stop: date,
           spend: val.spend.toFixed(2),
           reach: String(val.reach),
           impressions: String(val.impressions),
-        }));
+        });
+      }
 
       const totalSpend = flatMaxRows.reduce((sum, row) => sum + toUsd(row.spend), 0);
 
@@ -321,7 +402,7 @@ export default function ClientMetaOverviewSection() {
         joinedDate: userBudgetRow?.createdAt || null,
       });
       setInsights(aggregatedInsight);
-      setDailySpend(dailyRows);
+      setDailySpend(normalizedDailyRows);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Failed to load Meta data';
       setError(msg);

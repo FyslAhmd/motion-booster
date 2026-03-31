@@ -1071,7 +1071,7 @@ export default function CampaignsTable({
                             onAssigned={(users) => setAssignments((prev) => ({ ...prev, [c.id]: users }))}
                           />
 	                        ) : (
-	                          <span className="text-xs text-gray-400">No account selected</span>
+	                          <span className="text-xs text-gray-400"></span>
 	                        )}
 	                      </div>
 	                      <div className="flex items-center gap-2" data-no-modal="true">
