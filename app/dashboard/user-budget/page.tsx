@@ -26,6 +26,27 @@ interface UserBudgetRow {
   };
 }
 
+type AdjustmentDirection = 'ADD' | 'DECREASE';
+type SavingAction = { userId: string; direction: AdjustmentDirection };
+type PaymentMethod =
+  | 'MASTER_CARD'
+  | 'VISA_CARD'
+  | 'BANK_ACCOUNT'
+  | 'BKASH'
+  | 'NAGAD'
+  | 'ROCKET'
+  | 'OTHERS';
+
+const PAYMENT_METHOD_OPTIONS: Array<{ value: PaymentMethod; label: string }> = [
+  { value: 'MASTER_CARD', label: 'Master Card' },
+  { value: 'VISA_CARD', label: 'Visa Card' },
+  { value: 'BANK_ACCOUNT', label: 'Bank Account' },
+  { value: 'BKASH', label: 'bKash' },
+  { value: 'NAGAD', label: 'Nagad' },
+  { value: 'ROCKET', label: 'Rocket' },
+  { value: 'OTHERS', label: 'Others' },
+];
+
 function money(v: number) {
   return `$${v.toFixed(2)}`;
 }
@@ -47,7 +68,9 @@ export default function UserBudgetPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [depositInputs, setDepositInputs] = useState<Record<string, string>>({});
-  const [savingUserId, setSavingUserId] = useState<string | null>(null);
+  const [methodInputs, setMethodInputs] = useState<Record<string, PaymentMethod>>({});
+  const [otherMethodInputs, setOtherMethodInputs] = useState<Record<string, string>>({});
+  const [savingAction, setSavingAction] = useState<SavingAction | null>(null);
 
   const loadData = useCallback(async (showPageLoader = true) => {
     try {
@@ -106,37 +129,53 @@ export default function UserBudgetPage() {
     });
   }, [users, search]);
 
-  const submitDeposit = async (userId: string) => {
+  const submitDeposit = async (userId: string, direction: AdjustmentDirection) => {
     const value = depositInputs[userId] || '';
     const amount = Number(value);
+    const method = methodInputs[userId] || 'MASTER_CARD';
+    const methodOther = (otherMethodInputs[userId] || '').trim();
 
     if (!Number.isFinite(amount) || amount <= 0) {
-      setError('Please enter a valid positive deposit amount.');
+      setError('Please enter a valid positive amount.');
+      return;
+    }
+
+    if (method === 'OTHERS' && !methodOther) {
+      setError('Please enter the custom method when selecting Others.');
       return;
     }
 
     try {
-      setSavingUserId(userId);
+      setSavingAction({ userId, direction });
       setError('');
 
       const res = await fetch('/api/v1/admin/user-budgets/deposits', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ userId, amount }),
+        body: JSON.stringify({
+          userId,
+          amount,
+          direction,
+          method,
+          methodOther: method === 'OTHERS' ? methodOther : undefined,
+        }),
       });
 
       const json = await res.json();
       if (!res.ok || !json.success) {
-        throw new Error(json.error || 'Failed to add deposit');
+        throw new Error(json.error || 'Failed to save budget transaction');
       }
 
       setDepositInputs((prev) => ({ ...prev, [userId]: '' }));
+      if (method === 'OTHERS') {
+        setOtherMethodInputs((prev) => ({ ...prev, [userId]: '' }));
+      }
       await loadData(false);
     } catch (err: any) {
-      setError(err?.message || 'Failed to add deposit');
+      setError(err?.message || 'Failed to save budget transaction');
     } finally {
-      setSavingUserId(null);
+      setSavingAction(null);
     }
   };
 
@@ -146,13 +185,13 @@ export default function UserBudgetPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">User Budget</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Track deposits, assigned ads spend, and current balance per user.
+            Track budget increases, decreases, spend, and current balance per user.
           </p>
         </div>
 
         <div className="grid grid-cols-3 gap-2 sm:gap-3">
           <div className="rounded-xl border border-blue-100 bg-blue-50 px-2.5 py-2.5 sm:px-4 sm:py-3">
-            <p className="text-[10px] sm:text-xs font-medium uppercase tracking-wide text-blue-500">Total Deposited</p>
+            <p className="text-[10px] sm:text-xs font-medium uppercase tracking-wide text-blue-500">Net Budget</p>
             <p className="mt-1 text-lg sm:text-2xl font-bold text-blue-700">{money(totals.totalBudget)}</p>
           </div>
           <div className="rounded-xl border border-amber-100 bg-amber-50 px-2.5 py-2.5 sm:px-4 sm:py-3">
@@ -231,28 +270,69 @@ export default function UserBudgetPage() {
                           </div>
                         </div>
 
-                        <div className="mt-3 flex items-center gap-2">
-                          <input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            placeholder="Deposit amount"
-                            value={depositInputs[user.id] ?? ''}
+                        <div className="mt-3 space-y-2">
+                          <select
+                            value={methodInputs[user.id] || 'MASTER_CARD'}
                             onChange={(e) =>
-                              setDepositInputs((prev) => ({
+                              setMethodInputs((prev) => ({
                                 ...prev,
-                                [user.id]: e.target.value,
+                                [user.id]: e.target.value as PaymentMethod,
                               }))
                             }
-                            className="min-w-0 flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-400"
-                          />
-                          <button
-                            onClick={() => submitDeposit(user.id)}
-                            disabled={savingUserId === user.id}
-                            className="rounded-lg bg-red-600 px-3 py-2 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+                            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-400"
                           >
-                            {savingUserId === user.id ? 'Saving...' : 'Add'}
-                          </button>
+                            {PAYMENT_METHOD_OPTIONS.map((option) => (
+                              <option key={option.value} value={option.value}>
+                                {option.label}
+                              </option>
+                            ))}
+                          </select>
+
+                          {(methodInputs[user.id] || 'MASTER_CARD') === 'OTHERS' && (
+                            <input
+                              type="text"
+                              placeholder="Enter custom method"
+                              value={otherMethodInputs[user.id] ?? ''}
+                              onChange={(e) =>
+                                setOtherMethodInputs((prev) => ({
+                                  ...prev,
+                                  [user.id]: e.target.value,
+                                }))
+                              }
+                              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-red-400"
+                            />
+                          )}
+
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              placeholder="Amount"
+                              value={depositInputs[user.id] ?? ''}
+                              onChange={(e) =>
+                                setDepositInputs((prev) => ({
+                                  ...prev,
+                                  [user.id]: e.target.value,
+                                }))
+                              }
+                              className="min-w-0 flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-400"
+                            />
+                            <button
+                              onClick={() => submitDeposit(user.id, 'ADD')}
+                              disabled={savingAction?.userId === user.id}
+                              className="rounded-lg bg-green-600 px-3 py-2 text-xs font-semibold text-white hover:bg-green-700 disabled:opacity-50"
+                            >
+                              {savingAction?.userId === user.id && savingAction.direction === 'ADD' ? 'Saving...' : 'Add'}
+                            </button>
+                            <button
+                              onClick={() => submitDeposit(user.id, 'DECREASE')}
+                              disabled={savingAction?.userId === user.id}
+                              className="rounded-lg bg-red-600 px-3 py-2 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+                            >
+                              {savingAction?.userId === user.id && savingAction.direction === 'DECREASE' ? 'Saving...' : 'Deduct'}
+                            </button>
+                          </div>
                         </div>
                       </div>
                     );
