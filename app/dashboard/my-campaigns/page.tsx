@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import AdminShell from '../_components/AdminShell';
 import { AdminSectionSkeleton } from '@/components/ui/AdminSectionSkeleton';
 import { CampaignsTable } from '../meta/_components';
-import { Search, Filter } from 'lucide-react';
+import { Search, Filter, Activity, BarChart3, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/lib/auth/context';
 
 interface CampaignLite {
@@ -17,6 +17,8 @@ export default function MyCampaignsPage() {
   const { user } = useAuth();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ACTIVE');
+  const [refreshTick, setRefreshTick] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
   const [assignedCampaignIds, setAssignedCampaignIds] = useState<string[]>([]);
   const [campaignAccountById, setCampaignAccountById] = useState<Record<string, string>>({});
   const [assignmentsLoaded, setAssignmentsLoaded] = useState(false);
@@ -60,7 +62,7 @@ export default function MyCampaignsPage() {
     return () => {
       cancelled = true;
     };
-  }, [user?.id]);
+  }, [user?.id, refreshTick]);
 
   useEffect(() => {
     if (!assignmentsLoaded) return;
@@ -106,7 +108,19 @@ export default function MyCampaignsPage() {
     return () => {
       cancelled = true;
     };
-  }, [assignmentsLoaded, assignedCampaignIds]);
+  }, [assignmentsLoaded, assignedCampaignIds, refreshTick]);
+
+  useEffect(() => {
+    if (refreshing && assignmentsLoaded && activeCampaignCount !== null) {
+      setRefreshing(false);
+    }
+  }, [refreshing, assignmentsLoaded, activeCampaignCount]);
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    setActiveCampaignCount(null);
+    setRefreshTick((prev) => prev + 1);
+  };
 
   return (
     <AdminShell>
@@ -116,54 +130,68 @@ export default function MyCampaignsPage() {
           <p className="mt-0.5 text-sm text-gray-500">
             Manage and monitor your campaigns and ads.
           </p>
-          <div className="mt-3 grid grid-cols-[minmax(0,1fr)_92px] gap-2 sm:mt-4 sm:grid-cols-[minmax(0,1fr)_110px] sm:gap-2.5">
-            <div className="h-full rounded-xl border border-gray-200 bg-gray-50 p-2.5 sm:p-3">
-              <div className="flex w-full min-w-0 flex-col gap-2 sm:flex-row sm:items-center">
-                <div className="relative min-w-0 w-full sm:flex-1">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
-                  <input
-                    type="text"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search campaigns..."
-                    className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-red-400 focus:outline-none"
-                  />
-                </div>
+          <div className="mt-3 rounded-xl border border-gray-200 bg-gray-50 p-2.5 sm:mt-4 sm:p-3">
+            <div className="flex w-full min-w-0 items-center gap-2">
+              <div className="relative min-w-0 flex-1">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search campaigns..."
+                  className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-red-400 focus:outline-none"
+                />
+              </div>
 
-                <div className="relative w-full shrink-0 sm:w-auto">
-                  <Filter className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
-                  <select
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                    className="w-full appearance-none rounded-lg border border-gray-200 bg-white py-2 pl-8 pr-7 text-xs text-gray-700 focus:ring-2 focus:ring-red-400 focus:outline-none sm:w-auto"
-                  >
-                    <option value="all">All statuses</option>
-                    <option value="ACTIVE">Active</option>
-                    <option value="PAUSED">Paused</option>
-                    <option value="COMPLETED">Completed</option>
-                    <option value="RECENTLY_COMPLETED">Recently Completed</option>
-                    <option value="SCHEDULED">Scheduled</option>
-                    <option value="NOT_DELIVERING">Not Delivering</option>
-                    <option value="DELETED">Deleted</option>
-                    <option value="ARCHIVED">Archived</option>
-                    <option value="IN_PROCESS">In Review</option>
-                    <option value="WITH_ISSUES">With Issues</option>
-                  </select>
-                </div>
+              <div className="relative w-36 shrink-0 sm:w-44">
+                <Filter className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="w-full appearance-none rounded-lg border border-gray-200 bg-white py-2 pl-8 pr-7 text-xs text-gray-700 focus:ring-2 focus:ring-red-400 focus:outline-none"
+                >
+                  <option value="all">All statuses</option>
+                  <option value="ACTIVE">Active</option>
+                  <option value="PAUSED">Paused</option>
+                  <option value="COMPLETED">Completed</option>
+                  <option value="RECENTLY_COMPLETED">Recently Completed</option>
+                  <option value="SCHEDULED">Scheduled</option>
+                  <option value="NOT_DELIVERING">Not Delivering</option>
+                  <option value="DELETED">Deleted</option>
+                  <option value="ARCHIVED">Archived</option>
+                  <option value="IN_PROCESS">In Review</option>
+                  <option value="WITH_ISSUES">With Issues</option>
+                </select>
               </div>
             </div>
 
-            <div className="h-full rounded-xl border border-green-200 bg-green-50 px-2 py-2 sm:px-2.5 sm:py-2.5 text-center flex flex-col justify-center">
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-green-700">
-                Active
-              </p>
-              <p className="mt-1 text-lg font-bold leading-none text-green-700 sm:text-xl">
-                {countsLoading ? (
-                  <span className="mx-auto inline-block h-5 w-10 rounded-lg bg-green-200/90 skeleton-breathe" />
-                ) : (
-                  activeCampaignCount
-                )}
-              </p>
+            <div className="mt-2 grid grid-cols-[1fr_1fr_auto] gap-2">
+              <button
+                type="button"
+                className="flex items-center justify-center gap-2 rounded-lg border border-emerald-200 bg-linear-to-b from-emerald-50 to-white px-3 py-2 text-sm font-semibold text-emerald-700 shadow-sm"
+              >
+                <Activity className="h-4 w-4" />
+                {countsLoading ? 'Active ...' : `Active ${activeCampaignCount}`}
+              </button>
+
+              <button
+                type="button"
+                className="flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
+              >
+                <BarChart3 className="h-4 w-4 text-slate-500" />
+                Report
+              </button>
+
+              <button
+                type="button"
+                onClick={handleRefresh}
+                disabled={refreshing}
+                aria-label="Refresh campaigns"
+                title="Refresh campaigns"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-blue-700 shadow-sm transition-colors hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+              </button>
             </div>
           </div>
         </div>
@@ -172,6 +200,7 @@ export default function MyCampaignsPage() {
 
         <div>
           <CampaignsTable
+            key={`my-campaigns-${refreshTick}`}
             searchValue={search}
             onSearchValueChange={setSearch}
             statusFilterValue={statusFilter}
