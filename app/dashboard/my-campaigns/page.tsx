@@ -393,41 +393,15 @@ export default function MyCampaignsPage() {
   const downloadReportPdf = async () => {
     if (reportRows.length === 0 || !reportInvoiceRef.current) return;
 
-    const [{ jsPDF }, html2canvasModule] = await Promise.all([
+    const [{ jsPDF }, { toPng }] = await Promise.all([
       import('jspdf'),
-      import('html2canvas'),
+      import('html-to-image'),
     ]);
-    const html2canvas = html2canvasModule.default;
-
-    // ── Helper: rasterize SVG to PNG (html2canvas can’t render SVGs) ────
-    const rasterizeSvg = (src: string, w: number, h: number): Promise<string> =>
-      new Promise((resolve) => {
-        fetch(src)
-          .then((r) => r.text())
-          .then((svgText) => {
-            const blob = new Blob([svgText], { type: 'image/svg+xml;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const img = new Image();
-            img.onload = () => {
-              const c = document.createElement('canvas');
-              c.width = w; c.height = h;
-              c.getContext('2d')?.drawImage(img, 0, 0, w, h);
-              URL.revokeObjectURL(url);
-              resolve(c.toDataURL('image/png'));
-            };
-            img.onerror = () => { URL.revokeObjectURL(url); resolve(''); };
-            img.src = url;
-          })
-          .catch(() => resolve(''));
-      });
 
     const wrapper = reportInvoiceRef.current.parentElement as HTMLElement;
     const el = reportInvoiceRef.current;
 
-    // ── Step 1: Move invoice ON-SCREEN so browser computes full layout ───
-    // When elements are at top:-9999px, the browser skips full font metric
-    // computation. html2canvas then reads wrong baselines → text at bottom.
-    // Fix: temporarily show it on-screen (invisible to user via opacity:0).
+    // ── Step 1: Show invoice on-screen (invisible) so browser computes layout ──
     wrapper.style.position = 'fixed';
     wrapper.style.top = '0';
     wrapper.style.left = '0';
@@ -435,65 +409,40 @@ export default function MyCampaignsPage() {
     wrapper.style.opacity = '0';
     wrapper.style.pointerEvents = 'none';
 
-    // ── Step 2: Wait for fonts + layout to be fully computed ─────────────
+    // Wait for fonts + paint
     await document.fonts.ready;
-    // Double rAF ensures the browser has painted at least one frame
     await new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
 
-    // ── Step 3: Rasterize SVG images to PNG ──────────────────────────
-    const images = Array.from(el.querySelectorAll('img'));
-    const originalSrcs = images.map((img) => img.src);
-
-    await Promise.all(
-      images.map(async (img) => {
-        try {
-          const src = img.src;
-          if (src.toLowerCase().includes('.svg') || src.startsWith('data:image/svg')) {
-            const w = (img.offsetWidth || 230) * 2;
-            const h = (img.offsetHeight || 40) * 2;
-            const png = await rasterizeSvg(src, w, h);
-            if (png) {
-              img.src = png;
-              await new Promise<void>((resolve) => {
-                if (img.complete) { resolve(); return; }
-                img.addEventListener('load', () => resolve(), { once: true });
-                img.addEventListener('error', () => resolve(), { once: true });
-              });
-            }
-          }
-        } catch { /* skip */ }
-      }),
-    );
-
-    // One more rAF after image swap to ensure paint
-    await new Promise<void>((r) => requestAnimationFrame(() => r()));
-
-    // ── Step 4: Capture with html2canvas ─────────────────────────────
-    const canvas = await html2canvas(el, {
-      scale: 2,
-      useCORS: true,
-      imageTimeout: 0,
+    // ── Step 2: Capture using html-to-image (browser's OWN renderer) ──────────
+    // html-to-image uses SVG foreignObject — the browser renders the DOM natively,
+    // producing pixel-perfect output identical to screen. No html2canvas text bugs.
+    const imgData = await toPng(el, {
+      pixelRatio: 2,
       backgroundColor: '#d9d9d9',
-      logging: false,
     });
 
-    // ── Step 5: Restore original state ───────────────────────────────
-    images.forEach((img, i) => { img.src = originalSrcs[i]; });
+    // ── Step 3: Restore off-screen position ───────────────────────────────────
     wrapper.style.position = 'absolute';
     wrapper.style.top = '-9999px';
     wrapper.style.left = '-9999px';
     wrapper.style.zIndex = '-1';
     wrapper.style.opacity = '';
 
-    // ── Step 6: Build PDF ──────────────────────────────────────────
-    const imgData = canvas.toDataURL('image/png');
+    // ── Step 4: Build PDF ─────────────────────────────────────────────────────
     const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
-
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 16;
     const renderWidth = pageWidth - margin * 2;
-    const renderHeight = (canvas.height * renderWidth) / canvas.width;
+
+    // Get image dimensions to calculate aspect ratio
+    const img = new Image();
+    img.src = imgData;
+    await new Promise<void>((resolve) => {
+      img.onload = () => resolve();
+      img.onerror = () => resolve();
+    });
+    const renderHeight = (img.height * renderWidth) / img.width;
 
     let heightLeft = renderHeight;
     let y = margin;
