@@ -30,7 +30,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
   const d = payload[0]?.payload as ChartRow;
   return (
-    <div className="min-w-[170px] max-w-[220px] rounded-xl border border-gray-100 bg-white p-3 shadow-lg">
+    <div className="min-w-42.5 max-w-55 rounded-xl border border-gray-100 bg-white p-3 shadow-lg">
       <p className="mb-2 text-xs font-semibold text-gray-700">
         {new Date(String(label)).toLocaleDateString('en-US', {
           month: 'short', day: 'numeric', year: 'numeric',
