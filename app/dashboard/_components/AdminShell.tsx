@@ -56,6 +56,12 @@ interface NavGroup {
 
 type NavEntry = NavItem | NavGroup;
 
+interface UserNavItem {
+  href: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+}
+
 const navItems: NavEntry[] = [
   { href: '/dashboard', label: 'Overview', icon: LayoutDashboard, adminOnly: true },
   { href: '/dashboard/meta', label: 'Ads Manager', icon: Megaphone, adminOnly: true },
@@ -88,15 +94,6 @@ const navItems: NavEntry[] = [
   { href: '/dashboard/settings', label: 'Site Settings', icon: Settings, adminOnly: true },
 ];
 
-// Routes accessible by normal users (no admin required)
-const USER_ALLOWED_ROUTES = [
-  '/dashboard',
-  '/dashboard/chat',
-  '/dashboard/meta',
-  '/dashboard/profile',
-  '/dashboard/user-campaigns',
-];
-
 // ── User Shell (non-admin layout) ─────────────────────────────────────────
 function UserShell({ children, userName, avatarUrl, noPadding }: { children: React.ReactNode; userName: string; avatarUrl?: string | null; noPadding?: boolean }) {
   const pathname = usePathname();
@@ -109,9 +106,9 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
     router.push('/login');
   };
 
-  const userNavItems = [
+  const userNavItems: UserNavItem[] = [
     { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
-    { href: '/dashboard/user-campaigns', label: 'My Campaign', icon: Megaphone },
+    { href: '/dashboard/my-campaigns', label: 'My Campaign', icon: Megaphone },
     { href: '/dashboard/chat', label: 'Chat', icon: MessageCircle },
   ];
 
@@ -130,15 +127,16 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
           {userNavItems.map(({ href, label, icon: Icon }) => {
             const active = pathname === href;
             return (
-              <Link
+              <button
                 key={href}
-                href={href}
+                type="button"
+                onClick={() => router.push(href)}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${active ? 'bg-red-600 text-white shadow-md shadow-red-500/20' : 'text-gray-500 hover:text-gray-900 hover:bg-red-50'}`}
               >
                 <Icon className={`w-4 h-4 shrink-0 ${active ? 'text-white' : 'text-gray-400'}`} />
                 <span>{label}</span>
                 {active && <ChevronRight className="w-3 h-3 ml-auto text-white/70" />}
-              </Link>
+              </button>
             );
           })}
         </nav>
@@ -210,14 +208,15 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
         {userNavItems.map(({ href, label, icon: Icon }) => {
           const active = pathname === href;
           return (
-            <Link
+            <button
               key={href}
-              href={href}
+              type="button"
+              onClick={() => router.push(href)}
               className={`flex flex-col items-center justify-center gap-1 px-4 py-2 flex-1 transition-colors ${active ? 'text-red-500' : 'text-gray-500 hover:text-red-500'}`}
             >
               <Icon className="w-6 h-6" />
               <span className="whitespace-nowrap text-[10px] font-medium">{label}</span>
-            </Link>
+            </button>
           );
         })}
 
@@ -262,10 +261,13 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
               {userNavItems.map(({ href, label, icon: Icon }) => {
                 const active = pathname === href;
                 return (
-                  <Link
+                  <button
                     key={href}
-                    href={href}
-                    onClick={() => setSidebarOpen(false)}
+                    type="button"
+                    onClick={() => {
+                      setSidebarOpen(false);
+                      router.push(href);
+                    }}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
                       active
                         ? 'bg-red-600 text-white shadow-md shadow-red-500/20'
@@ -275,7 +277,7 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
                     <Icon className={`w-4 h-4 shrink-0 ${active ? 'text-white' : 'text-gray-400'}`} />
                     <span>{label}</span>
                     {active && <ChevronRight className="w-3 h-3 ml-auto text-white/70" />}
-                  </Link>
+                  </button>
                 );
               })}
             </nav>
@@ -349,11 +351,8 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
   // Route guard: redirect non-admin users away from admin-only pages
   useEffect(() => {
     if (!isLoading && isAuthenticated && !isAdmin) {
-      const isAllowed = USER_ALLOWED_ROUTES.some(
-        (route) => pathname === route || pathname.startsWith(route + '/')
-      );
-      if (!isAllowed) {
-        router.replace('/dashboard/chat');
+      if (pathname === '/dashboard/user-campaigns' || pathname.startsWith('/dashboard/user-campaigns/')) {
+        router.replace('/dashboard/my-campaigns');
       }
     }
   }, [isLoading, isAuthenticated, isAdmin, pathname, router]);

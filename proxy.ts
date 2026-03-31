@@ -7,6 +7,7 @@ const USER_ALLOWED_PATHS: { path: string; exact?: boolean }[] = [
   { path: '/dashboard/meta' },
   { path: '/dashboard/profile' },
   { path: '/dashboard/user-campaigns' },
+  { path: '/dashboard/my-campaigns' },
 ];
 
 function getAccessSecret(): Uint8Array {
@@ -60,7 +61,7 @@ export async function proxy(req: NextRequest) {
     }
 
     // Non-admin trying to access admin route → redirect to their default page
-    return NextResponse.redirect(new URL('/dashboard/chat', req.url));
+    return NextResponse.redirect(new URL('/dashboard/my-campaigns', req.url));
   } catch {
     // Invalid/expired access token — if refresh token exists, let page load
     // so the client-side AuthProvider can refresh the session silently.
