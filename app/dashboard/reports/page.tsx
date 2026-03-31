@@ -1,8 +1,10 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import AdminShell from '../_components/AdminShell';
 import { AdminSectionSkeleton } from '@/components/ui/AdminSectionSkeleton';
+import { BudgetReportInvoice, type BudgetReportRow } from '@/components/invoice/BudgetReportInvoice';
+import { useAuth } from '@/lib/auth/context';
 
 interface BudgetHistoryItem {
   id: string;
@@ -56,9 +58,12 @@ function extractMeta(note?: string | null) {
 }
 
 export default function ReportsPage() {
+  const { user } = useAuth();
+
   const [items, setItems] = useState<BudgetHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [reportLoading, setReportLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
@@ -67,20 +72,32 @@ export default function ReportsPage() {
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
 
+  // ── Invoice state ────────────────────────────────────────────────────────
+  const [reportRows, setReportRows] = useState<BudgetReportRow[]>([]);
+  const [invoiceNo, setInvoiceNo] = useState('');
+  const [billDate, setBillDate] = useState('');
+  const reportInvoiceRef = useRef<HTMLDivElement>(null);
+
+  const buildParams = useCallback((nextPage: number, limit: number) => {
+    const params = new URLSearchParams({
+      page: String(nextPage),
+      limit: String(limit),
+    });
+
+    if (searchTerm.trim()) params.set('q', searchTerm.trim());
+    if (typeFilter !== 'ALL') params.set('type', typeFilter);
+    if (fromDate) params.set('from', fromDate);
+    if (toDate) params.set('to', toDate);
+
+    return params;
+  }, [fromDate, searchTerm, toDate, typeFilter]);
+
   const loadHistory = useCallback(async (nextPage: number) => {
     try {
       setLoading(true);
       setError('');
 
-      const params = new URLSearchParams({
-        page: String(nextPage),
-        limit: String(ITEMS_PER_PAGE),
-      });
-
-      if (searchTerm.trim()) params.set('q', searchTerm.trim());
-      if (typeFilter !== 'ALL') params.set('type', typeFilter);
-      if (fromDate) params.set('from', fromDate);
-      if (toDate) params.set('to', toDate);
+      const params = buildParams(nextPage, ITEMS_PER_PAGE);
 
       const res = await fetch(`/api/v1/reports/budget-history?${params.toString()}`, {
         method: 'GET',
@@ -103,7 +120,7 @@ export default function ReportsPage() {
     } finally {
       setLoading(false);
     }
-  }, [fromDate, searchTerm, toDate, typeFilter]);
+  }, [buildParams]);
 
   useEffect(() => {
     setPage(1);
@@ -117,8 +134,135 @@ export default function ReportsPage() {
     if (totalItems === 0) return 'No transactions yet';
     const start = (page - 1) * ITEMS_PER_PAGE + 1;
     const end = Math.min(page * ITEMS_PER_PAGE, totalItems);
-    return `Showing ${start}-${end} of ${totalItems} transactions`;
+    return `Showing ${start}–${end} of ${totalItems} transactions`;
   }, [page, totalItems]);
+
+  // ── Step 1: Fetch all rows and build the invoice React component ──────────
+  const generateReport = useCallback(async () => {
+    if (!fromDate || !toDate) {
+      setError('Please select both From and To dates before generating the report.');
+      return;
+    }
+    if (new Date(fromDate).getTime() > new Date(toDate).getTime()) {
+      setError('From date cannot be after To date.');
+      return;
+    }
+
+    try {
+      setReportLoading(true);
+      setError('');
+
+      const allRows: BudgetHistoryItem[] = [];
+      let currentPage = 1;
+      let lastPage = 1;
+
+      do {
+        const params = buildParams(currentPage, 50);
+        const res = await fetch(`/api/v1/reports/budget-history?${params.toString()}`, {
+          method: 'GET',
+          credentials: 'include',
+        });
+        const json: HistoryResponse = await res.json();
+        if (!res.ok || !json.success) throw new Error(json.error || 'Failed to fetch report data');
+        allRows.push(...(json.data || []));
+        lastPage = json.pagination?.totalPages || 1;
+        currentPage += 1;
+      } while (currentPage <= lastPage);
+
+      if (allRows.length === 0) {
+        setError('No transactions found for the selected date range.');
+        return;
+      }
+
+      const mapped: BudgetReportRow[] = allRows.map((item) => {
+        const meta = extractMeta(item.note);
+        const isDecrease = item.amount < 0 || meta.direction === 'DECREASE';
+        const absAmount = Math.abs(item.amount);
+        return {
+          date: formatDate(item.createdAt),
+          type: isDecrease ? 'Deduct' : 'Add',
+          amount: absAmount,
+          amountLabel: `${isDecrease ? '-' : '+'}${formatMoney(item.amount)}`,
+          method: meta.method || 'N/A',
+          isDeduct: isDecrease,
+        };
+      });
+
+      setReportRows(mapped);
+      setInvoiceNo(`RPT-${Date.now().toString().slice(-6)}`);
+      setBillDate(new Date().toLocaleDateString());
+    } catch (err: any) {
+      setError(err?.message || 'Failed to build report.');
+    } finally {
+      setReportLoading(false);
+    }
+  }, [buildParams, fromDate, toDate]);
+
+  // ── Step 2: Render invoice to PNG → jsPDF ────────────────────────────────
+  const downloadPdf = useCallback(async () => {
+    if (reportRows.length === 0 || !reportInvoiceRef.current) return;
+
+    const [{ jsPDF }, { toPng }] = await Promise.all([
+      import('jspdf'),
+      import('html-to-image'),
+    ]);
+
+    const wrapper = reportInvoiceRef.current.parentElement as HTMLElement;
+    const el = reportInvoiceRef.current;
+
+    // Show off-screen so browser lays it out properly
+    wrapper.style.position = 'fixed';
+    wrapper.style.top = '0';
+    wrapper.style.left = '0';
+    wrapper.style.zIndex = '-1';
+    wrapper.style.opacity = '0';
+    wrapper.style.pointerEvents = 'none';
+
+    await document.fonts.ready;
+    await new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
+
+    const imgData = await toPng(el, {
+      pixelRatio: 2,
+      backgroundColor: '#d9d9d9',
+    });
+
+    // Restore off-screen
+    wrapper.style.position = 'absolute';
+    wrapper.style.top = '-9999px';
+    wrapper.style.left = '-9999px';
+    wrapper.style.zIndex = '-1';
+    wrapper.style.opacity = '';
+
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 16;
+    const renderWidth = pageWidth - margin * 2;
+
+    const img = new Image();
+    img.src = imgData;
+    await new Promise<void>((resolve) => {
+      img.onload = () => resolve();
+      img.onerror = () => resolve();
+    });
+    const renderHeight = (img.height * renderWidth) / img.width;
+
+    let heightLeft = renderHeight;
+    let y = margin;
+    doc.addImage(imgData, 'PNG', margin, y, renderWidth, renderHeight);
+    heightLeft -= pageHeight - margin * 2;
+
+    while (heightLeft > 0) {
+      doc.addPage();
+      y = margin - (renderHeight - heightLeft);
+      doc.addImage(imgData, 'PNG', margin, y, renderWidth, renderHeight);
+      heightLeft -= pageHeight - margin * 2;
+    }
+
+    doc.save(`budget-report-${fromDate}-to-${toDate}.pdf`);
+  }, [reportRows, fromDate, toDate]);
+
+  const clientName = user?.fullName || user?.username || 'Client';
 
   return (
     <AdminShell>
@@ -170,13 +314,24 @@ export default function ReportsPage() {
               </label>
             </div>
 
-            <div className="flex justify-end">
+            <div className="flex items-center gap-2 justify-end">
               <button
                 type="button"
-                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
+                onClick={generateReport}
+                disabled={reportLoading}
+                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60"
               >
-                Generate Report
+                {reportLoading ? 'Building...' : 'Generate Report'}
               </button>
+              {reportRows.length > 0 && (
+                <button
+                  type="button"
+                  onClick={downloadPdf}
+                  className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-100"
+                >
+                  Download PDF
+                </button>
+              )}
             </div>
           </div>
 
@@ -260,6 +415,23 @@ export default function ReportsPage() {
                 Next
               </button>
             </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Off-screen invoice for PDF capture ─────────────────────────────── */}
+      <div style={{ position: 'absolute', top: '-9999px', left: '-9999px', zIndex: -1 }}>
+        <div ref={reportInvoiceRef} style={{ width: 794 }}>
+          {reportRows.length > 0 && (
+            <BudgetReportInvoice
+              invoiceNo={invoiceNo}
+              billDate={billDate}
+              clientName={clientName}
+              assignBy="Motion Booster"
+              fromDate={fromDate}
+              toDate={toDate}
+              rows={reportRows}
+            />
           )}
         </div>
       </div>
