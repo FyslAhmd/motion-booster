@@ -100,6 +100,7 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
   const router = useRouter();
   const { logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -184,15 +185,49 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
         <span className="hidden lg:block text-base font-semibold text-gray-800">{activeLabel}</span>
         <div className="flex items-center gap-2 text-sm text-gray-500 font-medium">
           <span className="hidden sm:block lg:hidden">{activeLabel}</span>
-          <Link href="/dashboard/profile">
-            {avatarUrl ? (
-              <Image src={avatarUrl} alt="avatar" width={36} height={36} className="w-9 h-9 rounded-full object-cover" />
-            ) : (
-              <div className="w-9 h-9 rounded-full bg-linear-to-br from-red-500 to-red-700 flex items-center justify-center text-white text-xs font-bold">
-                {userName.slice(0, 2).toUpperCase()}
-              </div>
+          {/* Avatar dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setProfileDropdownOpen((o) => !o)}
+              className="flex items-center focus:outline-none"
+              aria-label="Profile menu"
+            >
+              {avatarUrl ? (
+                <Image src={avatarUrl} alt="avatar" width={36} height={36} className="w-9 h-9 rounded-full object-cover ring-2 ring-transparent hover:ring-red-300 transition-all" />
+              ) : (
+                <div className="w-9 h-9 rounded-full bg-linear-to-br from-red-500 to-red-700 flex items-center justify-center text-white text-xs font-bold ring-2 ring-transparent hover:ring-red-300 transition-all">
+                  {userName.slice(0, 2).toUpperCase()}
+                </div>
+              )}
+            </button>
+            {profileDropdownOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setProfileDropdownOpen(false)} />
+                <div className="absolute right-0 top-full mt-2 z-50 w-44 rounded-2xl bg-white border border-gray-100 shadow-xl overflow-hidden">
+                  <div className="px-4 py-3 border-b border-gray-100">
+                    <p className="text-xs font-semibold text-gray-900 truncate">{userName}</p>
+                    <p className="text-[10px] text-gray-400">My Account</p>
+                  </div>
+                  <div className="p-1.5 space-y-0.5">
+                    <button
+                      onClick={() => { setProfileDropdownOpen(false); router.push('/dashboard/profile'); }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors text-left"
+                    >
+                      <User className="w-4 h-4" />
+                      Profile
+                    </button>
+                    <button
+                      onClick={() => { setProfileDropdownOpen(false); logout(); router.push('/login'); }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors text-left"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Logout
+                    </button>
+                  </div>
+                </div>
+              </>
             )}
-          </Link>
+          </div>
         </div>
       </header>
 
@@ -333,6 +368,7 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [openGroup, setOpenGroup] = useState<string | null>('Home Page'); // open by default
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const adminName = user?.username || user?.email || 'User';
   const adminAvatar = user?.avatarUrl || '';
   const isAdmin = user?.role === 'ADMIN';
@@ -581,15 +617,49 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
           </div>
           <div className="flex items-center gap-2">
             <div className="text-xs text-gray-400 hidden sm:block">{adminName}</div>
-            <Link href="/dashboard/profile">
-              {adminAvatar ? (
-                <Image src={adminAvatar} alt="avatar" width={36} height={36} className="w-9 h-9 rounded-full object-cover" />
-              ) : (
-                <div className="w-9 h-9 rounded-full bg-linear-to-br from-red-500 to-red-700 flex items-center justify-center text-white text-xs font-bold">
-                  {adminName.slice(0, 2).toUpperCase()}
-                </div>
+            {/* Avatar dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setProfileDropdownOpen((o) => !o)}
+                className="flex items-center focus:outline-none"
+                aria-label="Profile menu"
+              >
+                {adminAvatar ? (
+                  <Image src={adminAvatar} alt="avatar" width={36} height={36} className="w-9 h-9 rounded-full object-cover ring-2 ring-transparent hover:ring-red-300 transition-all" />
+                ) : (
+                  <div className="w-9 h-9 rounded-full bg-linear-to-br from-red-500 to-red-700 flex items-center justify-center text-white text-xs font-bold ring-2 ring-transparent hover:ring-red-300 transition-all">
+                    {adminName.slice(0, 2).toUpperCase()}
+                  </div>
+                )}
+              </button>
+              {profileDropdownOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setProfileDropdownOpen(false)} />
+                  <div className="absolute right-0 top-full mt-2 z-50 w-44 rounded-2xl bg-white border border-gray-100 shadow-xl overflow-hidden">
+                    <div className="px-4 py-3 border-b border-gray-100">
+                      <p className="text-xs font-semibold text-gray-900 truncate">{adminName}</p>
+                      <p className="text-[10px] text-gray-400">My Account</p>
+                    </div>
+                    <div className="p-1.5 space-y-0.5">
+                      <button
+                        onClick={() => { setProfileDropdownOpen(false); router.push('/dashboard/profile'); }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors text-left"
+                      >
+                        <User className="w-4 h-4" />
+                        Profile
+                      </button>
+                      <button
+                        onClick={() => { setProfileDropdownOpen(false); handleLogout(); }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors text-left"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        Logout
+                      </button>
+                    </div>
+                  </div>
+                </>
               )}
-            </Link>
+            </div>
           </div>
         </header>
 
