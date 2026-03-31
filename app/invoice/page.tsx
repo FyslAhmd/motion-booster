@@ -1,4 +1,4 @@
-import Image from 'next/image';
+import { InvoiceShell } from '@/components/invoice';
 
 const invoiceData = {
   invoiceNo: '#0154',
@@ -23,52 +23,12 @@ const invoiceData = {
 
 export default function InvoicePage() {
   return (
-    <div data-invoice-root="true" className="min-h-screen bg-[#d9d9d9] px-3 py-4 font-sans print:min-h-0 print:bg-white print:px-0 print:py-0">
-      <div className="invoice-sheet mx-auto w-full max-w-195 bg-[#ececec] p-3 print:max-w-none print:p-0">
-        <div className="flex items-start justify-between bg-black px-4 py-3.5 sm:px-5 sm:py-4">
-          <div className="pr-3">
-            <Image
-              src="/Motion Booster White Logo-footer.svg"
-              alt="Motion Booster"
-              width={230}
-              height={62}
-              className="h-auto w-37.5 object-contain sm:w-52.5"
-              priority
-            />
-            <p className="mt-1.5 text-[9px] font-normal tracking-[1.4px] text-white sm:text-[11px]">GROW | BUSINESS | IDENTITY</p>
-          </div>
-          <h1 className="pt-0.5 text-[28px] font-black uppercase tracking-[2px] text-white sm:text-[48px] sm:leading-none sm:tracking-[3px]">
-            INVOICE
-          </h1>
-        </div>
-
-        <div className="px-1 pt-3 sm:px-2 sm:pt-4">
-          <div className="flex items-start justify-between gap-2.5">
-            <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-              <div className="flex items-center gap-1.5 text-[10px] sm:text-[12px]">
-                <span className="rounded-[3px] bg-[#f4e3c5] px-2 py-1 font-normal text-black">Name on Facebook:</span>
-                <span className="min-w-0 flex-1 rounded-[3px] bg-[#f4e3c5] px-2 py-1 text-black">{invoiceData.clientName}</span>
-              </div>
-              <div className="w-fit rounded-[3px] bg-[#f4e3c5] px-2 py-1 text-[10px] font-normal text-black sm:text-[12px]">
-                Assign by : {invoiceData.assignBy}
-              </div>
-            </div>
-
-            <div className="flex min-w-42.5 flex-col gap-1.5 sm:min-w-45.5">
-              <div className="rounded-[3px] bg-[#dddddd] px-2 py-1 text-[10px] font-normal text-black sm:text-[12px]">
-                Invoice No. : {invoiceData.invoiceNo}
-              </div>
-              <div className="rounded-[3px] bg-[#dddddd] px-2 py-1 text-[10px] font-normal text-black sm:text-[12px]">
-                Bill Date: {invoiceData.billDate}
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-3 rounded-sm bg-[#ef0914] py-1 text-center text-[18px] font-black tracking-[1px] text-white sm:text-[30px] sm:leading-[1.1]">
-            BILL RECEIPT
-          </div>
-
-          <div className="mt-2">
+    <InvoiceShell
+      invoiceNo={invoiceData.invoiceNo}
+      billDate={invoiceData.billDate}
+      clientName={invoiceData.clientName}
+      assignBy={invoiceData.assignBy}
+    >
             <table className="w-full border-separate border-spacing-0.5">
               <thead>
                 <tr>
@@ -97,7 +57,6 @@ export default function InvoicePage() {
                 ))}
               </tbody>
             </table>
-          </div>
 
           <div className="mt-2 rounded-sm bg-[#ef1f22] px-2 py-1 text-right text-[14px] font-normal text-white sm:text-[20px] sm:leading-[1.1]">
             Sub Total amount= {invoiceData.subTotalAmount}
@@ -130,9 +89,6 @@ export default function InvoicePage() {
               Payable intotal amount= {invoiceData.payableTotal}
             </div>
           </div>
-        </div>
-      </div>
-
-    </div>
+    </InvoiceShell>
   );
 }
