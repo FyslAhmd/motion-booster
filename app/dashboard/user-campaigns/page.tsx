@@ -315,18 +315,6 @@ function AdminView() {
     });
   }, [users, normalizedSearch, filterBy]);
 
-  const totals = useMemo(() => {
-    return filteredUsers.reduce(
-      (acc, user) => {
-        acc.campaigns += user.counts.campaigns;
-        acc.adSets += user.counts.adSets;
-        acc.ads += user.counts.ads;
-        return acc;
-      },
-      { campaigns: 0, adSets: 0, ads: 0 },
-    );
-  }, [filteredUsers]);
-
   return (
     <AdminShell>
       <div className="space-y-4 sm:space-y-6">
@@ -336,8 +324,8 @@ function AdminView() {
             Manage assigned users and review their campaigns, ad sets, and ads.
           </p>
 
-          <div className="mt-3 grid gap-2 sm:mt-4 sm:grid-cols-[minmax(0,1fr)_200px_110px] sm:gap-2.5">
-            <label className="relative block">
+          <div className="mt-3 flex items-center gap-2 sm:mt-4">
+            <label className="relative block min-w-0 flex-1">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <input
                 value={search}
@@ -347,7 +335,7 @@ function AdminView() {
               />
             </label>
 
-            <label className="relative block">
+            <label className="relative block w-[150px] shrink-0 sm:w-[200px]">
               <Filter className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <select
                 value={filterBy}
@@ -360,15 +348,6 @@ function AdminView() {
                 <option value="ads">Ad Assigned</option>
               </select>
             </label>
-
-            <div className="flex h-11 items-center justify-center rounded-xl border border-green-200 bg-green-50 px-3 text-center">
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-green-700">Users</p>
-                <p className="mt-0.5 text-lg font-bold leading-none text-green-700">
-                  {loading ? <span className="inline-block h-4 w-8 rounded bg-green-200/90 skeleton-breathe" /> : filteredUsers.length}
-                </p>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -400,21 +379,6 @@ function AdminView() {
               </div>
             ) : (
               <div className="rounded-2xl border border-gray-200 bg-white">
-                <div className="grid grid-cols-3 gap-2 border-b border-gray-100 p-3 sm:p-4">
-                  <div className="rounded-xl border border-blue-200 bg-blue-50 px-2 py-2 text-center sm:px-3">
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-blue-600">Campaigns</p>
-                    <p className="mt-0.5 text-base font-bold text-blue-700 sm:text-lg">{totals.campaigns}</p>
-                  </div>
-                  <div className="rounded-xl border border-purple-200 bg-purple-50 px-2 py-2 text-center sm:px-3">
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-purple-600">Ad Sets</p>
-                    <p className="mt-0.5 text-base font-bold text-purple-700 sm:text-lg">{totals.adSets}</p>
-                  </div>
-                  <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-2 py-2 text-center sm:px-3">
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-emerald-600">Ads</p>
-                    <p className="mt-0.5 text-base font-bold text-emerald-700 sm:text-lg">{totals.ads}</p>
-                  </div>
-                </div>
-
                 <div className="md:hidden space-y-3 p-3">
                   {filteredUsers.map((user) => (
                     <div key={user.id} className="rounded-xl border border-gray-200 bg-white p-3">
