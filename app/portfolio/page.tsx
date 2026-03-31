@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Tag, User, TrendingUp } from 'lucide-react';
 import { useLanguage } from '@/lib/lang/LanguageContext';
@@ -31,13 +31,24 @@ export default function PortfolioPage() {
   const [items, setItems] = useState<PortfolioItem[]>([]);
   const [activeCategory, setActiveCategory] = useState('all');
   const [selected, setSelected] = useState<PortfolioItem | null>(null);
+  const [loading, setLoading] = useState(true);
+  const hasLoadedRef = useRef(false);
 
   useEffect(() => {
-    fetch('/api/v1/cms/portfolio', { cache: 'no-store' })
+    if (hasLoadedRef.current) return;
+    hasLoadedRef.current = true;
+
+    const controller = new AbortController();
+    fetch('/api/v1/cms/portfolio', { cache: 'no-store', signal: controller.signal })
       .then(r => r.json())
       .then(data => setItems(Array.isArray(data) ? data : []))
-      .catch(() => { });
-  }, [language]);
+      .catch(() => { })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+
+    return () => controller.abort();
+  }, []);
 
   const categories = ['all', ...Array.from(new Set(items.map(i => i.category).filter(Boolean)))];
   const filtered = activeCategory === 'all' ? items : items.filter(i => i.category === activeCategory);
@@ -60,7 +71,9 @@ export default function PortfolioPage() {
               : 'Explore our work across web development, mobile apps, digital marketing, and brand design.'}
           </p>
           <p className="mt-3 text-sm text-gray-400">
-            {isBN
+            {loading ? (
+              <span className="inline-block h-4 w-44 rounded bg-gray-200 animate-pulse" />
+            ) : isBN
               ? `${categories.length - 1}টি ক্যাটাগরিতে ${items.length}টি প্রজেক্ট`
               : `${items.length} projects across ${categories.length - 1} categories`}
           </p>
@@ -71,7 +84,14 @@ export default function PortfolioPage() {
         {/* Category Filters (Team page style) */}
         <div className="mb-8 md:mb-10">
           <div className="flex gap-2 overflow-x-auto no-scrollbar whitespace-nowrap">
-            {categories.map(cat => (
+            {loading && Array.from({ length: 5 }).map((_, index) => (
+              <span
+                key={`portfolio-filter-skeleton-${index}`}
+                className="shrink-0 h-9 rounded-full bg-gray-200 animate-pulse"
+                style={{ width: `${72 + ((index % 3) + 1) * 20}px` }}
+              />
+            ))}
+            {!loading && categories.map(cat => (
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
@@ -89,7 +109,25 @@ export default function PortfolioPage() {
 
         {/* Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 md:gap-6">
-          {filtered.map(item => {
+          {loading && Array.from({ length: 8 }).map((_, index) => (
+            <div
+              key={`portfolio-card-skeleton-${index}`}
+              className="bg-white rounded-2xl overflow-hidden border border-gray-100"
+            >
+              <div className="h-40 md:h-44 bg-gray-200 animate-pulse" />
+              <div className="p-4">
+                <div className="h-5 w-2/3 rounded bg-gray-200 animate-pulse mb-2.5" />
+                <div className="h-4 w-full rounded bg-gray-200 animate-pulse mb-1.5" />
+                <div className="h-4 w-5/6 rounded bg-gray-200 animate-pulse mb-3" />
+                <div className="flex gap-1.5">
+                  <span className="h-5 w-12 rounded-full bg-gray-200 animate-pulse" />
+                  <span className="h-5 w-14 rounded-full bg-gray-200 animate-pulse" />
+                  <span className="h-5 w-10 rounded-full bg-gray-200 animate-pulse" />
+                </div>
+              </div>
+            </div>
+          ))}
+          {!loading && filtered.map(item => {
             const title = pickLocalizedText(language, item.title, item.titleBn);
             const categoryLabel = pickLocalizedText(language, item.category, item.categoryBn);
             const description = pickLocalizedText(language, item.description, item.descriptionBn);
@@ -144,7 +182,7 @@ export default function PortfolioPage() {
           })}
         </div>
 
-        {filtered.length === 0 && (
+        {!loading && filtered.length === 0 && (
           <div className="text-center py-20 text-gray-400">
             <p className="text-lg font-medium">
               {isBN ? 'এই ক্যাটাগরিতে এখনো কোনো প্রজেক্ট নেই।' : 'No projects in this category yet.'}
