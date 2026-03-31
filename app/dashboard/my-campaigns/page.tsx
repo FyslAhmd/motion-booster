@@ -5,37 +5,108 @@ import AdminShell from '../_components/AdminShell';
 import { AdminSectionSkeleton } from '@/components/ui/AdminSectionSkeleton';
 import { CampaignsTable } from '../meta/_components';
 import { Search, Filter } from 'lucide-react';
+import { useAuth } from '@/lib/auth/context';
 
-type CountTab = 'campaigns' | 'adsets' | 'ads';
+interface CampaignLite {
+  id: string;
+  status?: string;
+  effective_status?: string;
+}
 
 export default function MyCampaignsPage() {
+  const { user } = useAuth();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ACTIVE');
-  const [activeCounts, setActiveCounts] = useState<Record<CountTab, number | null>>({
-    campaigns: null,
-    adsets: null,
-    ads: null,
-  });
-  const countsLoading =
-    activeCounts.campaigns === null &&
-    activeCounts.adsets === null &&
-    activeCounts.ads === null;
+  const [assignedCampaignIds, setAssignedCampaignIds] = useState<string[]>([]);
+  const [campaignAccountById, setCampaignAccountById] = useState<Record<string, string>>({});
+  const [assignmentsLoaded, setAssignmentsLoaded] = useState(false);
+  const [activeCampaignCount, setActiveCampaignCount] = useState<number | null>(null);
+  const countsLoading = activeCampaignCount === null;
 
   useEffect(() => {
-    setActiveCounts({ campaigns: null, adsets: null, ads: null });
-    fetch('/api/v1/meta/active-counts')
+    if (!user?.id) return;
+
+    let cancelled = false;
+    setAssignmentsLoaded(false);
+    fetch(`/api/v1/admin/meta-assignments/users/${user.id}`)
       .then((r) => r.json())
       .then((json) => {
-        if (json.success) {
-          setActiveCounts({
-            campaigns: json.data.campaigns,
-            adsets: json.data.adSets,
-            ads: json.data.ads,
-          });
-        }
+        if (cancelled || !json?.success) return;
+
+        const campaigns = Array.isArray(json?.data?.campaigns) ? json.data.campaigns : [];
+        const ids = campaigns
+          .map((c: { metaObjectId?: string }) => c?.metaObjectId)
+          .filter((id: string | undefined): id is string => typeof id === 'string' && id.length > 0);
+
+        const accountMap: Record<string, string> = {};
+        campaigns.forEach((c: { metaObjectId?: string; metaAccountId?: string }) => {
+          if (c?.metaObjectId && c?.metaAccountId) {
+            accountMap[c.metaObjectId] = c.metaAccountId;
+          }
+        });
+
+        setAssignedCampaignIds(Array.from(new Set(ids)));
+        setCampaignAccountById(accountMap);
+        setAssignmentsLoaded(true);
       })
-      .catch(() => {});
-  }, []);
+      .catch(() => {
+        if (!cancelled) {
+          setAssignedCampaignIds([]);
+          setCampaignAccountById({});
+          setAssignmentsLoaded(true);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!assignmentsLoaded) return;
+
+    const uniqueIds = Array.from(new Set(assignedCampaignIds.filter(Boolean)));
+    if (uniqueIds.length === 0) {
+      setActiveCampaignCount(0);
+      return;
+    }
+
+    let cancelled = false;
+    const loadActiveCount = async () => {
+      setActiveCampaignCount(null);
+      try {
+        const chunkSize = 40;
+        const allCampaigns: CampaignLite[] = [];
+
+        for (let i = 0; i < uniqueIds.length; i += chunkSize) {
+          const chunk = uniqueIds.slice(i, i + chunkSize);
+          const params = new URLSearchParams({ type: 'CAMPAIGN', ids: chunk.join(',') });
+          const res = await fetch(`/api/v1/meta/by-ids?${params.toString()}`);
+          const json = await res.json();
+          if (json?.success && Array.isArray(json.data)) {
+            allCampaigns.push(...json.data);
+          }
+        }
+
+        const activeCount = allCampaigns.filter(
+          (c) => c?.status === 'ACTIVE' || c?.effective_status === 'ACTIVE',
+        ).length;
+
+        if (!cancelled) {
+          setActiveCampaignCount(activeCount);
+        }
+      } catch {
+        if (!cancelled) {
+          setActiveCampaignCount(0);
+        }
+      }
+    };
+
+    loadActiveCount();
+    return () => {
+      cancelled = true;
+    };
+  }, [assignmentsLoaded, assignedCampaignIds]);
 
   return (
     <AdminShell>
@@ -90,7 +161,7 @@ export default function MyCampaignsPage() {
                 {countsLoading ? (
                   <span className="mx-auto inline-block h-5 w-10 rounded-lg bg-green-200/90 skeleton-breathe" />
                 ) : (
-                  activeCounts.campaigns
+                  activeCampaignCount
                 )}
               </p>
             </div>
@@ -106,6 +177,8 @@ export default function MyCampaignsPage() {
             statusFilterValue={statusFilter}
             onStatusFilterChange={setStatusFilter}
             hideControls
+            assignedCampaignIds={assignedCampaignIds}
+            campaignAccountById={campaignAccountById}
           />
         </div>
       </div>

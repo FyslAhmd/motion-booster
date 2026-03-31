@@ -281,6 +281,8 @@ interface CampaignsTableProps {
   statusFilterValue?: string;
   onStatusFilterChange?: (value: string) => void;
   hideControls?: boolean;
+  assignedCampaignIds?: string[];
+  campaignAccountById?: Record<string, string>;
 }
 
 interface AssignmentUser {
@@ -299,6 +301,8 @@ export default function CampaignsTable({
   statusFilterValue,
   onStatusFilterChange,
   hideControls = false,
+  assignedCampaignIds,
+  campaignAccountById,
 }: CampaignsTableProps) {
   const [data, setData] = useState<Campaign[]>([]);
   const [paging, setPaging] = useState<CursorPaging | null>(null);
@@ -336,6 +340,66 @@ export default function CampaignsTable({
   const controlledFilter = typeof statusFilterValue === 'string';
   const effectiveSearch = controlledSearch ? searchValue : search;
   const effectiveFilterStatus = controlledFilter ? statusFilterValue : filterStatus;
+  const assignedMode = Array.isArray(assignedCampaignIds);
+
+  const [allAssignedCampaigns, setAllAssignedCampaigns] = useState<Campaign[]>([]);
+  const [assignedLoading, setAssignedLoading] = useState(false);
+  const isTableLoading = assignedMode ? assignedLoading : loading;
+
+  const fetchCampaignsByIds = useCallback(async (ids: string[]) => {
+    const uniqueIds = Array.from(new Set(ids.filter(Boolean)));
+    if (uniqueIds.length === 0) return [] as Campaign[];
+
+    const chunkSize = 40;
+    const all: Campaign[] = [];
+    for (let i = 0; i < uniqueIds.length; i += chunkSize) {
+      const chunk = uniqueIds.slice(i, i + chunkSize);
+      const params = new URLSearchParams({ type: 'CAMPAIGN', ids: chunk.join(',') });
+      const res = await fetch(`/api/v1/meta/by-ids?${params.toString()}`);
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data)) {
+        all.push(...json.data);
+      }
+    }
+    return all;
+  }, []);
+
+  useEffect(() => {
+    if (!assignedMode) return;
+
+    setLoading(false);
+
+    const ids = assignedCampaignIds ?? [];
+    if (ids.length === 0) {
+      setAllAssignedCampaigns([]);
+      setData([]);
+      setTotalCount(0);
+      setPaging({ hasNext: false, hasPrevious: false });
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadAssignedCampaigns = async () => {
+      setAssignedLoading(true);
+      setError('');
+      try {
+        const campaigns = await fetchCampaignsByIds(ids);
+        if (!cancelled) {
+          setAllAssignedCampaigns(campaigns);
+        }
+      } catch (e: any) {
+        if (!cancelled) setError(e?.message || 'Failed to load');
+      } finally {
+        if (!cancelled) setAssignedLoading(false);
+      }
+    };
+
+    loadAssignedCampaigns();
+    return () => {
+      cancelled = true;
+    };
+  }, [assignedMode, assignedCampaignIds, fetchCampaignsByIds]);
 
   const statusMeta = useCallback((key?: string, fallbackLabel?: string) => {
     const normalized = key || 'UNKNOWN';
@@ -355,6 +419,8 @@ export default function CampaignsTable({
   }, []);
 
   useEffect(() => {
+    if (assignedMode) return;
+
     const controller = new AbortController();
 
     const doFetch = async () => {
@@ -385,7 +451,46 @@ export default function CampaignsTable({
 
     doFetch();
     return () => controller.abort();
-  }, [currentAfter, effectiveSearch, effectiveFilterStatus, accountId]);
+  }, [currentAfter, effectiveSearch, effectiveFilterStatus, accountId, assignedMode]);
+
+  useEffect(() => {
+    if (!assignedMode) return;
+
+    const normalized = effectiveSearch.trim().toLowerCase();
+    const filtered = allAssignedCampaigns.filter((c) => {
+      const name = (c.name || '').toLowerCase();
+      const objective = (c.objective || '').toLowerCase();
+      const status = (c.status || '').toLowerCase();
+      const effective = (c.effective_status || '').toLowerCase();
+
+      const matchesSearch =
+        normalized.length === 0 ||
+        name.includes(normalized) ||
+        objective.includes(normalized) ||
+        status.includes(normalized) ||
+        effective.includes(normalized);
+
+      if (!matchesSearch) return false;
+      if (effectiveFilterStatus === 'all') return true;
+      return c.status === effectiveFilterStatus || c.effective_status === effectiveFilterStatus;
+    });
+
+    const pages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+    const safePage = Math.min(pageNum, pages);
+    if (safePage !== pageNum) {
+      setPageNum(safePage);
+      return;
+    }
+
+    const start = (safePage - 1) * PAGE_SIZE;
+    setData(filtered.slice(start, start + PAGE_SIZE));
+    setTotalCount(filtered.length);
+    setPaging({
+      hasNext: safePage < pages,
+      hasPrevious: safePage > 1,
+      cursors: {},
+    });
+  }, [assignedMode, allAssignedCampaigns, effectiveSearch, effectiveFilterStatus, pageNum]);
 
   // Fetch assignments for current page of campaigns
   useEffect(() => {
@@ -491,6 +596,13 @@ export default function CampaignsTable({
   }, [data, accountId]);
 
   const goNext = () => {
+    if (assignedMode) {
+      if (paging?.hasNext) {
+        setPageNum((p) => p + 1);
+      }
+      return;
+    }
+
     if (paging?.cursors?.after && paging.hasNext) {
       setCursorStack((prev) => [...prev, currentAfter || '__first__']);
       setCurrentAfter(paging.cursors.after);
@@ -499,6 +611,13 @@ export default function CampaignsTable({
   };
 
   const goPrev = () => {
+    if (assignedMode) {
+      if (pageNum > 1) {
+        setPageNum((p) => Math.max(1, p - 1));
+      }
+      return;
+    }
+
     if (cursorStack.length > 0) {
       const stack = [...cursorStack];
       const prev = stack.pop()!;
@@ -539,7 +658,7 @@ export default function CampaignsTable({
 
   const hasNext = !!paging?.hasNext;
   const hasPrev = cursorStack.length > 0;
-  const totalPages = totalCount != null ? Math.ceil(totalCount / PAGE_SIZE) : null;
+  const totalPages = totalCount != null ? Math.max(1, Math.ceil(totalCount / PAGE_SIZE)) : null;
 
   const campaignBudgetLabel = (c: Campaign) =>
     c.daily_budget ? `${fmtBudget(c.daily_budget)}/day` : c.lifetime_budget ? `${fmtBudget(c.lifetime_budget)} lifetime` : '—';
@@ -695,7 +814,8 @@ export default function CampaignsTable({
 
     try {
       const adSetQuery = new URLSearchParams({ campaign_id: campaign.id, limit: '12' });
-      if (accountId) adSetQuery.set('account_id', accountId);
+      const resolvedAccountId = accountId || campaignAccountById?.[campaign.id];
+      if (resolvedAccountId) adSetQuery.set('account_id', resolvedAccountId);
       const adSetRes = await fetch(`/api/v1/meta/adsets?${adSetQuery}`);
       const adSetJson = await adSetRes.json();
 
@@ -709,7 +829,7 @@ export default function CampaignsTable({
       if (adSets.length > 0) {
         const adFetches = adSets.map(async (adSet) => {
           const adsQuery = new URLSearchParams({ adset_id: adSet.id, limit: '6' });
-          if (accountId) adsQuery.set('account_id', accountId);
+          if (resolvedAccountId) adsQuery.set('account_id', resolvedAccountId);
           const adsRes = await fetch(`/api/v1/meta/ads?${adsQuery}`);
           const adsJson = await adsRes.json();
           return {
@@ -732,7 +852,7 @@ export default function CampaignsTable({
     } finally {
       setModalLoading(false);
     }
-  }, [accountId]);
+  }, [accountId, campaignAccountById]);
 
   useEffect(() => {
     if (!selectedCampaign) return;
@@ -798,7 +918,7 @@ export default function CampaignsTable({
       </div>
 
       {/* Loading */}
-      {loading && (
+      {isTableLoading && (
         <div className="grid grid-cols-1 gap-3 p-3 sm:gap-4 sm:p-5 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={`campaign-skeleton-${i}`} className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
