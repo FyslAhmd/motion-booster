@@ -143,16 +143,13 @@ export function CampaignReportInvoice({
   assignBy,
   rows,
 }: CampaignReportInvoiceProps) {
-  const totalUsd = rows.reduce((sum, row) => sum + row.spendUsd, 0);
-  const totalTk = rows.reduce((sum, row) => sum + row.spendTk, 0);
-
   return (
     <InvoiceShell
       invoiceNo={invoiceNo}
       billDate={billDate}
       clientName={clientName}
       assignBy={assignBy}
-      subtitle="BILL RECEIPT"
+      subtitle="Campaign History"
     >
       {/* ── Header row ─────────────────────────────────────────────────── */}
       <div style={ROW}>
@@ -188,50 +185,6 @@ export function CampaignReportInvoice({
         );
       })}
 
-      {/* ── Sub-total bar ──────────────────────────────────────────────── */}
-      <div style={{
-        marginTop: '6px',
-        borderRadius: '2px',
-        background: '#ef1f22',
-        padding: '4px 8px',
-        textAlign: 'right',
-        fontSize: '12px',
-        fontWeight: 'normal',
-        color: '#ffffff',
-      }}>
-        Sub Total amount= ${fmt(totalUsd)}
-      </div>
-
-      {/* ── Important note box ─────────────────────────────────────────── */}
-      <div style={{
-        marginTop: '6px',
-        overflow: 'hidden',
-        borderRadius: '6px',
-        border: '1px solid #cfcfcf',
-        background: '#d8d8d8',
-      }}>
-        <div style={{
-          borderBottom: '1px solid #c6c6c6',
-          padding: '4px 0',
-          textAlign: 'center',
-          fontSize: '17px',
-          fontWeight: '900',
-          letterSpacing: '1px',
-          color: '#000000',
-        }}>
-          IMPORTANT NOTE
-        </div>
-        <div style={{ padding: '8px 12px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', fontWeight: 'normal', color: '#000000' }}>
-            <span>01. Sub Total Amount (USD)</span>
-            <span>= ${fmt(totalUsd)}</span>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', fontWeight: 'normal', color: '#000000', marginTop: '2px' }}>
-            <span>02. Sub Total Amount (Tk)</span>
-            <span>= {fmt(totalTk)}</span>
-          </div>
-        </div>
-      </div>
     </InvoiceShell>
   );
 }

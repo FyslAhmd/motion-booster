@@ -339,7 +339,7 @@ function AdminView() {
               />
             </label>
 
-            <label className="relative block w-[150px] shrink-0 sm:w-[200px]">
+            <label className="relative block w-37.5 shrink-0 sm:w-50">
               <Filter className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <select
                 value={filterBy}
