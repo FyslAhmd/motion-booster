@@ -20,6 +20,7 @@ interface CampaignReportInvoiceProps {
   clientName: string;
   assignBy: string;
   rows: ReportInvoiceRow[];
+  selectedColumns?: string[];
 }
 
 function fmt(value: number) {
@@ -37,27 +38,20 @@ function fmt(value: number) {
 // Flex div layout is confirmed working by html2canvas maintainers.
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Column width ratios (11 columns)
-const COL_WIDTHS = [
-  '8.5%',  // Date
-  '9.5%',  // Ad Create Date
-  '9%',    // Ad End Date
-  '18%',   // Campaign Name
-  '7.5%',  // Spend ($)
-  '8.5%',  // Spend (Tk)
-  '11%',   // Goal
-  '7%',    // Goal Result
-  '7%',    // Cost / Goal
-  '7%',    // Reach
-  '7%',    // Impressions
-];
+// Column Configuration with Flex Weights
+export const COL_CONFIG: Record<string, { label: string; flex: number; align: 'center' | 'left' | 'right' }> = {
+  date: { label: 'Date', flex: 8.5, align: 'center' },
+  campaignName: { label: 'Campaign Name', flex: 20, align: 'left' },
+  spendUsd: { label: 'Spend ($)', flex: 7.5, align: 'right' },
+  spendTk: { label: 'Spend (Tk)', flex: 8.5, align: 'right' },
+  goal: { label: 'Goal', flex: 11, align: 'center' },
+  goalResult: { label: 'Goal Result', flex: 7, align: 'right' },
+  costPerGoalResult: { label: 'Cost / Goal', flex: 7, align: 'right' },
+  reach: { label: 'Reach', flex: 7, align: 'right' },
+  impressions: { label: 'Impressions', flex: 7, align: 'right' },
+};
 
-// Alignment per column
-const COL_ALIGN: ('center' | 'left' | 'right')[] = [
-  'center', 'center', 'center', 'left',
-  'right', 'right', 'center', 'right',
-  'right', 'right', 'right',
-];
+export const ALL_COLUMNS = Object.keys(COL_CONFIG);
 
 // Map 'left'/'center'/'right' to flex justify
 const JUSTIFY_MAP = {
@@ -73,11 +67,11 @@ const ROW: React.CSSProperties = {
   marginBottom: '2px',
 };
 
-function HeadCell({ children, width }: { children: React.ReactNode; width: string }) {
+function HeadCell({ children, flex }: { children: React.ReactNode; flex: number }) {
   return (
     <div
       style={{
-        width,
+        flex: `${flex} 1 0%`,
         minHeight: '28px',
         background: '#000000',
         borderRadius: '2px',
@@ -100,17 +94,17 @@ function HeadCell({ children, width }: { children: React.ReactNode; width: strin
 
 function DataCell({
   children,
-  width,
+  flex,
   align = 'center',
 }: {
   children: React.ReactNode;
-  width: string;
+  flex: number;
   align?: 'center' | 'left' | 'right';
 }) {
   return (
     <div
       style={{
-        width,
+        flex: `${flex} 1 0%`,
         minHeight: '26px',
         background: '#d8d8d8',
         borderRadius: '2px',
@@ -130,19 +124,18 @@ function DataCell({
   );
 }
 
-const HEADERS = [
-  'Date', 'Ad Create Date', 'Ad End Date', 'Campaign Name',
-  'Spend ($)', 'Spend (Tk)', 'Goal', 'Goal Result',
-  'Cost / Goal', 'Reach', 'Impressions',
-];
-
 export function CampaignReportInvoice({
   invoiceNo,
   billDate,
   clientName,
   assignBy,
   rows,
+  selectedColumns,
 }: CampaignReportInvoiceProps) {
+  const activeCols = selectedColumns && selectedColumns.length > 0 
+    ? selectedColumns.filter((k: string) => COL_CONFIG[k]) 
+    : ALL_COLUMNS;
+
   return (
     <InvoiceShell
       invoiceNo={invoiceNo}
@@ -153,34 +146,47 @@ export function CampaignReportInvoice({
     >
       {/* ── Header row ─────────────────────────────────────────────────── */}
       <div style={ROW}>
-        {HEADERS.map((label, i) => (
-          <HeadCell key={label} width={COL_WIDTHS[i]}>{label}</HeadCell>
-        ))}
+        {activeCols.map((colKey: string) => {
+          const cfg = COL_CONFIG[colKey];
+          return (
+            <HeadCell key={colKey} flex={cfg.flex}>
+              {cfg.label}
+            </HeadCell>
+          );
+        })}
       </div>
 
       {/* ── Data rows ──────────────────────────────────────────────────── */}
       {rows.map((row, idx) => {
-        const vals = [
-          row.date,
-          row.adCreateDate,
-          row.adEndDate,
-          row.campaignName,
-          fmt(row.spendUsd),
-          fmt(row.spendTk),
-          row.goal,
-          String(row.goalResult),
-          fmt(row.costPerGoalResult),
-          String(row.reach),
-          String(row.impressions),
-        ];
+        const rowData: Record<string, any> = {
+          date: row.date,
+          campaignName: (
+            <div style={{ display: 'flex', flexDirection: 'column', padding: '2px 0', gap: '2px' }}>
+              <span style={{ fontWeight: 600 }}>{row.campaignName}</span>
+              <span style={{ fontSize: '9px', color: '#555' }}>
+                ({row.adCreateDate} to {row.adEndDate})
+              </span>
+            </div>
+          ),
+          spendUsd: fmt(row.spendUsd),
+          spendTk: fmt(row.spendTk),
+          goal: row.goal,
+          goalResult: String(row.goalResult),
+          costPerGoalResult: fmt(row.costPerGoalResult),
+          reach: String(row.reach),
+          impressions: String(row.impressions),
+        };
 
         return (
           <div key={`${row.campaignName}-${idx}`} style={ROW}>
-            {vals.map((val, i) => (
-              <DataCell key={i} width={COL_WIDTHS[i]} align={COL_ALIGN[i]}>
-                {val}
-              </DataCell>
-            ))}
+            {activeCols.map((colKey: string) => {
+              const cfg = COL_CONFIG[colKey];
+              return (
+                <DataCell key={colKey} flex={cfg.flex} align={cfg.align}>
+                  {rowData[colKey]}
+                </DataCell>
+              );
+            })}
           </div>
         );
       })}
