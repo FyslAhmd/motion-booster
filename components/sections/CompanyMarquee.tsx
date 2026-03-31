@@ -126,7 +126,9 @@ export const CompanyMarquee = () => {
   }, [list.length]);
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (setWidthRef.current <= 0) return;
+    if (setWidthRef.current <= 0 || !e.isPrimary) return;
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    e.preventDefault();
     isDraggingRef.current = true;
     setIsDragging(true);
     dragStartXRef.current = e.clientX;
@@ -135,13 +137,15 @@ export const CompanyMarquee = () => {
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!isDraggingRef.current) return;
+    if (!isDraggingRef.current || !e.isPrimary) return;
+    e.preventDefault();
     const delta = e.clientX - dragStartXRef.current;
     offsetRef.current = normalizeOffset(dragStartOffsetRef.current - delta);
     applyTransform();
   };
 
   const endDrag = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDraggingRef.current) return;
     isDraggingRef.current = false;
     setIsDragging(false);
     if (e.currentTarget.hasPointerCapture(e.pointerId)) {
@@ -162,7 +166,7 @@ export const CompanyMarquee = () => {
         {/* Marquee Container */}
         <div
           ref={marqueeRef}
-          className={`relative overflow-hidden select-none touch-pan-x ${
+          className={`relative overflow-hidden select-none touch-pan-y ${
             isDragging ? 'cursor-grabbing' : 'cursor-grab'
           }`}
           data-marquee="company"
@@ -170,10 +174,8 @@ export const CompanyMarquee = () => {
           onPointerMove={handlePointerMove}
           onPointerUp={endDrag}
           onPointerCancel={endDrag}
-          onPointerLeave={(e) => {
-            if (!isDraggingRef.current) return;
-            endDrag(e);
-          }}
+          onLostPointerCapture={endDrag}
+          onDragStart={(e) => e.preventDefault()}
         >
           <div ref={trackRef} className="flex w-max items-center will-change-transform">
             {loading && Array.from({ length: 8 }).map((_, i) => (
@@ -199,6 +201,7 @@ export const CompanyMarquee = () => {
                         <img
                           src={company.logoImage}
                           alt={company.name}
+                          draggable={false}
                           className="block h-10 md:h-10 lg:h-10 w-auto max-w-none object-contain rounded-sm"
                         />
                       ) : (

@@ -284,6 +284,11 @@ export default function UserCampaignDetailPage({
   const [loadingAdSetsInModal, setLoadingAdSetsInModal] = useState(false);
   const [loadingAdsInModal, setLoadingAdsInModal] = useState(false);
 
+  const activeCampaignCount = useMemo(
+    () => campaigns.filter((c) => (c.effective_status || c.status || '').toUpperCase() === 'ACTIVE').length,
+    [campaigns],
+  );
+
   // Step 1: Fetch user assignment references
   useEffect(() => {
     setLoading(true);
@@ -385,47 +390,59 @@ export default function UserCampaignDetailPage({
       <div className="space-y-4 sm:space-y-5">
         {/* Back + Header */}
         {isAdmin ? (
-          <div className="rounded-2xl border border-gray-200 bg-white p-3 sm:p-5">
-            <div className="flex items-start gap-4">
+          <div className="relative rounded-2xl border border-gray-200 bg-white p-3 sm:p-5">
             <button
               onClick={() => router.push('/dashboard/user-campaigns')}
-              className="mt-1 rounded-lg border border-gray-200 p-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-600"
+              aria-label="Back to user assignments"
+              className="absolute left-3 top-3 p-1 text-gray-400 transition-colors hover:text-gray-600 sm:left-5 sm:top-5"
             >
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft className="h-5 w-5" />
             </button>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-3">
-                {user?.avatarUrl ? (
-                  <Image src={user.avatarUrl} alt="avatar" width={44} height={44} className="h-11 w-11 shrink-0 rounded-full object-cover" />
-                ) : (
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-red-50 text-sm font-bold text-red-600">
-                    {user?.fullName
-                      ?.split(' ')
-                      .map((w) => w[0])
-                      .join('')
-                      .slice(0, 2)
-                      .toUpperCase() || '?'}
-                  </div>
-                )}
-                <div>
-                  <h1 className="text-xl font-bold text-gray-900">{user?.fullName}</h1>
-                  <div className="mt-0.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500">
-                    {user?.phone && (
-                      <span className="flex items-center gap-1">
-                        <Phone className="h-3 w-3" />
-                        {user.phone}
-                      </span>
-                    )}
-                    {user?.email && (
-                      <span className="flex items-center gap-1">
-                        <Mail className="h-3 w-3" />
-                        {user.email}
-                      </span>
-                    )}
+
+            <div className="flex items-center gap-3 pl-6 sm:pl-7">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-3">
+                  {user?.avatarUrl ? (
+                    <Image src={user.avatarUrl} alt="avatar" width={44} height={44} className="h-11 w-11 shrink-0 rounded-full object-cover" />
+                  ) : (
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-red-50 text-sm font-bold text-red-600">
+                      {user?.fullName
+                        ?.split(' ')
+                        .map((w) => w[0])
+                        .join('')
+                        .slice(0, 2)
+                        .toUpperCase() || '?'}
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <h1 className="truncate text-xl font-bold text-gray-900">{user?.fullName}</h1>
+                        <div className="mt-0.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500">
+                          {user?.phone && (
+                            <span className="flex items-center gap-1">
+                              <Phone className="h-3 w-3" />
+                              {user.phone}
+                            </span>
+                          )}
+                          {user?.email && (
+                            <span className="flex items-center gap-1">
+                              <Mail className="h-3 w-3" />
+                              {user.email}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="shrink-0 rounded-xl border border-green-200 bg-green-50 px-3 py-2 text-center">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-green-700">Active</p>
+                        <p className="mt-1 text-sm font-bold leading-none text-green-800">
+                          {activeCampaignCount}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
             </div>
           </div>
         ) : (
@@ -515,11 +532,6 @@ function CampaignsSection({
       return c.status === filterStatus || c.effective_status === filterStatus;
     });
   }, [campaignRows, normalizedSearch, filterStatus]);
-
-  const activeCampaignCount = useMemo(
-    () => filteredCampaigns.filter((c) => (c.effective_status || c.status || '').toUpperCase() === 'ACTIVE').length,
-    [filteredCampaigns],
-  );
 
   const canToggle = (c: Campaign) =>
     ['ACTIVE', 'PAUSED'].includes(c.status) &&
@@ -683,7 +695,7 @@ function CampaignsSection({
       <div className="rounded-2xl border border-gray-200 bg-white p-3 sm:p-5">
         <h3 className="text-sm font-semibold text-gray-800">Campaigns</h3>
 
-        <div className="mt-3 flex items-center gap-2 sm:mt-4 sm:grid sm:grid-cols-[minmax(0,1fr)_170px_110px] sm:gap-2.5">
+        <div className="mt-3 flex items-center gap-2 sm:mt-4 sm:grid sm:grid-cols-[minmax(0,1fr)_170px] sm:gap-2.5">
           <label className="relative block min-w-0 flex-1 sm:flex-auto">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <input
@@ -714,24 +726,6 @@ function CampaignsSection({
               <option value="DELETED">Deleted</option>
             </select>
           </label>
-
-          <div className="hidden h-11 items-center justify-center rounded-xl border border-green-200 bg-green-50 px-3 text-center sm:flex">
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-green-700">Visible</p>
-              <p className="mt-0.5 text-lg font-bold leading-none text-green-700">{filteredCampaigns.length}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-2 grid grid-cols-2 gap-2 sm:hidden">
-          <div className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-center">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-green-700">Visible</p>
-            <p className="mt-0.5 text-base font-bold leading-none text-green-700">{filteredCampaigns.length}</p>
-          </div>
-          <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-center">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-blue-700">Active</p>
-            <p className="mt-0.5 text-base font-bold leading-none text-blue-700">{activeCampaignCount}</p>
-          </div>
         </div>
 
         {filteredCampaigns.length === 0 ? (
