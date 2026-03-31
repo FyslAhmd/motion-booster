@@ -8,6 +8,7 @@ const USER_ALLOWED_PATHS: { path: string; exact?: boolean }[] = [
   { path: '/dashboard/profile' },
   { path: '/dashboard/user-campaigns' },
   { path: '/dashboard/my-campaigns' },
+  { path: '/dashboard/reports' },
 ];
 
 function getAccessSecret(): Uint8Array {

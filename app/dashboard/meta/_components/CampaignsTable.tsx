@@ -457,22 +457,34 @@ export default function CampaignsTable({
     if (!assignedMode) return;
 
     const normalized = effectiveSearch.trim().toLowerCase();
+
     const filtered = allAssignedCampaigns.filter((c) => {
       const name = (c.name || '').toLowerCase();
       const objective = (c.objective || '').toLowerCase();
-      const status = (c.status || '').toLowerCase();
-      const effective = (c.effective_status || '').toLowerCase();
 
       const matchesSearch =
         normalized.length === 0 ||
         name.includes(normalized) ||
         objective.includes(normalized) ||
-        status.includes(normalized) ||
-        effective.includes(normalized);
+        (c.status || '').toLowerCase().includes(normalized) ||
+        (c.effective_status || '').toLowerCase().includes(normalized);
 
       if (!matchesSearch) return false;
       if (effectiveFilterStatus === 'all') return true;
-      return c.status === effectiveFilterStatus || c.effective_status === effectiveFilterStatus;
+
+      // derived_status.key is computed by deriveDeliveryStatus() — the same
+      // value shown in the UI badge (e.g. 'COMPLETED', 'NOT_DELIVERING',
+      // 'PAUSED', 'ACTIVE', 'SCHEDULED', etc.).
+      // This gives us filter parity with the /meta page which filters by
+      // effective_status on the Meta API, then derives richer labels.
+      const derivedKey = c.derived_status?.key || c.effective_status || c.status;
+
+      // 'PAUSED' filter: only truly paused campaigns (not completed etc.)
+      if (effectiveFilterStatus === 'PAUSED') return derivedKey === 'PAUSED';
+      // 'ACTIVE' filter: only genuinely active campaigns
+      if (effectiveFilterStatus === 'ACTIVE') return derivedKey === 'ACTIVE';
+      // All other filters: exact match on derived key
+      return derivedKey === effectiveFilterStatus;
     });
 
     const pages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
@@ -511,7 +523,10 @@ export default function CampaignsTable({
       .catch(() => {});
   }, [data, accountId]);
 
-  // Fetch spend + dynamic metric cards for currently visible campaigns
+  // Fetch spend + dynamic metric cards for currently visible campaigns.
+  // Process SEQUENTIALLY (not Promise.all) to avoid Meta API rate-limit (code 17).
+  // Each campaign still runs its 2 calls (insight + adsets) in parallel with each
+  // other, but campaigns queue one-at-a-time. Cards update progressively.
   useEffect(() => {
     if (!data.length) {
       setCampaignCardMetrics({});
@@ -520,22 +535,26 @@ export default function CampaignsTable({
 
     let isCancelled = false;
 
-    const loadCardMetrics = async () => {
-      const entries = await Promise.all(
-        data.map(async (campaign) => {
-          try {
+    const fetchOneCard = async (campaign: Campaign): Promise<[string, CampaignCardMetric | null]> => {
+      try {
+        const resolvedAccountId = accountId || campaignAccountById?.[campaign.id];
+
             const insightQuery = new URLSearchParams({
               type: 'single_campaign',
               campaign_id: campaign.id,
               date_preset: 'maximum',
             });
+            // Use mode=by_campaign: queries /{campaignId}/adsets directly.
+            // This is account-agnostic — works for both /meta and /my-campaigns
+            // without needing account_id. The old approach (filtering through
+            // /{accountId}/adsets?filtering=[campaign.id=X]) was unreliable.
             const adsetQuery = new URLSearchParams({
+              mode: 'by_campaign',
               campaign_id: campaign.id,
-              limit: '100',
+              limit: '50',
             });
-            if (accountId) {
-              insightQuery.set('account_id', accountId);
-              adsetQuery.set('account_id', accountId);
+            if (resolvedAccountId) {
+              insightQuery.set('account_id', resolvedAccountId);
             }
 
             const [insightRes, adsetRes] = await Promise.all([
@@ -574,18 +593,20 @@ export default function CampaignsTable({
               } satisfies CampaignCardMetric,
             ] as const;
           } catch {
-            return [campaign.id, null] as const;
+            return [campaign.id, null] as [string, null];
           }
-        }),
-      );
+    };
 
-      if (isCancelled) return;
-
-      const next: Record<string, CampaignCardMetric> = {};
-      for (const [campaignId, metric] of entries) {
-        if (metric) next[campaignId] = metric;
+    const loadCardMetrics = async () => {
+      // Sequential loop — prevents Meta API quota exhaustion (error 17)
+      for (const campaign of data) {
+        if (isCancelled) break;
+        const [id, metric] = await fetchOneCard(campaign);
+        if (isCancelled) break;
+        if (metric) {
+          setCampaignCardMetrics((prev) => ({ ...prev, [id]: metric }));
+        }
       }
-      setCampaignCardMetrics(next);
     };
 
     loadCardMetrics();
@@ -593,7 +614,7 @@ export default function CampaignsTable({
     return () => {
       isCancelled = true;
     };
-  }, [data, accountId]);
+  }, [data, accountId, campaignAccountById]);
 
   const goNext = () => {
     if (assignedMode) {

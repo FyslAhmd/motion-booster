@@ -1768,7 +1768,7 @@ export default function MessagesPage() {
             <div className="bg-white border-t border-gray-100 px-3 md:px-8 py-3 md:py-4">
               {/* Boost Post CTA — visible only for non-admin users */}
               {user?.role !== 'ADMIN' && (
-                <div className="-mt-6 mb-20 flex justify-start">
+                <div className="mb-4 ml-4 flex justify-start">
                   <button
                     onClick={openBoostForm}
                     aria-label="Boost Request"

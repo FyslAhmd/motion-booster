@@ -6,12 +6,13 @@ import { AdminSectionSkeleton } from '@/components/ui/AdminSectionSkeleton';
 import { CampaignsTable } from '../meta/_components';
 import { Search, Filter, Activity, BarChart3, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/lib/auth/context';
-import { CampaignReportInvoice } from '@/components/invoice';
+import { CampaignReportInvoice, ALL_COLUMNS, COL_CONFIG } from '@/components/invoice/CampaignReportInvoice';
 
 interface CampaignLite {
   id: string;
   status?: string;
   effective_status?: string;
+  derived_status?: { key: string; label: string };
 }
 
 interface ReportCampaign extends CampaignLite {
@@ -189,6 +190,8 @@ export default function MyCampaignsPage() {
   const [reportRows, setReportRows] = useState<ReportRow[]>([]);
   const [reportGeneratedAt, setReportGeneratedAt] = useState('');
   const [reportInvoiceNo, setReportInvoiceNo] = useState('');
+  const [selectedColumns, setSelectedColumns] = useState<string[]>(ALL_COLUMNS);
+  const [columnsDropdownOpen, setColumnsDropdownOpen] = useState(false);
   const reportInvoiceRef = useRef<HTMLDivElement>(null);
   const countsLoading = activeCampaignCount === null;
 
@@ -258,7 +261,10 @@ export default function MyCampaignsPage() {
         }
 
         const activeCount = allCampaigns.filter(
-          (c) => c?.status === 'ACTIVE' || c?.effective_status === 'ACTIVE',
+          // Use derived_status.key (same as UI badge) — not raw status/effective_status.
+          // A Completed/Not Delivering campaign still has effective_status='ACTIVE' from
+          // Meta, but derived_status.key correctly reflects its true delivery state.
+          (c) => (c?.derived_status?.key || c?.effective_status) === 'ACTIVE',
         ).length;
 
         if (!cancelled) {
@@ -308,7 +314,8 @@ export default function MyCampaignsPage() {
   };
 
   const getDominantGoalForCampaign = async (campaignId: string) => {
-    const params = new URLSearchParams({ campaign_id: campaignId, limit: '50' });
+    // Use mode=by_campaign: queries /{campaignId}/adsets directly, no account_id needed
+    const params = new URLSearchParams({ mode: 'by_campaign', campaign_id: campaignId, limit: '50' });
     const res = await fetch(`/api/v1/meta/adsets?${params.toString()}`);
     const json = await res.json();
     const adSets = Array.isArray(json?.data) ? json.data : [];
@@ -508,7 +515,7 @@ export default function MyCampaignsPage() {
                 type="button"
                 className="flex items-center justify-center gap-2 rounded-lg border border-emerald-200 bg-linear-to-b from-emerald-50 to-white px-3 py-2 text-sm font-semibold text-emerald-700 shadow-sm"
               >
-                <Activity className="h-4 w-4" />
+                {/* <Activity className="h-4 w-4" /> */}
                 {countsLoading ? 'Active ...' : `Active ${activeCampaignCount}`}
               </button>
 
@@ -520,7 +527,7 @@ export default function MyCampaignsPage() {
                 }}
                 className="flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
               >
-                <BarChart3 className="h-4 w-4 text-slate-500" />
+                {/* <BarChart3 className="h-4 w-4 text-slate-500" /> */}
                 Report
               </button>
 
@@ -593,21 +600,57 @@ export default function MyCampaignsPage() {
               </label>
             </div>
 
-            <div className="mt-4 flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={buildReportRows}
-                disabled={reportLoading}
-                className="rounded-lg border border-blue-200 bg-blue-50 px-3.5 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {reportLoading ? 'Generating...' : 'Generate Report'}
-              </button>
+            <div className="mt-4 flex flex-col gap-2">
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <button
+                    type="button"
+                    onClick={() => setColumnsDropdownOpen(!columnsDropdownOpen)}
+                    className="w-full rounded-lg border border-gray-200 bg-white px-3.5 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center justify-center gap-1"
+                  >
+                    Columns
+                  </button>
+                  {columnsDropdownOpen && (
+                    <div className="absolute top-full left-0 mt-1 w-full sm:w-56 rounded-lg bg-white shadow-xl border border-gray-200 p-2 z-10 flex flex-col gap-1 max-h-60 overflow-y-auto">
+                      {ALL_COLUMNS.map((col) => (
+                        <label key={col} className="flex items-center gap-2 px-2 py-1 hover:bg-gray-50 rounded cursor-pointer text-sm text-gray-700">
+                          <input
+                            type="checkbox"
+                            checked={selectedColumns.includes(col)}
+                            onChange={(e) => {
+                              if (e.target.checked) setSelectedColumns(prev => [...prev, col]);
+                              else setSelectedColumns(prev => prev.filter(c => c !== col));
+                            }}
+                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
+                          {COL_CONFIG[col].label}
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setColumnsDropdownOpen(false);
+                    buildReportRows();
+                  }}
+                  disabled={reportLoading}
+                  className="flex-1 rounded-lg border border-blue-200 bg-blue-50 px-3.5 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {reportLoading ? 'Generating...' : 'Generate Report'}
+                </button>
+              </div>
 
               <button
                 type="button"
-                onClick={downloadReportPdf}
+                onClick={() => {
+                  setColumnsDropdownOpen(false);
+                  downloadReportPdf();
+                }}
                 disabled={reportRows.length === 0 || reportLoading}
-                className="rounded-lg border border-emerald-200 bg-emerald-50 px-3.5 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+                className="w-full rounded-lg border border-emerald-200 bg-emerald-50 px-3.5 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Download PDF (A4)
               </button>
@@ -624,33 +667,34 @@ export default function MyCampaignsPage() {
                 <table className="w-full min-w-7xl border-separate border-spacing-0 text-xs">
                   <thead className="sticky top-0 bg-gray-100">
                     <tr>
-                      <th className="border-b border-gray-200 px-2 py-2 text-left">Date</th>
-                      <th className="border-b border-gray-200 px-2 py-2 text-left">Ad Create Date</th>
-                      <th className="border-b border-gray-200 px-2 py-2 text-left">Ad End Date</th>
-                      <th className="border-b border-gray-200 px-2 py-2 text-left">Campaign Name</th>
-                      <th className="border-b border-gray-200 px-2 py-2 text-right">Spend ($)</th>
-                      <th className="border-b border-gray-200 px-2 py-2 text-right">Spend (Tk)</th>
-                      <th className="border-b border-gray-200 px-2 py-2 text-left">Goal</th>
-                      <th className="border-b border-gray-200 px-2 py-2 text-right">Goal Result</th>
-                      <th className="border-b border-gray-200 px-2 py-2 text-right">Cost / Goal</th>
-                      <th className="border-b border-gray-200 px-2 py-2 text-right">Reach</th>
-                      <th className="border-b border-gray-200 px-2 py-2 text-right">Impressions</th>
+                      {selectedColumns.includes('date') && <th className="border-b border-gray-200 px-2 py-2 text-left">Date</th>}
+                      {selectedColumns.includes('campaignName') && <th className="border-b border-gray-200 px-2 py-2 text-left">Campaign Name</th>}
+                      {selectedColumns.includes('spendUsd') && <th className="border-b border-gray-200 px-2 py-2 text-right">Spend ($)</th>}
+                      {selectedColumns.includes('spendTk') && <th className="border-b border-gray-200 px-2 py-2 text-right">Spend (Tk)</th>}
+                      {selectedColumns.includes('goal') && <th className="border-b border-gray-200 px-2 py-2 text-left">Goal</th>}
+                      {selectedColumns.includes('goalResult') && <th className="border-b border-gray-200 px-2 py-2 text-right">Goal Result</th>}
+                      {selectedColumns.includes('costPerGoalResult') && <th className="border-b border-gray-200 px-2 py-2 text-right">Cost / Goal</th>}
+                      {selectedColumns.includes('reach') && <th className="border-b border-gray-200 px-2 py-2 text-right">Reach</th>}
+                      {selectedColumns.includes('impressions') && <th className="border-b border-gray-200 px-2 py-2 text-right">Impressions</th>}
                     </tr>
                   </thead>
                   <tbody>
                     {reportRows.map((row, index) => (
                       <tr key={`${row.campaignName}-${index}`}>
-                        <td className="border-b border-gray-100 px-2 py-2">{row.date}</td>
-                        <td className="border-b border-gray-100 px-2 py-2">{row.adCreateDate}</td>
-                        <td className="border-b border-gray-100 px-2 py-2">{row.adEndDate}</td>
-                        <td className="border-b border-gray-100 px-2 py-2">{row.campaignName}</td>
-                        <td className="border-b border-gray-100 px-2 py-2 text-right">{fmtCurrency(row.spendUsd)}</td>
-                        <td className="border-b border-gray-100 px-2 py-2 text-right">{fmtTk(row.spendTk)}</td>
-                        <td className="border-b border-gray-100 px-2 py-2">{row.goal}</td>
-                        <td className="border-b border-gray-100 px-2 py-2 text-right">{row.goalResult}</td>
-                        <td className="border-b border-gray-100 px-2 py-2 text-right">{fmtCurrency(row.costPerGoalResult)}</td>
-                        <td className="border-b border-gray-100 px-2 py-2 text-right">{row.reach}</td>
-                        <td className="border-b border-gray-100 px-2 py-2 text-right">{row.impressions}</td>
+                        {selectedColumns.includes('date') && <td className="border-b border-gray-100 px-2 py-2">{row.date}</td>}
+                        {selectedColumns.includes('campaignName') && (
+                          <td className="border-b border-gray-100 px-2 py-2">
+                            <div className="font-semibold text-gray-900">{row.campaignName}</div>
+                            <div className="text-[10px] text-gray-500">({row.adCreateDate} to {row.adEndDate})</div>
+                          </td>
+                        )}
+                        {selectedColumns.includes('spendUsd') && <td className="border-b border-gray-100 px-2 py-2 text-right">{fmtCurrency(row.spendUsd)}</td>}
+                        {selectedColumns.includes('spendTk') && <td className="border-b border-gray-100 px-2 py-2 text-right">{fmtTk(row.spendTk)}</td>}
+                        {selectedColumns.includes('goal') && <td className="border-b border-gray-100 px-2 py-2">{row.goal}</td>}
+                        {selectedColumns.includes('goalResult') && <td className="border-b border-gray-100 px-2 py-2 text-right">{row.goalResult}</td>}
+                        {selectedColumns.includes('costPerGoalResult') && <td className="border-b border-gray-100 px-2 py-2 text-right">{fmtCurrency(row.costPerGoalResult)}</td>}
+                        {selectedColumns.includes('reach') && <td className="border-b border-gray-100 px-2 py-2 text-right">{row.reach}</td>}
+                        {selectedColumns.includes('impressions') && <td className="border-b border-gray-100 px-2 py-2 text-right">{row.impressions}</td>}
                       </tr>
                     ))}
                   </tbody>
@@ -683,6 +727,7 @@ export default function MyCampaignsPage() {
               clientName={user?.fullName || user?.username || 'Assigned User'}
               assignBy={user?.fullName || user?.username || 'System'}
               rows={reportRows}
+              selectedColumns={selectedColumns}
             />
           </div>
         </div>
