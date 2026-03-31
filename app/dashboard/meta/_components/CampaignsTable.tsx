@@ -457,22 +457,34 @@ export default function CampaignsTable({
     if (!assignedMode) return;
 
     const normalized = effectiveSearch.trim().toLowerCase();
+
     const filtered = allAssignedCampaigns.filter((c) => {
       const name = (c.name || '').toLowerCase();
       const objective = (c.objective || '').toLowerCase();
-      const status = (c.status || '').toLowerCase();
-      const effective = (c.effective_status || '').toLowerCase();
 
       const matchesSearch =
         normalized.length === 0 ||
         name.includes(normalized) ||
         objective.includes(normalized) ||
-        status.includes(normalized) ||
-        effective.includes(normalized);
+        (c.status || '').toLowerCase().includes(normalized) ||
+        (c.effective_status || '').toLowerCase().includes(normalized);
 
       if (!matchesSearch) return false;
       if (effectiveFilterStatus === 'all') return true;
-      return c.status === effectiveFilterStatus || c.effective_status === effectiveFilterStatus;
+
+      // derived_status.key is computed by deriveDeliveryStatus() — the same
+      // value shown in the UI badge (e.g. 'COMPLETED', 'NOT_DELIVERING',
+      // 'PAUSED', 'ACTIVE', 'SCHEDULED', etc.).
+      // This gives us filter parity with the /meta page which filters by
+      // effective_status on the Meta API, then derives richer labels.
+      const derivedKey = c.derived_status?.key || c.effective_status || c.status;
+
+      // 'PAUSED' filter: only truly paused campaigns (not completed etc.)
+      if (effectiveFilterStatus === 'PAUSED') return derivedKey === 'PAUSED';
+      // 'ACTIVE' filter: only genuinely active campaigns
+      if (effectiveFilterStatus === 'ACTIVE') return derivedKey === 'ACTIVE';
+      // All other filters: exact match on derived key
+      return derivedKey === effectiveFilterStatus;
     });
 
     const pages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));

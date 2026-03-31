@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { metaFetch } from '@/lib/meta/client';
 import { validateRequest } from '@/lib/auth/validate-request';
 import { prisma } from '@/lib/db/prisma';
+import { deriveDeliveryStatus } from '@/lib/meta/derive-status';
 
 const CAMPAIGN_FIELDS = [
   'id', 'name', 'objective', 'status', 'effective_status',
@@ -89,7 +90,10 @@ export async function GET(req: NextRequest) {
 
       const chunkData = results
         .filter((r): r is PromiseFulfilledResult<unknown> => r.status === 'fulfilled')
-        .map((r) => r.value);
+        .map((r) => ({
+          ...(r.value as Record<string, unknown>),
+          derived_status: deriveDeliveryStatus(r.value as any),
+        }));
 
       data.push(...chunkData);
     }
