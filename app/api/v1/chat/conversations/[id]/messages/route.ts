@@ -54,6 +54,16 @@ export async function GET(
       }
     }
 
+    // Treat opening a conversation as "read" even if socket read event is missed.
+    await prisma.message.updateMany({
+      where: {
+        conversationId,
+        senderId: { not: user.id },
+        status: { not: 'READ' },
+      },
+      data: { status: 'READ' },
+    });
+
     // Fetch messages with cursor-based pagination
     const messages = await prisma.message.findMany({
       where: { conversationId },

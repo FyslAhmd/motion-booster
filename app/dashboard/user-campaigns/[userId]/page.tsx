@@ -552,7 +552,7 @@ function CampaignsSection({
       const res = await fetch('/api/v1/meta/status', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: campaign.id, status: newStatus }),
+        body: JSON.stringify({ id: campaign.id, status: newStatus, objectType: 'CAMPAIGN' }),
       });
       const json = await res.json();
       if (json.success) {

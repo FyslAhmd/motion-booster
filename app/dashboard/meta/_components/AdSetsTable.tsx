@@ -215,7 +215,7 @@ export default function AdSetsTable({ accountId }: AdSetsTableProps) {
       const res = await fetch('/api/v1/meta/status', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: adSet.id, status: newStatus }),
+        body: JSON.stringify({ id: adSet.id, status: newStatus, objectType: 'ADSET' }),
       });
       const json = await res.json();
       if (json.success) {

@@ -356,77 +356,6 @@ function EditModal({ client, onClose, onSave }: EditModalProps) {
   );
 }
 
-/* ─── Delete Confirm Modal ────────────────────────────── */
-
-interface DeleteModalProps {
-  client: Client;
-  onClose: () => void;
-  onDeleted: (id: string) => void;
-}
-
-function DeleteModal({ client, onClose, onDeleted }: DeleteModalProps) {
-  const [deleting, setDeleting] = useState(false);
-  const [error, setError] = useState('');
-
-  const handleDelete = async () => {
-    setDeleting(true);
-    setError('');
-    try {
-      const res = await fetch('/api/v1/admin/clients', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: client.id }),
-      });
-      const json = await res.json();
-      if (json.success) {
-        onDeleted(client.id);
-      } else {
-        setError(json.error || 'Failed to delete');
-      }
-    } catch {
-      setError('Network error');
-    } finally {
-      setDeleting(false);
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
-      <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-        <div className="flex flex-col items-center text-center">
-          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-red-50">
-            <Trash2 className="h-5 w-5 text-red-500" />
-          </div>
-          <h3 className="text-base font-bold text-gray-900">Delete Client</h3>
-          <p className="mt-1.5 text-sm text-gray-500">
-            Are you sure you want to delete <span className="font-semibold text-gray-700">{client.fullName}</span>?
-            This will permanently remove their account, messages, and all related data.
-          </p>
-          {error && (
-            <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600">{error}</p>
-          )}
-        </div>
-        <div className="mt-5 flex items-center gap-2">
-          <button
-            onClick={onClose}
-            className="flex-1 rounded-lg border border-gray-200 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleDelete}
-            disabled={deleting}
-            className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-red-600 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
-          >
-            {deleting ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
-            Delete
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 /* ─── Main Page ───────────────────────────────────────── */
 
 export default function ClientsPage() {
@@ -439,10 +368,10 @@ export default function ClientsPage() {
   const [totalPages, setTotalPages] = useState(0);
   const [counts, setCounts]         = useState({ total: 0, active: 0, suspended: 0, adsAccess: 0 });
   const [updating, setUpdating]     = useState<string | null>(null);
+  const { confirm } = useConfirm();
 
   // Edit / Delete modals
   const [editClient, setEditClient]     = useState<Client | null>(null);
-  const [deleteClient, setDeleteClient] = useState<Client | null>(null);
 
   // Debounce search — reset to page 1 when query changes
   useEffect(() => {
@@ -496,6 +425,37 @@ export default function ClientsPage() {
       BANNED: 'ACTIVE',
     };
     patch(client.id, { status: next[client.status] });
+  }
+
+  async function handleDeleteClient(client: Client) {
+    const ok = await confirm({
+      title: 'Delete Client',
+      message: `Are you sure you want to delete ${client.fullName}? This action cannot be undone.`,
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+    });
+    if (!ok) return;
+
+    setUpdating(client.id);
+    try {
+      const res = await fetch('/api/v1/admin/clients', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: client.id }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setClients((prev) => prev.filter((c) => c.id !== client.id));
+        load(page, debouncedSearch);
+        toast.success('Client deleted successfully!');
+      } else {
+        toast.error(json.error || 'Failed to delete client');
+      }
+    } catch {
+      toast.error('Network error while deleting client');
+    } finally {
+      setUpdating(null);
+    }
   }
 
   return (
@@ -594,7 +554,11 @@ export default function ClientsPage() {
                           <button onClick={() => setEditClient(client)} className="rounded-lg p-1.5 text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-colors">
                             <Pencil className="w-3.5 h-3.5" />
                           </button>
-                          <button onClick={() => setDeleteClient(client)} className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors">
+                          <button
+                            onClick={() => handleDeleteClient(client)}
+                            disabled={busy}
+                            className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
@@ -680,7 +644,12 @@ export default function ClientsPage() {
 	                          <button onClick={() => setEditClient(client)} title="Edit client" className="rounded-lg p-1.5 text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-colors">
 	                            <Pencil className="w-3.5 h-3.5" />
 	                          </button>
-	                          <button onClick={() => setDeleteClient(client)} title="Delete client" className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors">
+	                          <button
+                              onClick={() => handleDeleteClient(client)}
+                              disabled={busy}
+                              title="Delete client"
+                              className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
 	                            <Trash2 className="w-3.5 h-3.5" />
 	                          </button>
 	                        </div>
@@ -818,17 +787,6 @@ export default function ClientsPage() {
         />
       )}
 
-      {/* Delete Confirm Modal */}
-      {deleteClient && (
-        <DeleteModal
-          client={deleteClient}
-          onClose={() => setDeleteClient(null)}
-          onDeleted={(id) => {
-            setClients((prev) => prev.filter((c) => c.id !== id));
-            setDeleteClient(null);
-          }}
-        />
-      )}
     </AdminShell>
   );
 }

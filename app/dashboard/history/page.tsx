@@ -42,26 +42,43 @@ function getHistoryDetails(item: HistoryItem): string {
   const metadata = item.metadata;
   if (!metadata) return '-';
 
+  const moduleName = typeof metadata.module === 'string' ? metadata.module : null;
   const actorAdmin = typeof metadata.actorAdminUsername === 'string'
     ? metadata.actorAdminUsername
-    : item.user?.username || null;
+    : (typeof metadata.actorUsername === 'string' ? metadata.actorUsername : item.user?.username || null);
+  const actorFullName = typeof metadata.actorFullName === 'string' ? metadata.actorFullName : null;
   const clientUsername = typeof metadata.clientUsername === 'string' ? metadata.clientUsername : null;
+  const clientFullName = typeof metadata.clientFullName === 'string' ? metadata.clientFullName : null;
   const targetUserUsername = typeof metadata.targetUserUsername === 'string' ? metadata.targetUserUsername : null;
+  const targetUserFullName = typeof metadata.targetUserFullName === 'string' ? metadata.targetUserFullName : null;
+  const targetUserId = typeof metadata.targetUserId === 'string' ? metadata.targetUserId : null;
   const metaObjectType = typeof metadata.metaObjectType === 'string' ? metadata.metaObjectType : null;
   const metaObjectId = typeof metadata.metaObjectId === 'string' ? metadata.metaObjectId : null;
+  const targetObjectType = typeof metadata.targetObjectType === 'string' ? metadata.targetObjectType : null;
+  const targetObjectId = typeof metadata.targetObjectId === 'string' ? metadata.targetObjectId : null;
+  const nextStatus = typeof metadata.nextStatus === 'string' ? metadata.nextStatus : null;
   const notesRaw = metadata.changeNotes;
   const notes = Array.isArray(notesRaw)
     ? notesRaw.filter((n): n is string => typeof n === 'string' && n.length > 0)
     : [];
 
-  if (clientUsername && notes.length > 0) {
-    const actor = actorAdmin || 'Unknown admin';
-    return `${actor} -> ${clientUsername}: ${notes.join(', ')}`;
+  const actorLabel = actorFullName ? `${actorFullName}${actorAdmin ? ` (${actorAdmin})` : ''}` : (actorAdmin || 'Unknown user');
+  const clientLabel = clientFullName ? `${clientFullName}${clientUsername ? ` (${clientUsername})` : ''}` : clientUsername;
+  const targetUserLabel = targetUserFullName
+    ? `${targetUserFullName}${targetUserUsername ? ` (${targetUserUsername})` : ''}`
+    : (targetUserUsername || (targetUserId ? `User ${targetUserId}` : null));
+
+  if (moduleName === 'meta-status' && targetObjectType && targetObjectId && nextStatus) {
+    const humanStatus = nextStatus === 'ACTIVE' ? 'ON' : nextStatus === 'PAUSED' ? 'OFF' : nextStatus;
+    return `${actorLabel} changed ${targetObjectType} (${targetObjectId}) to ${humanStatus}`;
   }
 
-  if (targetUserUsername && metaObjectType && metaObjectId) {
-    const actor = actorAdmin || 'Unknown admin';
-    return `${actor} -> ${targetUserUsername}: ${metaObjectType} (${metaObjectId})`;
+  if (clientLabel && notes.length > 0) {
+    return `${actorLabel} -> ${clientLabel}: ${notes.join(', ')}`;
+  }
+
+  if (targetUserLabel && metaObjectType && metaObjectId) {
+    return `${actorLabel} -> ${targetUserLabel}: ${metaObjectType} (${metaObjectId})`;
   }
 
   try {

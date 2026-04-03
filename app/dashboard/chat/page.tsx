@@ -1745,7 +1745,7 @@ export default function MessagesPage() {
             </div>
 
             {/* Message Input */}
-            <div className="bg-white border-t border-gray-100 px-3 md:px-8 py-3 md:py-4">
+            <div className="bg-gray-50 border-t border-gray-200 px-3 md:px-8 py-3 md:py-4">
               {/* Boost Post CTA — visible only for non-admin users */}
               {user?.role !== 'ADMIN' && (
                 <div className="mb-4 ml-4 flex justify-start">
@@ -1753,10 +1753,10 @@ export default function MessagesPage() {
                     onClick={openBoostForm}
                     aria-label="Boost Request"
                     title="Boost Request"
-                    className="relative inline-flex h-16 w-16 items-center justify-center rounded-full shadow-lg shadow-red-300/50 transition-transform hover:scale-105 active:scale-95"
+                    className="relative inline-flex h-16 w-16 items-center justify-center rounded-full shadow-md shadow-red-200/50 transition-transform hover:scale-105 active:scale-95"
                   >
-                    <span className="absolute inset-0 rounded-full bg-red-400/45 animate-ping" />
-                    <span className="relative inline-flex h-full w-full items-center justify-center rounded-full bg-linear-to-r from-orange-500 via-red-500 to-pink-500 text-white animate-pulse">
+                    <span className="absolute inset-0 rounded-full bg-red-300/30 animate-ping" />
+                    <span className="relative inline-flex h-full w-full items-center justify-center rounded-full bg-red-500 text-white">
                       <MessageSquarePlus className="h-7 w-7" />
                     </span>
                   </button>
