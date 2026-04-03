@@ -276,7 +276,7 @@ export default function FeaturesPageBN() {
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
             <Link href="/register">
-            <button className="px-8 py-4 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-all shadow-lg hover:shadow-xl font-semibold flex items-center gap-2">
+            <button className="px-8 py-4 bg-red-500 text-white rounded-full hover:bg-red-600 transition-all shadow-lg hover:shadow-xl font-semibold flex items-center gap-2">
                 ফ্রি ট্রায়াল শুরু করুন
                 <ArrowRight className="w-5 h-5" />
               </button>
