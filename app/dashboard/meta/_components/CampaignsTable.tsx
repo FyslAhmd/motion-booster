@@ -709,7 +709,7 @@ export default function CampaignsTable({
       const res = await fetch('/api/v1/meta/status', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: campaign.id, status: newStatus }),
+        body: JSON.stringify({ id: campaign.id, status: newStatus, objectType: 'CAMPAIGN' }),
       });
       const json = await res.json();
       if (json.success) {
@@ -750,7 +750,7 @@ export default function CampaignsTable({
     ['ACTIVE', 'PAUSED'].includes(status) &&
     !['DELETED', 'ARCHIVED'].includes(effectiveStatus);
 
-  const toggleMetaObjectStatus = async (id: string, currentStatus: string) => {
+  const toggleMetaObjectStatus = async (id: string, currentStatus: string, objectType: 'ADSET' | 'AD') => {
     const newStatus = currentStatus === 'ACTIVE' ? 'PAUSED' : 'ACTIVE';
 
     const ok = await confirm({
@@ -767,7 +767,7 @@ export default function CampaignsTable({
       const res = await fetch('/api/v1/meta/status', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, status: newStatus }),
+        body: JSON.stringify({ id, status: newStatus, objectType }),
       });
       const json = await res.json();
       if (!json.success) {
@@ -1436,7 +1436,7 @@ export default function CampaignsTable({
                             </span>
                             {canToggleMetaObject(adSet.status, adSet.effective_status) && (
                               <button
-                                onClick={() => toggleMetaObjectStatus(adSet.id, adSet.status)}
+                                onClick={() => toggleMetaObjectStatus(adSet.id, adSet.status, 'ADSET')}
                                 disabled={togglingId === adSet.id}
                                 className={`relative ml-auto inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-1 ${
                                   adSet.status === 'ACTIVE' ? 'bg-green-500' : 'bg-gray-300'
@@ -1502,7 +1502,7 @@ export default function CampaignsTable({
                                       </span>
                                       {canToggleMetaObject(ad.status, ad.effective_status) && (
                                         <button
-                                          onClick={() => toggleMetaObjectStatus(ad.id, ad.status)}
+                                          onClick={() => toggleMetaObjectStatus(ad.id, ad.status, 'AD')}
                                           disabled={togglingId === ad.id}
                                           className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-1 ${
                                             ad.status === 'ACTIVE' ? 'bg-green-500' : 'bg-gray-300'

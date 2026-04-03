@@ -323,7 +323,10 @@ export default function AdminDashboardView() {
   useEffect(() => {
     if (isAdmin) {
       setAdminStatsLoading(true);
-      fetch("/api/v1/admin/stats")
+      fetch("/api/v1/admin/stats", {
+        cache: "no-store",
+        credentials: "include",
+      })
         .then((r) => r.json())
         .then((d) => {
           if (d.success) {

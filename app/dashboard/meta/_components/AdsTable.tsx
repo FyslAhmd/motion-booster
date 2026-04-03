@@ -174,7 +174,7 @@ export default function AdsTable({ accountId }: AdsTableProps) {
       const res = await fetch('/api/v1/meta/status', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: ad.id, status: newStatus }),
+        body: JSON.stringify({ id: ad.id, status: newStatus, objectType: 'AD' }),
       });
       const json = await res.json();
       if (json.success) {

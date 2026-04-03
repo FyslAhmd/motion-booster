@@ -292,7 +292,7 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
       </main>
 
       {/* Bottom nav — shrink-0 so it's always visible at bottom of flex column */}
-      <nav className="lg:hidden shrink-0 z-30 bg-white border-t border-gray-200 shadow-lg flex justify-around items-center h-16 px-2">
+      <nav className="lg:hidden shrink-0 z-30 bg-gray-50 shadow-lg flex justify-around items-center h-16 px-2">
         {userNavItems.map(({ href, label, icon: Icon }) => {
           const disabled = isNewClient && href !== '/dashboard/chat';
           const active = pathname === href;
@@ -305,11 +305,11 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
                 router.push(href);
               }}
               disabled={disabled}
-              className={`flex flex-col items-center justify-center gap-1 px-4 py-2 flex-1 transition-colors ${
+              className={`relative flex h-full flex-1 flex-col items-center justify-center gap-1 px-4 py-2 transition-colors ${
                 disabled
                   ? 'opacity-50 cursor-not-allowed text-gray-400'
                   : active
-                    ? 'text-red-500'
+                    ? 'text-red-600 after:absolute after:bottom-0 after:left-1/2 after:h-0.5 after:w-8 after:-translate-x-1/2 after:rounded-full after:bg-red-500 after:content-[\'\']'
                     : 'text-gray-500 hover:text-red-500'
               }`}
             >
