@@ -4,7 +4,7 @@ import { useRef, useState, useEffect } from 'react';
 import AdminShell from '../_components/AdminShell';
 import { AdminSectionSkeleton } from '@/components/ui/AdminSectionSkeleton';
 import { CampaignsTable } from '../meta/_components';
-import { Search, Filter, Activity, BarChart3, RefreshCw } from 'lucide-react';
+import { Search, Filter, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/lib/auth/context';
 import { CampaignReportInvoice, ALL_COLUMNS, COL_CONFIG } from '@/components/invoice/CampaignReportInvoice';
 
@@ -121,8 +121,17 @@ function getDateTs(value?: string, endOfDay = false) {
   return new Date(`${value}${suffix}`).getTime();
 }
 
-function parseCampaignInsight(raw: any) {
-  const insight = Array.isArray(raw?.data) ? raw.data[0] : Array.isArray(raw) ? raw[0] : raw;
+function parseCampaignInsight(raw: unknown) {
+  type InsightRow = {
+    spend?: string | number;
+    reach?: string | number;
+    impressions?: string | number;
+    actions?: Array<{ action_type?: string; value?: string | number }>;
+    cost_per_action_type?: Array<{ action_type?: string; value?: string | number }>;
+  };
+
+  const rawRecord = (raw && typeof raw === 'object' ? raw : {}) as { data?: unknown[] };
+  const insight = Array.isArray(rawRecord.data) ? rawRecord.data[0] : Array.isArray(raw) ? raw[0] : raw;
   if (!insight) {
     return {
       spend: 0,
@@ -133,15 +142,16 @@ function parseCampaignInsight(raw: any) {
     };
   }
 
-  const actions = insight.actions || [];
-  const costs = insight.cost_per_action_type || [];
+  const typedInsight = insight as InsightRow;
+  const actions = typedInsight.actions || [];
+  const costs = typedInsight.cost_per_action_type || [];
 
   return {
-    spend: Number(insight.spend || 0),
-    reach: Number(insight.reach || 0),
-    impressions: Number(insight.impressions || 0),
-    getAction: (type: string) => Number(actions.find((a: any) => a.action_type === type)?.value || 0),
-    getCost: (type: string) => Number(costs.find((a: any) => a.action_type === type)?.value || 0),
+    spend: Number(typedInsight.spend || 0),
+    reach: Number(typedInsight.reach || 0),
+    impressions: Number(typedInsight.impressions || 0),
+    getAction: (type: string) => Number(actions.find((a) => a.action_type === type)?.value || 0),
+    getCost: (type: string) => Number(costs.find((a) => a.action_type === type)?.value || 0),
   };
 }
 
@@ -390,8 +400,9 @@ export default function MyCampaignsPage() {
       if (rows.length === 0) {
         setReportError('No campaigns matched this date range.');
       }
-    } catch (err: any) {
-      setReportError(err?.message || 'Failed to build report.');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to build report.';
+      setReportError(message);
     } finally {
       setReportLoading(false);
     }
@@ -557,6 +568,9 @@ export default function MyCampaignsPage() {
             hideControls
             assignedCampaignIds={assignedCampaignIds}
             campaignAccountById={campaignAccountById}
+            onCampaignStatusChanged={() => {
+              setRefreshTick((prev) => prev + 1);
+            }}
           />
         </div>
       </div>
