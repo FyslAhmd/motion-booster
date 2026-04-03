@@ -6,6 +6,7 @@ import next from 'next';
 import { Server as SocketIOServer } from 'socket.io';
 import { jwtVerify } from 'jose';
 import { PrismaClient } from './lib/generated/prisma/index.js';
+import 'dotenv/config';
 
 const dev = process.env.NODE_ENV !== 'production';
 const hostname = dev ? 'localhost' : '0.0.0.0';
