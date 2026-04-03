@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ChevronRight, X } from 'lucide-react';
+import { ArrowRight, X } from 'lucide-react';
 import Link from 'next/link';
 import { createPortal } from 'react-dom';
 
@@ -80,7 +80,7 @@ export const WelcomeModal = () => {
       className="fixed inset-0 z-200 flex items-center justify-center bg-transparent px-4"
       onClick={handleClose}
     >
-      <div className="relative z-10 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+      <div className="relative z-10 w-full max-w-3xl" onClick={(e) => e.stopPropagation()}>
         <button
           onClick={handleClose}
           className="absolute -top-2 right-0 z-20 h-8 w-8 rounded-full bg-white/90 text-gray-600 shadow transition-colors hover:text-red-500"
@@ -90,35 +90,29 @@ export const WelcomeModal = () => {
 
         <div className="w-full bg-transparent p-0">
           {modalImage ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={modalImage}
-              alt="Welcome"
-              className="mx-auto h-64 w-full border-0 bg-transparent object-contain shadow-none"
-              loading="eager"
-              decoding="async"
-              fetchPriority="high"
-            />
-          ) : (
-            <div
-              className="mx-auto flex h-64 w-full items-center justify-center rounded-2xl"
-              style={{ background: 'linear-gradient(214.38deg, #ff8079 -2.24%, #ff1e1e 59.38%)' }}
-            >
-              <div className="text-center px-4">
-                <div className="mb-2 text-5xl">🚀</div>
-                <h2 className="text-xl font-extrabold leading-tight text-white">Motion Booster</h2>
-              </div>
+            <div className="mx-auto flex max-h-[70vh] w-fit max-w-[92vw] items-center justify-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={modalImage}
+                alt="Welcome"
+                className="block h-auto max-h-[70vh] w-auto max-w-full border-0 bg-transparent object-contain shadow-none"
+                loading="eager"
+                decoding="async"
+                fetchPriority="high"
+              />
             </div>
+          ) : (
+            <span></span>
           )}
 
           <div className="mt-4 flex justify-center">
             <Link
               href={exploreLink}
               onClick={handleClose}
-              className="inline-flex items-center gap-2 rounded-full bg-red-500 px-7 py-3 text-base font-bold text-white shadow-xl transition-colors hover:bg-red-600"
+              className="inline-flex items-center gap-2 rounded-full bg-red-500 px-7 py-2 text-base font-bold text-white shadow-xl transition-colors hover:bg-red-600"
             >
-              Explore
-              <ChevronRight className="h-4 w-4" />
+              Learn More
+              <ArrowRight className="h-5 font-bold" />
             </Link>
           </div>
         </div>
