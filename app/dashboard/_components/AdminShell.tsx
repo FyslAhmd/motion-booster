@@ -219,15 +219,16 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
 
       {/* Top bar */}
       <header className="shrink-0 z-20 bg-white border-b border-gray-100 h-18.5 flex items-center px-4 justify-between shadow-sm">
-        <Link href="/dashboard" className="lg:hidden">
-          <Image
-            src="/Motion Booster Black Logo-01.svg"
-            alt="Motion Booster"
-            width={130}
-            height={40}
-            className="h-12 w-auto"
-            priority
-          />
+        <Link href="/dashboard" className="lg:hidden flex items-center gap-2">
+          <div className="relative w-40 h-12">
+            <Image
+              src="/Motion Booster Black Logo-01.svg"
+              alt="Motion Booster"
+              fill
+              className="object-contain"
+              priority
+            />
+          </div>
         </Link>
         <span className="hidden lg:block text-base font-semibold text-gray-800">{activeLabel}</span>
         <div className="flex items-center gap-3 text-sm text-gray-500 font-medium">
@@ -243,15 +244,13 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
           <div className="relative">
             <button
               onClick={() => setProfileDropdownOpen((o) => !o)}
-              className="flex items-center focus:outline-none"
+              className="h-9 w-9 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors shadow-sm overflow-hidden focus:outline-none"
               aria-label="Profile menu"
             >
               {avatarUrl ? (
-                <Image src={avatarUrl} alt="avatar" width={36} height={36} className="w-9 h-9 rounded-full object-cover ring-2 ring-transparent hover:ring-red-300 transition-all" />
+                <Image src={avatarUrl} alt="avatar" width={36} height={36} className="w-9 h-9 rounded-full object-cover" />
               ) : (
-                <div className="w-9 h-9 rounded-full bg-linear-to-br from-red-500 to-red-700 flex items-center justify-center text-white text-xs font-bold ring-2 ring-transparent hover:ring-red-300 transition-all">
-                  {userName.slice(0, 2).toUpperCase()}
-                </div>
+                <span className="text-gray-700 font-bold text-sm">{userName.slice(0, 1).toUpperCase()}</span>
               )}
             </button>
             {profileDropdownOpen && (
