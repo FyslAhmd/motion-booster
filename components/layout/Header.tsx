@@ -124,7 +124,7 @@ export const Header = () => {
         <div className="flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
-            <div className="relative w-40 h-12">
+            <div className="relative w-36 h-12">
               <Image
                 src="/Motion Booster Black Logo-01.svg"
                 alt="Motion Booster Logo"
@@ -136,7 +136,7 @@ export const Header = () => {
           </Link>
 
           {/* Icons: Search, Notifications, Profile */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1">
             <button
               onClick={() => {
                 setShowNotifications(false);
@@ -188,7 +188,7 @@ export const Header = () => {
                 <span className="hidden md:inline">hello@motionbooster.com</span>
               </a>
             </div>
-            
+
             {/* Language Switcher */}
             <div className="flex items-center gap-2">
               <button
