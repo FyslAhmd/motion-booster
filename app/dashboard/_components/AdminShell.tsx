@@ -37,6 +37,7 @@ import {
   DollarSign,
   Inbox,
   History,
+  Bell,
 } from 'lucide-react';
 interface NavItem {
   href: string;
@@ -229,8 +230,15 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
           />
         </Link>
         <span className="hidden lg:block text-base font-semibold text-gray-800">{activeLabel}</span>
-        <div className="flex items-center gap-2 text-sm text-gray-500 font-medium">
+        <div className="flex items-center gap-3 text-sm text-gray-500 font-medium">
           <span className="hidden sm:block lg:hidden">{activeLabel}</span>
+          <button
+            type="button"
+            aria-label="Notifications"
+            className="h-9 w-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+          >
+            <Bell className="w-5 h-5 text-gray-600" />
+          </button>
           {/* Avatar dropdown */}
           <div className="relative">
             <button
@@ -668,8 +676,15 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
               })()}
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <div className="text-xs text-gray-400 hidden sm:block">{adminName}</div>
+            <button
+              type="button"
+              aria-label="Notifications"
+              className="h-9 w-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+            >
+              <Bell className="w-5 h-5 text-gray-600" />
+            </button>
             {/* Avatar dropdown */}
             <div className="relative">
               <button
