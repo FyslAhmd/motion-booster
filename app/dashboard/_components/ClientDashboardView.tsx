@@ -42,6 +42,13 @@ interface AssignedCampaignLite {
   metaAccountId: string;
 }
 
+interface CampaignLite {
+  id: string;
+  status?: string;
+  effective_status?: string;
+  derived_status?: { key: string; label?: string };
+}
+
 interface UserBudgetSummaryRow {
   totalBudget?: number;
   totalSpent?: number;
@@ -50,17 +57,6 @@ interface UserBudgetSummaryRow {
 
 // ── Meta account summary card (shown on admin overview) ─────────────────
 const BDT_RATE = 145;
-
-function metaAmountToUsd(amount: string | undefined): number {
-  if (!amount) return 0;
-  const n = Number(amount);
-  if (!Number.isFinite(n)) return 0;
-
-  // Meta amount_spent may arrive as:
-  // - decimal string (e.g. "123.45")
-  // - minor units string (e.g. "12345")
-  return amount.includes(".") ? n : n / 100;
-}
 
 function resolveAccountId(account: MetaAccountSummary | null | undefined): string | null {
   const id = account?.account_id || account?.id;
@@ -148,16 +144,63 @@ export default function ClientDashboardView() {
   useEffect(() => {
     if (isAdmin || !user?.id) return;
 
-    fetch(`/api/v1/admin/meta-assignments/users/${encodeURIComponent(user.id)}`)
-      .then((r) => r.json())
-      .then((d) => {
-        if (!d?.success) return;
-        const campaigns = Array.isArray(d?.data?.campaigns) ? d.data.campaigns.length : 0;
-        setTotalAds(campaigns);
-      })
-      .catch(() => {
-        setTotalAds(0);
-      });
+    let cancelled = false;
+
+    const loadActiveCampaignCount = async () => {
+      try {
+        const assignmentsRes = await fetch(`/api/v1/admin/meta-assignments/users/${encodeURIComponent(user.id)}`);
+        const assignmentsJson = await assignmentsRes.json();
+
+        if (!assignmentsJson?.success) {
+          if (!cancelled) setTotalAds(0);
+          return;
+        }
+
+        const campaignIds = Array.isArray(assignmentsJson?.data?.campaigns)
+          ? assignmentsJson.data.campaigns
+              .map((c: { metaObjectId?: string }) => c?.metaObjectId)
+              .filter((id: string | undefined): id is string => typeof id === 'string' && id.length > 0)
+          : [];
+
+        const uniqueIds = Array.from(new Set(campaignIds));
+        if (uniqueIds.length === 0) {
+          if (!cancelled) setTotalAds(0);
+          return;
+        }
+
+        const chunkSize = 40;
+        const allCampaigns: CampaignLite[] = [];
+
+        for (let i = 0; i < uniqueIds.length; i += chunkSize) {
+          const chunk = uniqueIds.slice(i, i + chunkSize);
+          const params = new URLSearchParams({ type: 'CAMPAIGN', ids: chunk.join(',') });
+          const res = await fetch(`/api/v1/meta/by-ids?${params.toString()}`);
+          const json = await res.json();
+
+          if (json?.success && Array.isArray(json.data)) {
+            allCampaigns.push(...json.data);
+          }
+        }
+
+        const activeCount = allCampaigns.filter(
+          (c) => (c?.derived_status?.key || c?.effective_status) === 'ACTIVE',
+        ).length;
+
+        if (!cancelled) {
+          setTotalAds(activeCount);
+        }
+      } catch {
+        if (!cancelled) {
+          setTotalAds(0);
+        }
+      }
+    };
+
+    loadActiveCampaignCount();
+
+    return () => {
+      cancelled = true;
+    };
   }, [isAdmin, user?.id]);
 
   useEffect(() => {
