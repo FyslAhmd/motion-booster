@@ -865,8 +865,8 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
 
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-        {/* Top bar — mobile only */}
-        <header className="lg:hidden sticky top-0 z-10 bg-white border-b border-gray-100 px-4 sm:px-6 h-18.5 flex items-center justify-between gap-4">
+        {/* Top bar */}
+        <header className="sticky top-0 z-10 bg-white border-b border-gray-100 px-4 sm:px-6 h-18.5 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setSidebarOpen(true)}
@@ -959,8 +959,8 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
 
         {showNotifications && (
           <>
-            <div className="fixed inset-0 z-20 bg-black/30 lg:hidden" onClick={() => setShowNotifications(false)} />
-            <div className="fixed top-[4.8rem] left-3 right-3 z-30 rounded-2xl border border-gray-200 bg-white shadow-2xl lg:hidden">
+            <div className="fixed inset-0 z-20 bg-black/30" onClick={() => setShowNotifications(false)} />
+            <div className="fixed top-[4.8rem] left-3 right-3 z-30 rounded-2xl border border-gray-200 bg-white shadow-2xl sm:left-auto sm:right-4 sm:w-96">
               <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
                 <h3 className="text-sm font-semibold text-gray-900">Notifications</h3>
                 <button onClick={() => setShowNotifications(false)} className="text-xs font-medium text-gray-500 hover:text-gray-700">Close</button>

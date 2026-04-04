@@ -1,7 +1,9 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Search, UserPlus, X, Loader2, Check } from 'lucide-react';
+import { toast } from 'sonner';
+import { createPortal } from 'react-dom';
 
 interface AssignedUser {
   id: string;
@@ -20,6 +22,8 @@ interface UserOption {
 interface AssignUserDropdownProps {
   /** The Meta object id (campaign/adset/ad) */
   metaObjectId: string;
+  /** Optional object title/name shown in notifications */
+  metaObjectName?: string;
   /** The type of Meta object */
   metaObjectType: 'CAMPAIGN' | 'ADSET' | 'AD';
   /** The Meta ad account id (e.g. act_xxx) */
@@ -34,6 +38,7 @@ interface AssignUserDropdownProps {
 
 export default function AssignUserDropdown({
   metaObjectId,
+  metaObjectName,
   metaObjectType,
   metaAccountId,
   assignedUsers,
@@ -45,19 +50,55 @@ export default function AssignUserDropdown({
   const [users, setUsers] = useState<UserOption[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const ref = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const searchTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  const updateMenuPosition = useCallback(() => {
+    if (!ref.current || typeof window === 'undefined') return;
+
+    const rect = ref.current.getBoundingClientRect();
+    const menuWidth = 256; // w-64
+    const left = Math.max(8, Math.min(rect.right - menuWidth, window.innerWidth - menuWidth - 8));
+    const top = rect.bottom + 6;
+
+    setMenuPosition({ top, left });
+  }, []);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Close on outside click
   useEffect(() => {
     function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      const clickedTrigger = ref.current?.contains(target);
+      const clickedMenu = dropdownRef.current?.contains(target);
+      if (!clickedTrigger && !clickedMenu) {
         setOpen(false);
       }
     }
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
+
+  useEffect(() => {
+    if (!open) return;
+
+    updateMenuPosition();
+
+    const handleViewportChange = () => updateMenuPosition();
+    window.addEventListener('resize', handleViewportChange);
+    window.addEventListener('scroll', handleViewportChange, true);
+
+    return () => {
+      window.removeEventListener('resize', handleViewportChange);
+      window.removeEventListener('scroll', handleViewportChange, true);
+    };
+  }, [open, updateMenuPosition]);
 
   // Fetch users when dropdown opens or search changes
   useEffect(() => {
@@ -99,6 +140,7 @@ export default function AssignUserDropdown({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           metaObjectId,
+          metaObjectName,
           metaObjectType,
           metaAccountId,
           userId: user.id,
@@ -121,8 +163,14 @@ export default function AssignUserDropdown({
           setOpen(false);
           setSearch('');
         }
+
+        toast.success(`${user.fullName} assigned successfully`);
+      } else {
+        toast.error(json.error || 'Failed to assign user');
       }
-    } catch {}
+    } catch {
+      toast.error('Network error while assigning user');
+    }
     finally {
       setSaving(false);
     }
@@ -219,8 +267,16 @@ export default function AssignUserDropdown({
       )}
 
       {/* Dropdown */}
-      {open && (
-        <div className="absolute right-0 top-full z-230 mt-1 w-64 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg">
+      {open && mounted && createPortal(
+        <div
+          ref={dropdownRef}
+          className="z-230 w-64 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg"
+          style={{
+            position: 'fixed',
+            top: `${menuPosition.top}px`,
+            left: `${menuPosition.left}px`,
+          }}
+        >
           {/* Search */}
           <div className="border-b border-gray-100 p-2">
             <div className="relative">
@@ -277,7 +333,8 @@ export default function AssignUserDropdown({
               })
             )}
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   );

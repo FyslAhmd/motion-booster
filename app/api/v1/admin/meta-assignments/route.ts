@@ -3,6 +3,25 @@ import { prisma } from '@/lib/db/prisma';
 import { validateRequest } from '@/lib/auth/validate-request';
 import { Prisma } from '@/lib/generated/prisma';
 import { getClientIp, logActivity } from '@/lib/server/activity-history';
+import { metaFetch } from '@/lib/meta/client';
+
+async function resolveMetaObjectName(input: {
+  metaObjectId: string;
+  providedName?: string;
+}): Promise<string> {
+  const provided = input.providedName?.trim();
+  if (provided) return provided;
+
+  try {
+    const response = await metaFetch<{ name?: string }>(`/${input.metaObjectId}`, {
+      fields: 'name',
+    });
+    const name = response?.name?.trim();
+    return name || input.metaObjectId;
+  } catch {
+    return input.metaObjectId;
+  }
+}
 
 async function recordMetaAssignmentHistory(input: {
   req: NextRequest;
@@ -45,6 +64,7 @@ async function createAssignmentNotifications(input: {
   metaObjectId: string;
   metaObjectType: 'CAMPAIGN' | 'ADSET' | 'AD';
   metaAccountId: string;
+  metaObjectName: string;
 }): Promise<void> {
   const objectLabel =
     input.metaObjectType === 'CAMPAIGN'
@@ -52,12 +72,15 @@ async function createAssignmentNotifications(input: {
       : input.metaObjectType === 'ADSET'
         ? 'Ad Set'
         : 'Ad';
+  const userNotificationTitle = `${objectLabel} assignment update`;
+  const adminNotificationTitle = `${objectLabel} assigned successfully`;
+  const objectDisplayName = input.metaObjectName || input.metaObjectId;
 
   try {
     await logActivity({
       userId: input.userId,
       eventType: 'CUSTOM_ACTION',
-      action: 'Notification: New assignment received',
+      action: `Notification: ${userNotificationTitle}`,
       path: '/dashboard/my-campaigns',
       method: 'SYSTEM',
       ipAddress: getClientIp(input.req),
@@ -65,8 +88,8 @@ async function createAssignmentNotifications(input: {
       metadata: {
         module: 'notifications',
         type: 'ASSIGNMENT',
-        title: 'New assignment received',
-        text: `${objectLabel} ${input.metaObjectId} was assigned to you by ${input.adminUsername}.`,
+        title: userNotificationTitle,
+        text: `${objectLabel} ${objectDisplayName} was assigned to you by ${input.adminUsername}.`,
         href: '/dashboard/my-campaigns',
         targetUserId: input.userId,
         targetUserFullName: input.userFullName,
@@ -75,6 +98,7 @@ async function createAssignmentNotifications(input: {
         assignedByAdminUsername: input.adminUsername,
         assignedByAdminEmail: input.adminEmail,
         metaObjectId: input.metaObjectId,
+        metaObjectName: input.metaObjectName,
         metaObjectType: input.metaObjectType,
         metaAccountId: input.metaAccountId,
       },
@@ -83,7 +107,7 @@ async function createAssignmentNotifications(input: {
     await logActivity({
       userId: input.adminId,
       eventType: 'CUSTOM_ACTION',
-      action: 'Notification: Assignment completed',
+      action: `Notification: ${adminNotificationTitle}`,
       path: input.req.nextUrl.pathname,
       method: input.req.method,
       ipAddress: getClientIp(input.req),
@@ -91,8 +115,8 @@ async function createAssignmentNotifications(input: {
       metadata: {
         module: 'notifications',
         type: 'ASSIGNMENT',
-        title: 'Assignment completed',
-        text: `${objectLabel} ${input.metaObjectId} assigned to ${input.userFullName}.`,
+        title: adminNotificationTitle,
+        text: `${objectLabel} ${objectDisplayName} assigned to ${input.userFullName}.`,
         href: '/dashboard/user-campaigns',
         targetUserId: input.userId,
         targetUserFullName: input.userFullName,
@@ -101,6 +125,7 @@ async function createAssignmentNotifications(input: {
         assignedByAdminUsername: input.adminUsername,
         assignedByAdminEmail: input.adminEmail,
         metaObjectId: input.metaObjectId,
+        metaObjectName: input.metaObjectName,
         metaObjectType: input.metaObjectType,
         metaAccountId: input.metaAccountId,
       },
@@ -163,11 +188,12 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { metaObjectId, metaObjectType, metaAccountId, userId } = body as {
+    const { metaObjectId, metaObjectType, metaAccountId, userId, metaObjectName: rawMetaObjectName } = body as {
       metaObjectId: string;
       metaObjectType: 'CAMPAIGN' | 'ADSET' | 'AD';
       metaAccountId: string;
       userId: string;
+      metaObjectName?: string;
     };
 
     if (!metaObjectId || !metaObjectType || !metaAccountId || !userId) {
@@ -190,6 +216,11 @@ export async function POST(req: NextRequest) {
     if (user.role === 'ADMIN') {
       return NextResponse.json({ success: false, error: 'Cannot assign to admin users' }, { status: 400 });
     }
+
+    const metaObjectName = await resolveMetaObjectName({
+      metaObjectId,
+      providedName: rawMetaObjectName,
+    });
 
     const existing = await prisma.metaAdAssignment.findFirst({
       where: { metaObjectId, metaObjectType, userId },
@@ -228,6 +259,7 @@ export async function POST(req: NextRequest) {
         targetUserFullName: user.fullName,
         targetUserEmail: user.email,
         metaObjectId,
+        metaObjectName,
         metaObjectType,
         metaAccountId,
         isExisting: Boolean(existing),
@@ -246,6 +278,7 @@ export async function POST(req: NextRequest) {
         metaObjectId,
         metaObjectType,
         metaAccountId,
+        metaObjectName,
       });
     }
 

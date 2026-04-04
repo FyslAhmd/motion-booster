@@ -301,6 +301,7 @@ export default function AdsTable({ accountId }: AdsTableProps) {
                         <div className="mt-1.5">
                           <AssignUserDropdown
                             metaObjectId={ad.id}
+                            metaObjectName={ad.name}
                             metaObjectType="AD"
                             metaAccountId={accountId}
                             assignedUsers={assignedUser ? [assignedUser] : []}
@@ -354,6 +355,7 @@ export default function AdsTable({ accountId }: AdsTableProps) {
                           <td className="px-4 py-3">
                             <AssignUserDropdown
                               metaObjectId={ad.id}
+                              metaObjectName={ad.name}
                               metaObjectType="AD"
                               metaAccountId={accountId}
                               assignedUsers={assignedUser ? [assignedUser] : []}

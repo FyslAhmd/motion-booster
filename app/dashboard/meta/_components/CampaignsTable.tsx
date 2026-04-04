@@ -1089,6 +1089,7 @@ export default function CampaignsTable({
 	                        {accountId ? (
 	                          <AssignUserDropdown
 	                            metaObjectId={c.id}
+                            metaObjectName={c.name}
                             metaObjectType="CAMPAIGN"
                             metaAccountId={accountId}
                             assignedUsers={assignments[c.id] || []}
