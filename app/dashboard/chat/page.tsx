@@ -1745,7 +1745,7 @@ export default function MessagesPage() {
             </div>
 
             {/* Message Input */}
-            <div className="bg-gray-50 border-t border-gray-200 px-3 md:px-8 py-3 md:py-4">
+            <div className="bg-gray-50 px-3 md:px-8 py-3 md:py-4">
               {/* Boost Post CTA — visible only for non-admin users */}
               {user?.role !== 'ADMIN' && (
                 <div className="mb-4 ml-4 flex justify-start">

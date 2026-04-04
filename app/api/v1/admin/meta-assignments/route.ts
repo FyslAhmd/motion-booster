@@ -34,6 +34,82 @@ async function recordMetaAssignmentHistory(input: {
   }
 }
 
+async function createAssignmentNotifications(input: {
+  req: NextRequest;
+  adminId: string;
+  adminUsername: string;
+  adminEmail: string;
+  userId: string;
+  userFullName: string;
+  userUsername: string;
+  metaObjectId: string;
+  metaObjectType: 'CAMPAIGN' | 'ADSET' | 'AD';
+  metaAccountId: string;
+}): Promise<void> {
+  const objectLabel =
+    input.metaObjectType === 'CAMPAIGN'
+      ? 'Campaign'
+      : input.metaObjectType === 'ADSET'
+        ? 'Ad Set'
+        : 'Ad';
+
+  try {
+    await logActivity({
+      userId: input.userId,
+      eventType: 'CUSTOM_ACTION',
+      action: 'Notification: New assignment received',
+      path: '/dashboard/my-campaigns',
+      method: 'SYSTEM',
+      ipAddress: getClientIp(input.req),
+      userAgent: input.req.headers.get('user-agent'),
+      metadata: {
+        module: 'notifications',
+        type: 'ASSIGNMENT',
+        title: 'New assignment received',
+        text: `${objectLabel} ${input.metaObjectId} was assigned to you by ${input.adminUsername}.`,
+        href: '/dashboard/my-campaigns',
+        targetUserId: input.userId,
+        targetUserFullName: input.userFullName,
+        targetUserUsername: input.userUsername,
+        assignedByAdminId: input.adminId,
+        assignedByAdminUsername: input.adminUsername,
+        assignedByAdminEmail: input.adminEmail,
+        metaObjectId: input.metaObjectId,
+        metaObjectType: input.metaObjectType,
+        metaAccountId: input.metaAccountId,
+      },
+    });
+
+    await logActivity({
+      userId: input.adminId,
+      eventType: 'CUSTOM_ACTION',
+      action: 'Notification: Assignment completed',
+      path: input.req.nextUrl.pathname,
+      method: input.req.method,
+      ipAddress: getClientIp(input.req),
+      userAgent: input.req.headers.get('user-agent'),
+      metadata: {
+        module: 'notifications',
+        type: 'ASSIGNMENT',
+        title: 'Assignment completed',
+        text: `${objectLabel} ${input.metaObjectId} assigned to ${input.userFullName}.`,
+        href: '/dashboard/user-campaigns',
+        targetUserId: input.userId,
+        targetUserFullName: input.userFullName,
+        targetUserUsername: input.userUsername,
+        assignedByAdminId: input.adminId,
+        assignedByAdminUsername: input.adminUsername,
+        assignedByAdminEmail: input.adminEmail,
+        metaObjectId: input.metaObjectId,
+        metaObjectType: input.metaObjectType,
+        metaAccountId: input.metaAccountId,
+      },
+    });
+  } catch (error) {
+    console.error('[meta-assignments notifications]', error);
+  }
+}
+
 /**
  * GET /api/v1/admin/meta-assignments?account_id=act_xxx&type=CAMPAIGN
  * Returns all assignments for the given Meta account, optionally filtered by type.
@@ -157,6 +233,21 @@ export async function POST(req: NextRequest) {
         isExisting: Boolean(existing),
       },
     });
+
+    if (!existing) {
+      await createAssignmentNotifications({
+        req,
+        adminId: auth.id,
+        adminUsername: auth.username,
+        adminEmail: auth.email,
+        userId: user.id,
+        userFullName: user.fullName,
+        userUsername: user.username,
+        metaObjectId,
+        metaObjectType,
+        metaAccountId,
+      });
+    }
 
     return NextResponse.json({ success: true, data: assignment });
   } catch (err) {

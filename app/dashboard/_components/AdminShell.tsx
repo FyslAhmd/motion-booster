@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -38,7 +38,6 @@ import {
   DollarSign,
   Inbox,
   History,
-  Bell,
 } from 'lucide-react';
 interface NavItem {
   href: string;
@@ -62,6 +61,36 @@ interface UserNavItem {
   label: string;
   icon: typeof LayoutDashboard;
   requiresCampaignAccess?: boolean;
+}
+
+interface DashboardNotificationItem {
+  id: string;
+  title: string;
+  text: string;
+  href: string;
+  createdAt: string;
+}
+
+function formatNotificationTime(value: string): string {
+  const timestamp = new Date(value).getTime();
+  if (!Number.isFinite(timestamp)) return 'Just now';
+
+  const diffMs = Date.now() - timestamp;
+  const diffMin = Math.max(0, Math.floor(diffMs / 60000));
+
+  if (diffMin < 1) return 'Just now';
+  if (diffMin < 60) return `${diffMin}m ago`;
+
+  const diffHour = Math.floor(diffMin / 60);
+  if (diffHour < 24) return `${diffHour}h ago`;
+
+  const diffDay = Math.floor(diffHour / 24);
+  if (diffDay < 7) return `${diffDay}d ago`;
+
+  return new Date(value).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+  });
 }
 
 const navItems: NavEntry[] = [
@@ -104,6 +133,9 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState<DashboardNotificationItem[]>([]);
+  const [notificationsLoading, setNotificationsLoading] = useState(false);
+  const [lastSeenAt, setLastSeenAt] = useState<string | null>(null);
   const [hasAssignedCampaigns, setHasAssignedCampaigns] = useState<boolean | null>(null);
   const notificationPanelRef = useRef<HTMLDivElement>(null);
 
@@ -152,6 +184,42 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
     }
   }, [isNewClient, pathname, router]);
 
+  const fetchNotifications = useCallback(async () => {
+    if (!user?.id) return;
+
+    setNotificationsLoading(true);
+    try {
+      const res = await fetch('/api/v1/notifications?limit=20', {
+        cache: 'no-store',
+        credentials: 'include',
+      });
+      const json = await res.json();
+      if (res.ok && json?.success && Array.isArray(json?.data)) {
+        setNotifications(json.data as DashboardNotificationItem[]);
+      }
+    } catch {
+      // Ignore transient fetch errors for notification polling.
+    } finally {
+      setNotificationsLoading(false);
+    }
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!user?.id || typeof window === 'undefined') return;
+    const key = `mb:dashboard:last-seen-notification:${user.id}`;
+    const stored = window.localStorage.getItem(key);
+    setLastSeenAt(stored || null);
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    void fetchNotifications();
+    const timer = window.setInterval(() => {
+      void fetchNotifications();
+    }, 20000);
+    return () => window.clearInterval(timer);
+  }, [user?.id, fetchNotifications]);
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -169,7 +237,10 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
   }, [showNotifications]);
 
   const activeLabel = userNavItems.find(n => n.href === pathname)?.label ?? 'Dashboard';
-  const isChatPage = pathname === '/dashboard/chat' || pathname.startsWith('/dashboard/chat/');
+  const unreadCount = notifications.filter((item) => {
+    if (!lastSeenAt) return true;
+    return new Date(item.createdAt).getTime() > new Date(lastSeenAt).getTime();
+  }).length;
 
   return (
     <div className="h-svh min-h-svh bg-gray-50 flex flex-col overflow-hidden lg:pl-64">
@@ -238,19 +309,7 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
       </aside>
 
       {/* Top bar */}
-<<<<<<< HEAD
       <header className="shrink-0 z-20 h-18.5 flex items-center px-4 justify-between bg-white border-b border-gray-100 shadow-sm">
-        <Link href="/dashboard" className="lg:hidden">
-          <Image
-            src="/Motion Booster Black Logo-01.svg"
-            alt="Motion Booster"
-            width={130}
-            height={40}
-            className="h-12 w-auto"
-            priority
-          />
-=======
-      <header className="shrink-0 z-20 bg-white border-b border-gray-100 h-18.5 flex items-center px-4 justify-between shadow-sm">
         <Link href="/dashboard" className="lg:hidden flex items-center gap-2">
           <div className="relative w-40 h-12">
             <Image
@@ -261,26 +320,37 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
               priority
             />
           </div>
->>>>>>> 9aca61aca1e7f00cd705c719064f8c875343a5d2
         </Link>
         <span className="hidden lg:block text-base font-semibold text-gray-800">{activeLabel}</span>
         <div className="flex items-center gap-3 text-sm text-gray-500 font-medium">
           <span className="hidden sm:block lg:hidden">{activeLabel}</span>
           <button
             type="button"
-<<<<<<< HEAD
             onClick={() => {
               setProfileDropdownOpen(false);
-              setShowNotifications((prev) => !prev);
+              setShowNotifications((prev) => {
+                const next = !prev;
+                if (next) {
+                  void fetchNotifications();
+                  if (user?.id && typeof window !== 'undefined') {
+                    const key = `mb:dashboard:last-seen-notification:${user.id}`;
+                    const now = new Date().toISOString();
+                    window.localStorage.setItem(key, now);
+                    setLastSeenAt(now);
+                  }
+                }
+                return next;
+              });
             }}
             aria-label="Notifications"
-            className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
-=======
-            aria-label="Notifications"
-            className="h-9 w-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
->>>>>>> 9aca61aca1e7f00cd705c719064f8c875343a5d2
+            className="relative h-9 w-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
           >
             <Bell className="w-5 h-5 text-gray-600" />
+            {unreadCount > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 inline-flex min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-semibold leading-4 text-white">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
           </button>
           {/* Avatar dropdown */}
           <div className="relative">
@@ -336,37 +406,24 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
             </div>
 
             <div className="max-h-[58vh] overflow-y-auto py-2">
-              {[
-                {
-                  id: 'n1',
-                  title: 'New message received',
-                  text: 'You have a new chat message in dashboard inbox.',
-                  time: 'Just now',
-                },
-                {
-                  id: 'n2',
-                  title: 'Campaign update',
-                  text: 'One of your campaigns has a fresh status update.',
-                  time: '12m ago',
-                },
-                {
-                  id: 'n3',
-                  title: 'Support reply',
-                  text: 'Our team replied to your latest request.',
-                  time: '1h ago',
-                },
-              ].map((item) => (
-                <Link
-                  key={item.id}
-                  href="/dashboard/chat"
-                  onClick={() => setShowNotifications(false)}
-                  className="block px-4 py-3 transition-colors hover:bg-gray-50"
-                >
-                  <p className="text-sm font-medium text-gray-900">{item.title}</p>
-                  <p className="mt-0.5 text-xs text-gray-600">{item.text}</p>
-                  <p className="mt-1 text-[11px] text-gray-400">{item.time}</p>
-                </Link>
-              ))}
+              {notificationsLoading ? (
+                <div className="flex items-center justify-center py-8 text-xs text-gray-400">Loading...</div>
+              ) : notifications.length === 0 ? (
+                <div className="px-4 py-6 text-center text-sm text-gray-500">No notifications yet.</div>
+              ) : (
+                notifications.map((item) => (
+                  <Link
+                    key={item.id}
+                    href={item.href || '/dashboard'}
+                    onClick={() => setShowNotifications(false)}
+                    className="block px-4 py-3 transition-colors hover:bg-gray-50"
+                  >
+                    <p className="text-sm font-medium text-gray-900">{item.title}</p>
+                    <p className="mt-0.5 text-xs text-gray-600">{item.text}</p>
+                    <p className="mt-1 text-[11px] text-gray-400">{formatNotificationTime(item.createdAt)}</p>
+                  </Link>
+                ))
+              )}
             </div>
           </div>
         </>
@@ -518,6 +575,9 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
   const [openGroup, setOpenGroup] = useState<string | null>('Home Page'); // open by default
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState<DashboardNotificationItem[]>([]);
+  const [notificationsLoading, setNotificationsLoading] = useState(false);
+  const [lastSeenAt, setLastSeenAt] = useState<string | null>(null);
   const adminName = user?.username || user?.email || 'User';
   const adminAvatar = user?.avatarUrl || '';
   const isAdmin = user?.role === 'ADMIN';
@@ -567,6 +627,47 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [showNotifications]);
+
+  const fetchNotifications = useCallback(async () => {
+    if (!user?.id) return;
+
+    setNotificationsLoading(true);
+    try {
+      const res = await fetch('/api/v1/notifications?limit=20', {
+        cache: 'no-store',
+        credentials: 'include',
+      });
+      const json = await res.json();
+      if (res.ok && json?.success && Array.isArray(json?.data)) {
+        setNotifications(json.data as DashboardNotificationItem[]);
+      }
+    } catch {
+      // Ignore transient fetch errors for notification polling.
+    } finally {
+      setNotificationsLoading(false);
+    }
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!user?.id || typeof window === 'undefined') return;
+    const key = `mb:dashboard:last-seen-notification:${user.id}`;
+    const stored = window.localStorage.getItem(key);
+    setLastSeenAt(stored || null);
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    void fetchNotifications();
+    const timer = window.setInterval(() => {
+      void fetchNotifications();
+    }, 20000);
+    return () => window.clearInterval(timer);
+  }, [user?.id, fetchNotifications]);
+
+  const unreadCount = notifications.filter((item) => {
+    if (!lastSeenAt) return true;
+    return new Date(item.createdAt).getTime() > new Date(lastSeenAt).getTime();
+  }).length;
 
   // Track dashboard route visits for history timeline.
   useEffect(() => {
@@ -780,29 +881,35 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
               })()}
             </div>
           </div>
-<<<<<<< HEAD
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            <div className="text-xs text-gray-400 hidden sm:block">{adminName}</div>
             <button
               type="button"
               onClick={() => {
                 setProfileDropdownOpen(false);
-                setShowNotifications((prev) => !prev);
+                setShowNotifications((prev) => {
+                  const next = !prev;
+                  if (next) {
+                    void fetchNotifications();
+                    if (user?.id && typeof window !== 'undefined') {
+                      const key = `mb:dashboard:last-seen-notification:${user.id}`;
+                      const now = new Date().toISOString();
+                      window.localStorage.setItem(key, now);
+                      setLastSeenAt(now);
+                    }
+                  }
+                  return next;
+                });
               }}
               aria-label="Notifications"
-              className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+              className="relative h-9 w-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
             >
               <Bell className="w-5 h-5 text-gray-600" />
-            </button>
-=======
-          <div className="flex items-center gap-3">
->>>>>>> 9aca61aca1e7f00cd705c719064f8c875343a5d2
-            <div className="text-xs text-gray-400 hidden sm:block">{adminName}</div>
-            <button
-              type="button"
-              aria-label="Notifications"
-              className="h-9 w-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
-            >
-              <Bell className="w-5 h-5 text-gray-600" />
+              {unreadCount > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 inline-flex min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-semibold leading-4 text-white">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
             </button>
             {/* Avatar dropdown */}
             <div className="relative">
@@ -860,37 +967,24 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
               </div>
 
               <div className="max-h-[58vh] overflow-y-auto py-2">
-                {[
-                  {
-                    id: 'n1',
-                    title: 'New message received',
-                    text: 'You have a new chat message in dashboard inbox.',
-                    time: 'Just now',
-                  },
-                  {
-                    id: 'n2',
-                    title: 'Campaign update',
-                    text: 'One of your campaigns has a fresh status update.',
-                    time: '12m ago',
-                  },
-                  {
-                    id: 'n3',
-                    title: 'Support reply',
-                    text: 'Our team replied to your latest request.',
-                    time: '1h ago',
-                  },
-                ].map((item) => (
-                  <Link
-                    key={item.id}
-                    href="/dashboard/chat"
-                    onClick={() => setShowNotifications(false)}
-                    className="block px-4 py-3 transition-colors hover:bg-gray-50"
-                  >
-                    <p className="text-sm font-medium text-gray-900">{item.title}</p>
-                    <p className="mt-0.5 text-xs text-gray-600">{item.text}</p>
-                    <p className="mt-1 text-[11px] text-gray-400">{item.time}</p>
-                  </Link>
-                ))}
+                {notificationsLoading ? (
+                  <div className="flex items-center justify-center py-8 text-xs text-gray-400">Loading...</div>
+                ) : notifications.length === 0 ? (
+                  <div className="px-4 py-6 text-center text-sm text-gray-500">No notifications yet.</div>
+                ) : (
+                  notifications.map((item) => (
+                    <Link
+                      key={item.id}
+                      href={item.href || '/dashboard'}
+                      onClick={() => setShowNotifications(false)}
+                      className="block px-4 py-3 transition-colors hover:bg-gray-50"
+                    >
+                      <p className="text-sm font-medium text-gray-900">{item.title}</p>
+                      <p className="mt-0.5 text-xs text-gray-600">{item.text}</p>
+                      <p className="mt-1 text-[11px] text-gray-400">{formatNotificationTime(item.createdAt)}</p>
+                    </Link>
+                  ))
+                )}
               </div>
             </div>
           </>
