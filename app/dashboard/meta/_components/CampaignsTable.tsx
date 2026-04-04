@@ -5,6 +5,7 @@ import { Search, Filter, ChevronLeft, ChevronRight, X, Loader2, CalendarDays } f
 import AssignUserDropdown from './AssignUserDropdown';
 import { toast } from 'sonner';
 import { createPortal } from 'react-dom';
+import { useConfirm } from '@/lib/admin/confirm';
 
 interface Campaign {
   id: string;
@@ -283,6 +284,7 @@ interface CampaignsTableProps {
   hideControls?: boolean;
   assignedCampaignIds?: string[];
   campaignAccountById?: Record<string, string>;
+  onCampaignStatusChanged?: () => void;
 }
 
 interface AssignmentUser {
@@ -303,7 +305,9 @@ export default function CampaignsTable({
   hideControls = false,
   assignedCampaignIds,
   campaignAccountById,
+  onCampaignStatusChanged,
 }: CampaignsTableProps) {
+  const { confirm } = useConfirm();
   const [data, setData] = useState<Campaign[]>([]);
   const [paging, setPaging] = useState<CursorPaging | null>(null);
   const [totalCount, setTotalCount] = useState<number | null>(null);
@@ -690,6 +694,16 @@ export default function CampaignsTable({
   /** Toggle campaign status between ACTIVE and PAUSED */
   const toggleStatus = async (campaign: Campaign) => {
     const newStatus = campaign.status === 'ACTIVE' ? 'PAUSED' : 'ACTIVE';
+
+    const ok = await confirm({
+      title: newStatus === 'PAUSED' ? 'Pause Campaign' : 'Activate Campaign',
+      message:
+        newStatus === 'PAUSED'
+          ? 'Are you sure you want to pause this campaign?'
+          : 'Are you sure you want to activate this campaign?',
+    });
+    if (!ok) return;
+
     setTogglingId(campaign.id);
     try {
       const res = await fetch('/api/v1/meta/status', {
@@ -716,6 +730,7 @@ export default function CampaignsTable({
               : c,
           ),
         );
+        onCampaignStatusChanged?.();
       } else {
         toast.error(`Failed: ${json.error}`);
       }
@@ -737,6 +752,16 @@ export default function CampaignsTable({
 
   const toggleMetaObjectStatus = async (id: string, currentStatus: string, objectType: 'ADSET' | 'AD') => {
     const newStatus = currentStatus === 'ACTIVE' ? 'PAUSED' : 'ACTIVE';
+
+    const ok = await confirm({
+      title: newStatus === 'PAUSED' ? 'Pause Item' : 'Activate Item',
+      message:
+        newStatus === 'PAUSED'
+          ? 'Are you sure you want to pause this item?'
+          : 'Are you sure you want to activate this item?',
+    });
+    if (!ok) return;
+
     setTogglingId(id);
     try {
       const res = await fetch('/api/v1/meta/status', {

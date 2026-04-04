@@ -38,6 +38,7 @@ import {
   DollarSign,
   Inbox,
   History,
+  Bell,
 } from 'lucide-react';
 interface NavItem {
   href: string;
@@ -237,6 +238,7 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
       </aside>
 
       {/* Top bar */}
+<<<<<<< HEAD
       <header className="shrink-0 z-20 h-18.5 flex items-center px-4 justify-between bg-white border-b border-gray-100 shadow-sm">
         <Link href="/dashboard" className="lg:hidden">
           <Image
@@ -247,18 +249,36 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
             className="h-12 w-auto"
             priority
           />
+=======
+      <header className="shrink-0 z-20 bg-white border-b border-gray-100 h-18.5 flex items-center px-4 justify-between shadow-sm">
+        <Link href="/dashboard" className="lg:hidden flex items-center gap-2">
+          <div className="relative w-40 h-12">
+            <Image
+              src="/Motion Booster Black Logo-01.svg"
+              alt="Motion Booster"
+              fill
+              className="object-contain"
+              priority
+            />
+          </div>
+>>>>>>> 9aca61aca1e7f00cd705c719064f8c875343a5d2
         </Link>
         <span className="hidden lg:block text-base font-semibold text-gray-800">{activeLabel}</span>
-        <div className="flex items-center gap-2 text-sm text-gray-500 font-medium">
+        <div className="flex items-center gap-3 text-sm text-gray-500 font-medium">
           <span className="hidden sm:block lg:hidden">{activeLabel}</span>
           <button
             type="button"
+<<<<<<< HEAD
             onClick={() => {
               setProfileDropdownOpen(false);
               setShowNotifications((prev) => !prev);
             }}
             aria-label="Notifications"
             className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+=======
+            aria-label="Notifications"
+            className="h-9 w-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+>>>>>>> 9aca61aca1e7f00cd705c719064f8c875343a5d2
           >
             <Bell className="w-5 h-5 text-gray-600" />
           </button>
@@ -266,15 +286,13 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
           <div className="relative">
             <button
               onClick={() => setProfileDropdownOpen((o) => !o)}
-              className="flex items-center focus:outline-none"
+              className="h-9 w-9 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors shadow-sm overflow-hidden focus:outline-none"
               aria-label="Profile menu"
             >
               {avatarUrl ? (
-                <Image src={avatarUrl} alt="avatar" width={36} height={36} className="w-9 h-9 rounded-full object-cover ring-2 ring-transparent hover:ring-red-300 transition-all" />
+                <Image src={avatarUrl} alt="avatar" width={36} height={36} className="w-9 h-9 rounded-full object-cover" />
               ) : (
-                <div className="w-9 h-9 rounded-full bg-linear-to-br from-red-500 to-red-700 flex items-center justify-center text-white text-xs font-bold ring-2 ring-transparent hover:ring-red-300 transition-all">
-                  {userName.slice(0, 2).toUpperCase()}
-                </div>
+                <span className="text-gray-700 font-bold text-sm">{userName.slice(0, 1).toUpperCase()}</span>
               )}
             </button>
             {profileDropdownOpen && (
@@ -762,6 +780,7 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
               })()}
             </div>
           </div>
+<<<<<<< HEAD
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -774,7 +793,17 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
             >
               <Bell className="w-5 h-5 text-gray-600" />
             </button>
+=======
+          <div className="flex items-center gap-3">
+>>>>>>> 9aca61aca1e7f00cd705c719064f8c875343a5d2
             <div className="text-xs text-gray-400 hidden sm:block">{adminName}</div>
+            <button
+              type="button"
+              aria-label="Notifications"
+              className="h-9 w-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+            >
+              <Bell className="w-5 h-5 text-gray-600" />
+            </button>
             {/* Avatar dropdown */}
             <div className="relative">
               <button

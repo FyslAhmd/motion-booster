@@ -125,22 +125,49 @@ export default function WelcomeModalPage() {
       setSaved(true);
       toast.success('Welcome popup settings saved successfully!');
       setTimeout(() => setSaved(false), 2500);
-    } catch (e: any) {
-      toast.error(e?.message || 'Failed to save settings');
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'Failed to save settings';
+      toast.error(message);
     }
   };
 
   const handleImageUpload = (file: File) => {
+    const isSvg =
+      file.type === 'image/svg+xml' ||
+      file.name.toLowerCase().endsWith('.svg');
+
+    if (isSvg) {
+      const svgReader = new FileReader();
+      svgReader.onload = () => {
+        const rawSvg = typeof svgReader.result === 'string' ? svgReader.result : '';
+        if (!rawSvg) {
+          toast.error('Failed to read SVG file');
+          return;
+        }
+
+        const encodedSvg = encodeURIComponent(rawSvg)
+          .replace(/%0A/g, '')
+          .replace(/%20/g, ' ');
+
+        const svgDataUrl = `data:image/svg+xml;charset=utf-8,${encodedSvg}`;
+        setSettings(prev => ({ ...prev, welcomeModalImage: svgDataUrl }));
+      };
+      svgReader.onerror = () => toast.error('Failed to read SVG file');
+      svgReader.readAsText(file);
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = () => {
       const b64 = typeof reader.result === 'string' ? reader.result : '';
       setSettings(prev => ({ ...prev, welcomeModalImage: b64 }));
     };
+    reader.onerror = () => toast.error('Failed to read image file');
     reader.readAsDataURL(file);
   };
 
   const currentImage = settings.welcomeModalImage || '';
-  const currentLink = settings.welcomeModalExploreLink || '/service';
+  // const currentLink = settings.welcomeModalExploreLink || '/service';
 
   return (
     <AdminShell>
@@ -150,40 +177,37 @@ export default function WelcomeModalPage() {
           className="fixed inset-0 z-100 flex items-center justify-center bg-black/70 px-4"
           onClick={() => setPreview(false)}
         >
-          <div className="relative" onClick={e => e.stopPropagation()}>
+          <div className="relative z-10 w-full max-w-3xl" onClick={e => e.stopPropagation()}>
             {/* Close hint */}
             <p className="text-white/60 text-xs text-center mb-3">Click anywhere outside to close preview</p>
 
             {/* Simulated modal */}
-            <div className="relative w-80 rounded-2xl bg-transparent p-4 shadow-2xl">
+            <div className="relative w-full bg-transparent p-0">
               <button
                 onClick={() => setPreview(false)}
-                className="absolute top-2 right-2 z-10 w-6 h-6 bg-white/80 rounded-full flex items-center justify-center text-gray-500 shadow hover:bg-white"
+                className="absolute -top-2 right-0 z-20 h-8 w-8 rounded-full bg-white/90 text-gray-600 shadow transition-colors hover:text-red-500"
               >
-                <span className="text-[10px] font-bold">✕</span>
+                <span className="text-xs font-bold">✕</span>
               </button>
 
               {/* Banner */}
               {currentImage ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={currentImage} alt="banner" className="w-full h-64 object-contain" />
-              ) : (
-                <div
-                  className="w-full h-64 flex items-center justify-center rounded-xl"
-                  style={{ background: 'linear-gradient(214.38deg, #ff8079 -2.24%, #ff1e1e 59.38%)' }}
-                >
-                  <div className="text-center px-4">
-                    <div className="text-5xl mb-2">🚀</div>
-                    <p className="text-white text-xl font-extrabold">Motion Booster</p>
-                    <p className="text-white/80 text-sm">Your Digital Growth Partner</p>
-                  </div>
+                <div className="mx-auto flex max-h-[70vh] w-fit max-w-[92vw] items-center justify-center">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={currentImage}
+                    alt="banner"
+                    className="block h-auto max-h-[70vh] w-auto max-w-full border-0 bg-transparent object-contain shadow-none"
+                  />
                 </div>
+              ) : (
+                <span></span>
               )}
 
               {/* CTA below image */}
               <div className="mt-4 flex items-center justify-center">
-                <div className="flex items-center gap-1.5 bg-red-500 px-6 py-3 rounded-full text-base font-bold text-white shadow-xl">
-                  Explore →
+                <div className="inline-flex items-center gap-2 rounded-full bg-red-500 px-7 py-2 text-base font-bold text-white shadow-xl">
+                  Learn More →
                 </div>
               </div>
             </div>
@@ -252,7 +276,7 @@ export default function WelcomeModalPage() {
             <input
               ref={fileRef}
               type="file"
-              accept="image/*"
+              accept="image/*,.svg,image/svg+xml"
               className="hidden"
               onChange={e => {
                 const file = e.target.files?.[0];
@@ -295,35 +319,32 @@ export default function WelcomeModalPage() {
         <div className="flex flex-col gap-4">
           <div className="bg-white rounded-2xl border border-gray-100 p-5">
             <h2 className="text-sm font-semibold text-gray-700 mb-4">Live Preview</h2>
-            <div className="flex items-center justify-center bg-gray-800/80 rounded-xl p-6 min-h-80">
+            <div className="flex items-center justify-center bg-gray-800/80 rounded-xl p-4">
               {/* Mock modal */}
-              <div className="relative w-full max-w-65 rounded-2xl bg-transparent p-3 shadow-2xl">
+              <div className="relative w-fit max-w-[92vw] bg-transparent p-0 shadow-2xl">
                 {/* close btn */}
-                <div className="absolute top-2 right-2 z-10 w-6 h-6 bg-white/80 rounded-full flex items-center justify-center text-gray-500 shadow">
-                  <span className="text-[10px] font-bold">✕</span>
+                <div className="absolute -top-2 right-0 z-20 h-8 w-8 rounded-full bg-white/90 text-gray-600 shadow flex items-center justify-center">
+                  <span className="text-xs font-bold">✕</span>
                 </div>
 
                 {/* banner */}
                 {currentImage ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={currentImage} alt="banner" className="w-full h-64 object-contain" />
-                ) : (
-                  <div
-                    className="w-full h-64 flex items-center justify-center rounded-xl"
-                    style={{ background: 'linear-gradient(214.38deg, #ff8079 -2.24%, #ff1e1e 59.38%)' }}
-                  >
-                    <div className="text-center px-4">
-                      <div className="text-4xl mb-1">🚀</div>
-                      <p className="text-white text-base font-extrabold">Motion Booster</p>
-                      <p className="text-white/80 text-[10px]">Your Digital Growth Partner</p>
-                    </div>
+                  <div className="mx-auto flex max-h-[70vh] w-fit max-w-[92vw] items-center justify-center">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={currentImage}
+                      alt="banner"
+                      className="block h-auto max-h-[70vh] w-auto max-w-full border-0 bg-transparent object-contain shadow-none"
+                    />
                   </div>
+                ) : (
+                  <span></span>
                 )}
 
                 {/* button below image */}
                 <div className="mt-4 flex items-center justify-center">
-                  <div className="flex items-center gap-1 bg-red-500 text-white px-5 py-2.5 rounded-full text-sm font-bold shadow-xl">
-                    Explore →
+                  <div className="inline-flex items-center gap-2 rounded-full bg-red-500 px-7 py-2 text-base font-bold text-white shadow-xl">
+                    Learn More →
                   </div>
                 </div>
               </div>

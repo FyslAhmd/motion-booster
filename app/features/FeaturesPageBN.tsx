@@ -6,7 +6,6 @@ import { PublicPageLoadingSkeleton } from '@/components/ui/PublicPageLoadingSkel
 import {
   BarChart3,
   Bell,
-  CheckCircle,
   Clock,
   Globe,
   Lock,
@@ -22,7 +21,6 @@ import {
   Users,
   Zap,
   FileText,
-  Download,
   RefreshCw,
   Eye,
   ArrowRight,
@@ -267,9 +265,9 @@ export default function FeaturesPageBN() {
             <Rocket className="w-4 h-4" />
             প্রবৃদ্ধির জন্য শক্তিশালী ফিচার
           </div>
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6">
+          <h1 className="text-xl lg:text-2xl font-bold text-gray-900 mb-6">
             আপনার যা কিছু দরকার
-            <span className="block mt-2 text-red-600">
+            <span className="block mt-2 text-red-600 text-3xl lg:text-5xl">
               ক্যাম্পেইনকে দ্রুত এগিয়ে নিতে
             </span>
           </h1>
@@ -278,14 +276,9 @@ export default function FeaturesPageBN() {
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
             <Link href="/register">
-            <button className="px-8 py-4 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-all shadow-lg hover:shadow-xl font-semibold flex items-center gap-2">
+            <button className="px-8 py-4 bg-red-500 text-white rounded-full hover:bg-red-600 transition-all shadow-lg hover:shadow-xl font-semibold flex items-center gap-2">
                 ফ্রি ট্রায়াল শুরু করুন
                 <ArrowRight className="w-5 h-5" />
-              </button>
-            </Link>
-            <Link href="/contact">
-              <button className="px-8 py-4 bg-white text-gray-700 rounded-xl hover:bg-gray-50 transition-all border-2 border-gray-200 font-semibold">
-                সেলস টিমে কথা বলুন
               </button>
             </Link>
           </div>
@@ -293,14 +286,15 @@ export default function FeaturesPageBN() {
       </section>
 
       {/* Category Filter */}
-      <section className="pt-3 pb-6 px-4">
+      <section className="p-3">
         <div className="max-w-7xl mx-auto page-reveal page-delay-1">
-          <div className="flex flex-wrap gap-3 justify-center">
+          <div className="overflow-x-auto no-scrollbar">
+            <div className="mx-auto flex w-max min-w-full flex-nowrap gap-3 md:w-full md:justify-center">
             {categories.map((cat) => (
               <button
                 key={cat.id}
                 onClick={() => setActiveCategory(cat.id)}
-                className={`px-6 py-2.5 rounded-lg font-medium transition-all ${
+                className={`shrink-0 whitespace-nowrap px-6 py-2.5 rounded-full font-medium transition-all ${
                   activeCategory === cat.id
                     ? 'bg-red-500 text-white shadow-md'
                     : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'
@@ -309,18 +303,19 @@ export default function FeaturesPageBN() {
                 {cat.name}
               </button>
             ))}
+            </div>
           </div>
         </div>
       </section>
 
       {/* Features Grid */}
-      <section className="py-12 px-4">
+      <section className="py-4 px-4">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredFeatures.map((feature, index) => (
               <div
                 key={index}
-                className={`bg-white rounded-2xl p-8 hover:shadow-2xl transition-all duration-300 border border-gray-100 group ${index % 2 === 0 ? 'card-reveal-left' : 'card-reveal-right'}`}
+                className={`bg-white rounded-2xl p-4 hover:shadow-2xl transition-all duration-300 border border-gray-100 group ${index % 2 === 0 ? 'card-reveal-left' : 'card-reveal-right'}`}
                 style={{ animationDelay: `${index * 70}ms` }}
               >
                 <div className={`w-14 h-14 ${feature.bgColor} rounded-xl flex items-center justify-center mb-6`}>
