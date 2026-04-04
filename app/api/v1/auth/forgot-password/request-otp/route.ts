@@ -44,32 +44,39 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    const fallbackFingerprint = createPasswordFingerprint(
-      `fallback:${email}:${Date.now()}:${crypto.randomUUID()}`
-    );
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'No account found with this email.' },
+        { status: 404 }
+      );
+    }
 
-    const passwordFingerprint = user ? createPasswordFingerprint(user.passwordHash) : fallbackFingerprint;
     const resetToken = await createPasswordResetOtpToken({
-      userId: user?.id || `unknown-${crypto.randomUUID()}`,
+      userId: user.id,
       email,
       otp,
-      passwordFingerprint,
+      passwordFingerprint: createPasswordFingerprint(user.passwordHash),
     });
 
-    if (user && user.status === 'ACTIVE') {
-      try {
-        await sendPasswordResetOtpEmail({
-          to: user.email,
-          otp,
-          expiresInMinutes: Math.max(1, OTP_EXPIRY_MINUTES),
-        });
-      } catch (error) {
-        console.error('[forgot-password/request-otp] SMTP send failed:', error);
-        return NextResponse.json(
-          { success: false, error: 'Failed to send OTP email. Please try again.' },
-          { status: 500 }
-        );
-      }
+    if (user.status !== 'ACTIVE') {
+      return NextResponse.json(
+        { success: false, error: 'This account is not active.' },
+        { status: 403 }
+      );
+    }
+
+    try {
+      await sendPasswordResetOtpEmail({
+        to: user.email,
+        otp,
+        expiresInMinutes: Math.max(1, OTP_EXPIRY_MINUTES),
+      });
+    } catch (error) {
+      console.error('[forgot-password/request-otp] SMTP send failed:', error);
+      return NextResponse.json(
+        { success: false, error: 'Failed to send OTP email. Please try again.' },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({

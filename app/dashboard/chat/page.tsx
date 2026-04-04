@@ -987,10 +987,10 @@ export default function MessagesPage() {
 
   return (
     <AdminShell noPadding>
-    <div className="flex h-full w-full min-w-0 bg-white overflow-hidden">
+    <div className="flex h-full w-full min-w-0 bg-gray-50 overflow-hidden">
       {/* ───────────────────── Conversations Sidebar ──────────────── */}
       <div
-        className={`w-full sm:w-80 lg:w-96 shrink-0 bg-white border-r border-gray-200 flex flex-col ${
+        className={`w-full sm:w-80 lg:w-96 shrink-0 bg-gray-50 border-r border-gray-200 flex flex-col ${
           showChat ? 'hidden sm:flex' : 'flex'
         }`}
       >
@@ -1226,7 +1226,7 @@ export default function MessagesPage() {
         {selectedConversation ? (
           <>
             {/* Chat Header */}
-            <div className="bg-white border-b border-gray-100 px-4 md:px-8 py-3 md:py-4">
+            <div className="bg-gray-50 border-b border-gray-100 px-4 md:px-8 py-3 md:py-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <button

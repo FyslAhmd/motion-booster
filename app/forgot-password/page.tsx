@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/lib/lang/LanguageContext';
+import { toast } from 'sonner';
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
@@ -36,10 +37,11 @@ export default function ForgotPasswordPage() {
       }
 
       if (!res.ok) {
-        setError(
+        const errorMessage =
           payload?.error ||
-            (isBN ? 'OTP পাঠানো যায়নি। আবার চেষ্টা করুন।' : 'Failed to send OTP. Please try again.')
-        );
+          (isBN ? 'OTP পাঠানো যায়নি। আবার চেষ্টা করুন।' : 'Failed to send OTP. Please try again.');
+        setError(errorMessage);
+        toast.error(errorMessage);
         return;
       }
 
@@ -48,13 +50,20 @@ export default function ForgotPasswordPage() {
         sessionStorage.setItem(`forgot_password_reset_token:${normalizedEmail}`, resetToken);
       }
 
+      toast.success(
+        isBN
+          ? 'OTP ইমেইলে পাঠানো হয়েছে।'
+          : 'OTP has been sent to your email.'
+      );
+
       router.push(`/forgot-password/verify?email=${encodeURIComponent(normalizedEmail)}`);
     } catch {
-      setError(
+      const errorMessage =
         isBN
           ? 'নেটওয়ার্ক সমস্যা হয়েছে। আবার চেষ্টা করুন।'
-          : 'Network error. Please try again.'
-      );
+          : 'Network error. Please try again.';
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

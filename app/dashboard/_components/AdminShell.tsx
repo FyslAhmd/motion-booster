@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -15,6 +15,7 @@ import {
   LogOut,
   Menu,
   X,
+  Bell,
   ChevronRight,
   ChevronDown,
   BarChart2,
@@ -101,7 +102,9 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
   const { logout, user } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
   const [hasAssignedCampaigns, setHasAssignedCampaigns] = useState<boolean | null>(null);
+  const notificationPanelRef = useRef<HTMLDivElement>(null);
 
   const handleLogout = () => {
     logout();
@@ -148,15 +151,32 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
     }
   }, [isNewClient, pathname, router]);
 
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setShowNotifications(false);
+      }
+    };
+
+    if (showNotifications) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [showNotifications]);
+
   const activeLabel = userNavItems.find(n => n.href === pathname)?.label ?? 'Dashboard';
+  const isChatPage = pathname === '/dashboard/chat' || pathname.startsWith('/dashboard/chat/');
 
   return (
     <div className="h-svh min-h-svh bg-gray-50 flex flex-col overflow-hidden lg:pl-64">
       {/* Desktop fixed sidebar */}
-      <aside className="hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:left-0 lg:w-64 lg:bg-white lg:border-r lg:border-gray-100 lg:z-40">
-        <div className="px-5 py-4 border-b border-gray-100">
+      <aside className="hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:left-0 lg:w-64 lg:z-40 lg:bg-white lg:border-r lg:border-gray-100">
+        <div className="h-18.5 px-5 flex items-center border-b border-gray-100">
           <Link href="/dashboard">
-            <Image src="/Motion Booster Black Logo-01.svg" alt="Motion Booster" width={130} height={40} className="h-8 w-auto" priority />
+            <Image src="/Motion Booster Black Logo-01.svg" alt="Motion Booster" width={130} height={40} className="h-10 w-auto" priority />
           </Link>
         </div>
         <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto no-scrollbar">
@@ -172,7 +192,7 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
                   router.push(href);
                 }}
                 disabled={disabled}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
                   disabled
                     ? 'opacity-50 cursor-not-allowed text-gray-400'
                     : active
@@ -181,8 +201,8 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
                 }`}
               >
                 <Icon className={`w-4 h-4 shrink-0 ${active ? 'text-white' : 'text-gray-400'}`} />
-                <span>{label}</span>
-                {active && <ChevronRight className="w-3 h-3 ml-auto text-white/70" />}
+                <span className="flex-1 text-left">{label}</span>
+                {active && <ChevronRight className="w-3 h-3 text-white/70" />}
               </button>
             );
           })}
@@ -217,7 +237,7 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
       </aside>
 
       {/* Top bar */}
-      <header className="shrink-0 z-20 bg-white border-b border-gray-100 h-18.5 flex items-center px-4 justify-between shadow-sm">
+      <header className="shrink-0 z-20 h-18.5 flex items-center px-4 justify-between bg-white border-b border-gray-100 shadow-sm">
         <Link href="/dashboard" className="lg:hidden">
           <Image
             src="/Motion Booster Black Logo-01.svg"
@@ -231,6 +251,17 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
         <span className="hidden lg:block text-base font-semibold text-gray-800">{activeLabel}</span>
         <div className="flex items-center gap-2 text-sm text-gray-500 font-medium">
           <span className="hidden sm:block lg:hidden">{activeLabel}</span>
+          <button
+            type="button"
+            onClick={() => {
+              setProfileDropdownOpen(false);
+              setShowNotifications((prev) => !prev);
+            }}
+            aria-label="Notifications"
+            className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+          >
+            <Bell className="w-5 h-5 text-gray-600" />
+          </button>
           {/* Avatar dropdown */}
           <div className="relative">
             <button
@@ -277,6 +308,52 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
         </div>
       </header>
 
+      {showNotifications && (
+        <>
+          <div className="fixed inset-0 z-30 bg-black/30" onClick={() => setShowNotifications(false)} />
+          <div ref={notificationPanelRef} className="fixed top-[4.8rem] left-3 right-3 z-40 rounded-2xl border border-gray-200 bg-white shadow-2xl sm:left-auto sm:right-4 sm:w-96">
+            <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
+              <h3 className="text-sm font-semibold text-gray-900">Notifications</h3>
+              <button onClick={() => setShowNotifications(false)} className="text-xs font-medium text-gray-500 hover:text-gray-700">Close</button>
+            </div>
+
+            <div className="max-h-[58vh] overflow-y-auto py-2">
+              {[
+                {
+                  id: 'n1',
+                  title: 'New message received',
+                  text: 'You have a new chat message in dashboard inbox.',
+                  time: 'Just now',
+                },
+                {
+                  id: 'n2',
+                  title: 'Campaign update',
+                  text: 'One of your campaigns has a fresh status update.',
+                  time: '12m ago',
+                },
+                {
+                  id: 'n3',
+                  title: 'Support reply',
+                  text: 'Our team replied to your latest request.',
+                  time: '1h ago',
+                },
+              ].map((item) => (
+                <Link
+                  key={item.id}
+                  href="/dashboard/chat"
+                  onClick={() => setShowNotifications(false)}
+                  className="block px-4 py-3 transition-colors hover:bg-gray-50"
+                >
+                  <p className="text-sm font-medium text-gray-900">{item.title}</p>
+                  <p className="mt-0.5 text-xs text-gray-600">{item.text}</p>
+                  <p className="mt-1 text-[11px] text-gray-400">{item.time}</p>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+
       {/* Page content — flex-1 + min-h-0 so it doesn't overflow on noPadding pages */}
       <main className={`flex-1 min-h-0 w-full min-w-0 no-scrollbar ${noPadding ? 'overflow-hidden' : 'overflow-x-hidden overflow-y-auto'}`}>
         <PageTransition variant="admin" className={noPadding ? 'h-full w-full' : undefined}>
@@ -322,13 +399,13 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
           {/* Sidebar panel */}
           <aside className="relative w-72 max-w-[80vw] h-full bg-white flex flex-col shadow-2xl">
             {/* Header */}
-            <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+            <div className="h-18.5 px-5 flex items-center justify-between border-b border-gray-100">
               <Image
                 src="/Motion Booster Black Logo-01.svg"
                 alt="Motion Booster"
                 width={130}
                 height={40}
-                className="h-8 w-auto"
+                className="h-10 w-auto"
                 priority
               />
               <button
@@ -354,7 +431,7 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
                       router.push(href);
                     }}
                     disabled={disabled}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
                       disabled
                         ? 'opacity-50 cursor-not-allowed text-gray-400'
                         : active
@@ -363,8 +440,8 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
                     }`}
                   >
                     <Icon className={`w-4 h-4 shrink-0 ${active ? 'text-white' : 'text-gray-400'}`} />
-                    <span>{label}</span>
-                    {active && <ChevronRight className="w-3 h-3 ml-auto text-white/70" />}
+                    <span className="flex-1 text-left">{label}</span>
+                    {active && <ChevronRight className="w-3 h-3 text-white/70" />}
                   </button>
                 );
               })}
@@ -422,6 +499,7 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [openGroup, setOpenGroup] = useState<string | null>('Home Page'); // open by default
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
   const adminName = user?.username || user?.email || 'User';
   const adminAvatar = user?.avatarUrl || '';
   const isAdmin = user?.role === 'ADMIN';
@@ -446,15 +524,31 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
     }
   }, [isLoading, isAuthenticated, isAdmin, pathname, router]);
 
-  // Lock body scroll when sidebar is open on mobile
+  // Lock body scroll when sidebar or notifications panel is open on mobile
   useEffect(() => {
-    if (sidebarOpen) {
+    if (sidebarOpen || showNotifications) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
     }
     return () => { document.body.style.overflow = ''; };
-  }, [sidebarOpen]);
+  }, [sidebarOpen, showNotifications]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setShowNotifications(false);
+      }
+    };
+
+    if (showNotifications) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [showNotifications]);
 
   // Track dashboard route visits for history timeline.
   useEffect(() => {
@@ -669,6 +763,17 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setProfileDropdownOpen(false);
+                setShowNotifications((prev) => !prev);
+              }}
+              aria-label="Notifications"
+              className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+            >
+              <Bell className="w-5 h-5 text-gray-600" />
+            </button>
             <div className="text-xs text-gray-400 hidden sm:block">{adminName}</div>
             {/* Avatar dropdown */}
             <div className="relative">
@@ -715,6 +820,52 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
             </div>
           </div>
         </header>
+
+        {showNotifications && (
+          <>
+            <div className="fixed inset-0 z-20 bg-black/30 lg:hidden" onClick={() => setShowNotifications(false)} />
+            <div className="fixed top-[4.8rem] left-3 right-3 z-30 rounded-2xl border border-gray-200 bg-white shadow-2xl lg:hidden">
+              <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
+                <h3 className="text-sm font-semibold text-gray-900">Notifications</h3>
+                <button onClick={() => setShowNotifications(false)} className="text-xs font-medium text-gray-500 hover:text-gray-700">Close</button>
+              </div>
+
+              <div className="max-h-[58vh] overflow-y-auto py-2">
+                {[
+                  {
+                    id: 'n1',
+                    title: 'New message received',
+                    text: 'You have a new chat message in dashboard inbox.',
+                    time: 'Just now',
+                  },
+                  {
+                    id: 'n2',
+                    title: 'Campaign update',
+                    text: 'One of your campaigns has a fresh status update.',
+                    time: '12m ago',
+                  },
+                  {
+                    id: 'n3',
+                    title: 'Support reply',
+                    text: 'Our team replied to your latest request.',
+                    time: '1h ago',
+                  },
+                ].map((item) => (
+                  <Link
+                    key={item.id}
+                    href="/dashboard/chat"
+                    onClick={() => setShowNotifications(false)}
+                    className="block px-4 py-3 transition-colors hover:bg-gray-50"
+                  >
+                    <p className="text-sm font-medium text-gray-900">{item.title}</p>
+                    <p className="mt-0.5 text-xs text-gray-600">{item.text}</p>
+                    <p className="mt-1 text-[11px] text-gray-400">{item.time}</p>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
 
         {/* Page content */}
         <main className={`flex-1 min-h-0 w-full min-w-0 no-scrollbar ${noPadding ? 'overflow-hidden' : 'p-4 sm:p-6 overflow-y-auto'}`}>

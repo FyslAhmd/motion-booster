@@ -470,7 +470,7 @@ export default function MyCampaignsPage() {
   return (
     <AdminShell>
       <div className="space-y-4 sm:space-y-6">
-        <div className="rounded-2xl border border-gray-200 bg-white p-3 sm:p-5">
+        <div className="mx-2 my-2 rounded-2xl border border-gray-200 bg-white p-3 sm:mx-3 sm:my-3 sm:p-5">
           <h1 className="text-xl font-bold text-gray-900">My Campaigns</h1>
           <p className="mt-0.5 text-sm text-gray-500">
             Manage and monitor your campaigns and ads.
