@@ -57,6 +57,33 @@ const MIME_TYPES: Record<string, string> = {
   '.ogg': 'audio/ogg', '.mp3': 'audio/mpeg', '.m4a': 'audio/mp4',
 };
 
+function getChatNotificationCopy(input: {
+  senderName: string;
+  messageType: 'TEXT' | 'IMAGE' | 'VIDEO' | 'FILE' | 'VOICE';
+  content?: string;
+}) {
+  const rawContent = (input.content || '').trim();
+  if (input.messageType === 'TEXT') {
+    const preview = rawContent.length > 100 ? `${rawContent.slice(0, 100)}...` : rawContent;
+    return {
+      title: `New message from ${input.senderName}`,
+      text: preview || `${input.senderName} sent you a message.`,
+    };
+  }
+
+  const labelByType: Record<'IMAGE' | 'VIDEO' | 'FILE' | 'VOICE', string> = {
+    IMAGE: 'an image',
+    VIDEO: 'a video',
+    FILE: 'a file',
+    VOICE: 'a voice message',
+  };
+
+  return {
+    title: `New message from ${input.senderName}`,
+    text: `${input.senderName} sent ${labelByType[input.messageType]}.`,
+  };
+}
+
 app.prepare().then(() => {
   const httpServer = createServer((req, res) => {
     const parsedUrl = parse(req.url!, true);
@@ -233,6 +260,51 @@ app.prepare().then(() => {
         // Emit to all participants in the conversation
         for (const participant of conversation.participants) {
           io.to(`user:${participant.id}`).emit('message:receive', message);
+        }
+
+        // Persist bell notifications + instant live notifications for recipients.
+        const recipientIds = conversation.participants
+          .map((participant) => participant.id)
+          .filter((participantId) => participantId !== user.id);
+
+        if (recipientIds.length > 0) {
+          const copy = getChatNotificationCopy({
+            senderName: user.fullName,
+            messageType,
+            content,
+          });
+
+          await Promise.all(
+            recipientIds.map(async (recipientId) => {
+              const notification = await prisma.notification.create({
+                data: {
+                  userId: recipientId,
+                  type: 'GENERAL',
+                  title: copy.title,
+                  text: copy.text,
+                  href: '/dashboard/chat',
+                  metadata: {
+                    module: 'chat',
+                    type: 'CHAT_MESSAGE',
+                    senderId: user.id,
+                    senderName: user.fullName,
+                    conversationId,
+                    messageId: message.id,
+                    messageType,
+                  },
+                },
+              });
+
+              io.to(`user:${recipientId}`).emit('notification:new', {
+                id: notification.id,
+                type: notification.type,
+                title: notification.title,
+                text: notification.text,
+                href: notification.href || '/dashboard/chat',
+                createdAt: notification.createdAt.toISOString(),
+              });
+            }),
+          );
         }
 
         callback?.({ success: true, message });
