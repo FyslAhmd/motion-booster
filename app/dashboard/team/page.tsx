@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import AdminShell from '../_components/AdminShell';
-import { Plus, Trash2, X, AlertTriangle, Star, Loader2 } from 'lucide-react';
+import { Plus, Trash2, X, AlertTriangle, Star, Loader2, Crown } from 'lucide-react';
 import ImageUpload from '@/components/ui/ImageUpload';
 import { AdminSectionSkeleton } from '@/components/ui/AdminSectionSkeleton';
 import { toast } from 'sonner';
@@ -225,6 +225,7 @@ export default function AdminTeamPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [leaderUpdatingId, setLeaderUpdatingId] = useState<string | null>(null);
 
   useEffect(() => {
     fetch('/api/v1/cms/team')
@@ -234,8 +235,25 @@ export default function AdminTeamPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  const departmentLeaderByDept = useMemo(() => {
+    const sorted = [...team].sort((a, b) => a.order - b.order);
+    const map: Record<string, string> = {};
+
+    for (const member of sorted) {
+      if (!member.department || map[member.department]) continue;
+      map[member.department] = member.id;
+    }
+
+    return map;
+  }, [team]);
+
   const handleSave = async () => {
     if (!editing || !editing.name.trim()) return;
+    const parsedOrder = Number(editing.order);
+    const normalizedOrder = Number.isFinite(parsedOrder) && parsedOrder >= 0
+      ? Math.floor(parsedOrder)
+      : 0;
+
     const placeRows = editing.workPlaces.map((place, idx) => ({
       place: place.trim(),
       logo: (editing.workPlaceLogos?.[idx] || '').trim(),
@@ -257,6 +275,7 @@ export default function AdminTeamPage() {
       workPlaces: placeRows.map((row) => row.place),
       workPlaceLogos: placeRows.map((row) => row.logo),
       workPlacesBn: (editing.workPlacesBn || []).filter(v => v.trim()),
+      order: normalizedOrder,
     };
     setSaving(true);
     try {
@@ -267,7 +286,7 @@ export default function AdminTeamPage() {
           body: JSON.stringify(clean),
         });
         const created = await res.json();
-        setTeam(prev => [...prev, created]);
+        setTeam(prev => [...prev, created].sort((a, b) => a.order - b.order));
       } else {
         const res = await fetch(`/api/v1/cms/team/${editing.id}`, {
           method: 'PUT',
@@ -275,7 +294,7 @@ export default function AdminTeamPage() {
           body: JSON.stringify(clean),
         });
         const updated = await res.json();
-        setTeam(prev => prev.map(m => m.id === updated.id ? updated : m));
+        setTeam(prev => prev.map(m => m.id === updated.id ? updated : m).sort((a, b) => a.order - b.order));
       }
       setEditing(null);
       setIsNew(false);
@@ -301,7 +320,72 @@ export default function AdminTeamPage() {
     }
   };
 
-  const openNew = () => { setEditing({ id: '', order: 0, ...BLANK }); setIsNew(true); };
+  const handleSetDepartmentLeader = async (member: TeamMemberItem) => {
+    const deptMembers = [...team]
+      .filter((m) => m.department === member.department)
+      .sort((a, b) => a.order - b.order);
+
+    if (deptMembers.length === 0) return;
+    if (deptMembers[0]?.id === member.id) {
+      toast.info(`${member.name} is already leader of ${member.department}.`);
+      return;
+    }
+
+    const target = deptMembers.find((m) => m.id === member.id);
+    if (!target) return;
+
+    const oldOrders = deptMembers.map((m) => m.order).sort((a, b) => a - b);
+    const reorderedIds = [
+      target.id,
+      ...deptMembers.filter((m) => m.id !== target.id).map((m) => m.id),
+    ];
+
+    const nextOrderById: Record<string, number> = {};
+    reorderedIds.forEach((id, idx) => {
+      nextOrderById[id] = oldOrders[idx] ?? idx;
+    });
+
+    const payloads = deptMembers.map((m) => ({
+      ...m,
+      order: nextOrderById[m.id] ?? m.order,
+    }));
+
+    setLeaderUpdatingId(member.id);
+    try {
+      const updatedRows = await Promise.all(
+        payloads.map(async (row) => {
+          const res = await fetch(`/api/v1/cms/team/${row.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(row),
+          });
+          if (!res.ok) throw new Error('Failed to update leader');
+          return (await res.json()) as TeamMemberItem;
+        }),
+      );
+
+      setTeam((prev) => {
+        const updatedMap = new Map(updatedRows.map((item) => [item.id, item]));
+        return prev
+          .map((item) => updatedMap.get(item.id) ?? item)
+          .sort((a, b) => a.order - b.order);
+      });
+
+      toast.success(`${member.name} is now leader of ${member.department}.`);
+    } catch {
+      toast.error('Failed to update department leader.');
+    } finally {
+      setLeaderUpdatingId(null);
+    }
+  };
+
+  const openNew = () => {
+    const nextOrder = team.length > 0
+      ? Math.max(...team.map((m) => m.order)) + 1
+      : 0;
+    setEditing({ id: '', order: nextOrder, ...BLANK });
+    setIsNew(true);
+  };
 
   return (
     <AdminShell>
@@ -320,7 +404,10 @@ export default function AdminTeamPage() {
         <AdminSectionSkeleton variant="grid" />
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {team.map(member => (
+          {team.map(member => {
+            const isDepartmentLeader = departmentLeaderByDept[member.department] === member.id;
+
+            return (
             <div key={member.id} className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-md transition-shadow">
               <div className="flex items-start justify-between mb-3">
                 {member.avatarImage ? (
@@ -331,7 +418,18 @@ export default function AdminTeamPage() {
                     {member.avatar || member.name.slice(0, 2).toUpperCase()}
                   </div>
                 )}
-                {member.featured && <Star className="w-4 h-4 text-amber-400 fill-amber-400" />}
+                <div className="flex items-center gap-1.5">
+                  {isDepartmentLeader && (
+                    <span title="Department Leader" className="inline-flex items-center justify-center rounded-md bg-red-50 p-1">
+                      <Crown className="w-3.5 h-3.5 text-red-500" />
+                    </span>
+                  )}
+                  {member.featured && (
+                    <span title="All Tab Leader" className="inline-flex items-center justify-center rounded-md bg-amber-50 p-1">
+                      <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                    </span>
+                  )}
+                </div>
               </div>
               <h3 className="font-semibold text-gray-900 text-sm">{member.name}</h3>
               <p className="text-xs text-gray-500 mt-0.5 mb-2 line-clamp-2">{member.role}</p>
@@ -340,8 +438,22 @@ export default function AdminTeamPage() {
                 <span>•</span>
                 <span>{member.projects} projects</span>
               </div>
-              <span className="inline-block bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-lg">{member.department}</span>
+              <div className="flex items-center gap-2">
+                <span className="inline-block bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-lg">{member.department}</span>
+                <span className="inline-block bg-gray-50 text-gray-500 text-xs px-2 py-0.5 rounded-lg">Priority {member.order}</span>
+              </div>
               <div className="flex items-center gap-1 mt-3">
+                <button
+                  onClick={() => { void handleSetDepartmentLeader(member); }}
+                  disabled={leaderUpdatingId === member.id || isDepartmentLeader}
+                  className={`text-xs rounded-lg py-1.5 px-2.5 transition-colors border ${
+                    isDepartmentLeader
+                      ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                      : 'border-red-100 text-red-600 hover:bg-red-50'
+                  } disabled:opacity-70`}
+                >
+                  {leaderUpdatingId === member.id ? 'Setting...' : isDepartmentLeader ? 'Leader' : 'Make Leader'}
+                </button>
                 <button onClick={() => { setEditing({ ...member }); setIsNew(false); }} className="flex-1 text-xs text-blue-600 hover:bg-blue-50 border border-blue-100 rounded-lg py-1.5 transition-colors">
                   Edit
                 </button>
@@ -350,7 +462,7 @@ export default function AdminTeamPage() {
                 </button>
               </div>
             </div>
-          ))}
+          );})}
           <button onClick={openNew} className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl p-5 hover:border-red-300 hover:bg-red-50/30 transition-colors flex flex-col items-center justify-center gap-2 min-h-45">
             <Plus className="w-6 h-6 text-gray-300" />
             <span className="text-sm text-gray-400">Add Team Member</span>
@@ -416,6 +528,21 @@ export default function AdminTeamPage() {
                   <label className="block text-xs font-medium text-gray-500 mb-1.5">Department (Bangla)</label>
                   <input type="text" value={editing.departmentBn || ''} onChange={e => setEditing({ ...editing, departmentBn: e.target.value })} placeholder="e.g. ক্রিয়েটিভ" className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400" />
                 </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">Priority</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={editing.order}
+                    onChange={e => {
+                      const raw = Number(e.target.value);
+                      setEditing({ ...editing, order: Number.isFinite(raw) && raw >= 0 ? Math.floor(raw) : 0 });
+                    }}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400"
+                    placeholder="0"
+                  />
+                  <p className="mt-1 text-[11px] text-gray-400">Lower number means higher priority.</p>
+                </div>
               </div>
 
               <div>
@@ -446,8 +573,8 @@ export default function AdminTeamPage() {
                   <div className={`w-4 h-4 bg-white rounded-full shadow transition-transform mx-0.5 ${editing.featured ? 'translate-x-5' : 'translate-x-0'}`} />
                 </button>
                 <div>
-                  <span className="text-sm font-medium text-gray-700">Featured member</span>
-                  <span className="text-xs text-gray-400 ml-1.5">Shows a star badge on the team card</span>
+                  <span className="text-sm font-medium text-gray-700">All Tab Leader</span>
+                  <span className="text-xs text-gray-400 ml-1.5">Shows at top when Team page tab is set to All</span>
                 </div>
               </div>
 
