@@ -114,6 +114,15 @@ model Notification {
   @@map("notifications")
 }
 
+model InvoiceCounter {
+  counterKey String   @id @map("counter_key")
+  value      Int      @default(0)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@map("invoice_counters")
+}
+
 // ─── USER BUDGET DEPOSIT HISTORY ─────────────────────
 
 model UserBudgetDeposit {

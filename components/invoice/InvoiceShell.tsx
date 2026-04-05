@@ -49,7 +49,7 @@ export function InvoiceShell({
               GROW | BUSINESS | IDENTITY
             </p>
           </div>
-          <h1 style={{ fontSize: '42px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '3px', color: '#ffffff', margin: 0, lineHeight: 1 }}>
+          <h1 style={{ fontSize: '32px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '3px', color: '#ffffff', margin: 0, lineHeight: 1 }}>
             {title}
           </h1>
         </div>

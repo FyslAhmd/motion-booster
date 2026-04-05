@@ -7,6 +7,7 @@ import { CampaignsTable } from '../meta/_components';
 import { Search, Filter, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/lib/auth/context';
 import { CampaignReportInvoice, ALL_COLUMNS, COL_CONFIG } from '@/components/invoice/CampaignReportInvoice';
+import { fetchNextInvoiceNumber } from '@/lib/invoice/client';
 
 interface CampaignLite {
   id: string;
@@ -29,10 +30,10 @@ interface GoalConfig {
 }
 
 interface ReportRow {
-  date: string;
   adCreateDate: string;
   adEndDate: string;
   campaignName: string;
+  pageName: string;
   spendUsd: number;
   spendTk: number;
   goal: string;
@@ -204,6 +205,7 @@ export default function MyCampaignsPage() {
   const [columnsDropdownOpen, setColumnsDropdownOpen] = useState(false);
   const reportInvoiceRef = useRef<HTMLDivElement>(null);
   const countsLoading = activeCampaignCount === null;
+  const reportTotalTk = reportRows.reduce((sum, row) => sum + row.spendTk, 0);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -339,6 +341,21 @@ export default function MyCampaignsPage() {
     return [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || 'LINK_CLICKS';
   };
 
+  const fetchPageNamesByCampaignIds = async (campaignIds: string[]) => {
+    const uniqueIds = Array.from(new Set(campaignIds.filter(Boolean)));
+    if (uniqueIds.length === 0) return {} as Record<string, string>;
+
+    const params = new URLSearchParams({ ids: uniqueIds.join(',') });
+    const res = await fetch(`/api/v1/meta/page-names?${params.toString()}`);
+    const json = await res.json();
+
+    if (!json?.success || !json?.map || typeof json.map !== 'object') {
+      return {} as Record<string, string>;
+    }
+
+    return json.map as Record<string, string>;
+  };
+
   const buildReportRows = async () => {
     if (!reportFromDate || !reportToDate) {
       setReportError('Please select both from and to dates.');
@@ -356,8 +373,7 @@ export default function MyCampaignsPage() {
       setReportLoading(true);
       setReportError('');
       setReportRows([]);
-
-      const todayLabel = fmtDate(new Date().toISOString());
+      setReportInvoiceNo('');
 
       const campaigns = await fetchCampaignsByIds(assignedCampaignIds);
       const filtered = campaigns.filter((c) => {
@@ -365,6 +381,8 @@ export default function MyCampaignsPage() {
         if (Number.isNaN(startTs)) return false;
         return startTs >= fromTs && startTs <= toTs;
       });
+
+      const pageNameMap = await fetchPageNamesByCampaignIds(filtered.map((campaign) => campaign.id));
 
       const rows = await Promise.all(
         filtered.map(async (campaign) => {
@@ -379,10 +397,10 @@ export default function MyCampaignsPage() {
           const goalResult = resolveGoalResult(goal, parsed);
 
           return {
-            date: todayLabel,
             adCreateDate: fmtDate(campaign.start_time || campaign.created_time),
             adEndDate: fmtDate(campaign.stop_time),
             campaignName: campaign.name || campaign.id,
+            pageName: pageNameMap[campaign.id] || 'N/A',
             spendUsd: parsed.spend,
             spendTk: parsed.spend * USD_TO_TK_RATE,
             goal,
@@ -394,9 +412,10 @@ export default function MyCampaignsPage() {
         }),
       );
 
+      const nextInvoiceNo = rows.length > 0 ? await fetchNextInvoiceNumber() : '';
       setReportRows(rows);
       setReportGeneratedAt(new Date().toISOString());
-      setReportInvoiceNo(`RPT-${Date.now().toString().slice(-6)}`);
+      setReportInvoiceNo(nextInvoiceNo);
       if (rows.length === 0) {
         setReportError('No campaigns matched this date range.');
       }
@@ -681,8 +700,8 @@ export default function MyCampaignsPage() {
                 <table className="w-full min-w-7xl border-separate border-spacing-0 text-xs">
                   <thead className="sticky top-0 bg-gray-100">
                     <tr>
-                      {selectedColumns.includes('date') && <th className="border-b border-gray-200 px-2 py-2 text-left">Date</th>}
                       {selectedColumns.includes('campaignName') && <th className="border-b border-gray-200 px-2 py-2 text-left">Campaign Name</th>}
+                      {selectedColumns.includes('pageName') && <th className="border-b border-gray-200 px-2 py-2 text-left">Page Name</th>}
                       {selectedColumns.includes('spendUsd') && <th className="border-b border-gray-200 px-2 py-2 text-right">Spend ($)</th>}
                       {selectedColumns.includes('spendTk') && <th className="border-b border-gray-200 px-2 py-2 text-right">Spend (Tk)</th>}
                       {selectedColumns.includes('goal') && <th className="border-b border-gray-200 px-2 py-2 text-left">Goal</th>}
@@ -695,13 +714,13 @@ export default function MyCampaignsPage() {
                   <tbody>
                     {reportRows.map((row, index) => (
                       <tr key={`${row.campaignName}-${index}`}>
-                        {selectedColumns.includes('date') && <td className="border-b border-gray-100 px-2 py-2">{row.date}</td>}
                         {selectedColumns.includes('campaignName') && (
                           <td className="border-b border-gray-100 px-2 py-2">
                             <div className="font-semibold text-gray-900">{row.campaignName}</div>
                             <div className="text-[10px] text-gray-500">({row.adCreateDate} to {row.adEndDate})</div>
                           </td>
                         )}
+                        {selectedColumns.includes('pageName') && <td className="border-b border-gray-100 px-2 py-2">{row.pageName}</td>}
                         {selectedColumns.includes('spendUsd') && <td className="border-b border-gray-100 px-2 py-2 text-right">{fmtCurrency(row.spendUsd)}</td>}
                         {selectedColumns.includes('spendTk') && <td className="border-b border-gray-100 px-2 py-2 text-right">{fmtTk(row.spendTk)}</td>}
                         {selectedColumns.includes('goal') && <td className="border-b border-gray-100 px-2 py-2">{row.goal}</td>}
@@ -713,6 +732,12 @@ export default function MyCampaignsPage() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            )}
+
+            {reportRows.length > 0 && (
+              <div className="mt-2 flex justify-end rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white">
+                Total Campaign Spend (Tk): {fmtTk(reportTotalTk)}
               </div>
             )}
           </div>
@@ -736,10 +761,10 @@ export default function MyCampaignsPage() {
         >
           <div ref={reportInvoiceRef} style={{ width: 794 }}>
             <CampaignReportInvoice
-              invoiceNo={reportInvoiceNo || `RPT-${Date.now().toString().slice(-6)}`}
+              invoiceNo={reportInvoiceNo || 'MB-00000'}
               billDate={fmtDate(reportGeneratedAt || new Date().toISOString())}
               clientName={user?.fullName || user?.username || 'Assigned User'}
-              assignBy={user?.fullName || user?.username || 'System'}
+              assignBy="Motion Booster Team"
               rows={reportRows}
               selectedColumns={selectedColumns}
             />
