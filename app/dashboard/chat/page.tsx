@@ -187,7 +187,6 @@ function AdminBlueTick({ role }: { role?: string | null }) {
   return (
     <BadgeCheck
       className="h-4 w-4 [&>path:first-child]:fill-blue-500 [&>path:first-child]:stroke-blue-500 [&>path:last-child]:stroke-white [&>path:last-child]:stroke-[2.6]"
-      title="Verified admin"
       aria-label="Verified admin"
     />
   );
