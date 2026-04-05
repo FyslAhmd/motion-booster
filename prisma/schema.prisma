@@ -21,6 +21,12 @@ enum UserStatus {
   BANNED
 }
 
+enum MetaStatusRequestState {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum NotificationType {
   GENERAL
   AUTH_REGISTER
@@ -54,6 +60,8 @@ model User {
   conversations    Conversation[] @relation("ConversationParticipants")
   metaAdAssignments MetaAdAssignment[]
   boostRequests     BoostRequest[]
+  metaStatusRequests MetaStatusRequest[] @relation("MetaStatusRequestRequester")
+  reviewedMetaStatusRequests MetaStatusRequest[] @relation("MetaStatusRequestReviewer")
   budgetDeposits    UserBudgetDeposit[] @relation("BudgetDepositsForUser")
   budgetEntriesCreated UserBudgetDeposit[] @relation("BudgetDepositsCreatedByAdmin")
   activityHistory     ActivityHistory[]
@@ -512,4 +520,29 @@ model BoostRequest {
 
   @@index([userId])
   @@map("boost_requests")
+}
+
+model MetaStatusRequest {
+  id              String                 @id @default(cuid())
+  requesterUserId String                 @map("requester_user_id")
+  reviewedByAdminId String?              @map("reviewed_by_admin_id")
+  metaObjectId    String                 @map("meta_object_id")
+  metaObjectType  MetaObjectType         @map("meta_object_type")
+  metaAccountId   String?                @map("meta_account_id")
+  metaObjectName  String                 @map("meta_object_name")
+  currentStatus   String?                @map("current_status")
+  requestedStatus String                 @default("ACTIVE") @map("requested_status")
+  state           MetaStatusRequestState @default(PENDING)
+  reason          String?                @db.Text
+  reviewedAt      DateTime?              @map("reviewed_at")
+  createdAt       DateTime               @default(now()) @map("created_at")
+  updatedAt       DateTime               @updatedAt @map("updated_at")
+
+  requesterUser User  @relation("MetaStatusRequestRequester", fields: [requesterUserId], references: [id], onDelete: Cascade)
+  reviewedByAdmin User? @relation("MetaStatusRequestReviewer", fields: [reviewedByAdminId], references: [id], onDelete: SetNull)
+
+  @@index([requesterUserId, state])
+  @@index([metaObjectId, state])
+  @@index([state, createdAt])
+  @@map("meta_status_requests")
 }

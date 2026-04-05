@@ -53,6 +53,7 @@ async function resolveMetaObjectName(input: {
 
 async function createStatusRequestNotifications(input: {
   req: NextRequest;
+  requestId: string;
   requester: {
     id: string;
     username: string;
@@ -85,7 +86,7 @@ async function createStatusRequestNotifications(input: {
     nextStatus: input.nextStatus,
   });
 
-  const href = `/dashboard/user-campaigns/${input.requester.id}`;
+  const href = '/dashboard/meta-status-requests';
 
   await Promise.all(
     admins.map((admin) =>
@@ -100,6 +101,7 @@ async function createStatusRequestNotifications(input: {
         logIpAddress: getClientIp(input.req),
         logUserAgent: input.req.headers.get('user-agent'),
         metadata: {
+          requestId: input.requestId,
           requesterUserId: input.requester.id,
           requesterUsername: input.requester.username,
           requesterEmail: input.requester.email,
@@ -116,6 +118,54 @@ async function createStatusRequestNotifications(input: {
     requestedToggle: notificationCopy.requestedToggle,
     successMessage: notificationCopy.successMessage,
   };
+}
+
+async function notifyAdminsAboutUserPause(input: {
+  req: NextRequest;
+  requester: {
+    id: string;
+    username: string;
+    fullName: string;
+    email: string;
+  };
+  objectId: string;
+  objectType: MetaObjectType;
+  objectName: string;
+}) {
+  const admins = await prisma.user.findMany({
+    where: { role: 'ADMIN', status: 'ACTIVE' },
+    select: { id: true },
+  });
+
+  if (admins.length === 0) return;
+
+  const objectLabel = input.objectType === 'CAMPAIGN' ? 'Campaign' : input.objectType === 'ADSET' ? 'Ad Set' : 'Ad';
+
+  await Promise.all(
+    admins.map((admin) =>
+      createNotification({
+        userId: admin.id,
+        type: 'ADS_DEACTIVATION_REQUEST',
+        title: `${objectLabel} paused by user`,
+        text: `${input.requester.fullName} paused ${objectLabel.toLowerCase()} ${input.objectName}.`,
+        href: '/dashboard/meta-status-requests',
+        logPath: '/dashboard/meta-status-requests',
+        logMethod: 'SYSTEM',
+        logIpAddress: getClientIp(input.req),
+        logUserAgent: input.req.headers.get('user-agent'),
+        metadata: {
+          requesterUserId: input.requester.id,
+          requesterUsername: input.requester.username,
+          requesterEmail: input.requester.email,
+          requesterFullName: input.requester.fullName,
+          requestedObjectId: input.objectId,
+          requestedObjectType: input.objectType,
+          requestedObjectName: input.objectName,
+          event: 'USER_PAUSED_OBJECT',
+        },
+      }),
+    ),
+  );
 }
 
 /**
@@ -168,8 +218,41 @@ export async function PATCH(req: NextRequest) {
         providedName: objectName,
       });
 
+      const existingPending = await prisma.metaStatusRequest.findFirst({
+        where: {
+          requesterUserId: auth.id,
+          metaObjectId: id,
+          requestedStatus: requestStatus,
+          state: 'PENDING',
+        },
+      });
+
+      if (existingPending) {
+        return NextResponse.json({
+          success: true,
+          requested: true,
+          id,
+          status: requestStatus,
+          objectType: normalizedObjectType,
+          message: 'Activation request already pending admin approval.',
+        });
+      }
+
+      const createdRequest = await prisma.metaStatusRequest.create({
+        data: {
+          requesterUserId: auth.id,
+          metaObjectId: id,
+          metaObjectType: normalizedObjectType,
+          metaObjectName: resolvedObjectName,
+          requestedStatus: requestStatus,
+          currentStatus: 'PAUSED',
+          state: 'PENDING',
+        },
+      });
+
       const notificationCopy = await createStatusRequestNotifications({
         req,
+        requestId: createdRequest.id,
         requester: {
           id: auth.id,
           username: auth.username,
@@ -230,6 +313,12 @@ export async function PATCH(req: NextRequest) {
       const isPermissionError = /Meta API\s*200/i.test(errorMessage) || /permission/i.test(errorMessage);
 
       if (auth.role === 'USER' && nextStatus === 'PAUSED' && isPermissionError) {
+        const resolvedObjectName = await resolveMetaObjectName({
+          objectId: id,
+          objectType: normalizedObjectType,
+          providedName: objectName,
+        });
+
         try {
           await logActivity({
             userId: auth.id,
@@ -254,6 +343,19 @@ export async function PATCH(req: NextRequest) {
         } catch (logErr) {
           console.error('[meta/status soft-pause history]', logErr);
         }
+
+        await notifyAdminsAboutUserPause({
+          req,
+          requester: {
+            id: auth.id,
+            username: auth.username,
+            fullName: auth.fullName,
+            email: auth.email,
+          },
+          objectId: id,
+          objectType: normalizedObjectType,
+          objectName: resolvedObjectName,
+        });
 
         return NextResponse.json({
           success: true,
@@ -289,6 +391,27 @@ export async function PATCH(req: NextRequest) {
       });
     } catch (logErr) {
       console.error('[meta/status history]', logErr);
+    }
+
+    if (auth.role === 'USER' && nextStatus === 'PAUSED') {
+      const resolvedObjectName = await resolveMetaObjectName({
+        objectId: id,
+        objectType: normalizedObjectType,
+        providedName: objectName,
+      });
+
+      await notifyAdminsAboutUserPause({
+        req,
+        requester: {
+          id: auth.id,
+          username: auth.username,
+          fullName: auth.fullName,
+          email: auth.email,
+        },
+        objectId: id,
+        objectType: normalizedObjectType,
+        objectName: resolvedObjectName,
+      });
     }
 
     // Invalidate cached data so next fetch reflects the change

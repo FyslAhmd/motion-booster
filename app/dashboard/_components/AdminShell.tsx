@@ -103,6 +103,7 @@ const navItems: NavEntry[] = [
   { href: '/dashboard/chat', label: 'Chat Messages', icon: MessageCircle },
   { href: '/dashboard/media-message', label: 'Media Message', icon: Inbox, adminOnly: true },
   { href: '/dashboard/boost-requests', label: 'Boost Requests', icon: Rocket, adminOnly: true },
+  { href: '/dashboard/meta-status-requests', label: 'Status Requests', icon: UserCog, adminOnly: true },
   { href: '/dashboard/user-budget', label: 'User Budget', icon: DollarSign, adminOnly: true },
   { href: '/dashboard/clients', label: 'Clients', icon: Users, adminOnly: true },
   { href: '/dashboard/history', label: 'Activity History', icon: History, adminOnly: true },
@@ -618,7 +619,12 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
   // Route guard: redirect non-admin users away from admin-only pages
   useEffect(() => {
     if (!isLoading && isAuthenticated && !isAdmin) {
-      if (pathname === '/dashboard/user-campaigns' || pathname.startsWith('/dashboard/user-campaigns/')) {
+      if (
+        pathname === '/dashboard/user-campaigns' ||
+        pathname.startsWith('/dashboard/user-campaigns/') ||
+        pathname === '/dashboard/meta-status-requests' ||
+        pathname.startsWith('/dashboard/meta-status-requests/')
+      ) {
         router.replace('/dashboard/my-campaigns');
       }
     }
