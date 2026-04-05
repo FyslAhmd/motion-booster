@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { validateRequest } from '@/lib/auth/validate-request';
 import { metaFetch } from '@/lib/meta/client';
+import {
+  getMetaAssignmentUpdateTitle,
+  type NotificationMetaObjectType,
+} from '@/lib/server/notification-templates';
 
 export async function GET(req: NextRequest) {
   try {
@@ -68,7 +72,7 @@ export async function GET(req: NextRequest) {
         text?: string;
         href?: string;
         type?: string;
-        metaObjectType?: 'CAMPAIGN' | 'ADSET' | 'AD';
+        metaObjectType?: NotificationMetaObjectType;
         metaObjectId?: string;
         metaObjectName?: string;
       };
@@ -80,10 +84,7 @@ export async function GET(req: NextRequest) {
 
       // Backward compatibility for older assignment rows with generic titles.
       if (metadata.type === 'ASSIGNMENT' && title.toLowerCase() === 'new assignment received') {
-        if (metadata.metaObjectType === 'CAMPAIGN') title = 'Campaign assignment update';
-        else if (metadata.metaObjectType === 'ADSET') title = 'Ad Set assignment update';
-        else if (metadata.metaObjectType === 'AD') title = 'Ad assignment update';
-        else title = 'Assignment update';
+        title = getMetaAssignmentUpdateTitle(metadata.metaObjectType);
       }
 
       let text =

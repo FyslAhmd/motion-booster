@@ -4,6 +4,7 @@ import { validateRequest } from '@/lib/auth/validate-request';
 import { Prisma } from '@/lib/generated/prisma';
 import { getClientIp, logActivity } from '@/lib/server/activity-history';
 import { metaFetch } from '@/lib/meta/client';
+import { buildMetaAssignmentNotificationCopy } from '@/lib/server/notification-templates';
 
 async function resolveMetaObjectName(input: {
   metaObjectId: string;
@@ -66,21 +67,19 @@ async function createAssignmentNotifications(input: {
   metaAccountId: string;
   metaObjectName: string;
 }): Promise<void> {
-  const objectLabel =
-    input.metaObjectType === 'CAMPAIGN'
-      ? 'Campaign'
-      : input.metaObjectType === 'ADSET'
-        ? 'Ad Set'
-        : 'Ad';
-  const userNotificationTitle = `${objectLabel} assignment update`;
-  const adminNotificationTitle = `${objectLabel} assigned successfully`;
   const objectDisplayName = input.metaObjectName || input.metaObjectId;
+  const notificationCopy = buildMetaAssignmentNotificationCopy({
+    objectType: input.metaObjectType,
+    objectDisplayName,
+    adminUsername: input.adminUsername,
+    targetUserFullName: input.userFullName,
+  });
 
   try {
     await logActivity({
       userId: input.userId,
       eventType: 'CUSTOM_ACTION',
-      action: `Notification: ${userNotificationTitle}`,
+      action: `Notification: ${notificationCopy.userTitle}`,
       path: '/dashboard/my-campaigns',
       method: 'SYSTEM',
       ipAddress: getClientIp(input.req),
@@ -88,8 +87,8 @@ async function createAssignmentNotifications(input: {
       metadata: {
         module: 'notifications',
         type: 'ASSIGNMENT',
-        title: userNotificationTitle,
-        text: `${objectLabel} ${objectDisplayName} was assigned to you by ${input.adminUsername}.`,
+        title: notificationCopy.userTitle,
+        text: notificationCopy.userText,
         href: '/dashboard/my-campaigns',
         targetUserId: input.userId,
         targetUserFullName: input.userFullName,
@@ -107,7 +106,7 @@ async function createAssignmentNotifications(input: {
     await logActivity({
       userId: input.adminId,
       eventType: 'CUSTOM_ACTION',
-      action: `Notification: ${adminNotificationTitle}`,
+      action: `Notification: ${notificationCopy.adminTitle}`,
       path: input.req.nextUrl.pathname,
       method: input.req.method,
       ipAddress: getClientIp(input.req),
@@ -115,8 +114,8 @@ async function createAssignmentNotifications(input: {
       metadata: {
         module: 'notifications',
         type: 'ASSIGNMENT',
-        title: adminNotificationTitle,
-        text: `${objectLabel} ${objectDisplayName} assigned to ${input.userFullName}.`,
+        title: notificationCopy.adminTitle,
+        text: notificationCopy.adminText,
         href: '/dashboard/user-campaigns',
         targetUserId: input.userId,
         targetUserFullName: input.userFullName,

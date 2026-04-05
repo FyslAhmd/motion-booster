@@ -558,7 +558,7 @@ export default function MyCampaignsPage() {
 
         {countsLoading && <AdminSectionSkeleton variant="inline" />}
 
-        <div>
+        <div className="mx-2 sm:mx-3">
           <CampaignsTable
             key={`my-campaigns-${refreshTick}`}
             searchValue={search}
