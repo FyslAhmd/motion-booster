@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { defaultHeroSlides } from '@/lib/admin/store';
 import { isRecoverableDbError } from '@/lib/server/db-error';
+import { createNotification } from '@/lib/server/notifications';
 
 const DEFAULT_SLIDES = [
   {
@@ -94,6 +95,35 @@ export async function POST(req: NextRequest) {
         order: count,
       },
     });
+
+    const users = await prisma.user.findMany({
+      where: {
+        role: 'USER',
+        status: 'ACTIVE',
+      },
+      select: { id: true },
+    });
+
+    await Promise.all(
+      users.map((user) =>
+        createNotification({
+          userId: user.id,
+          type: 'GENERAL',
+          title: 'New offer is available',
+          text: slide.title?.trim()
+            ? `A new homepage offer is live now: ${slide.title}`
+            : 'A new homepage offer is now available.',
+          href: '/',
+          logPath: req.nextUrl.pathname,
+          logMethod: req.method,
+          metadata: {
+            module: 'hero-slider',
+            heroSlideId: slide.id,
+            heroSlideTitle: slide.title,
+          },
+        }),
+      ),
+    );
 
     return NextResponse.json(slide, { status: 201 });
   } catch (error) {
