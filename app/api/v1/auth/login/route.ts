@@ -9,6 +9,8 @@ import {
 import { loginSchema, formatZodErrors } from '@/lib/validators/auth';
 import { AppError, formatErrorResponse } from '@/lib/errors/AppError';
 import { ZodError } from 'zod';
+import { createNotification } from '@/lib/server/notifications';
+import { getClientIp } from '@/lib/server/activity-history';
 
 export async function POST(request: NextRequest) {
   const requestId = crypto.randomUUID();
@@ -109,6 +111,22 @@ export async function POST(request: NextRequest) {
       data: {
         lastLoginAt: new Date(),
         lastLoginIp: ip,
+      },
+    });
+
+    await createNotification({
+      userId: user.id,
+      type: 'AUTH_LOGIN',
+      title: 'Login successful',
+      text: `Welcome back, ${user.fullName}!`,
+      href: '/dashboard',
+      logPath: request.nextUrl.pathname,
+      logMethod: request.method,
+      logIpAddress: getClientIp(request),
+      logUserAgent: request.headers.get('user-agent'),
+      metadata: {
+        role: user.role,
+        phone: user.phone,
       },
     });
 

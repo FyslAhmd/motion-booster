@@ -5,6 +5,7 @@ import { Prisma } from '@/lib/generated/prisma';
 import { getClientIp, logActivity } from '@/lib/server/activity-history';
 import { metaFetch } from '@/lib/meta/client';
 import { buildMetaAssignmentNotificationCopy } from '@/lib/server/notification-templates';
+import { createNotification } from '@/lib/server/notifications';
 
 async function resolveMetaObjectName(input: {
   metaObjectId: string;
@@ -76,20 +77,17 @@ async function createAssignmentNotifications(input: {
   });
 
   try {
-    await logActivity({
+    await createNotification({
       userId: input.userId,
-      eventType: 'CUSTOM_ACTION',
-      action: `Notification: ${notificationCopy.userTitle}`,
-      path: '/dashboard/my-campaigns',
-      method: 'SYSTEM',
-      ipAddress: getClientIp(input.req),
-      userAgent: input.req.headers.get('user-agent'),
+      type: 'ASSIGNMENT',
+      title: notificationCopy.userTitle,
+      text: notificationCopy.userText,
+      href: '/dashboard/my-campaigns',
+      logPath: '/dashboard/my-campaigns',
+      logMethod: 'SYSTEM',
+      logIpAddress: getClientIp(input.req),
+      logUserAgent: input.req.headers.get('user-agent'),
       metadata: {
-        module: 'notifications',
-        type: 'ASSIGNMENT',
-        title: notificationCopy.userTitle,
-        text: notificationCopy.userText,
-        href: '/dashboard/my-campaigns',
         targetUserId: input.userId,
         targetUserFullName: input.userFullName,
         targetUserUsername: input.userUsername,
@@ -103,20 +101,17 @@ async function createAssignmentNotifications(input: {
       },
     });
 
-    await logActivity({
+    await createNotification({
       userId: input.adminId,
-      eventType: 'CUSTOM_ACTION',
-      action: `Notification: ${notificationCopy.adminTitle}`,
-      path: input.req.nextUrl.pathname,
-      method: input.req.method,
-      ipAddress: getClientIp(input.req),
-      userAgent: input.req.headers.get('user-agent'),
+      type: 'ASSIGNMENT',
+      title: notificationCopy.adminTitle,
+      text: notificationCopy.adminText,
+      href: '/dashboard/user-campaigns',
+      logPath: input.req.nextUrl.pathname,
+      logMethod: input.req.method,
+      logIpAddress: getClientIp(input.req),
+      logUserAgent: input.req.headers.get('user-agent'),
       metadata: {
-        module: 'notifications',
-        type: 'ASSIGNMENT',
-        title: notificationCopy.adminTitle,
-        text: notificationCopy.adminText,
-        href: '/dashboard/user-campaigns',
         targetUserId: input.userId,
         targetUserFullName: input.userFullName,
         targetUserUsername: input.userUsername,

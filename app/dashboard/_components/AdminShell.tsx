@@ -7,6 +7,9 @@ import Image from 'next/image';
 import { useAuth } from '@/lib/auth/context';
 import { AdminSectionSkeleton } from '@/components/ui/AdminSectionSkeleton';
 import PageTransition from '@/components/ui/PageTransition';
+import { useLiveNotifications } from '@/lib/notifications/use-live-notifications';
+import type { AppNotification } from '@/lib/notifications/types';
+import { toast } from 'sonner';
 import {
   LayoutDashboard,
   Users,
@@ -129,7 +132,7 @@ const navItems: NavEntry[] = [
 function UserShell({ children, userName, avatarUrl, noPadding }: { children: React.ReactNode; userName: string; avatarUrl?: string | null; noPadding?: boolean }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { logout, user } = useAuth();
+  const { logout, user, accessToken } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -241,6 +244,25 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
     if (!lastSeenAt) return true;
     return new Date(item.createdAt).getTime() > new Date(lastSeenAt).getTime();
   }).length;
+
+  useLiveNotifications({
+    token: accessToken,
+    enabled: true,
+    onNotification: (incoming: AppNotification) => {
+      const nextItem: DashboardNotificationItem = {
+        id: incoming.id,
+        title: incoming.title,
+        text: incoming.text,
+        href: incoming.href,
+        createdAt: incoming.createdAt,
+      };
+      setNotifications((prev) => {
+        if (prev.some((item) => item.id === nextItem.id)) return prev;
+        return [nextItem, ...prev].slice(0, 20);
+      });
+      toast.success(incoming.title, { description: incoming.text });
+    },
+  });
 
   return (
     <div className="h-svh min-h-svh bg-gray-50 flex flex-col overflow-hidden lg:pl-64">
@@ -568,7 +590,7 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
 }
 
 export default function AdminShell({ children, noPadding }: { children: React.ReactNode; noPadding?: boolean }) {
-  const { isAuthenticated, isLoading, logout, user } = useAuth();
+  const { isAuthenticated, isLoading, logout, user, accessToken } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -668,6 +690,25 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
     if (!lastSeenAt) return true;
     return new Date(item.createdAt).getTime() > new Date(lastSeenAt).getTime();
   }).length;
+
+  useLiveNotifications({
+    token: accessToken,
+    enabled: isAuthenticated,
+    onNotification: (incoming: AppNotification) => {
+      const nextItem: DashboardNotificationItem = {
+        id: incoming.id,
+        title: incoming.title,
+        text: incoming.text,
+        href: incoming.href,
+        createdAt: incoming.createdAt,
+      };
+      setNotifications((prev) => {
+        if (prev.some((item) => item.id === nextItem.id)) return prev;
+        return [nextItem, ...prev].slice(0, 20);
+      });
+      toast.success(incoming.title, { description: incoming.text });
+    },
+  });
 
   // Track dashboard route visits for history timeline.
   useEffect(() => {

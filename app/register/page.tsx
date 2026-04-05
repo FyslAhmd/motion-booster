@@ -8,6 +8,7 @@ import { registerSchema, formatZodErrors } from '@/lib/validators/auth';
 import { useLanguage } from '@/lib/lang/LanguageContext';
 import { ZodError } from 'zod';
 import { COUNTRY_CODES, type CountryCode } from '@/lib/data/country-codes';
+import { toast } from 'sonner';
 
 // ─── Icon Components (defined outside to prevent re-creation) ───
 const UserIcon = (
@@ -350,6 +351,7 @@ export default function RegisterPage() {
       }
 
       setSuccessMessage(data.message || (isBN ? 'অ্যাকাউন্ট সফলভাবে তৈরি হয়েছে!' : 'Account created successfully!'));
+      toast.success(isBN ? 'রেজিস্ট্রেশন সফল হয়েছে' : 'Registration successful');
       setTimeout(() => {
         router.push('/login');
       }, 2000);

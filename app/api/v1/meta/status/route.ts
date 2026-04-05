@@ -10,6 +10,7 @@ import {
   type NotificationMetaObjectType,
   type NotificationNextStatus,
 } from '@/lib/server/notification-templates';
+import { createNotification } from '@/lib/server/notifications';
 
 type MetaObjectType = NotificationMetaObjectType;
 
@@ -88,20 +89,17 @@ async function createStatusRequestNotifications(input: {
 
   await Promise.all(
     admins.map((admin) =>
-      logActivity({
+      createNotification({
         userId: admin.id,
-        eventType: 'CUSTOM_ACTION',
-        action: `Notification: ${notificationCopy.title}`,
-        path: href,
-        method: 'SYSTEM',
-        ipAddress: getClientIp(input.req),
-        userAgent: input.req.headers.get('user-agent'),
+        type: notificationCopy.type,
+        title: notificationCopy.title,
+        text: notificationCopy.text,
+        href,
+        logPath: href,
+        logMethod: 'SYSTEM',
+        logIpAddress: getClientIp(input.req),
+        logUserAgent: input.req.headers.get('user-agent'),
         metadata: {
-          module: 'notifications',
-          type: notificationCopy.type,
-          title: notificationCopy.title,
-          text: notificationCopy.text,
-          href,
           requesterUserId: input.requester.id,
           requesterUsername: input.requester.username,
           requesterEmail: input.requester.email,

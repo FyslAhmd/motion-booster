@@ -21,6 +21,15 @@ enum UserStatus {
   BANNED
 }
 
+enum NotificationType {
+  GENERAL
+  AUTH_REGISTER
+  AUTH_LOGIN
+  ASSIGNMENT
+  ADS_ACTIVATION_REQUEST
+  ADS_DEACTIVATION_REQUEST
+}
+
 // ─── USER ─────────────────────────────────────────────
 
 model User {
@@ -48,6 +57,7 @@ model User {
   budgetDeposits    UserBudgetDeposit[] @relation("BudgetDepositsForUser")
   budgetEntriesCreated UserBudgetDeposit[] @relation("BudgetDepositsCreatedByAdmin")
   activityHistory     ActivityHistory[]
+  notifications      Notification[]
 
   @@index([email])
   @@index([username])
@@ -75,6 +85,25 @@ model ActivityHistory {
   @@index([eventType])
   @@index([createdAt])
   @@map("activity_history")
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String           @map("user_id")
+  type      NotificationType @default(GENERAL)
+  title     String
+  text      String           @db.Text
+  href      String?          @db.Text
+  metadata  Json?
+  isRead    Boolean          @default(false) @map("is_read")
+  readAt    DateTime?        @map("read_at")
+  createdAt DateTime         @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, isRead])
+  @@map("notifications")
 }
 
 // ─── USER BUDGET DEPOSIT HISTORY ─────────────────────
