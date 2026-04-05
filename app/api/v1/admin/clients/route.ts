@@ -82,11 +82,12 @@ export async function GET(req: NextRequest) {
       } : {}),
     };
 
-    const [clients, total, activeCount, suspendedCount, adsCount, totalAll] = await Promise.all([
+    const [clients, total, activeCount, suspendedCount, bannedCount, adsCount, totalAll] = await Promise.all([
       prisma.user.findMany({ where, select: CLIENT_SELECT, orderBy: { createdAt: 'desc' }, skip, take: PAGE_SIZE }),
       prisma.user.count({ where }),
       prisma.user.count({ where: { role: 'USER', status: 'ACTIVE' } }),
       prisma.user.count({ where: { role: 'USER', status: 'SUSPENDED' } }),
+      prisma.user.count({ where: { role: 'USER', status: 'BANNED' } }),
       prisma.user.count({ where: { role: 'USER', adsAccess: true } }),
       prisma.user.count({ where: { role: 'USER' } }),
     ]);
@@ -97,7 +98,7 @@ export async function GET(req: NextRequest) {
       total,
       page,
       totalPages: Math.ceil(total / PAGE_SIZE),
-      counts: { total: totalAll, active: activeCount, suspended: suspendedCount, adsAccess: adsCount },
+      counts: { total: totalAll, active: activeCount, suspended: suspendedCount, banned: bannedCount, adsAccess: adsCount },
     });
   } catch (err) {
     console.error('[admin clients GET]', err);

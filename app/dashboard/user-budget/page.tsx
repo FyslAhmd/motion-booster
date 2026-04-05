@@ -36,6 +36,7 @@ type PaymentMethod =
   | 'NAGAD'
   | 'ROCKET'
   | 'OTHERS';
+type AmountCurrency = 'USD' | 'BDT';
 
 const PAYMENT_METHOD_OPTIONS: Array<{ value: PaymentMethod; label: string }> = [
   { value: 'MASTER_CARD', label: 'Master Card' },
@@ -45,6 +46,13 @@ const PAYMENT_METHOD_OPTIONS: Array<{ value: PaymentMethod; label: string }> = [
   { value: 'NAGAD', label: 'Nagad' },
   { value: 'ROCKET', label: 'Rocket' },
   { value: 'OTHERS', label: 'Others' },
+];
+
+const BDT_PER_USD = 145;
+
+const AMOUNT_CURRENCY_OPTIONS: Array<{ value: AmountCurrency; label: string }> = [
+  { value: 'USD', label: 'Dollar ($)' },
+  { value: 'BDT', label: 'Taka (Tk)' },
 ];
 
 function money(v: number) {
@@ -68,6 +76,7 @@ export default function UserBudgetPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [depositInputs, setDepositInputs] = useState<Record<string, string>>({});
+  const [currencyInputs, setCurrencyInputs] = useState<Record<string, AmountCurrency>>({});
   const [methodInputs, setMethodInputs] = useState<Record<string, PaymentMethod>>({});
   const [otherMethodInputs, setOtherMethodInputs] = useState<Record<string, string>>({});
   const [savingAction, setSavingAction] = useState<SavingAction | null>(null);
@@ -131,12 +140,22 @@ export default function UserBudgetPage() {
 
   const submitDeposit = async (userId: string, direction: AdjustmentDirection) => {
     const value = depositInputs[userId] || '';
-    const amount = Number(value);
+    const enteredAmount = Number(value);
+    const selectedCurrency = currencyInputs[userId] || 'USD';
+    const amountInUsd = selectedCurrency === 'BDT'
+      ? enteredAmount / BDT_PER_USD
+      : enteredAmount;
+    const amount = Number(amountInUsd.toFixed(6));
     const method = methodInputs[userId] || 'MASTER_CARD';
     const methodOther = (otherMethodInputs[userId] || '').trim();
 
-    if (!Number.isFinite(amount) || amount <= 0) {
+    if (!Number.isFinite(enteredAmount) || enteredAmount <= 0) {
       setError('Please enter a valid positive amount.');
+      return;
+    }
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setError('Converted USD amount is invalid.');
       return;
     }
 
@@ -232,6 +251,12 @@ export default function UserBudgetPage() {
                 <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
                   {filteredUsers.map((user) => {
                     const initials = initialsFromName(user.fullName, user.username);
+                    const selectedCurrency = currencyInputs[user.id] || 'USD';
+                    const enteredAmount = Number(depositInputs[user.id] ?? '');
+                    const convertedPreview = selectedCurrency === 'BDT' && Number.isFinite(enteredAmount) && enteredAmount > 0
+                      ? enteredAmount / BDT_PER_USD
+                      : null;
+
                     return (
                       <div key={user.id} className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:p-4">
                         <div className="flex items-center gap-3">
@@ -271,22 +296,55 @@ export default function UserBudgetPage() {
                         </div>
 
                         <div className="mt-3 space-y-2">
-                          <select
-                            value={methodInputs[user.id] || 'MASTER_CARD'}
-                            onChange={(e) =>
-                              setMethodInputs((prev) => ({
-                                ...prev,
-                                [user.id]: e.target.value as PaymentMethod,
-                              }))
-                            }
-                            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-400"
-                          >
-                            {PAYMENT_METHOD_OPTIONS.map((option) => (
-                              <option key={option.value} value={option.value}>
-                                {option.label}
-                              </option>
-                            ))}
-                          </select>
+                          <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_96px] gap-2">
+                            <select
+                              value={methodInputs[user.id] || 'MASTER_CARD'}
+                              onChange={(e) =>
+                                setMethodInputs((prev) => ({
+                                  ...prev,
+                                  [user.id]: e.target.value as PaymentMethod,
+                                }))
+                              }
+                              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-400"
+                            >
+                              {PAYMENT_METHOD_OPTIONS.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </select>
+
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              placeholder="Amount"
+                              value={depositInputs[user.id] ?? ''}
+                              onChange={(e) =>
+                                setDepositInputs((prev) => ({
+                                  ...prev,
+                                  [user.id]: e.target.value,
+                                }))
+                              }
+                              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-400"
+                            />
+                            <select
+                              value={selectedCurrency}
+                              onChange={(e) =>
+                                setCurrencyInputs((prev) => ({
+                                  ...prev,
+                                  [user.id]: e.target.value as AmountCurrency,
+                                }))
+                              }
+                              className="w-full rounded-lg border border-gray-200 px-2 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-400"
+                            >
+                              {AMOUNT_CURRENCY_OPTIONS.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
 
                           {(methodInputs[user.id] || 'MASTER_CARD') === 'OTHERS' && (
                             <input
@@ -303,36 +361,27 @@ export default function UserBudgetPage() {
                             />
                           )}
 
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              placeholder="Amount"
-                              value={depositInputs[user.id] ?? ''}
-                              onChange={(e) =>
-                                setDepositInputs((prev) => ({
-                                  ...prev,
-                                  [user.id]: e.target.value,
-                                }))
-                              }
-                              className="min-w-0 flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-400"
-                            />
+                          <div className="grid grid-cols-2 gap-2">
                             <button
                               onClick={() => submitDeposit(user.id, 'ADD')}
                               disabled={savingAction?.userId === user.id}
-                              className="rounded-lg bg-green-600 px-3 py-2 text-xs font-semibold text-white hover:bg-green-700 disabled:opacity-50"
+                              className="w-full rounded-lg bg-green-600 px-3 py-2 text-xs font-semibold text-white hover:bg-green-700 disabled:opacity-50"
                             >
                               {savingAction?.userId === user.id && savingAction.direction === 'ADD' ? 'Saving...' : 'Add'}
                             </button>
                             <button
                               onClick={() => submitDeposit(user.id, 'DECREASE')}
                               disabled={savingAction?.userId === user.id}
-                              className="rounded-lg bg-red-600 px-3 py-2 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+                              className="w-full rounded-lg bg-red-600 px-3 py-2 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-50"
                             >
                               {savingAction?.userId === user.id && savingAction.direction === 'DECREASE' ? 'Saving...' : 'Deduct'}
                             </button>
                           </div>
+                          {convertedPreview !== null && (
+                            <p className="text-[11px] text-gray-500">
+                              145 Tk = $1. Converted amount: {money(convertedPreview)}
+                            </p>
+                          )}
                         </div>
                       </div>
                     );

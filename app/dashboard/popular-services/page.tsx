@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, type DragEvent, type PointerEvent as React
 import AdminShell from '../_components/AdminShell';
 import { useConfirm } from '@/lib/admin/confirm';
 import { PopularServiceItem } from '@/lib/admin/store';
-import { Plus, Pencil, Trash2, X, Save, ChevronUp, ChevronDown, ExternalLink } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Save, ExternalLink } from 'lucide-react';
 import Image from 'next/image';
 import ImageUpload from '@/components/ui/ImageUpload';
 import { toast } from 'sonner';
@@ -90,6 +90,8 @@ export default function PopularServicesPage() {
   const [isCoarsePointer, setIsCoarsePointer] = useState(false);
   const [touchDragIdx, setTouchDragIdx] = useState<number | null>(null);
   const touchStartYRef = useRef(0);
+  const touchPointerIdRef = useRef<number | null>(null);
+  const touchReorderedRef = useRef(false);
   const itemsRef = useRef<PopularServiceItem[]>([]);
 
   useEffect(() => {
@@ -158,19 +160,6 @@ export default function PopularServicesPage() {
     } catch { toast.error('Delete failed.'); } finally { setLoading(false); }
   };
 
-  const move = async (index: number, dir: -1 | 1) => {
-    const arr = [...items];
-    const t = index + dir;
-    if (t < 0 || t >= arr.length) return;
-    [arr[index], arr[t]] = [arr[t], arr[index]];
-    setItems(arr);
-    await fetch('/api/v1/cms/popular-services/reorder', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ids: arr.map(i => i.id) }),
-    }).catch(() => toast.error('Reorder failed.'));
-  };
-
   const persistOrder = async (orderedItems: PopularServiceItem[]) => {
     await fetch('/api/v1/cms/popular-services/reorder', {
       method: 'POST',
@@ -230,12 +219,18 @@ export default function PopularServicesPage() {
 
   const onHandlePointerDown = (e: ReactPointerEvent<HTMLButtonElement>, index: number) => {
     if (!isCoarsePointer) return;
+    e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    touchPointerIdRef.current = e.pointerId;
+    touchReorderedRef.current = false;
     setTouchDragIdx(index);
     touchStartYRef.current = e.clientY;
   };
 
   const onHandlePointerMove = (e: ReactPointerEvent<HTMLButtonElement>) => {
     if (!isCoarsePointer || touchDragIdx === null) return;
+    if (touchPointerIdRef.current !== null && e.pointerId !== touchPointerIdRef.current) return;
+    e.preventDefault();
     const deltaY = e.clientY - touchStartYRef.current;
     const threshold = 26;
 
@@ -244,17 +239,27 @@ export default function PopularServicesPage() {
       moveAt(touchDragIdx, next);
       setTouchDragIdx(next);
       touchStartYRef.current = e.clientY;
+      touchReorderedRef.current = true;
     } else if (deltaY < -threshold && touchDragIdx > 0) {
       const next = touchDragIdx - 1;
       moveAt(touchDragIdx, next);
       setTouchDragIdx(next);
       touchStartYRef.current = e.clientY;
+      touchReorderedRef.current = true;
     }
   };
 
-  const onHandlePointerUp = async () => {
+  const onHandlePointerUp = async (e: ReactPointerEvent<HTMLButtonElement>) => {
     if (!isCoarsePointer || touchDragIdx === null) return;
+    if (touchPointerIdRef.current !== null && e.pointerId !== touchPointerIdRef.current) return;
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
+    const shouldPersist = touchReorderedRef.current;
+    touchPointerIdRef.current = null;
+    touchReorderedRef.current = false;
     setTouchDragIdx(null);
+    if (!shouldPersist) return;
     await persistOrder(itemsRef.current);
   };
 
@@ -541,8 +546,7 @@ export default function PopularServicesPage() {
                   onPointerMove={onHandlePointerMove}
                   onPointerUp={onHandlePointerUp}
                   onPointerCancel={onHandlePointerUp}
-                  onPointerLeave={onHandlePointerUp}
-                  className="cursor-grab active:cursor-grabbing shrink-0 p-1 rounded text-gray-300 hover:text-gray-500 hover:bg-gray-100"
+                  className="touch-none cursor-grab active:cursor-grabbing shrink-0 p-1 rounded text-gray-300 hover:text-gray-500 hover:bg-gray-100"
                   title={isCoarsePointer ? 'Drag up/down to reorder' : 'Drag to reorder'}
                   aria-label="Drag to reorder"
                 >
@@ -571,16 +575,6 @@ export default function PopularServicesPage() {
                     <span className="bg-gray-100 px-2 py-0.5 rounded-full truncate max-w-30 sm:max-w-none">{item.category || 'No category'}</span>
                     <span className="shrink-0">{item.services.length} features</span>
                   </div>
-                </div>
-
-                {/* Reorder */}
-                <div className="flex flex-col gap-0.5 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0">
-                  <button onClick={() => move(index, -1)} disabled={index === 0} className="p-0.5 rounded hover:bg-gray-200 disabled:opacity-20">
-                    <ChevronUp className="w-3.5 h-3.5 text-gray-500" />
-                  </button>
-                  <button onClick={() => move(index, 1)} disabled={index === items.length - 1} className="p-0.5 rounded hover:bg-gray-200 disabled:opacity-20">
-                    <ChevronDown className="w-3.5 h-3.5 text-gray-500" />
-                  </button>
                 </div>
 
                 {/* Actions */}

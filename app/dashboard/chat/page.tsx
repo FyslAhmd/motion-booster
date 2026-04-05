@@ -27,6 +27,7 @@ import {
   Image as ImageIcon,
   Film,
   Rocket,
+  BadgeCheck,
   ChevronDown,
 } from 'lucide-react';
 
@@ -178,6 +179,18 @@ function getFileIcon(mimeType?: string | null) {
   if (mimeType.startsWith('image/')) return <ImageIcon className="w-5 h-5" />;
   if (mimeType.startsWith('video/')) return <Film className="w-5 h-5" />;
   return <FileText className="w-5 h-5" />;
+}
+
+function AdminBlueTick({ role }: { role?: string | null }) {
+  if ((role || '').toUpperCase() !== 'ADMIN') return null;
+
+  return (
+    <BadgeCheck
+      className="h-4 w-4 [&>path:first-child]:fill-blue-500 [&>path:first-child]:stroke-blue-500 [&>path:last-child]:stroke-white [&>path:last-child]:stroke-[2.6]"
+      title="Verified admin"
+      aria-label="Verified admin"
+    />
+  );
 }
 
 // ─── Component ────────────────────────────────────────
@@ -1071,8 +1084,9 @@ export default function MessagesPage() {
                       )}
                       <span className={`absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-white ${isOnline ? 'bg-green-500' : 'bg-gray-300'}`} />
                     </div>
-                    <p className="mt-1 w-16 truncate text-center text-[11px] font-medium text-gray-700 group-hover:text-gray-900">
-                      {person.fullName}
+                    <p className="mt-1 flex w-16 items-center justify-center gap-1 text-center text-[11px] font-medium text-gray-700 group-hover:text-gray-900">
+                      <span className="min-w-0 truncate">{person.fullName}</span>
+                      <AdminBlueTick role={person.role} />
                     </p>
                     <p className={`text-center text-[10px] ${hasConversation ? 'text-gray-400' : 'text-red-500'}`}>
                       {hasConversation ? 'Inbox' : 'New'}
@@ -1116,7 +1130,10 @@ export default function MessagesPage() {
                       </div>
                     )}
                     <div className="text-left">
-                      <div className="text-sm font-medium text-gray-900">{u.fullName}</div>
+                      <div className="flex items-center gap-1 text-sm font-medium text-gray-900">
+                        <span>{u.fullName}</span>
+                        <AdminBlueTick role={u.role} />
+                      </div>
                       <div className="text-xs text-gray-500">@{u.username}</div>
                     </div>
                     {isUserShownOnline(u.id, u.role) && (
@@ -1186,8 +1203,9 @@ export default function MessagesPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between mb-1">
                       <div>
-                        <h3 className="font-semibold text-gray-900 text-sm">
-                          {person.fullName}
+                        <h3 className="flex items-center gap-1 font-semibold text-gray-900 text-sm">
+                          <span>{person.fullName}</span>
+                          <AdminBlueTick role={person.role} />
                         </h3>
                         <div className="mt-0.5 flex items-center gap-2">
                           <span className="text-xs text-gray-400">
@@ -1252,8 +1270,9 @@ export default function MessagesPage() {
                     )}
                   </div>
                   <div>
-                    <h2 className="font-semibold text-gray-900 text-base md:text-lg leading-tight">
-                      {selectedConversation.participant.fullName}
+                    <h2 className="flex items-center gap-1 font-semibold text-gray-900 text-base md:text-lg leading-tight">
+                      <span>{selectedConversation.participant.fullName}</span>
+                      <AdminBlueTick role={selectedConversation.participant.role} />
                     </h2>
                     <p className="text-xs md:text-sm font-medium">
                       {typingText ? (
@@ -1301,8 +1320,9 @@ export default function MessagesPage() {
                     )}
                     <p className="text-gray-500 text-sm">
                       Start your conversation with{' '}
-                      <span className="font-semibold">
-                        {selectedConversation.participant.fullName}
+                      <span className="inline-flex items-center gap-1 font-semibold">
+                        <span>{selectedConversation.participant.fullName}</span>
+                        <AdminBlueTick role={selectedConversation.participant.role} />
                       </span>
                     </p>
                   </div>
