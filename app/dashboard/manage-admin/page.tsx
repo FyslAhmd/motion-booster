@@ -36,6 +36,7 @@ interface Client {
   phone: string;
   role: string;
   status: 'ACTIVE' | 'SUSPENDED' | 'BANNED';
+  adminType: 'BOOST_REQUEST' | 'SUPPORT_ADMIN' | 'OTHER_ADMIN';
   adsAccess: boolean;
   emailVerified: boolean;
   lastLoginAt: string | null;
@@ -49,6 +50,18 @@ const STATUS_STYLES: Record<Client['status'], { label: string; cls: string; icon
   ACTIVE:    { label: 'Active',    cls: 'bg-green-50 text-green-700 border border-green-200',  icon: ShieldCheck },
   SUSPENDED: { label: 'Suspended', cls: 'bg-amber-50 text-amber-700 border border-amber-200',  icon: ShieldOff },
   BANNED:    { label: 'Banned',    cls: 'bg-red-50 text-red-600 border border-red-200',         icon: Ban },
+};
+
+const ADMIN_TYPE_LABELS: Record<Client['adminType'], string> = {
+  BOOST_REQUEST: 'Boost Request',
+  SUPPORT_ADMIN: 'Support Admin',
+  OTHER_ADMIN: 'Other Admin',
+};
+
+const ADMIN_TYPE_STYLES: Record<Client['adminType'], string> = {
+  BOOST_REQUEST: 'bg-blue-50 text-blue-700 border border-blue-200',
+  SUPPORT_ADMIN: 'bg-violet-50 text-violet-700 border border-violet-200',
+  OTHER_ADMIN: 'bg-gray-100 text-gray-700 border border-gray-200',
 };
 
 function fmtDate(iso: string | null) {
@@ -145,6 +158,7 @@ function EditModal({ client, onClose, onSave }: EditModalProps) {
   const [form, setForm] = useState({
     fullName: client.fullName,
     status: client.status,
+    adminType: client.adminType,
     adsAccess: client.adsAccess,
     emailVerified: client.emailVerified,
     newPassword: '',
@@ -175,6 +189,7 @@ function EditModal({ client, onClose, onSave }: EditModalProps) {
         id: client.id,
         fullName: form.fullName,
         status: form.status,
+        adminType: form.adminType,
         emailVerified: form.emailVerified,
       };
       if (form.adsAccess !== client.adsAccess) payload.adsAccess = form.adsAccess;
@@ -296,6 +311,19 @@ function EditModal({ client, onClose, onSave }: EditModalProps) {
                 <option value="ACTIVE">Active</option>
                 <option value="SUSPENDED">Suspended</option>
                 <option value="BANNED">Banned</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-1 block text-xs font-medium text-gray-500">Admin Type</label>
+              <select
+                value={form.adminType}
+                onChange={(e) => set('adminType', e.target.value)}
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-400"
+              >
+                <option value="BOOST_REQUEST">Boost Request</option>
+                <option value="SUPPORT_ADMIN">Support Admin</option>
+                <option value="OTHER_ADMIN">Other Admin</option>
               </select>
             </div>
 
@@ -580,6 +608,10 @@ export default function ManageAdminPage() {
 
                       {/* Row 3: badges */}
                       <div className="flex flex-wrap items-center gap-2 pl-12">
+                        <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold ${ADMIN_TYPE_STYLES[client.adminType]}`}>
+                          {ADMIN_TYPE_LABELS[client.adminType]}
+                        </span>
+
                         {/* Status */}
                         <button onClick={() => cycleStatus(client)} disabled={busy} title="Click to change status"
                           className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold transition-opacity hover:opacity-70 disabled:opacity-50 ${st.cls}`}>
@@ -667,6 +699,10 @@ export default function ManageAdminPage() {
 	                      </div>
 
 	                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                          <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold ${ADMIN_TYPE_STYLES[client.adminType]}`}>
+                            {ADMIN_TYPE_LABELS[client.adminType]}
+                          </span>
+
 	                        <button
 	                          onClick={() => cycleStatus(client)}
 	                          disabled={busy}

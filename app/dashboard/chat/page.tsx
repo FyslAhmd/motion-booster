@@ -1076,6 +1076,25 @@ export default function MessagesPage() {
     setBoostLang(lang);
   }, []);
 
+  const notifyServiceDeskAdmins = useCallback(async (topicId: LiveChatGuideOptionId) => {
+    if (user?.role === 'ADMIN') return;
+
+    try {
+      const res = await authFetch('/api/v1/chat/service-desk-notification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topicId }),
+      });
+
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        console.error('Failed to notify service desk admins:', json?.error || res.statusText);
+      }
+    } catch (error) {
+      console.error('Failed to notify service desk admins:', error);
+    }
+  }, [authFetch, user?.role]);
+
   const openBoostForm = useCallback((preferredLang: 'en' | 'bn' = 'en') => {
     setBoostStep(0);
     setBoostLang(preferredLang);
@@ -1093,6 +1112,7 @@ export default function MessagesPage() {
 
     setSelectedServiceOption(serviceOption);
     setShowLiveChatGuide(false);
+    void notifyServiceDeskAdmins(topicId);
 
     if (serviceOption.id === 'boost-request') {
       openBoostForm(preferredLang);
@@ -1100,7 +1120,7 @@ export default function MessagesPage() {
     }
 
     setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
-  }, [liveChatLanguage, openBoostForm]);
+  }, [liveChatLanguage, notifyServiceDeskAdmins, openBoostForm]);
 
   const handleBoostSubmit = async () => {
     if (!canSubmitBoost) return;

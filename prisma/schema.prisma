@@ -21,6 +21,12 @@ enum UserStatus {
   BANNED
 }
 
+enum AdminType {
+  BOOST_REQUEST
+  SUPPORT_ADMIN
+  OTHER_ADMIN
+}
+
 enum MetaStatusRequestState {
   PENDING
   APPROVED
@@ -52,6 +58,7 @@ model User {
   passwordHash  String     @map("password_hash")
   role          UserRole   @default(USER)
   status        UserStatus @default(ACTIVE)
+  adminType     AdminType  @default(OTHER_ADMIN) @map("admin_type")
   emailVerified Boolean    @default(false) @map("email_verified")
   avatarUrl     String?    @map("avatar_url")
   adsAccess     Boolean    @default(false) @map("ads_access")

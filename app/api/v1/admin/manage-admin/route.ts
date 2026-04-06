@@ -12,6 +12,7 @@ const ADMIN_SELECT = {
   phone: true,
   role: true,
   status: true,
+  adminType: true,
   adsAccess: true,
   emailVerified: true,
   lastLoginAt: true,
@@ -22,6 +23,18 @@ const ADMIN_SELECT = {
 } as const;
 
 const PAGE_SIZE = 20;
+
+type AdminTypeValue = 'BOOST_REQUEST' | 'SUPPORT_ADMIN' | 'OTHER_ADMIN';
+
+const ADMIN_TYPES = new Set<AdminTypeValue>([
+  'BOOST_REQUEST',
+  'SUPPORT_ADMIN',
+  'OTHER_ADMIN',
+]);
+
+function isAdminType(value: unknown): value is AdminTypeValue {
+  return typeof value === 'string' && ADMIN_TYPES.has(value as AdminTypeValue);
+}
 
 async function recordAdminHistory(input: {
   adminId: string;
@@ -115,13 +128,14 @@ export async function PATCH(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { id, username, email, fullName, phone, status, adsAccess, emailVerified, newPassword } = body as {
+    const { id, username, email, fullName, phone, status, adminType, adsAccess, emailVerified, newPassword } = body as {
       id: string;
       username?: string;
       email?: string;
       fullName?: string;
       phone?: string;
       status?: 'ACTIVE' | 'SUSPENDED' | 'BANNED';
+      adminType?: AdminTypeValue;
       adsAccess?: boolean;
       emailVerified?: boolean;
       newPassword?: string;
@@ -135,6 +149,10 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'Password must be at least 8 characters' }, { status: 400 });
     }
 
+    if (adminType !== undefined && !isAdminType(adminType)) {
+      return NextResponse.json({ success: false, error: 'Invalid admin type' }, { status: 400 });
+    }
+
     // Build update data — only include fields that were provided
     const data: Record<string, unknown> = {};
     if (username !== undefined) data.username = username.trim();
@@ -142,6 +160,7 @@ export async function PATCH(req: NextRequest) {
     if (fullName !== undefined) data.fullName = fullName.trim();
     if (phone !== undefined) data.phone = phone.trim();
     if (status !== undefined) data.status = status;
+    if (adminType !== undefined) data.adminType = adminType;
     if (adsAccess !== undefined) data.adsAccess = adsAccess;
     if (emailVerified !== undefined) data.emailVerified = emailVerified;
     if (newPassword !== undefined && newPassword.trim().length >= 8) {
@@ -161,6 +180,7 @@ export async function PATCH(req: NextRequest) {
         email: true,
         fullName: true,
         status: true,
+        adminType: true,
         adsAccess: true,
         emailVerified: true,
       },
@@ -200,6 +220,9 @@ export async function PATCH(req: NextRequest) {
     if (existingAdmin.status !== updated.status) {
       changeNotes.push(`Status ${existingAdmin.status} -> ${updated.status}`);
     }
+    if (existingAdmin.adminType !== updated.adminType) {
+      changeNotes.push(`Type ${existingAdmin.adminType} -> ${updated.adminType}`);
+    }
     if (existingAdmin.emailVerified !== updated.emailVerified) {
       changeNotes.push(updated.emailVerified ? 'Email Verified ON' : 'Email Verified OFF');
     }
@@ -231,6 +254,7 @@ export async function PATCH(req: NextRequest) {
         managedAdminUsername: updated.username,
         managedAdminEmail: updated.email,
         managedAdminFullName: updated.fullName,
+        managedAdminType: updated.adminType,
         changeNotes,
       },
     });
@@ -266,7 +290,7 @@ export async function DELETE(req: NextRequest) {
     // Allow deleting admins only; disallow deleting own account.
     const user = await prisma.user.findUnique({
       where: { id },
-      select: { role: true, username: true, fullName: true, email: true },
+      select: { role: true, username: true, fullName: true, email: true, adminType: true },
     });
     if (!user) {
       return NextResponse.json({ success: false, error: 'User not found' }, { status: 404 });
@@ -314,6 +338,7 @@ export async function DELETE(req: NextRequest) {
         deletedAdminUsername: user.username,
         deletedAdminEmail: user.email,
         deletedAdminFullName: user.fullName,
+        deletedAdminType: user.adminType,
       },
     });
 
