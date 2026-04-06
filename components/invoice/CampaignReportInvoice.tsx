@@ -1,10 +1,10 @@
 import { InvoiceShell } from './InvoiceShell';
 
 interface ReportInvoiceRow {
-  date: string;
   adCreateDate: string;
   adEndDate: string;
   campaignName: string;
+  pageName: string;
   spendUsd: number;
   spendTk: number;
   goal: string;
@@ -40,11 +40,11 @@ function fmt(value: number) {
 
 // Column Configuration with Flex Weights
 export const COL_CONFIG: Record<string, { label: string; flex: number; align: 'center' | 'left' | 'right' }> = {
-  date: { label: 'Date', flex: 8.5, align: 'center' },
-  campaignName: { label: 'Campaign Name', flex: 20, align: 'left' },
-  spendUsd: { label: 'Spend ($)', flex: 7.5, align: 'right' },
-  spendTk: { label: 'Spend (Tk)', flex: 8.5, align: 'right' },
-  goal: { label: 'Goal', flex: 11, align: 'center' },
+  campaignName: { label: 'Campaign Name', flex: 18, align: 'left' },
+  pageName: { label: 'Page Name', flex: 14, align: 'left' },
+  spendUsd: { label: 'Spend ($)', flex: 7, align: 'right' },
+  spendTk: { label: 'Spend (Tk)', flex: 8, align: 'right' },
+  goal: { label: 'Goal', flex: 10, align: 'center' },
   goalResult: { label: 'Goal Result', flex: 7, align: 'right' },
   costPerGoalResult: { label: 'Cost / Goal', flex: 7, align: 'right' },
   reach: { label: 'Reach', flex: 7, align: 'right' },
@@ -132,9 +132,10 @@ export function CampaignReportInvoice({
   rows,
   selectedColumns,
 }: CampaignReportInvoiceProps) {
-  const activeCols = selectedColumns && selectedColumns.length > 0 
-    ? selectedColumns.filter((k: string) => COL_CONFIG[k]) 
+  const activeCols = selectedColumns && selectedColumns.length > 0
+    ? selectedColumns.filter((k: string) => COL_CONFIG[k])
     : ALL_COLUMNS;
+  const grandTotalTk = rows.reduce((sum, row) => sum + row.spendTk, 0);
 
   return (
     <InvoiceShell
@@ -142,7 +143,8 @@ export function CampaignReportInvoice({
       billDate={billDate}
       clientName={clientName}
       assignBy={assignBy}
-      subtitle="Campaign History"
+      title="Campaign Summary"
+      subtitle="Campaign Summary"
     >
       {/* ── Header row ─────────────────────────────────────────────────── */}
       <div style={ROW}>
@@ -159,7 +161,6 @@ export function CampaignReportInvoice({
       {/* ── Data rows ──────────────────────────────────────────────────── */}
       {rows.map((row, idx) => {
         const rowData: Record<string, any> = {
-          date: row.date,
           campaignName: (
             <div style={{ display: 'flex', flexDirection: 'column', padding: '2px 0', gap: '2px' }}>
               <span style={{ fontWeight: 600 }}>{row.campaignName}</span>
@@ -168,6 +169,7 @@ export function CampaignReportInvoice({
               </span>
             </div>
           ),
+          pageName: row.pageName,
           spendUsd: fmt(row.spendUsd),
           spendTk: fmt(row.spendTk),
           goal: row.goal,
@@ -190,6 +192,24 @@ export function CampaignReportInvoice({
           </div>
         );
       })}
+
+      <div
+        style={{
+          marginTop: '4px',
+          background: '#ef0914',
+          borderRadius: '2px',
+          padding: '6px 10px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-end',
+          fontSize: '10px',
+          fontWeight: 700,
+          color: '#ffffff',
+          letterSpacing: '0.2px',
+        }}
+      >
+        Total Campaign Spend (Tk): {fmt(grandTotalTk)}
+      </div>
 
     </InvoiceShell>
   );

@@ -5,6 +5,7 @@ import { registerSchema, formatZodErrors } from '@/lib/validators/auth';
 import { AppError, formatErrorResponse } from '@/lib/errors/AppError';
 import { ZodError } from 'zod';
 import { getClientIp, logActivity } from '@/lib/server/activity-history';
+import { createNotification } from '@/lib/server/notifications';
 
 export async function POST(request: NextRequest) {
   const requestId = crypto.randomUUID();
@@ -108,6 +109,22 @@ export async function POST(request: NextRequest) {
       },
     }).catch(() => {
       // Do not fail registration if history logging fails.
+    });
+
+    await createNotification({
+      userId: user.id,
+      type: 'AUTH_REGISTER',
+      title: 'Registration successful',
+      text: `Welcome ${user.fullName}! Your account was created successfully.`,
+      href: '/dashboard',
+      logPath: request.nextUrl.pathname,
+      logMethod: request.method,
+      logIpAddress: getClientIp(request),
+      logUserAgent: request.headers.get('user-agent'),
+      metadata: {
+        username: user.username,
+        email: user.email,
+      },
     });
 
     // 7. Return success response

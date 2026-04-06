@@ -5,6 +5,7 @@ import AdminShell from '../_components/AdminShell';
 import { AdminSectionSkeleton } from '@/components/ui/AdminSectionSkeleton';
 import { BudgetReportInvoice, type BudgetReportRow } from '@/components/invoice/BudgetReportInvoice';
 import { useAuth } from '@/lib/auth/context';
+import { fetchNextInvoiceNumber } from '@/lib/invoice/client';
 
 interface BudgetHistoryItem {
   id: string;
@@ -151,6 +152,7 @@ export default function ReportsPage() {
     try {
       setReportLoading(true);
       setError('');
+      setInvoiceNo('');
 
       const allRows: BudgetHistoryItem[] = [];
       let currentPage = 1;
@@ -189,7 +191,7 @@ export default function ReportsPage() {
       });
 
       setReportRows(mapped);
-      setInvoiceNo(`RPT-${Date.now().toString().slice(-6)}`);
+      setInvoiceNo(await fetchNextInvoiceNumber());
       setBillDate(new Date().toLocaleDateString());
     } catch (err: any) {
       setError(err?.message || 'Failed to build report.');
@@ -427,7 +429,7 @@ export default function ReportsPage() {
               invoiceNo={invoiceNo}
               billDate={billDate}
               clientName={clientName}
-              assignBy="Motion Booster"
+              assignBy="Motion Booster Team"
               fromDate={fromDate}
               toDate={toDate}
               rows={reportRows}

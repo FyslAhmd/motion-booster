@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, type DragEvent, type PointerEvent as ReactPointerEvent } from 'react';
 import AdminShell from '../_components/AdminShell';
 import {
-  Plus, Pencil, Trash2, X, AlertTriangle, ChevronDown, Loader2,
+  Plus, Pencil, Trash2, X, AlertTriangle, Loader2, GripVertical,
   EyeOff, Tag, Image as ImageIcon,
 } from 'lucide-react';
 import ImageUpload from '@/components/ui/ImageUpload';
@@ -64,6 +64,14 @@ export default function AdminBlogPage() {
   const [tagInput, setTagInput] = useState('');
   const [tagInputBn, setTagInputBn] = useState('');
   const [draftConfirm, setDraftConfirm] = useState(false);
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [dragReordered, setDragReordered] = useState(false);
+  const [isCoarsePointer, setIsCoarsePointer] = useState(false);
+  const [touchDragIdx, setTouchDragIdx] = useState<number | null>(null);
+  const postsRef = useRef<BlogPostItem[]>([]);
+  const touchStartYRef = useRef(0);
+  const touchPointerIdRef = useRef<number | null>(null);
+  const touchReorderedRef = useRef(false);
 
   useEffect(() => {
     fetch('/api/v1/cms/blog')
@@ -71,6 +79,19 @@ export default function AdminBlogPage() {
       .then(data => setPosts(Array.isArray(data) ? data : []))
       .catch(() => {})
       .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    postsRef.current = posts;
+  }, [posts]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const media = window.matchMedia('(pointer: coarse)');
+    const update = () => setIsCoarsePointer(media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
   }, []);
 
   const reorder = async (ordered: BlogPostItem[]) => {
@@ -82,18 +103,103 @@ export default function AdminBlogPage() {
     }).catch(() => {});
   };
 
-  const moveUp = (idx: number) => {
-    if (idx === 0) return;
-    const arr = [...posts];
-    [arr[idx - 1], arr[idx]] = [arr[idx], arr[idx - 1]];
-    reorder(arr);
+  const moveAt = (from: number, to: number) => {
+    setPosts(prev => {
+      if (from < 0 || from >= prev.length || to < 0 || to >= prev.length || from === to) return prev;
+      const arr = [...prev];
+      const [moved] = arr.splice(from, 1);
+      arr.splice(to, 0, moved);
+      postsRef.current = arr;
+      return arr;
+    });
   };
 
-  const moveDown = (idx: number) => {
-    if (idx === posts.length - 1) return;
-    const arr = [...posts];
-    [arr[idx], arr[idx + 1]] = [arr[idx + 1], arr[idx]];
-    reorder(arr);
+  const onDragStart = (e: DragEvent<HTMLDivElement>, index: number) => {
+    const fromHandle = (e.target as HTMLElement).closest('[data-drag-handle="true"]');
+    if (!fromHandle) {
+      e.preventDefault();
+      return;
+    }
+
+    setDragIdx(index);
+    setDragReordered(false);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', posts[index]?.id || '');
+  };
+
+  const onDragOver = (e: DragEvent<HTMLDivElement>, overIndex: number) => {
+    e.preventDefault();
+    if (dragIdx === null || dragIdx === overIndex) return;
+
+    setPosts(prev => {
+      const arr = [...prev];
+      const [moved] = arr.splice(dragIdx, 1);
+      arr.splice(overIndex, 0, moved);
+      postsRef.current = arr;
+      return arr;
+    });
+
+    setDragIdx(overIndex);
+    setDragReordered(true);
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const onDragEnd = async () => {
+    const shouldPersist = dragReordered;
+    setDragIdx(null);
+    setDragReordered(false);
+    if (!shouldPersist) return;
+    await reorder(postsRef.current);
+  };
+
+  const onHandlePointerDown = (e: ReactPointerEvent<HTMLButtonElement>, index: number) => {
+    if (!isCoarsePointer) return;
+    e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    touchPointerIdRef.current = e.pointerId;
+    touchReorderedRef.current = false;
+    setTouchDragIdx(index);
+    setDragIdx(index);
+    touchStartYRef.current = e.clientY;
+  };
+
+  const onHandlePointerMove = (e: ReactPointerEvent<HTMLButtonElement>) => {
+    if (!isCoarsePointer || touchDragIdx === null) return;
+    if (touchPointerIdRef.current !== null && e.pointerId !== touchPointerIdRef.current) return;
+    e.preventDefault();
+    const deltaY = e.clientY - touchStartYRef.current;
+    const threshold = 26;
+
+    if (deltaY > threshold && touchDragIdx < postsRef.current.length - 1) {
+      const next = touchDragIdx + 1;
+      moveAt(touchDragIdx, next);
+      setTouchDragIdx(next);
+      setDragIdx(next);
+      touchStartYRef.current = e.clientY;
+      touchReorderedRef.current = true;
+    } else if (deltaY < -threshold && touchDragIdx > 0) {
+      const next = touchDragIdx - 1;
+      moveAt(touchDragIdx, next);
+      setTouchDragIdx(next);
+      setDragIdx(next);
+      touchStartYRef.current = e.clientY;
+      touchReorderedRef.current = true;
+    }
+  };
+
+  const onHandlePointerUp = async (e: ReactPointerEvent<HTMLButtonElement>) => {
+    if (!isCoarsePointer || touchDragIdx === null) return;
+    if (touchPointerIdRef.current !== null && e.pointerId !== touchPointerIdRef.current) return;
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
+    const shouldPersist = touchReorderedRef.current;
+    touchPointerIdRef.current = null;
+    touchReorderedRef.current = false;
+    setTouchDragIdx(null);
+    setDragIdx(null);
+    if (!shouldPersist) return;
+    await reorder(postsRef.current);
   };
 
   const openNew = () => {
@@ -256,17 +362,28 @@ export default function AdminBlogPage() {
       ) : (
         <div className="space-y-3">
           {posts.map((post, idx) => (
-            <div key={post.id} className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+            <div
+              key={post.id}
+              draggable={!isCoarsePointer}
+              onDragStart={(e) => onDragStart(e, idx)}
+              onDragOver={(e) => onDragOver(e, idx)}
+              onDragEnd={onDragEnd}
+              className={`bg-white rounded-2xl border border-gray-100 overflow-hidden transition-shadow ${dragIdx === idx ? 'opacity-50 shadow-lg' : 'hover:shadow-sm'}`}
+            >
               <div className="flex items-center gap-3 p-4">
-                {/* Reorder buttons */}
-                <div className="flex flex-col gap-0.5 shrink-0">
-                  <button onClick={() => moveUp(idx)} disabled={idx === 0} className="p-0.5 text-gray-300 hover:text-gray-600 disabled:opacity-30">
-                    <ChevronDown className="w-3.5 h-3.5 rotate-180" />
-                  </button>
-                  <button onClick={() => moveDown(idx)} disabled={idx === posts.length - 1} className="p-0.5 text-gray-300 hover:text-gray-600 disabled:opacity-30">
-                    <ChevronDown className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  data-drag-handle="true"
+                  onPointerDown={(e) => onHandlePointerDown(e, idx)}
+                  onPointerMove={onHandlePointerMove}
+                  onPointerUp={onHandlePointerUp}
+                  onPointerCancel={onHandlePointerUp}
+                  className="shrink-0 cursor-grab touch-none rounded-lg p-1 text-gray-300 hover:text-gray-500 active:cursor-grabbing"
+                  aria-label="Reorder blog post"
+                  title="Drag to reorder"
+                >
+                  <GripVertical className="w-4 h-4" />
+                </button>
                 <span className="w-6 h-6 bg-gray-100 rounded-lg text-xs font-medium text-gray-500 flex items-center justify-center shrink-0">
                   {idx + 1}
                 </span>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, type DragEvent, type PointerEvent as ReactPointerEvent } from 'react';
 import AdminShell from '../_components/AdminShell';
 import { useConfirm } from '@/lib/admin/confirm';
 import { CompanyItem, defaultCompanies, generateId } from '@/lib/admin/store';
@@ -38,9 +38,13 @@ function CompaniesCardsSkeleton() {
 export default function AdminCompaniesPage() {
   const [companies, setCompanies] = useState<CompanyItem[]>([]);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [isCoarsePointer, setIsCoarsePointer] = useState(false);
+  const [touchDragIdx, setTouchDragIdx] = useState<number | null>(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const touchStartYRef = useRef(0);
+  const touchPointerIdRef = useRef<number | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -76,6 +80,15 @@ export default function AdminCompaniesPage() {
     return () => {
       cancelled = true;
     };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const media = window.matchMedia('(pointer: coarse)');
+    const update = () => setIsCoarsePointer(media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
   }, []);
 
   const { confirm } = useConfirm();
@@ -123,8 +136,29 @@ export default function AdminCompaniesPage() {
   };
 
   // drag-reorder
-  const onDragStart = (i: number) => setDragIdx(i);
-  const onDragOver = (e: React.DragEvent, i: number) => {
+  const moveAt = (from: number, to: number) => {
+    setCompanies(prev => {
+      if (from < 0 || from >= prev.length || to < 0 || to >= prev.length || from === to) return prev;
+      const arr = [...prev];
+      const [moved] = arr.splice(from, 1);
+      arr.splice(to, 0, moved);
+      return arr;
+    });
+  };
+
+  const onDragStart = (e: DragEvent<HTMLDivElement>, index: number) => {
+    const fromHandle = (e.target as HTMLElement).closest('[data-drag-handle="true"]');
+    if (!fromHandle) {
+      e.preventDefault();
+      return;
+    }
+
+    setDragIdx(index);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', companies[index]?.id || '');
+  };
+
+  const onDragOver = (e: DragEvent<HTMLDivElement>, i: number) => {
     e.preventDefault();
     if (dragIdx === null || dragIdx === i) return;
     const arr = [...companies];
@@ -133,7 +167,51 @@ export default function AdminCompaniesPage() {
     setDragIdx(i);
     setCompanies(arr);
   };
+
   const onDragEnd = () => setDragIdx(null);
+
+  const onHandlePointerDown = (e: ReactPointerEvent<HTMLButtonElement>, index: number) => {
+    if (!isCoarsePointer) return;
+    e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    touchPointerIdRef.current = e.pointerId;
+    setTouchDragIdx(index);
+    setDragIdx(index);
+    touchStartYRef.current = e.clientY;
+  };
+
+  const onHandlePointerMove = (e: ReactPointerEvent<HTMLButtonElement>) => {
+    if (!isCoarsePointer || touchDragIdx === null) return;
+    if (touchPointerIdRef.current !== null && e.pointerId !== touchPointerIdRef.current) return;
+    e.preventDefault();
+    const deltaY = e.clientY - touchStartYRef.current;
+    const threshold = 26;
+
+    if (deltaY > threshold && touchDragIdx < companies.length - 1) {
+      const next = touchDragIdx + 1;
+      moveAt(touchDragIdx, next);
+      setTouchDragIdx(next);
+      setDragIdx(next);
+      touchStartYRef.current = e.clientY;
+    } else if (deltaY < -threshold && touchDragIdx > 0) {
+      const next = touchDragIdx - 1;
+      moveAt(touchDragIdx, next);
+      setTouchDragIdx(next);
+      setDragIdx(next);
+      touchStartYRef.current = e.clientY;
+    }
+  };
+
+  const onHandlePointerUp = (e: ReactPointerEvent<HTMLButtonElement>) => {
+    if (!isCoarsePointer || touchDragIdx === null) return;
+    if (touchPointerIdRef.current !== null && e.pointerId !== touchPointerIdRef.current) return;
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
+    touchPointerIdRef.current = null;
+    setTouchDragIdx(null);
+    setDragIdx(null);
+  };
 
   return (
     <AdminShell>
@@ -198,16 +276,26 @@ export default function AdminCompaniesPage() {
             {companies.map((company, idx) => (
               <div
                 key={company.id}
-                draggable
-                onDragStart={() => onDragStart(idx)}
+                draggable={!isCoarsePointer}
+                onDragStart={e => onDragStart(e, idx)}
                 onDragOver={e => onDragOver(e, idx)}
                 onDragEnd={onDragEnd}
                 className={`bg-white rounded-xl border border-gray-100 p-4 flex items-start gap-3 transition-shadow ${dragIdx === idx ? 'opacity-50 shadow-lg' : 'hover:shadow-sm'}`}
               >
                 {/* Drag handle */}
-                <div className="mt-1 cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 shrink-0">
+                <button
+                  type="button"
+                  data-drag-handle="true"
+                  onPointerDown={(e) => onHandlePointerDown(e, idx)}
+                  onPointerMove={onHandlePointerMove}
+                  onPointerUp={onHandlePointerUp}
+                  onPointerCancel={onHandlePointerUp}
+                  className="mt-1 shrink-0 cursor-grab touch-none text-gray-300 hover:text-gray-500 active:cursor-grabbing"
+                  aria-label="Reorder company"
+                  title="Drag to reorder"
+                >
                   <GripVertical className="w-4 h-4" />
-                </div>
+                </button>
 
                 {/* Index */}
                 <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-500 shrink-0 mt-1">
@@ -238,24 +326,16 @@ export default function AdminCompaniesPage() {
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={company.logoImage} alt={company.name} className="h-10 w-auto object-contain border border-gray-100 rounded-lg bg-gray-50 p-1.5" />
                       )}
-                      <div className="flex-1">
+                      <div className="w-[140px] sm:w-[170px] shrink-0">
                         <ImageUpload
-                          value={company.logoImage || ''}
+                          value=""
                           onChange={v => update(company.id, 'logoImage', v)}
-                          label={company.logoImage ? 'Replace Logo' : 'Upload Logo'}
+                          label="Upload Logo"
                           aspectRatio="wide"
                           maxPx={400}
                           sizeHint="400×200px, PNG transparent bg"
                         />
                       </div>
-                      {company.logoImage && (
-                        <button
-                          onClick={() => update(company.id, 'logoImage', '')}
-                          className="text-xs text-red-500 hover:text-red-700 whitespace-nowrap"
-                        >
-                          Remove
-                        </button>
-                      )}
                     </div>
                   </div>
                 </div>

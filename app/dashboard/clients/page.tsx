@@ -366,7 +366,7 @@ export default function ClientsPage() {
   const [page, setPage]             = useState(1);
   const [total, setTotal]           = useState(0);
   const [totalPages, setTotalPages] = useState(0);
-  const [counts, setCounts]         = useState({ total: 0, active: 0, suspended: 0, adsAccess: 0 });
+  const [counts, setCounts]         = useState({ total: 0, active: 0, suspended: 0, banned: 0 });
   const [updating, setUpdating]     = useState<string | null>(null);
   const { confirm } = useConfirm();
 
@@ -506,7 +506,7 @@ export default function ClientsPage() {
               { label: 'Total',     value: counts.total,      cls: 'text-indigo-600', bg: 'bg-indigo-50' },
               { label: 'Active',    value: counts.active,     cls: 'text-green-600',  bg: 'bg-green-50' },
               { label: 'Suspended', value: counts.suspended,  cls: 'text-amber-600',  bg: 'bg-amber-50' },
-              { label: 'Ads Access',value: counts.adsAccess,  cls: 'text-red-600',    bg: 'bg-red-50' },
+              { label: 'Banned',    value: counts.banned,     cls: 'text-red-600',    bg: 'bg-red-50' },
             ].map(s => (
               <div key={s.label} className="rounded-xl border border-gray-100 bg-white p-4 flex items-center gap-3 shadow-sm">
                 <div className={`w-8 h-8 rounded-lg ${s.bg} flex items-center justify-center shrink-0`}>

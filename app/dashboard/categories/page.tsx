@@ -70,6 +70,8 @@ export default function CategoriesPage() {
   const [isCoarsePointer, setIsCoarsePointer] = useState(false);
   const [touchDragIdx, setTouchDragIdx] = useState<number | null>(null);
   const touchStartYRef = useRef(0);
+  const touchPointerIdRef = useRef<number | null>(null);
+  const touchReorderedRef = useRef(false);
 
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
@@ -194,12 +196,18 @@ export default function CategoriesPage() {
 
   const onHandlePointerDown = (e: ReactPointerEvent<HTMLButtonElement>, index: number) => {
     if (!isCoarsePointer) return;
+    e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    touchPointerIdRef.current = e.pointerId;
+    touchReorderedRef.current = false;
     setTouchDragIdx(index);
     touchStartYRef.current = e.clientY;
   };
 
   const onHandlePointerMove = (e: ReactPointerEvent<HTMLButtonElement>) => {
     if (!isCoarsePointer || touchDragIdx === null) return;
+    if (touchPointerIdRef.current !== null && e.pointerId !== touchPointerIdRef.current) return;
+    e.preventDefault();
     const deltaY = e.clientY - touchStartYRef.current;
     const threshold = 26;
 
@@ -208,17 +216,27 @@ export default function CategoriesPage() {
       moveAt(touchDragIdx, next);
       setTouchDragIdx(next);
       touchStartYRef.current = e.clientY;
+      touchReorderedRef.current = true;
     } else if (deltaY < -threshold && touchDragIdx > 0) {
       const next = touchDragIdx - 1;
       moveAt(touchDragIdx, next);
       setTouchDragIdx(next);
       touchStartYRef.current = e.clientY;
+      touchReorderedRef.current = true;
     }
   };
 
-  const onHandlePointerUp = async () => {
+  const onHandlePointerUp = async (e: ReactPointerEvent<HTMLButtonElement>) => {
     if (!isCoarsePointer || touchDragIdx === null) return;
+    if (touchPointerIdRef.current !== null && e.pointerId !== touchPointerIdRef.current) return;
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
+    const shouldPersist = touchReorderedRef.current;
+    touchPointerIdRef.current = null;
+    touchReorderedRef.current = false;
     setTouchDragIdx(null);
+    if (!shouldPersist) return;
     await persistOrder(itemsRef.current);
   };
 
@@ -459,8 +477,7 @@ export default function CategoriesPage() {
                   onPointerMove={onHandlePointerMove}
                   onPointerUp={onHandlePointerUp}
                   onPointerCancel={onHandlePointerUp}
-                  onPointerLeave={onHandlePointerUp}
-                  className="cursor-grab active:cursor-grabbing shrink-0 p-1 rounded text-gray-300 hover:text-gray-500 hover:bg-gray-100"
+                  className="touch-none cursor-grab active:cursor-grabbing shrink-0 p-1 rounded text-gray-300 hover:text-gray-500 hover:bg-gray-100"
                   title={isCoarsePointer ? 'Drag up/down to reorder' : 'Drag to reorder'}
                   aria-label="Drag to reorder"
                 >

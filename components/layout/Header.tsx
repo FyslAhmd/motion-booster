@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
@@ -9,6 +9,8 @@ import { useLanguage } from '@/lib/lang/LanguageContext';
 import { LayoutDashboard, User, Phone, Mail, Search, Home, Briefcase, Users, Menu, X, ArrowRight, LogOut, Bell } from 'lucide-react';
 import { MoreDrawer } from '@/components/ui/MoreDrawer';
 import { toast } from 'sonner';
+import { useLiveNotifications } from '@/lib/notifications/use-live-notifications';
+import type { AppNotification } from '@/lib/notifications/types';
 
 export const Header = () => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -16,7 +18,10 @@ export const Header = () => {
   const [showSearch, setShowSearch] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const { isAuthenticated, isLoading, user, logout } = useAuth();
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [notificationsLoading, setNotificationsLoading] = useState(false);
+  const [lastSeenAt, setLastSeenAt] = useState<string | null>(null);
+  const { isAuthenticated, isLoading, user, logout, accessToken } = useAuth();
   const { language, setLanguage, t } = useLanguage();
   const isBN = language === 'BN';
   const profileMenuRef = useRef<HTMLDivElement>(null);
@@ -117,6 +122,61 @@ export const Header = () => {
         ? 'ক্লায়েন্ট অ্যাকাউন্ট'
         : 'Client Account';
 
+  const fetchNotifications = useCallback(async () => {
+    if (!user?.id) return;
+
+    setNotificationsLoading(true);
+    try {
+      const res = await fetch('/api/v1/notifications?limit=20', {
+        cache: 'no-store',
+        credentials: 'include',
+      });
+      const json = await res.json();
+      if (res.ok && json?.success && Array.isArray(json?.data)) {
+        setNotifications(json.data as AppNotification[]);
+      }
+    } catch {
+      // Ignore transient notification fetch failures in header.
+    } finally {
+      setNotificationsLoading(false);
+    }
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!user?.id || typeof window === 'undefined') return;
+    const key = `mb:header:last-seen-notification:${user.id}`;
+    const stored = window.localStorage.getItem(key);
+    setLastSeenAt(stored || null);
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    void fetchNotifications();
+    const timer = window.setInterval(() => {
+      void fetchNotifications();
+    }, 20000);
+    return () => window.clearInterval(timer);
+  }, [user?.id, fetchNotifications]);
+
+  const unreadCount = notifications.filter((item) => {
+    if (!lastSeenAt) return true;
+    return new Date(item.createdAt).getTime() > new Date(lastSeenAt).getTime();
+  }).length;
+
+  useLiveNotifications({
+    token: accessToken,
+    enabled: isAuthenticated,
+    onNotification: (notification) => {
+      setNotifications((prev) => {
+        if (prev.some((item) => item.id === notification.id)) return prev;
+        return [notification, ...prev].slice(0, 20);
+      });
+      toast.success(notification.title, {
+        description: notification.text,
+      });
+    },
+  });
+
   return (
     <header className="relative z-120 lg:fixed lg:top-0 lg:left-0 lg:right-0 lg:bg-white lg:shadow-md">
       {/* Mobile Top Bar - Logo + Icons */}
@@ -149,12 +209,27 @@ export const Header = () => {
             <button
               onClick={() => {
                 setShowSearch(false);
-                setShowNotifications(prev => !prev);
+                setShowNotifications((prev) => {
+                  const next = !prev;
+                  if (next && user?.id && typeof window !== 'undefined') {
+                    const key = `mb:header:last-seen-notification:${user.id}`;
+                    const now = new Date().toISOString();
+                    window.localStorage.setItem(key, now);
+                    setLastSeenAt(now);
+                    void fetchNotifications();
+                  }
+                  return next;
+                });
               }}
-              className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+              className="relative w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
               aria-label="Notifications"
             >
               <Bell className="w-5 h-5 text-gray-600" />
+              {unreadCount > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 inline-flex min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-semibold leading-4 text-white">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
             </button>
             <Link href={isAuthenticated ? "/dashboard" : "/login"} className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors shadow-sm">
               {isAuthenticated ? (
@@ -248,7 +323,34 @@ export const Header = () => {
             {/* Auth & Login Button */}
             <div className="flex items-center gap-3">
               {!isLoading && isAuthenticated ? (
-                <div className="relative" ref={profileMenuRef}>
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowNotifications((prev) => {
+                        const next = !prev;
+                        if (next && user?.id && typeof window !== 'undefined') {
+                          const key = `mb:header:last-seen-notification:${user.id}`;
+                          const now = new Date().toISOString();
+                          window.localStorage.setItem(key, now);
+                          setLastSeenAt(now);
+                          void fetchNotifications();
+                        }
+                        return next;
+                      });
+                    }}
+                    aria-label="Notifications"
+                    className="relative h-9 w-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+                  >
+                    <Bell className="w-5 h-5 text-gray-600" />
+                    {unreadCount > 0 && (
+                      <span className="absolute -right-0.5 -top-0.5 inline-flex min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-semibold leading-4 text-white">
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </span>
+                    )}
+                  </button>
+
+                  <div className="relative" ref={profileMenuRef}>
                   <button
                     onClick={() => setShowProfileMenu(!showProfileMenu)}
                     className="flex items-center gap-2 px-2 py-2 hover:bg-gray-50 rounded-lg transition-colors"
@@ -306,6 +408,7 @@ export const Header = () => {
                     </div>
                   )}
                 </div>
+                </>
               ) : (
                 <div className="flex items-center gap-3">
                   <Link
@@ -367,8 +470,8 @@ export const Header = () => {
       {/* Mobile Notifications Panel */}
       {showNotifications && (
         <>
-          <div className="fixed inset-0 z-135 bg-black/30 lg:hidden" onClick={() => setShowNotifications(false)} />
-          <div ref={notificationPanelRef} className="fixed top-[4.6rem] left-3 right-3 z-140 rounded-2xl border border-gray-200 bg-white shadow-2xl lg:hidden">
+          <div className="fixed inset-0 z-135 bg-black/30" onClick={() => setShowNotifications(false)} />
+          <div ref={notificationPanelRef} className="fixed top-[4.6rem] left-3 right-3 z-140 rounded-2xl border border-gray-200 bg-white shadow-2xl sm:left-auto sm:right-4 sm:w-96">
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
               <h3 className="text-sm font-semibold text-gray-900">{t('notifications')}</h3>
               <button onClick={() => setShowNotifications(false)} className="text-xs font-medium text-gray-500 hover:text-gray-700">{t('floating_call_close')}</button>
@@ -376,41 +479,24 @@ export const Header = () => {
 
             {isAuthenticated ? (
               <div className="max-h-[58vh] overflow-y-auto py-2">
-                {[
-                  {
-                    id: 'n1',
-                    title: isBN ? 'নতুন মেসেজ এসেছে' : 'New message received',
-                    text: isBN
-                      ? 'ড্যাশবোর্ড ইনবক্সে আপনার নতুন একটি চ্যাট মেসেজ আছে।'
-                      : 'You have a new chat message in dashboard inbox.',
-                    time: isBN ? 'এইমাত্র' : 'Just now',
-                  },
-                  {
-                    id: 'n2',
-                    title: isBN ? 'ক্যাম্পেইন আপডেট' : 'Campaign update',
-                    text: isBN
-                      ? 'আপনার একটি ক্যাম্পেইনের নতুন স্ট্যাটাস আপডেট হয়েছে।'
-                      : 'One of your campaigns has a fresh status update.',
-                    time: isBN ? '১২ মিনিট আগে' : '12m ago',
-                  },
-                  {
-                    id: 'n3',
-                    title: isBN ? 'সাপোর্ট রিপ্লাই' : 'Support reply',
-                    text: isBN
-                      ? 'আপনার সর্বশেষ অনুরোধের জবাব দিয়েছে আমাদের টিম।'
-                      : 'Our team replied to your latest request.',
-                    time: isBN ? '১ ঘণ্টা আগে' : '1h ago',
-                  },
-                ].map((item) => (
+                {notificationsLoading ? (
+                  <div className="flex items-center justify-center py-8 text-xs text-gray-400">
+                    {isBN ? 'লোড হচ্ছে...' : 'Loading...'}
+                  </div>
+                ) : notifications.length === 0 ? (
+                  <div className="px-4 py-6 text-center text-sm text-gray-500">
+                    {isBN ? 'এখনও কোনো নোটিফিকেশন নেই।' : 'No notifications yet.'}
+                  </div>
+                ) : notifications.map((item) => (
                   <Link
                     key={item.id}
-                    href="/dashboard/chat"
+                    href={item.href || '/dashboard'}
                     onClick={() => setShowNotifications(false)}
                     className="block px-4 py-3 hover:bg-gray-50 transition-colors"
                   >
                     <p className="text-sm font-medium text-gray-900">{item.title}</p>
                     <p className="text-xs text-gray-600 mt-0.5">{item.text}</p>
-                    <p className="text-[11px] text-gray-400 mt-1">{item.time}</p>
+                    <p className="text-[11px] text-gray-400 mt-1">{new Date(item.createdAt).toLocaleString()}</p>
                   </Link>
                 ))}
               </div>

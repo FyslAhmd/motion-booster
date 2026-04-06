@@ -5,10 +5,10 @@ import { CampaignReportInvoice } from '@/components/invoice';
 
 const SAMPLE_ROWS = [
   {
-    date: 'Mar 31, 2026',
     adCreateDate: 'Mar 28, 2026',
     adEndDate: 'Apr 04, 2026',
     campaignName: 'Post: কার্ড কাট এবং ড্রপ সোল্ডার পেয়ে নেট',
+    pageName: 'Motion Booster',
     spendUsd: 11.50,
     spendTk: 1667.50,
     goal: 'CONVERSATIONS',
@@ -16,12 +16,13 @@ const SAMPLE_ROWS = [
     costPerGoalResult: 0.04,
     reach: 28294,
     impressions: 32593,
+    total: 1667.50,
   },
   {
-    date: 'Mar 31, 2026',
     adCreateDate: 'Mar 29, 2026',
     adEndDate: 'Apr 07, 2026',
     campaignName: 'Iqra Language Institute',
+    pageName: 'Iqra Language Institute',
     spendUsd: 10.12,
     spendTk: 1467.40,
     goal: 'CONVERSATIONS',
@@ -29,6 +30,7 @@ const SAMPLE_ROWS = [
     costPerGoalResult: 0.19,
     reach: 11506,
     impressions: 18789,
+    total: 1467.40,
   },
 ];
 

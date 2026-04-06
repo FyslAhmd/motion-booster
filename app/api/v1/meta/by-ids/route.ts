@@ -9,6 +9,7 @@ const CAMPAIGN_FIELDS = [
   'configured_status', 'daily_budget', 'lifetime_budget',
   'budget_remaining', 'spend_cap',
   'start_time', 'stop_time', 'created_time', 'updated_time',
+  'promoted_object',
   'ads.limit(1){creative{thumbnail_url}}',
 ].join(',');
 

@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import AdminShell from '../_components/AdminShell';
 import { useAuth } from '@/lib/auth/context';
-import { Search, ChevronLeft, ChevronRight, Calendar, Wallet, Clock3, Target, Users2, ExternalLink } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, Calendar, Wallet, Clock3, Target, Users2, ExternalLink, Filter } from 'lucide-react';
 import { AdminSectionSkeleton } from '@/components/ui/AdminSectionSkeleton';
 import { createPortal } from 'react-dom';
 import { COUNTRY_CODES } from '@/lib/data/country-codes';
@@ -55,6 +55,7 @@ interface AudienceProfile {
 type PlacementValue = 'facebook' | 'whatsapp' | 'instagram';
 type LocationValue = string;
 type GenderValue = 'male' | 'female' | 'both';
+type BoostRequestStatusFilter = 'ALL' | BoostRequestStatus;
 
 interface BoostSetupDraft {
   placements: PlacementValue[];
@@ -93,12 +94,15 @@ export default function BoostRequestsPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<BoostRequestStatusFilter>('ALL');
+  const [showFilterMenu, setShowFilterMenu] = useState(false);
   const [selected, setSelected] = useState<BoostRequestItem | null>(null);
   const [showAllAudience, setShowAllAudience] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [savingSetup, setSavingSetup] = useState(false);
   const [setupDraft, setSetupDraft] = useState<BoostSetupDraft | null>(null);
+  const filterMenuRef = useRef<HTMLDivElement | null>(null);
   const limit = 15;
 
   useEffect(() => {
@@ -147,6 +151,19 @@ export default function BoostRequestsPage() {
     setShowAllAudience(false);
   }, [selected?.id]);
 
+  useEffect(() => {
+    if (!showFilterMenu) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!filterMenuRef.current?.contains(event.target as Node)) {
+        setShowFilterMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showFilterMenu]);
+
   const getBoostRequestStatus = useCallback((item: BoostRequestItem): BoostRequestStatus => {
     const matchedStatus = item.targetAudience.match(/^\s*status\s*[:\-]\s*([^\n]+)/im)?.[1]?.trim().toLowerCase();
     if (matchedStatus) {
@@ -180,6 +197,16 @@ export default function BoostRequestsPage() {
     if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
     return `${words[0][0]}${words[1][0]}`.toUpperCase();
   }, [getRequesterName]);
+
+  const filteredItems = useMemo(() => {
+    if (!data) return [];
+    if (statusFilter === 'ALL') return data.items;
+    return data.items.filter((item) => getBoostRequestStatus(item) === statusFilter);
+  }, [data, statusFilter, getBoostRequestStatus]);
+
+  const statusFilterLabel = statusFilter === 'ALL'
+    ? 'All'
+    : BOOST_REQUEST_STATUS_OPTIONS.find((option) => option.value === statusFilter)?.label ?? 'All';
 
   const updateRequestStatus = useCallback(
     async (item: BoostRequestItem, nextStatus: BoostRequestStatus) => {
@@ -559,32 +586,81 @@ export default function BoostRequestsPage() {
         </div>
       </div>
 
-      {/* Search */}
-      <div className="relative mb-5 max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-        <input
-          type="text"
-          placeholder="Search by audience, placement, budget..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-400 focus:bg-white transition-all"
-        />
+      {/* Search + Filter */}
+      <div className="mb-5 flex items-center gap-2 max-w-md">
+        <div className="relative flex-1 min-w-0">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search by audience..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="w-full pl-10 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-400 focus:bg-white transition-all"
+          />
+        </div>
+        <div className="relative shrink-0" ref={filterMenuRef}>
+          <button
+            type="button"
+            onClick={() => setShowFilterMenu((prev) => !prev)}
+            className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-red-400"
+            aria-haspopup="menu"
+            aria-expanded={showFilterMenu}
+          >
+            <Filter className="h-4 w-4" />
+            <span>Filter</span>
+          </button>
+          {showFilterMenu && (
+            <div className="absolute right-0 top-full z-20 mt-2 w-40 rounded-xl border border-gray-200 bg-white p-1.5 shadow-lg">
+              <button
+                type="button"
+                onClick={() => {
+                  setStatusFilter('ALL');
+                  setShowFilterMenu(false);
+                }}
+                className={`w-full rounded-lg px-2.5 py-2 text-left text-sm font-medium transition-colors ${
+                  statusFilter === 'ALL' ? 'bg-red-50 text-red-600' : 'text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                All
+              </button>
+              {BOOST_REQUEST_STATUS_OPTIONS.map((option) => (
+                <button
+                  key={`status-filter-${option.value}`}
+                  type="button"
+                  onClick={() => {
+                    setStatusFilter(option.value);
+                    setShowFilterMenu(false);
+                  }}
+                  className={`w-full rounded-lg px-2.5 py-2 text-left text-sm font-medium transition-colors ${
+                    statusFilter === option.value ? 'bg-red-50 text-red-600' : 'text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Table */}
       {loading ? (
         <AdminSectionSkeleton variant="table" />
-      ) : !data || data.items.length === 0 ? (
+      ) : !data || filteredItems.length === 0 ? (
         <div className="text-center py-20 text-gray-400">
           <Target className="w-12 h-12 mx-auto mb-3 text-gray-300" />
           <p className="font-medium text-gray-500">No boost requests found</p>
-          <p className="text-sm mt-1">Submissions will appear here when users fill out the boost form in chat.</p>
+          <p className="text-sm mt-1">
+            {statusFilter === 'ALL'
+              ? 'Submissions will appear here when users fill out the boost form in chat.'
+              : `No ${statusFilterLabel.toLowerCase()} requests found for this page.`}
+          </p>
         </div>
       ) : (
         <>
           {/* Cards */}
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {data.items.map(item => {
+            {filteredItems.map(item => {
               const itemStatus = getBoostRequestStatus(item);
 
               return (

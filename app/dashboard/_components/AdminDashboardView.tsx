@@ -207,7 +207,11 @@ interface StatCard {
 }
 
 function TakaIcon({ className = "" }: { className?: string }) {
-  return <span className={`font-bold leading-none ${className}`}>৳</span>;
+  return (
+    <span className={`inline-flex items-center justify-center text-[18px] font-bold leading-none ${className}`}>
+      ৳
+    </span>
+  );
 }
 
 interface MetaAccountSummary {

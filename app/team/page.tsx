@@ -35,7 +35,8 @@ export default function TeamPage() {
     ? team
     : team.filter(m => m.department === activeTab);
 
-  const featured = filtered.find(m => m.featured) ?? filtered[0];
+  const allLeader = team.find(m => m.featured) ?? team[0];
+  const featured = activeTab === 'all' ? allLeader : filtered[0];
   const rest = filtered.filter(m => m.id !== featured?.id);
   const openMember = (memberId: string) => {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });

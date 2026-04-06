@@ -1,6 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { validateRequest } from '@/lib/auth/validate-request';
+import { createNotification } from '@/lib/server/notifications';
+
+function getChatNotificationCopy(input: {
+  senderName: string;
+  messageType: 'TEXT' | 'IMAGE' | 'VIDEO' | 'FILE' | 'VOICE';
+  content?: string;
+}) {
+  const rawContent = (input.content || '').trim();
+  if (input.messageType === 'TEXT') {
+    const preview = rawContent.length > 100 ? `${rawContent.slice(0, 100)}...` : rawContent;
+    return {
+      title: `New message from ${input.senderName}`,
+      text: preview || `${input.senderName} sent you a message.`,
+    };
+  }
+
+  const labelByType: Record<'IMAGE' | 'VIDEO' | 'FILE' | 'VOICE', string> = {
+    IMAGE: 'an image',
+    VIDEO: 'a video',
+    FILE: 'a file',
+    VOICE: 'a voice message',
+  };
+
+  return {
+    title: `New message from ${input.senderName}`,
+    text: `${input.senderName} sent ${labelByType[input.messageType]}.`,
+  };
+}
 
 // ─── GET /api/v1/chat/conversations/[id]/messages ───
 // Returns messages for a specific conversation with pagination.
@@ -202,6 +230,41 @@ export async function POST(
       where: { id: conversationId },
       data: { updatedAt: new Date() },
     });
+
+    const recipientIds = conversation.participants
+      .map((participant) => participant.id)
+      .filter((participantId) => participantId !== user.id);
+
+    if (recipientIds.length > 0) {
+      const copy = getChatNotificationCopy({
+        senderName: message.sender.fullName,
+        messageType,
+        content,
+      });
+
+      await Promise.all(
+        recipientIds.map((recipientId) =>
+          createNotification({
+            userId: recipientId,
+            type: 'GENERAL',
+            title: copy.title,
+            text: copy.text,
+            href: '/dashboard/chat',
+            logPath: req.nextUrl.pathname,
+            logMethod: req.method,
+            metadata: {
+              module: 'chat',
+              type: 'CHAT_MESSAGE',
+              senderId: user.id,
+              senderName: message.sender.fullName,
+              conversationId,
+              messageId: message.id,
+              messageType,
+            },
+          }),
+        ),
+      );
+    }
 
     return NextResponse.json({ message }, { status: 201 });
   } catch (error) {
