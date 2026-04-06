@@ -107,6 +107,7 @@ const navItems: NavEntry[] = [
   { href: '/dashboard/user-budget', label: 'User Budget', icon: DollarSign, adminOnly: true },
   { href: '/dashboard/accounts', label: 'Accounts', icon: DollarSign, adminOnly: true },
   { href: '/dashboard/clients', label: 'Clients', icon: Users, adminOnly: true },
+  { href: '/dashboard/manage-admin', label: 'Manage Admin', icon: UserCog, adminOnly: true },
   { href: '/dashboard/history', label: 'Activity History', icon: History, adminOnly: true },
   {
     group: true,

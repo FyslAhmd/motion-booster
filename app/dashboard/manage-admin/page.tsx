@@ -1,7 +1,6 @@
 'use client';
 
 import Image from 'next/image';
-import Link from 'next/link';
 import { useState, useEffect, useCallback, Fragment } from 'react';
 import AdminShell from '../_components/AdminShell';
 import { useConfirm } from '@/lib/admin/confirm';
@@ -27,7 +26,6 @@ import {
   AlertTriangle,
   Eye,
   EyeOff,
-  UserCog,
 } from 'lucide-react';
 
 interface Client {
@@ -169,7 +167,7 @@ function EditModal({ client, onClose, onSave }: EditModalProps) {
       setError('New password must be at least 8 characters.');
       return;
     }
-    if (!await confirm({ title: 'Save Changes', message: 'Are you sure you want to save client changes?' })) return;
+    if (!await confirm({ title: 'Save Changes', message: 'Are you sure you want to save admin changes?' })) return;
     setSaving(true);
     setError('');
     try {
@@ -181,7 +179,7 @@ function EditModal({ client, onClose, onSave }: EditModalProps) {
       };
       if (form.adsAccess !== client.adsAccess) payload.adsAccess = form.adsAccess;
       if (form.newPassword) payload.newPassword = form.newPassword;
-      const res = await fetch('/api/v1/admin/clients', {
+      const res = await fetch('/api/v1/admin/manage-admin', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -189,14 +187,14 @@ function EditModal({ client, onClose, onSave }: EditModalProps) {
       const json = await res.json();
       if (json.success) {
         onSave(json.data);
-        toast.success('Client changes saved successfully!');
+        toast.success('Admin changes saved successfully!');
       } else {
         setError(json.error || 'Failed to save');
-        toast.error(json.error || 'Failed to save client changes');
+        toast.error(json.error || 'Failed to save admin changes');
       }
     } catch {
       setError('Network error');
-      toast.error('Network error while saving client changes');
+      toast.error('Network error while saving admin changes');
     } finally {
       setSaving(false);
     }
@@ -211,7 +209,7 @@ function EditModal({ client, onClose, onSave }: EditModalProps) {
         {/* Header */}
         <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
           <div>
-            <h2 className="text-base font-bold text-gray-900">Edit Client</h2>
+            <h2 className="text-base font-bold text-gray-900">Edit Admin</h2>
             <p className="mt-0.5 text-xs text-gray-400">ID: {client.id}</p>
           </div>
           <button onClick={onClose} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100">
@@ -360,7 +358,7 @@ function EditModal({ client, onClose, onSave }: EditModalProps) {
 
 /* ─── Main Page ───────────────────────────────────────── */
 
-export default function ClientsPage() {
+export default function ManageAdminPage() {
   const [clients, setClients]       = useState<Client[]>([]);
   const [loading, setLoading]       = useState(true);
   const [search, setSearch]         = useState('');
@@ -388,7 +386,7 @@ export default function ClientsPage() {
     setLoading(true);
     try {
       const params = new URLSearchParams({ page: String(pg), search: q });
-      const res  = await fetch(`/api/v1/admin/clients?${params}`);
+      const res  = await fetch(`/api/v1/admin/manage-admin?${params}`);
       const json = await res.json();
       if (json.success) {
         setClients(json.data);
@@ -405,7 +403,7 @@ export default function ClientsPage() {
   async function patch(id: string, payload: Partial<Pick<Client, 'status' | 'adsAccess' | 'emailVerified'>>) {
     setUpdating(id);
     try {
-      const res  = await fetch('/api/v1/admin/clients', {
+      const res  = await fetch('/api/v1/admin/manage-admin', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, ...payload }),
@@ -431,7 +429,7 @@ export default function ClientsPage() {
 
   async function handleDeleteClient(client: Client) {
     const ok = await confirm({
-      title: 'Delete Client',
+      title: 'Delete Admin',
       message: `Are you sure you want to delete ${client.fullName}? This action cannot be undone.`,
       confirmLabel: 'Delete',
       cancelLabel: 'Cancel',
@@ -440,7 +438,7 @@ export default function ClientsPage() {
 
     setUpdating(client.id);
     try {
-      const res = await fetch('/api/v1/admin/clients', {
+      const res = await fetch('/api/v1/admin/manage-admin', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: client.id }),
@@ -449,12 +447,12 @@ export default function ClientsPage() {
       if (json.success) {
         setClients((prev) => prev.filter((c) => c.id !== client.id));
         load(page, debouncedSearch);
-        toast.success('Client deleted successfully!');
+        toast.success('Admin deleted successfully!');
       } else {
-        toast.error(json.error || 'Failed to delete client');
+        toast.error(json.error || 'Failed to delete admin');
       }
     } catch {
-      toast.error('Network error while deleting client');
+      toast.error('Network error while deleting admin');
     } finally {
       setUpdating(null);
     }
@@ -468,31 +466,24 @@ export default function ClientsPage() {
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
               <Users className="w-5 h-5 text-red-500" />
-              Clients
+              Manage Admin
             </h1>
             <p className="text-sm text-gray-400 mt-0.5">
               {loading ? (
                 <span className="inline-block h-3 w-40 skeleton-breathe rounded-full bg-gray-200" />
               ) : (
-                `${clients.length} registered client${clients.length !== 1 ? 's' : ''}`
+                `${clients.length} registered admin${clients.length !== 1 ? 's' : ''}`
               )}
             </p>
           </div>
           <div className="ml-auto flex w-full items-center gap-2 sm:w-auto">
-            <Link
-              href="/dashboard/manage-admin"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 transition-colors hover:bg-red-100"
-            >
-              <UserCog className="h-4 w-4" />
-              Manage Admin
-            </Link>
             <div className="relative min-w-0 flex-1 sm:flex-none">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
               <input
                 type="text"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                placeholder="Search clients…"
+                placeholder="Search admins…"
                 className="w-full rounded-xl border border-gray-200 bg-white py-2 pl-9 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 sm:w-56"
               />
             </div>
@@ -534,7 +525,7 @@ export default function ClientsPage() {
           ) : clients.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-gray-400">
               <Users className="w-10 h-10 mb-3 opacity-30" />
-              <p className="text-sm">{debouncedSearch ? 'No clients match your search.' : 'No clients yet.'}</p>
+              <p className="text-sm">{debouncedSearch ? 'No admins match your search.' : 'No admins yet.'}</p>
             </div>
           ) : (
             <div>
@@ -650,13 +641,13 @@ export default function ClientsPage() {
 	                          <p className="text-[11px] text-gray-400 truncate">@{client.username}</p>
 	                        </div>
 	                        <div className="flex items-center gap-1 shrink-0">
-	                          <button onClick={() => setEditClient(client)} title="Edit client" className="rounded-lg p-1.5 text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-colors">
+	                          <button onClick={() => setEditClient(client)} title="Edit admin" className="rounded-lg p-1.5 text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-colors">
 	                            <Pencil className="w-3.5 h-3.5" />
 	                          </button>
 	                          <button
                               onClick={() => handleDeleteClient(client)}
                               disabled={busy}
-                              title="Delete client"
+                              title="Delete admin"
                               className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
 	                            <Trash2 className="w-3.5 h-3.5" />
@@ -733,7 +724,7 @@ export default function ClientsPage() {
               {totalPages > 1 && (
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-gray-100 px-4 py-3">
                   <p className="text-xs text-gray-400">
-                    Showing {(page - 1) * 20 + 1}–{Math.min(page * 20, total)} of {total} clients
+                    Showing {(page - 1) * 20 + 1}–{Math.min(page * 20, total)} of {total} admins
                   </p>
                   <div className="flex items-center gap-1">
                     <button
