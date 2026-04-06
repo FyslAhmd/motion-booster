@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback, type ComponentType } from "re
 import {
   BarChart2,
   MessageCircle,
+  Mail,
   TrendingUp,
   CalendarDays,
   Eye,
@@ -13,6 +14,9 @@ import {
   Loader2,
   ShieldCheck,
   Megaphone,
+  RotateCcw,
+  Wallet,
+  Users,
 } from "lucide-react";
 import AdminShell from "./AdminShell";
 import MetaOverviewSection from "./MetaOverviewSection";
@@ -270,15 +274,20 @@ function fmtUSD(n: number) {
 }
 
 export default function AdminDashboardView() {
-  const { user } = useAuth();
+  const { user, accessToken, refreshSession } = useAuth();
   const isAdmin = user?.role === "ADMIN";
   const userName = user?.fullName || user?.username || "User";
-  const [unseenMessages, setUnseenMessages] = useState<number | null>(null);
-  const [pendingBoostRequests, setPendingBoostRequests] = useState<number | null>(null);
-  const [totalSpendBDT, setTotalSpendBDT] = useState<number | null>(null);
-  const [totalAds, setTotalAds] = useState<number | null>(null);
-  const [dailySpendUSD, setDailySpendUSD] = useState<number | null>(null);
-  const [clientNetBalanceUSD, setClientNetBalanceUSD] = useState<number | null>(null);
+  const [unseenMessages, setUnseenMessages] = useState(0);
+  const [pendingBoostRequests, setPendingBoostRequests] = useState(0);
+  const [reactivationRequests, setReactivationRequests] = useState(0);
+  const [budgetIncreaseCount, setBudgetIncreaseCount] = useState(0);
+  const [mediaMessageCount, setMediaMessageCount] = useState(0);
+  const [totalClientsCount, setTotalClientsCount] = useState(0);
+  const [totalSpendBDT, setTotalSpendBDT] = useState(0);
+  const [totalAds, setTotalAds] = useState(0);
+  const [dailySpendUSD, setDailySpendUSD] = useState(0);
+  const [clientNetBalanceUSD, setClientNetBalanceUSD] = useState(0);
+  const [totalBudgetDepositsUSD, setTotalBudgetDepositsUSD] = useState(0);
   const [adminStatsLoading, setAdminStatsLoading] = useState(true);
   const [metaSummaryLoading, setMetaSummaryLoading] = useState(true);
   const [budgetSummaryLoading, setBudgetSummaryLoading] = useState(true);
@@ -288,6 +297,7 @@ export default function AdminDashboardView() {
   const [showSpendModal, setShowSpendModal] = useState(false);
   const [revealCountdown, setRevealCountdown] = useState(0);
   const revealTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const refreshInFlightRef = useRef<Promise<string | null> | null>(null);
 
   // Auto-hide spend after REVEAL_TIMEOUT_SEC seconds
   const startRevealTimer = useCallback(() => {
@@ -324,26 +334,89 @@ export default function AdminDashboardView() {
     setRevealCountdown(0);
   }, []);
 
+  const refreshSessionOnce = useCallback(async (): Promise<string | null> => {
+    if (!refreshInFlightRef.current) {
+      refreshInFlightRef.current = refreshSession().finally(() => {
+        refreshInFlightRef.current = null;
+      });
+    }
+
+    return refreshInFlightRef.current;
+  }, [refreshSession]);
+
+  const authFetch = useCallback(async (url: string, options: RequestInit = {}): Promise<Response> => {
+    const buildHeaders = (token: string | null) => {
+      const headers = new Headers(options.headers || {});
+      if (token) {
+        headers.set('Authorization', `Bearer ${token}`);
+      }
+      return headers;
+    };
+
+    let response = await fetch(url, {
+      ...options,
+      credentials: 'include',
+      headers: buildHeaders(accessToken),
+    });
+
+    if (response.status !== 401) {
+      return response;
+    }
+
+    const refreshedToken = await refreshSessionOnce();
+    if (!refreshedToken) {
+      return response;
+    }
+
+    response = await fetch(url, {
+      ...options,
+      credentials: 'include',
+      headers: buildHeaders(refreshedToken),
+    });
+
+    return response;
+  }, [accessToken, refreshSessionOnce]);
+
   useEffect(() => {
     if (isAdmin) {
       setAdminStatsLoading(true);
-      fetch("/api/v1/admin/stats", {
-        cache: "no-store",
-        credentials: "include",
+      authFetch("/api/v1/admin/stats", {
+        method: 'GET',
+        cache: 'no-store',
       })
         .then((r) => r.json())
         .then((d) => {
           if (d.success) {
             setUnseenMessages(d.data.unseenMessages ?? 0);
             setPendingBoostRequests(d.data.pendingBoostRequests ?? 0);
+            setReactivationRequests(d.data.reactivationRequests ?? 0);
+            setBudgetIncreaseCount(d.data.budgetIncreaseCount ?? 0);
+            setMediaMessageCount(d.data.mediaMessageCount ?? 0);
+            setTotalClientsCount(d.data.totalClients ?? 0);
+            setTotalAds(d.data.activeAds ?? 0);
+            setTotalBudgetDepositsUSD(Number(d.data.totalBudgetDeposits ?? 0));
           }
         })
-        .catch(() => {})
+        .catch(() => {
+          setUnseenMessages(0);
+          setPendingBoostRequests(0);
+          setReactivationRequests(0);
+          setBudgetIncreaseCount(0);
+          setMediaMessageCount(0);
+          setTotalClientsCount(0);
+          setTotalAds(0);
+          setTotalBudgetDepositsUSD(0);
+        })
         .finally(() => setAdminStatsLoading(false));
       return;
     }
 
     setUnseenMessages(0);
+    setReactivationRequests(0);
+    setBudgetIncreaseCount(0);
+    setMediaMessageCount(0);
+    setTotalClientsCount(0);
+    setTotalBudgetDepositsUSD(0);
     setAdminStatsLoading(true);
 
     fetch('/api/v1/boost-requests?page=1&limit=1', {
@@ -359,7 +432,7 @@ export default function AdminDashboardView() {
         setPendingBoostRequests(0);
       })
       .finally(() => setAdminStatsLoading(false));
-  }, [isAdmin]);
+  }, [authFetch, isAdmin]);
 
   useEffect(() => {
     if (!isAdmin) {
@@ -381,7 +454,10 @@ export default function AdminDashboardView() {
   useEffect(() => {
     if (isAdmin || !user?.id) return;
 
-    fetch(`/api/v1/admin/meta-assignments/users/${encodeURIComponent(user.id)}`)
+    authFetch(`/api/v1/admin/meta-assignments/users/${encodeURIComponent(user.id)}`, {
+      method: 'GET',
+      cache: 'no-store',
+    })
       .then((r) => r.json())
       .then((d) => {
         if (!d?.success) return;
@@ -391,7 +467,7 @@ export default function AdminDashboardView() {
       .catch(() => {
         setTotalAds(0);
       });
-  }, [isAdmin, user?.id]);
+  }, [authFetch, isAdmin, user?.id]);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -399,13 +475,18 @@ export default function AdminDashboardView() {
     let mounted = true;
     setBudgetSummaryLoading(true);
 
-    fetch('/api/v1/admin/user-budgets', {
+    authFetch('/api/v1/admin/user-budgets', {
       method: 'GET',
-      credentials: 'include',
+      cache: 'no-store',
     })
       .then((r) => r.json())
       .then((d) => {
-        if (!mounted || !d?.success || !Array.isArray(d.data)) return;
+        if (!mounted) return;
+
+        if (!d?.success || !Array.isArray(d.data)) {
+          setClientNetBalanceUSD(isAdmin ? Number(totalBudgetDepositsUSD || 0) : 0);
+          return;
+        }
 
         const targetRow = isAdmin
           ? null
@@ -427,7 +508,10 @@ export default function AdminDashboardView() {
 
         setClientNetBalanceUSD(targetRow ? Number(targetRow.balance || 0) : 0);
       })
-      .catch(() => {})
+      .catch(() => {
+        if (!mounted) return;
+        setClientNetBalanceUSD(isAdmin ? Number(totalBudgetDepositsUSD || 0) : 0);
+      })
       .finally(() => {
         if (mounted) setBudgetSummaryLoading(false);
       });
@@ -435,7 +519,7 @@ export default function AdminDashboardView() {
     return () => {
       mounted = false;
     };
-  }, [isAdmin, user?.id]);
+  }, [authFetch, isAdmin, totalBudgetDepositsUSD, user?.id]);
 
   useEffect(() => {
     if (isAdmin) {
@@ -465,47 +549,32 @@ export default function AdminDashboardView() {
             .filter((id: string | null): id is string => Boolean(id));
 
           if (accountIds.length === 0) {
-            setTotalAds(0);
             setDailySpendUSD(0);
             return;
           }
 
-          const [allActiveCountsRes, perAccountSummaries] = await Promise.all([
-            fetch('/api/v1/meta/active-counts', { cache: 'no-store' })
-              .then((r) => r.json())
-              .catch(() => null),
-            Promise.allSettled(
-              accountIds.map(async (accountId: string) => {
-                const insightsRes = await fetch(
-                  `/api/v1/meta/insights?type=account&date_preset=today&account_id=${encodeURIComponent(accountId)}`,
-                  { cache: "no-store" },
-                ).then((r) => r.json());
+          const perAccountSummaries = await Promise.allSettled(
+            accountIds.map(async (accountId: string) => {
+              const insightsRes = await fetch(
+                `/api/v1/meta/insights?type=account&date_preset=today&account_id=${encodeURIComponent(accountId)}`,
+                { cache: "no-store" },
+              ).then((r) => r.json());
 
-                let todaySpendUsd = 0;
-                if (insightsRes?.success && Array.isArray(insightsRes.data)) {
-                  todaySpendUsd = (insightsRes.data as InsightSpendRow[]).reduce((sum: number, row) => {
-                    const spend = Number.parseFloat(String(row?.spend ?? "0"));
-                    return sum + (Number.isFinite(spend) ? spend : 0);
-                  }, 0);
-                }
+              let todaySpendUsd = 0;
+              if (insightsRes?.success && Array.isArray(insightsRes.data)) {
+                todaySpendUsd = (insightsRes.data as InsightSpendRow[]).reduce((sum: number, row) => {
+                  const spend = Number.parseFloat(String(row?.spend ?? "0"));
+                  return sum + (Number.isFinite(spend) ? spend : 0);
+                }, 0);
+              }
 
-                return { todaySpendUsd };
-              }),
-            ),
-          ]);
+              return { todaySpendUsd };
+            }),
+          );
 
           if (!mounted) return;
 
-          let adsTotal: number | null = null;
           let dailySpendUsdTotal = 0;
-
-          if (
-            allActiveCountsRes?.success &&
-            typeof allActiveCountsRes?.data?.campaigns === 'number' &&
-            Number.isFinite(allActiveCountsRes.data.campaigns)
-          ) {
-            adsTotal = allActiveCountsRes.data.campaigns;
-          }
 
           for (const item of perAccountSummaries) {
             if (item.status !== "fulfilled") continue;
@@ -513,10 +582,9 @@ export default function AdminDashboardView() {
             if (Number.isFinite(todaySpendUsd)) dailySpendUsdTotal += todaySpendUsd;
           }
 
-          setTotalAds(adsTotal);
           setDailySpendUSD(dailySpendUsdTotal);
         } catch {
-          // Keep null values when API is unavailable; overview cards will show dashes.
+          setDailySpendUSD(0);
         } finally {
           if (mounted) setMetaSummaryLoading(false);
         }
@@ -540,9 +608,12 @@ export default function AdminDashboardView() {
 
     const loadUserSpend = async () => {
       try {
-        const assignedRes = await fetch(
+        const assignedRes = await authFetch(
           `/api/v1/admin/meta-assignments/users/${encodeURIComponent(user.id)}`,
-          { cache: "no-store" },
+          {
+            method: 'GET',
+            cache: "no-store",
+          },
         );
         const assignedData = await assignedRes.json();
 
@@ -607,30 +678,24 @@ export default function AdminDashboardView() {
     return () => {
       mounted = false;
     };
-  }, [isAdmin, user?.id]);
+  }, [authFetch, isAdmin, user?.id]);
 
   const advanceUSD =
-    clientNetBalanceUSD != null && Number.isFinite(clientNetBalanceUSD) && clientNetBalanceUSD > 0
+    Number.isFinite(clientNetBalanceUSD) && clientNetBalanceUSD > 0
       ? clientNetBalanceUSD
       : 0;
   const dueUSD =
-    clientNetBalanceUSD != null && Number.isFinite(clientNetBalanceUSD) && clientNetBalanceUSD < 0
+    Number.isFinite(clientNetBalanceUSD) && clientNetBalanceUSD < 0
       ? Math.abs(clientNetBalanceUSD)
       : 0;
 
-  const advanceValue =
-    clientNetBalanceUSD == null
-      ? "—"
-      : fmtBDT(advanceUSD * BDT_RATE);
-  const dueValue =
-    clientNetBalanceUSD == null
-      ? "—"
-      : fmtBDT(dueUSD * BDT_RATE);
+  const advanceValue = fmtBDT(advanceUSD * BDT_RATE);
+  const dueValue = fmtBDT(dueUSD * BDT_RATE);
 
   const statCards: StatCard[] = [
     {
       label: "Active Ads",
-      value: totalAds ?? "—",
+      value: totalAds,
       icon: Megaphone,
       color: "text-red-600",
       bg: "bg-red-50",
@@ -638,7 +703,7 @@ export default function AdminDashboardView() {
     },
     {
       label: "Daily Spend",
-      value: dailySpendUSD != null ? fmtUSD(dailySpendUSD) : "—",
+      value: fmtUSD(dailySpendUSD),
       icon: TrendingUp,
       color: "text-green-600",
       bg: "bg-green-50",
@@ -659,7 +724,7 @@ export default function AdminDashboardView() {
     },
     {
       label: "Unseen Messages",
-      value: unseenMessages ?? "—",
+      value: unseenMessages,
       icon: MessageCircle,
       color: unseenMessages ? "text-orange-600" : "text-gray-400",
       bg: unseenMessages ? "bg-orange-50" : "bg-gray-50",
@@ -667,11 +732,43 @@ export default function AdminDashboardView() {
     },
     {
       label: "Schedule",
-      value: pendingBoostRequests ?? "—",
+      value: pendingBoostRequests,
       icon: CalendarDays,
       color: "text-violet-600",
       bg: "bg-violet-50",
       href: "/dashboard/boost-requests",
+    },
+    {
+      label: "Reactivation Requests",
+      value: reactivationRequests,
+      icon: RotateCcw,
+      color: (reactivationRequests ?? 0) > 0 ? "text-sky-600" : "text-gray-400",
+      bg: (reactivationRequests ?? 0) > 0 ? "bg-sky-50" : "bg-gray-50",
+      href: "/dashboard/meta-status-requests",
+    },
+    {
+      label: "Budget Increases",
+      value: budgetIncreaseCount,
+      icon: Wallet,
+      color: "text-emerald-600",
+      bg: "bg-emerald-50",
+      href: "/dashboard/user-budget",
+    },
+    {
+      label: "Media Messages",
+      value: mediaMessageCount,
+      icon: Mail,
+      color: (mediaMessageCount ?? 0) > 0 ? "text-orange-600" : "text-gray-400",
+      bg: (mediaMessageCount ?? 0) > 0 ? "bg-orange-50" : "bg-gray-50",
+      href: "/dashboard/media-message",
+    },
+    {
+      label: "Total Clients",
+      value: totalClientsCount,
+      icon: Users,
+      color: "text-indigo-600",
+      bg: "bg-indigo-50",
+      href: "/dashboard/clients",
     },
   ];
 
@@ -708,7 +805,7 @@ export default function AdminDashboardView() {
                   </p>
                 </div>
                 <div className="flex w-full items-center gap-2 text-sm text-gray-400 sm:w-auto">
-                  {totalSpendBDT !== null ? (
+                  {Number.isFinite(totalSpendBDT) ? (
                     <div className="flex w-full max-w-65 items-center gap-3 rounded-2xl bg-red-600 px-4 py-3 sm:w-auto sm:max-w-none sm:min-w-62.5 text-white shadow-lg shadow-red-500/25">
                       <TrendingUp className="h-4.5 w-4.5 shrink-0" />
                       <div className="min-w-0 flex-1">
@@ -773,7 +870,7 @@ export default function AdminDashboardView() {
             <DashboardQuickStatsSkeleton />
           ) : (
             /* Quick Stats */
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
               {statCards.map((card) => {
                 const Icon = card.icon;
                 const hasNewBadge = card.label === "Unseen Messages" && (unseenMessages ?? 0) > 0;

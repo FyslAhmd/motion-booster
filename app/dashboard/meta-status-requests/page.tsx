@@ -6,7 +6,7 @@ import { AdminSectionSkeleton } from '@/components/ui/AdminSectionSkeleton';
 import { useConfirm } from '@/lib/admin/confirm';
 import { useAuth } from '@/lib/auth/context';
 import { toast } from 'sonner';
-import { CheckCircle2, Search, XCircle, Filter } from 'lucide-react';
+import { CheckCircle2, Search, XCircle, Filter, ChevronDown } from 'lucide-react';
 
 type RequestState = 'PENDING' | 'APPROVED' | 'REJECTED';
 type RequestedStatus = 'ACTIVE' | 'PAUSED';
@@ -65,7 +65,6 @@ export default function MetaStatusRequestsPage() {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [stateFilter, setStateFilter] = useState<'ALL' | RequestState>('PENDING');
-  const [requestedStatusFilter, setRequestedStatusFilter] = useState<'ALL' | RequestedStatus>('ALL');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
@@ -114,7 +113,6 @@ export default function MetaStatusRequestsPage() {
         page: String(page),
         limit: '15',
         state: stateFilter,
-        requestedStatus: requestedStatusFilter,
       });
       if (debouncedSearch) params.set('search', debouncedSearch);
 
@@ -138,7 +136,7 @@ export default function MetaStatusRequestsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, stateFilter, requestedStatusFilter, debouncedSearch, authFetch]);
+  }, [page, stateFilter, debouncedSearch, authFetch]);
 
   useEffect(() => {
     loadData();
@@ -200,7 +198,7 @@ export default function MetaStatusRequestsPage() {
             Review user requests to activate campaign items. Pending requests require admin approval.
           </p>
 
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-4 grid grid-cols-2 gap-3">
             <div className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5">
               <p className="text-[11px] uppercase tracking-wide text-gray-500">Total</p>
               <p className="mt-1 text-lg font-bold text-gray-800">{total}</p>
@@ -213,26 +211,27 @@ export default function MetaStatusRequestsPage() {
         </div>
 
         <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5">
-          <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_160px_180px]">
+          <div className="grid grid-cols-[minmax(0,1fr)_148px] gap-2.5 sm:grid-cols-[minmax(0,1fr)_190px]">
             <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search by requester, campaign name, or object ID"
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-9 pr-3 text-sm text-gray-800 outline-none ring-red-200 transition focus:border-red-400 focus:ring-2"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2 pl-8.5 pr-2.5 text-sm text-gray-800 outline-none ring-red-200 transition focus:border-red-400 focus:ring-2"
               />
             </div>
 
             <div className="relative">
               <Filter className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
               <select
                 value={stateFilter}
                 onChange={(e) => {
                   setStateFilter(e.target.value as 'ALL' | RequestState);
                   setPage(1);
                 }}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-9 pr-3 text-sm text-gray-800 outline-none ring-red-200 transition focus:border-red-400 focus:ring-2"
+                className="w-full appearance-none rounded-xl border border-gray-200 bg-gray-50 py-2 pl-9 pr-10 text-sm text-gray-800 outline-none ring-red-200 transition focus:border-red-400 focus:ring-2"
               >
                 <option value="ALL">All states</option>
                 <option value="PENDING">Pending</option>
@@ -241,23 +240,9 @@ export default function MetaStatusRequestsPage() {
               </select>
             </div>
 
-            <div>
-              <select
-                value={requestedStatusFilter}
-                onChange={(e) => {
-                  setRequestedStatusFilter(e.target.value as 'ALL' | RequestedStatus);
-                  setPage(1);
-                }}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-800 outline-none ring-red-200 transition focus:border-red-400 focus:ring-2"
-              >
-                <option value="ALL">All requested status</option>
-                <option value="ACTIVE">Activate requests</option>
-                <option value="PAUSED">Pause requests</option>
-              </select>
-            </div>
           </div>
 
-          <div className="mt-4 overflow-x-auto">
+          <div className="mt-4">
             {loading ? (
               <AdminSectionSkeleton variant="inline" />
             ) : rows.length === 0 ? (
@@ -265,85 +250,78 @@ export default function MetaStatusRequestsPage() {
                 No status requests found for current filters.
               </div>
             ) : (
-              <table className="min-w-full divide-y divide-gray-100">
-                <thead>
-                  <tr className="text-left text-xs uppercase tracking-wide text-gray-500">
-                    <th className="px-3 py-2">Requester</th>
-                    <th className="px-3 py-2">Object</th>
-                    <th className="px-3 py-2">Request</th>
-                    <th className="px-3 py-2">State</th>
-                    <th className="px-3 py-2">Submitted</th>
-                    <th className="px-3 py-2">Reviewed</th>
-                    <th className="px-3 py-2 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 text-sm">
-                  {rows.map((row) => (
-                    <tr key={row.id} className="align-top">
-                      <td className="px-3 py-3">
-                        <p className="font-semibold text-gray-900">{row.requesterUser.fullName || row.requesterUser.username}</p>
-                        <p className="text-xs text-gray-500">{row.requesterUser.email}</p>
-                      </td>
-                      <td className="px-3 py-3">
-                        <p className="font-medium text-gray-900">{row.metaObjectName}</p>
-                        <p className="text-xs text-gray-500">{row.metaObjectType} • {row.metaObjectId}</p>
-                      </td>
-                      <td className="px-3 py-3">
-                        <span className="inline-flex rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700">
-                          {row.requestedStatus}
-                        </span>
-                        {row.currentStatus ? (
-                          <p className="mt-1 text-xs text-gray-500">Current: {row.currentStatus}</p>
-                        ) : null}
-                      </td>
-                      <td className="px-3 py-3">
-                        <span
-                          className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${
-                            row.state === 'PENDING'
-                              ? 'bg-yellow-50 text-yellow-700'
-                              : row.state === 'APPROVED'
-                                ? 'bg-green-50 text-green-700'
-                                : 'bg-red-50 text-red-700'
-                          }`}
-                        >
-                          {row.state}
-                        </span>
-                      </td>
-                      <td className="px-3 py-3 text-xs text-gray-600">{formatDateTime(row.createdAt)}</td>
-                      <td className="px-3 py-3 text-xs text-gray-600">
-                        {formatDateTime(row.reviewedAt)}
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                {rows.map((row) => (
+                  <article key={row.id} className="rounded-2xl border border-gray-200 bg-white p-3.5 shadow-sm">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="truncate font-semibold text-gray-900">{row.requesterUser.fullName || row.requesterUser.username}</p>
+                        <p className="truncate text-xs text-gray-500">{row.requesterUser.email}</p>
+                      </div>
+                      <span
+                        className={`inline-flex shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${
+                          row.state === 'PENDING'
+                            ? 'bg-yellow-50 text-yellow-700'
+                            : row.state === 'APPROVED'
+                              ? 'bg-green-50 text-green-700'
+                              : 'bg-red-50 text-red-700'
+                        }`}
+                      >
+                        {row.state}
+                      </span>
+                    </div>
+
+                    <div className="mt-3 rounded-xl border border-gray-200 bg-gray-50 p-3">
+                      <p className="line-clamp-2 text-sm font-medium text-gray-900">{row.metaObjectName}</p>
+                      <p className="mt-1 truncate text-xs text-gray-500">{row.metaObjectType} • {row.metaObjectId}</p>
+                    </div>
+
+                    {row.reason ? (
+                      <p className="mt-2 line-clamp-2 text-xs text-gray-600">Reason: {row.reason}</p>
+                    ) : null}
+
+                    <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                      <div className="rounded-lg border border-gray-200 bg-white p-2">
+                        <p className="text-[11px] uppercase tracking-wide text-gray-500">Submitted</p>
+                        <p className="mt-1 text-xs text-gray-700">{formatDateTime(row.createdAt)}</p>
+                      </div>
+
+                      <div className="rounded-lg border border-gray-200 bg-white p-2">
+                        <p className="text-[11px] uppercase tracking-wide text-gray-500">Reviewed</p>
+                        <p className="mt-1 text-xs text-gray-700">{formatDateTime(row.reviewedAt)}</p>
                         {row.reviewedByAdmin ? (
-                          <p className="mt-1 text-[11px] text-gray-500">by {row.reviewedByAdmin.fullName || row.reviewedByAdmin.username}</p>
+                          <p className="mt-1 truncate text-[11px] text-gray-500">by {row.reviewedByAdmin.fullName || row.reviewedByAdmin.username}</p>
                         ) : null}
-                      </td>
-                      <td className="px-3 py-3">
-                        {row.state === 'PENDING' ? (
-                          <div className="flex items-center justify-end gap-2">
-                            <button
-                              onClick={() => updateDecision(row.id, 'APPROVE')}
-                              disabled={updatingId === row.id}
-                              className="inline-flex items-center gap-1 rounded-lg border border-green-200 bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700 hover:bg-green-100 disabled:opacity-50"
-                            >
-                              <CheckCircle2 className="h-3.5 w-3.5" />
-                              Approve
-                            </button>
-                            <button
-                              onClick={() => updateDecision(row.id, 'REJECT')}
-                              disabled={updatingId === row.id}
-                              className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:opacity-50"
-                            >
-                              <XCircle className="h-3.5 w-3.5" />
-                              Reject
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="text-right text-xs text-gray-400">Reviewed</div>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </div>
+                    </div>
+
+                    <div className="mt-3">
+                      {row.state === 'PENDING' ? (
+                        <div className="flex flex-wrap items-center justify-end gap-2">
+                          <button
+                            onClick={() => updateDecision(row.id, 'APPROVE')}
+                            disabled={updatingId === row.id}
+                            className="inline-flex items-center gap-1 rounded-lg border border-green-200 bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700 hover:bg-green-100 disabled:opacity-50"
+                          >
+                            <CheckCircle2 className="h-3.5 w-3.5" />
+                            Approve
+                          </button>
+                          <button
+                            onClick={() => updateDecision(row.id, 'REJECT')}
+                            disabled={updatingId === row.id}
+                            className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:opacity-50"
+                          >
+                            <XCircle className="h-3.5 w-3.5" />
+                            Reject
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="text-right text-xs text-gray-400">Reviewed</div>
+                      )}
+                    </div>
+                  </article>
+                ))}
+              </div>
             )}
           </div>
 

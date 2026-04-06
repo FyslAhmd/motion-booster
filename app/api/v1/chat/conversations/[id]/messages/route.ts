@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { validateRequest } from '@/lib/auth/validate-request';
 import { createNotification } from '@/lib/server/notifications';
+import { sendAdminChatAlertEmail } from '@/lib/server/mailer';
 
 function getChatNotificationCopy(input: {
   senderName: string;
@@ -29,6 +30,9 @@ function getChatNotificationCopy(input: {
     text: `${input.senderName} sent ${labelByType[input.messageType]}.`,
   };
 }
+
+const CHAT_MESSAGE_TYPES = new Set(['TEXT', 'IMAGE', 'VIDEO', 'FILE', 'VOICE'] as const);
+type ChatMessageType = 'TEXT' | 'IMAGE' | 'VIDEO' | 'FILE' | 'VOICE';
 
 // ─── GET /api/v1/chat/conversations/[id]/messages ───
 // Returns messages for a specific conversation with pagination.
@@ -166,14 +170,23 @@ export async function POST(
       duration,
     } = body;
 
+    const normalizedMessageType = String(messageType || 'TEXT').toUpperCase();
+    if (!CHAT_MESSAGE_TYPES.has(normalizedMessageType as ChatMessageType)) {
+      return NextResponse.json(
+        { error: 'Invalid message type' },
+        { status: 400 }
+      );
+    }
+    const safeMessageType = normalizedMessageType as ChatMessageType;
+
     // For TEXT messages, content is required. For file/voice, content is optional.
-    if (messageType === 'TEXT' && !content?.trim()) {
+    if (safeMessageType === 'TEXT' && !content?.trim()) {
       return NextResponse.json(
         { error: 'Message content is required' },
         { status: 400 }
       );
     }
-    if (messageType !== 'TEXT' && !fileUrl) {
+    if (safeMessageType !== 'TEXT' && !fileUrl) {
       return NextResponse.json(
         { error: 'fileUrl is required for non-text messages' },
         { status: 400 }
@@ -238,7 +251,7 @@ export async function POST(
     if (recipientIds.length > 0) {
       const copy = getChatNotificationCopy({
         senderName: message.sender.fullName,
-        messageType,
+        messageType: safeMessageType,
         content,
       });
 
@@ -259,11 +272,29 @@ export async function POST(
               senderName: message.sender.fullName,
               conversationId,
               messageId: message.id,
-              messageType,
+              messageType: safeMessageType,
             },
           }),
         ),
       );
+    }
+
+    if (user.role !== 'ADMIN') {
+      try {
+        await sendAdminChatAlertEmail({
+          to: 'mdmehrab254.mk@gmail.com',
+          senderName: message.sender.fullName,
+          senderEmail: user.email,
+          senderRole: user.role,
+          messageType: safeMessageType,
+          content: content?.trim() || '',
+          conversationId,
+          messageId: message.id,
+          createdAt: message.createdAt,
+        });
+      } catch (emailError) {
+        console.error('[chat admin email alert]', emailError);
+      }
     }
 
     return NextResponse.json({ message }, { status: 201 });

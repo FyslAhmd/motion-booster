@@ -8,6 +8,7 @@ import { jwtVerify } from 'jose';
 import { PrismaClient } from './lib/generated/prisma/index.js';
 import { notificationBus, type LiveNotificationEvent } from './lib/server/notification-bus.js';
 import { chatBus, type LiveChatMessageEvent } from './lib/server/chat-bus.js';
+import { sendAdminChatAlertEmail } from './lib/server/mailer.js';
 import 'dotenv/config';
 
 const dev = process.env.NODE_ENV !== 'production';
@@ -44,6 +45,9 @@ async function verifyToken(token: string) {
 
 // ─── Track online users: userId -> Set<socketId> ──────
 const onlineUsers = new Map<string, Set<string>>();
+const CHAT_ADMIN_ALERT_EMAIL = process.env.CHAT_ALERT_ADMIN_EMAIL || 'mdmehrab254.mk@gmail.com';
+const CHAT_MESSAGE_TYPES = new Set(['TEXT', 'IMAGE', 'VIDEO', 'FILE', 'VOICE'] as const);
+type ChatMessageType = 'TEXT' | 'IMAGE' | 'VIDEO' | 'FILE' | 'VOICE';
 
 // ─── MIME types for static file serving ───────────────
 const MIME_TYPES: Record<string, string> = {
@@ -166,7 +170,7 @@ app.prepare().then(() => {
       const payload = await verifyToken(token);
       const user = await prisma.user.findUnique({
         where: { id: payload.userId },
-        select: { id: true, username: true, fullName: true, role: true, status: true },
+        select: { id: true, username: true, fullName: true, email: true, role: true, status: true },
       });
 
       if (!user || user.status !== 'ACTIVE') {
@@ -202,13 +206,19 @@ app.prepare().then(() => {
         const {
           conversationId,
           content,
-          messageType = 'TEXT',
+          messageType: rawMessageType = 'TEXT',
           fileUrl,
           fileName,
           fileSize,
           mimeType,
           duration,
         } = data;
+
+        const normalizedMessageType = String(rawMessageType || 'TEXT').toUpperCase();
+        if (!CHAT_MESSAGE_TYPES.has(normalizedMessageType as ChatMessageType)) {
+          return callback?.({ error: 'Invalid messageType' });
+        }
+        const messageType = normalizedMessageType as ChatMessageType;
 
         // For TEXT messages, content is required. For file/voice, content is optional (caption).
         if (!conversationId) {
@@ -313,6 +323,24 @@ app.prepare().then(() => {
               });
             }),
           );
+        }
+
+        if (user.role === 'USER') {
+          try {
+            await sendAdminChatAlertEmail({
+              to: CHAT_ADMIN_ALERT_EMAIL,
+              senderName: user.fullName,
+              senderEmail: user.email,
+              senderRole: user.role,
+              messageType,
+              content: content?.trim() || '',
+              conversationId,
+              messageId: message.id,
+              createdAt: message.createdAt,
+            });
+          } catch (emailError) {
+            console.error('[chat admin email alert]', emailError);
+          }
         }
 
         callback?.({ success: true, message });

@@ -210,32 +210,51 @@ export async function PATCH(req: NextRequest) {
       ? `${objectLabel} activation approved`
       : `${objectLabel} activation rejected`;
 
-    const text = nextState === 'APPROVED'
+    const baseText = nextState === 'APPROVED'
       ? `Your request to activate ${objectLabel.toLowerCase()} ${existing.metaObjectName} was approved.`
       : `Your request to activate ${objectLabel.toLowerCase()} ${existing.metaObjectName} was rejected.`;
 
-    await createNotification({
-      userId: existing.requesterUserId,
-      type: 'GENERAL',
-      title,
-      text,
-      href: '/dashboard/my-campaigns',
-      logPath: req.nextUrl.pathname,
-      logMethod: req.method,
-      logIpAddress: getClientIp(req),
-      logUserAgent: req.headers.get('user-agent'),
-      metadata: {
+    const text = nextState === 'REJECTED' && reason
+      ? `${baseText} Reason: ${reason}`
+      : baseText;
+
+    const requesterUserId =
+      typeof updated?.requesterUser?.id === 'string' && updated.requesterUser.id
+        ? updated.requesterUser.id
+        : typeof existing?.requesterUserId === 'string'
+          ? existing.requesterUserId
+          : null;
+
+    if (!requesterUserId) {
+      console.error('[admin/meta-status-requests PATCH] missing requester user id for notification', {
         requestId: existing.id,
-        decision: nextState,
-        reviewedByAdminId: auth.id,
-        reviewedByAdminUsername: auth.username,
-        reviewedByAdminEmail: auth.email,
         metaObjectId: existing.metaObjectId,
-        metaObjectType: existing.metaObjectType,
-        metaObjectName: existing.metaObjectName,
-        reason: reason || null,
-      },
-    });
+        nextState,
+      });
+    } else {
+      await createNotification({
+        userId: requesterUserId,
+        type: 'GENERAL',
+        title,
+        text,
+        href: '/dashboard/my-campaigns',
+        logPath: req.nextUrl.pathname,
+        logMethod: req.method,
+        logIpAddress: getClientIp(req),
+        logUserAgent: req.headers.get('user-agent'),
+        metadata: {
+          requestId: existing.id,
+          decision: nextState,
+          reviewedByAdminId: auth.id,
+          reviewedByAdminUsername: auth.username,
+          reviewedByAdminEmail: auth.email,
+          metaObjectId: existing.metaObjectId,
+          metaObjectType: existing.metaObjectType,
+          metaObjectName: existing.metaObjectName,
+          reason: reason || null,
+        },
+      });
+    }
 
     return NextResponse.json({ success: true, data: updated });
   } catch (error) {

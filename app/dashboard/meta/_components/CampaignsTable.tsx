@@ -701,6 +701,7 @@ export default function CampaignsTable({
         newStatus === 'PAUSED'
           ? 'Are you sure you want to pause this campaign?'
           : 'Are you sure you want to activate this campaign?',
+      confirmLabel: 'Yes',
     });
     if (!ok) return;
 
@@ -759,6 +760,7 @@ export default function CampaignsTable({
         newStatus === 'PAUSED'
           ? 'Are you sure you want to pause this item?'
           : 'Are you sure you want to activate this item?',
+      confirmLabel: 'Yes',
     });
     if (!ok) return;
 

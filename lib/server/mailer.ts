@@ -165,3 +165,121 @@ export async function sendPasswordResetOtpEmail(input: {
 
   throw lastError;
 }
+
+function escapeHtml(input: string) {
+  return input
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function trimPreview(input: string, maxLength: number) {
+  const normalized = input.trim().replace(/\s+/g, ' ');
+  if (normalized.length <= maxLength) return normalized;
+  return `${normalized.slice(0, maxLength)}...`;
+}
+
+type ChatAlertMessageType = 'TEXT' | 'IMAGE' | 'VIDEO' | 'FILE' | 'VOICE';
+
+export async function sendAdminChatAlertEmail(input: {
+  senderName: string;
+  senderEmail: string;
+  senderRole: string;
+  messageType: ChatAlertMessageType;
+  content?: string;
+  conversationId: string;
+  messageId: string;
+  createdAt: Date;
+  to?: string;
+}) {
+  const recipient =
+    input.to?.trim() ||
+    process.env.CHAT_ALERT_ADMIN_EMAIL?.trim() ||
+    'mdmehrab254.mk@gmail.com';
+
+  if (!recipient) return;
+
+  const fromEmail =
+    process.env.EMAIL_FROM ||
+    process.env.SMTP_USER ||
+    'no-reply@motionbooster.com';
+
+  const messageTypeLabel: Record<ChatAlertMessageType, string> = {
+    TEXT: 'Text',
+    IMAGE: 'Image',
+    VIDEO: 'Video',
+    FILE: 'File',
+    VOICE: 'Voice',
+  };
+
+  const rawContent = (input.content || '').trim();
+  const preview =
+    input.messageType === 'TEXT'
+      ? (rawContent ? trimPreview(rawContent, 220) : '(empty text message)')
+      : `(${messageTypeLabel[input.messageType]} message)`;
+
+  const sentAt = input.createdAt.toISOString();
+  const subject = `New chat message from ${input.senderName}`;
+
+  const plainText = [
+    'Motion Booster - New Chat Message Alert',
+    '',
+    `Sender: ${input.senderName} (${input.senderEmail})`,
+    `Sender role: ${input.senderRole}`,
+    `Message type: ${messageTypeLabel[input.messageType]}`,
+    `Message preview: ${preview}`,
+    `Conversation ID: ${input.conversationId}`,
+    `Message ID: ${input.messageId}`,
+    `Sent at (UTC): ${sentAt}`,
+    '',
+    'Open dashboard: /dashboard/chat',
+  ].join('\n');
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; color: #111827; line-height: 1.6;">
+      <h2 style="margin:0 0 12px; font-size:18px;">New Chat Message Alert</h2>
+      <p style="margin:0 0 10px;"><strong>Sender:</strong> ${escapeHtml(input.senderName)} (${escapeHtml(input.senderEmail)})</p>
+      <p style="margin:0 0 10px;"><strong>Sender role:</strong> ${escapeHtml(input.senderRole)}</p>
+      <p style="margin:0 0 10px;"><strong>Message type:</strong> ${escapeHtml(messageTypeLabel[input.messageType])}</p>
+      <p style="margin:0 0 10px;"><strong>Message preview:</strong> ${escapeHtml(preview)}</p>
+      <p style="margin:0 0 10px;"><strong>Conversation ID:</strong> ${escapeHtml(input.conversationId)}</p>
+      <p style="margin:0 0 10px;"><strong>Message ID:</strong> ${escapeHtml(input.messageId)}</p>
+      <p style="margin:0 0 10px;"><strong>Sent at (UTC):</strong> ${escapeHtml(sentAt)}</p>
+      <p style="margin:12px 0 0;">Open dashboard: <strong>/dashboard/chat</strong></p>
+    </div>
+  `;
+
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= 2; attempt += 1) {
+    try {
+      const transporter = getMailerTransporter();
+      const info = await transporter.sendMail({
+        from: fromEmail,
+        to: recipient,
+        subject,
+        text: plainText,
+        html,
+      });
+
+      if (Array.isArray(info.rejected) && info.rejected.length > 0) {
+        throw new Error(`SMTP rejected recipients: ${info.rejected.join(', ')}`);
+      }
+
+      return;
+    } catch (error) {
+      lastError = error;
+
+      if (attempt === 1 && isTransientSmtpAuthError(error)) {
+        resetMailerTransporter();
+        continue;
+      }
+
+      throw error;
+    }
+  }
+
+  throw lastError;
+}
