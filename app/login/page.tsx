@@ -188,7 +188,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-[calc(100dvh-8.625rem)] lg:min-h-[calc(100dvh-7.75rem)] bg-linear-to-br from-red-50 to-white flex items-center justify-center px-4 py-6 md:py-10">
+    <div className="min-h-[calc(100dvh-8.625rem)] lg:min-h-[calc(100dvh-7.75rem)] bg-linear-to-br from-red-50 to-white flex items-center justify-center px-4 py-6 md:py-10" suppressHydrationWarning>
       <div className="w-full max-w-md lg:mt-0">
         <div className="bg-white rounded-3xl shadow-md p-8 md:p-10">
           {/* Header */}
@@ -242,7 +242,7 @@ export default function LoginPage() {
                     width={20}
                     height={14}
                     className="rounded-sm object-cover"
-                    style={{ height: 'auto' }}
+                    style={{ width: 20, height: 14 }}
                     unoptimized
                   />
                   <span className="text-sm text-gray-700 font-medium">
@@ -293,6 +293,7 @@ export default function LoginPage() {
                               width={22}
                               height={15}
                               className="rounded-sm object-cover shrink-0"
+                              style={{ width: 22, height: 15 }}
                               unoptimized
                             />
                             <span className="truncate flex-1 text-left">{country.name}</span>

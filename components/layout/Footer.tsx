@@ -11,7 +11,7 @@ export const Footer = () => {
   const { t } = useLanguage();
 
   return (
-    <footer className="page-reveal">
+    <footer className="page-reveal" suppressHydrationWarning>
       {/* Main Footer */}
       <div style={{ background: '#000000' }}>
         <div className="max-w-7xl mx-auto px-6 lg:px-8 py-10 sm:py-12 lg:py-14">

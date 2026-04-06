@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import AdminShell from '../_components/AdminShell';
 import { useAuth } from '@/lib/auth/context';
-import { Search, ChevronLeft, ChevronRight, Calendar, Wallet, Clock3, Target, Users2, ExternalLink, Filter } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, Calendar, Wallet, Clock3, Target, Users2, ExternalLink, Filter, Send } from 'lucide-react';
 import { AdminSectionSkeleton } from '@/components/ui/AdminSectionSkeleton';
 import { createPortal } from 'react-dom';
 import { COUNTRY_CODES } from '@/lib/data/country-codes';
@@ -94,7 +94,7 @@ export default function BoostRequestsPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<BoostRequestStatusFilter>('ALL');
+  const [statusFilter, setStatusFilter] = useState<BoostRequestStatusFilter>('PENDING');
   const [showFilterMenu, setShowFilterMenu] = useState(false);
   const [selected, setSelected] = useState<BoostRequestItem | null>(null);
   const [showAllAudience, setShowAllAudience] = useState(false);
@@ -102,6 +102,8 @@ export default function BoostRequestsPage() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [savingSetup, setSavingSetup] = useState(false);
   const [setupDraft, setSetupDraft] = useState<BoostSetupDraft | null>(null);
+  const [adminMessageDraft, setAdminMessageDraft] = useState('');
+  const [sendingAdminMessage, setSendingAdminMessage] = useState(false);
   const filterMenuRef = useRef<HTMLDivElement | null>(null);
   const limit = 15;
 
@@ -149,6 +151,10 @@ export default function BoostRequestsPage() {
   useEffect(() => {
     // Reset audience expansion when selecting another request
     setShowAllAudience(false);
+  }, [selected?.id]);
+
+  useEffect(() => {
+    setAdminMessageDraft('');
   }, [selected?.id]);
 
   useEffect(() => {
@@ -573,6 +579,55 @@ export default function BoostRequestsPage() {
     }
   }, [selected, setupDraft, updatingId, accessToken, refreshSession]);
 
+  const sendAdminMessageToLiveChat = useCallback(async () => {
+    if (!selected || !adminMessageDraft.trim() || updatingId) return;
+
+    const messageText = adminMessageDraft.trim();
+    setSendingAdminMessage(true);
+    setUpdatingId(selected.id);
+    try {
+      let res = await fetch(`/api/v1/boost-requests/${selected.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        },
+        body: JSON.stringify({ adminMessage: messageText }),
+      });
+
+      if (res.status === 401) {
+        const newToken = await refreshSession();
+        if (newToken) {
+          res = await fetch(`/api/v1/boost-requests/${selected.id}`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${newToken}`,
+            },
+            body: JSON.stringify({ adminMessage: messageText }),
+          });
+        }
+      }
+
+      if (!res.ok) return;
+      const updated: BoostRequestItem = await res.json();
+
+      setData(prev =>
+        prev
+          ? {
+              ...prev,
+              items: prev.items.map(entry => (entry.id === updated.id ? { ...entry, ...updated } : entry)),
+            }
+          : prev,
+      );
+      setSelected(prev => (prev && prev.id === updated.id ? { ...prev, ...updated } : prev));
+      setAdminMessageDraft('');
+    } finally {
+      setSendingAdminMessage(false);
+      setUpdatingId(null);
+    }
+  }, [selected, adminMessageDraft, updatingId, accessToken, refreshSession]);
+
   return (
     <AdminShell>
       {/* Header */}
@@ -607,7 +662,7 @@ export default function BoostRequestsPage() {
             aria-expanded={showFilterMenu}
           >
             <Filter className="h-4 w-4" />
-            <span>Filter</span>
+            <span>{statusFilterLabel}</span>
           </button>
           {showFilterMenu && (
             <div className="absolute right-0 top-full z-20 mt-2 w-40 rounded-xl border border-gray-200 bg-white p-1.5 shadow-lg">
@@ -770,7 +825,7 @@ export default function BoostRequestsPage() {
 
       {/* Detail Modal */}
       {mounted && selected && createPortal(
-        <div className="fixed inset-0 z-120 flex items-center justify-center bg-black/60 p-3 sm:p-4" onClick={() => { setSetupDraft(null); setSelected(null); }}>
+        <div className="fixed inset-0 z-120 flex items-center justify-center bg-black/60 p-3 sm:p-4" onClick={() => { setSetupDraft(null); setAdminMessageDraft(''); setSelected(null); }}>
           <div
             className="w-full max-w-[min(1100px,96vw)] max-h-[90vh] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-[0_28px_90px_-30px_rgba(0,0,0,0.65)]"
             onClick={e => e.stopPropagation()}
@@ -780,7 +835,7 @@ export default function BoostRequestsPage() {
                 <div className="min-w-0 pr-4">
                   <h2 className="truncate text-base font-semibold text-gray-900 sm:text-lg">Boost Request Details</h2>
                 </div>
-                <button onClick={() => { setSetupDraft(null); setSelected(null); }} className="rounded-lg px-2 py-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700">×</button>
+                  <button onClick={() => { setSetupDraft(null); setAdminMessageDraft(''); setSelected(null); }} className="rounded-lg px-2 py-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700">×</button>
               </div>
             </div>
 
@@ -1011,6 +1066,33 @@ export default function BoostRequestsPage() {
                           className="inline-flex items-center rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           {savingSetup ? 'Saving...' : 'Save setup options'}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="rounded-3xl border border-red-100 bg-linear-to-br from-red-50/80 to-white p-5 shadow-sm">
+                      <h4 className="text-sm font-semibold text-gray-900">Send message to Live Chat</h4>
+                      <p className="mt-1 text-xs text-gray-500">Write a client-facing update. It will appear in requester&apos;s dashboard live chat.</p>
+
+                      <div className="mt-3">
+                        <textarea
+                          value={adminMessageDraft}
+                          onChange={(e) => setAdminMessageDraft(e.target.value)}
+                          rows={3}
+                          placeholder="Write update for client..."
+                          className="w-full resize-none rounded-xl border border-red-100 bg-white px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-red-400"
+                        />
+                      </div>
+
+                      <div className="mt-3 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={() => void sendAdminMessageToLiveChat()}
+                          disabled={sendingAdminMessage || updatingId === selected.id || !adminMessageDraft.trim()}
+                          className="inline-flex items-center gap-1.5 rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          <Send className="h-4 w-4" />
+                          {sendingAdminMessage ? 'Sending...' : 'Send to Live Chat'}
                         </button>
                       </div>
                     </div>

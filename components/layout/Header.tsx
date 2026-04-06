@@ -178,7 +178,7 @@ export const Header = () => {
   });
 
   return (
-    <header className="relative z-120 lg:fixed lg:top-0 lg:left-0 lg:right-0 lg:bg-white lg:shadow-md">
+    <header className="relative z-120 lg:fixed lg:top-0 lg:left-0 lg:right-0 lg:bg-white lg:shadow-md" suppressHydrationWarning>
       {/* Mobile Top Bar - Logo + Icons */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-130 py-3 px-4 bg-white border-b border-gray-100">
         <div className="flex items-center justify-between">
@@ -321,7 +321,7 @@ export const Header = () => {
             })}
 
             {/* Auth & Login Button */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3" suppressHydrationWarning>
               {!isLoading && isAuthenticated ? (
                 <>
                   <button
@@ -410,7 +410,7 @@ export const Header = () => {
                 </div>
                 </>
               ) : (
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3" suppressHydrationWarning>
                   <Link
                     href="/login"
                     className="flex items-center gap-2 px-6 py-3 bg-linear-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold rounded-lg transition-all shadow-md hover:shadow-lg text-sm"

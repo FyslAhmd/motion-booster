@@ -367,7 +367,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-red-50 to-white flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-linear-to-br from-red-50 to-white flex items-center justify-center px-4 py-12" suppressHydrationWarning>
       <div className="w-full max-w-md">
         <div className="bg-white rounded-3xl shadow-md p-8 md:p-10">
           {/* Header */}
@@ -458,6 +458,7 @@ export default function RegisterPage() {
                     width={20}
                     height={14}
                     className="rounded-sm object-cover"
+                    style={{ width: 20, height: 14 }}
                     unoptimized
                   />
                   <span className="text-sm text-gray-700 font-medium">
@@ -508,6 +509,7 @@ export default function RegisterPage() {
                               width={22}
                               height={15}
                               className="rounded-sm object-cover shrink-0"
+                              style={{ width: 22, height: 15 }}
                               unoptimized
                             />
                             <span className="truncate flex-1 text-left">{country.name}</span>

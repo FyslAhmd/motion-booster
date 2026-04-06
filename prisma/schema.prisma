@@ -36,6 +36,11 @@ enum NotificationType {
   ADS_DEACTIVATION_REQUEST
 }
 
+enum AccountEntryType {
+  OTHER
+  TOTAL_ADJUSTMENT
+}
+
 // ─── USER ─────────────────────────────────────────────
 
 model User {
@@ -64,6 +69,8 @@ model User {
   reviewedMetaStatusRequests MetaStatusRequest[] @relation("MetaStatusRequestReviewer")
   budgetDeposits    UserBudgetDeposit[] @relation("BudgetDepositsForUser")
   budgetEntriesCreated UserBudgetDeposit[] @relation("BudgetDepositsCreatedByAdmin")
+  accountEntries UserAccountEntry[] @relation("AccountEntriesForUser")
+  accountEntriesCreated UserAccountEntry[] @relation("AccountEntriesCreatedByAdmin")
   activityHistory     ActivityHistory[]
   notifications      Notification[]
 
@@ -121,6 +128,26 @@ model InvoiceCounter {
   updatedAt  DateTime @updatedAt @map("updated_at")
 
   @@map("invoice_counters")
+}
+
+model UserAccountEntry {
+  id          String           @id @default(cuid())
+  userId      String           @map("user_id")
+  type        AccountEntryType @default(OTHER)
+  title       String
+  amount      Decimal          @db.Decimal(14, 2)
+  createdById String?          @map("created_by_id")
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+
+  user      User  @relation("AccountEntriesForUser", fields: [userId], references: [id], onDelete: Cascade)
+  createdBy User? @relation("AccountEntriesCreatedByAdmin", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([type])
+  @@index([createdById])
+  @@index([createdAt])
+  @@map("user_account_entries")
 }
 
 // ─── USER BUDGET DEPOSIT HISTORY ─────────────────────

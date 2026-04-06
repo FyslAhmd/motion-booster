@@ -17,25 +17,66 @@ export interface CreateNotificationInput {
 }
 
 export async function createNotification(input: CreateNotificationInput) {
-  const row = await prisma.notification.create({
-    data: {
-      userId: input.userId,
-      type: input.type ?? 'GENERAL',
-      title: input.title,
-      text: input.text,
-      href: input.href ?? '/dashboard',
-      metadata: input.metadata,
-    },
-  });
-
-  const payload: LiveNotificationPayload = {
-    id: row.id,
-    type: row.type,
-    title: row.title,
-    text: row.text,
-    href: row.href || '/dashboard',
-    createdAt: row.createdAt.toISOString(),
+  const fallbackPayload: LiveNotificationPayload = {
+    id: crypto.randomUUID(),
+    type: input.type ?? 'GENERAL',
+    title: input.title,
+    text: input.text,
+    href: input.href ?? '/dashboard',
+    createdAt: new Date().toISOString(),
   };
+
+  let payload = fallbackPayload;
+
+  try {
+    const notificationDelegate = (prisma as unknown as {
+      notification?: {
+        create?: (args: {
+          data: {
+            userId: string;
+            type: NotificationType;
+            title: string;
+            text: string;
+            href: string;
+            metadata?: Prisma.InputJsonValue;
+          };
+        }) => Promise<{
+          id: string;
+          type: NotificationType;
+          title: string;
+          text: string;
+          href: string | null;
+          createdAt: Date;
+        }>;
+      };
+    }).notification;
+
+    if (typeof notificationDelegate?.create !== 'function') {
+      throw new Error('Prisma notification delegate is unavailable');
+    }
+
+    const row = await notificationDelegate.create({
+      data: {
+        userId: input.userId,
+        type: input.type ?? 'GENERAL',
+        title: input.title,
+        text: input.text,
+        href: input.href ?? '/dashboard',
+        metadata: input.metadata,
+      },
+    });
+
+    payload = {
+      id: row.id,
+      type: row.type,
+      title: row.title,
+      text: row.text,
+      href: row.href || '/dashboard',
+      createdAt: row.createdAt.toISOString(),
+    };
+  } catch (error) {
+    console.error('[notifications create]', error);
+  }
 
   notificationBus.emit('notification:new', {
     userId: input.userId,

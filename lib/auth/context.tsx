@@ -33,6 +33,10 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+function isPublicAuthRoute(pathname: string): boolean {
+  return pathname === '/login' || pathname === '/register' || pathname.startsWith('/forgot-password');
+}
+
 // ─── Read the accessToken cookie from document.cookie ────────────────────────
 function getAccessTokenFromCookie(): string | null {
   if (typeof document === 'undefined') return null;
@@ -88,6 +92,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     async function init() {
       try {
+        const accessTokenFromCookie = getAccessTokenFromCookie();
+        const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
+
+        // Avoid noisy 401 calls on auth pages when the user is clearly logged out.
+        if (!accessTokenFromCookie && isPublicAuthRoute(pathname)) {
+          if (!cancelled) {
+            setUser(null);
+            setAccessToken(null);
+          }
+          return;
+        }
+
         // 1. Try /me with existing accessToken cookie
         const meRes = await fetch('/api/v1/auth/me');
         if (meRes.ok) {
@@ -95,7 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (!cancelled && meData.success && meData.data?.user) {
             setUser(meData.data.user);
             // Read the access token from the cookie for socket auth etc.
-            setAccessToken(getAccessTokenFromCookie());
+            setAccessToken(accessTokenFromCookie || getAccessTokenFromCookie());
             startRefreshTimer();
             return;
           }

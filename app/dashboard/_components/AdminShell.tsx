@@ -105,6 +105,7 @@ const navItems: NavEntry[] = [
   { href: '/dashboard/boost-requests', label: 'Boost Requests', icon: Rocket, adminOnly: true },
   { href: '/dashboard/meta-status-requests', label: 'Status Requests', icon: UserCog, adminOnly: true },
   { href: '/dashboard/user-budget', label: 'User Budget', icon: DollarSign, adminOnly: true },
+  { href: '/dashboard/accounts', label: 'Accounts', icon: DollarSign, adminOnly: true },
   { href: '/dashboard/clients', label: 'Clients', icon: Users, adminOnly: true },
   { href: '/dashboard/history', label: 'Activity History', icon: History, adminOnly: true },
   {
@@ -622,6 +623,8 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
       if (
         pathname === '/dashboard/user-campaigns' ||
         pathname.startsWith('/dashboard/user-campaigns/') ||
+        pathname === '/dashboard/accounts' ||
+        pathname.startsWith('/dashboard/accounts/') ||
         pathname === '/dashboard/meta-status-requests' ||
         pathname.startsWith('/dashboard/meta-status-requests/')
       ) {

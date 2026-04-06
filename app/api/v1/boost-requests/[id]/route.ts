@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { requireAdmin } from '@/lib/auth/require-admin';
+import { chatBus } from '@/lib/server/chat-bus';
+import { createNotification } from '@/lib/server/notifications';
 
 type PlacementValue = 'facebook' | 'instagram' | 'whatsapp';
 type LocationValue = string;
@@ -155,12 +157,129 @@ const mergeTargetAudienceStatus = (current: string, status: BoostRequestStatus):
   return [`Status: ${STATUS_LABELS[status]}`, ...preservedLines].join('\n').trim();
 };
 
+function getChatNotificationCopy(input: {
+  senderName: string;
+  messageType: 'TEXT' | 'IMAGE' | 'VIDEO' | 'FILE' | 'VOICE';
+  content?: string;
+}) {
+  const rawContent = (input.content || '').trim();
+  if (input.messageType === 'TEXT') {
+    const preview = rawContent.length > 100 ? `${rawContent.slice(0, 100)}...` : rawContent;
+    return {
+      title: `New message from ${input.senderName}`,
+      text: preview || `${input.senderName} sent you a message.`,
+    };
+  }
+
+  const labelByType: Record<'IMAGE' | 'VIDEO' | 'FILE' | 'VOICE', string> = {
+    IMAGE: 'an image',
+    VIDEO: 'a video',
+    FILE: 'a file',
+    VOICE: 'a voice message',
+  };
+
+  return {
+    title: `New message from ${input.senderName}`,
+    text: `${input.senderName} sent ${labelByType[input.messageType]}.`,
+  };
+}
+
+async function pushAdminMessageToChat(input: {
+  adminId: string;
+  adminName: string;
+  targetUserId: string;
+  content: string;
+  req: NextRequest;
+}) {
+  if (!input.content.trim()) return null;
+
+  const existingConversation = await prisma.conversation.findFirst({
+    where: {
+      AND: [
+        { participants: { some: { id: input.adminId } } },
+        { participants: { some: { id: input.targetUserId } } },
+      ],
+    },
+    include: {
+      participants: {
+        select: { id: true },
+      },
+    },
+  });
+
+  const conversation = existingConversation || await prisma.conversation.create({
+    data: {
+      participants: {
+        connect: [{ id: input.adminId }, { id: input.targetUserId }],
+      },
+    },
+    include: {
+      participants: {
+        select: { id: true },
+      },
+    },
+  });
+
+  const message = await prisma.message.create({
+    data: {
+      conversationId: conversation.id,
+      senderId: input.adminId,
+      content: input.content.trim(),
+      status: 'SENT',
+    },
+    include: {
+      sender: {
+        select: { id: true, username: true, fullName: true, role: true },
+      },
+    },
+  });
+
+  await prisma.conversation.update({
+    where: { id: conversation.id },
+    data: { updatedAt: new Date() },
+  });
+
+  chatBus.emit('chat:message:new', {
+    participantUserIds: conversation.participants.map((participant) => participant.id),
+    message,
+  });
+
+  const notificationCopy = getChatNotificationCopy({
+    senderName: input.adminName,
+    messageType: 'TEXT',
+    content: input.content,
+  });
+
+  await createNotification({
+    userId: input.targetUserId,
+    type: 'GENERAL',
+    title: notificationCopy.title,
+    text: notificationCopy.text,
+    href: '/dashboard/chat',
+    logPath: input.req.nextUrl.pathname,
+    logMethod: input.req.method,
+    metadata: {
+      module: 'chat',
+      type: 'CHAT_MESSAGE',
+      senderId: input.adminId,
+      senderName: input.adminName,
+      conversationId: conversation.id,
+      messageId: message.id,
+      messageType: 'TEXT',
+      source: 'boost-request-admin-reply',
+    },
+  });
+
+  return message;
+}
+
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const result = await requireAdmin(req);
   if (result instanceof NextResponse) return result;
+  const admin = result;
 
   const { id } = await params;
 
@@ -184,8 +303,10 @@ export async function PATCH(
     Object.prototype.hasOwnProperty.call(body, 'minAge') ||
     Object.prototype.hasOwnProperty.call(body, 'maxAge') ||
     Object.prototype.hasOwnProperty.call(body, 'gender');
+  const adminMessage = typeof body.adminMessage === 'string' ? body.adminMessage.trim() : '';
+  const hasAdminMessage = adminMessage.length > 0;
 
-  if (!hasCompletedUpdate && !hasStatusUpdate && !hasSetupUpdate) {
+  if (!hasCompletedUpdate && !hasStatusUpdate && !hasSetupUpdate && !hasAdminMessage) {
     return NextResponse.json({ error: 'Nothing to update' }, { status: 400 });
   }
 
@@ -232,24 +353,56 @@ export async function PATCH(
   }
 
   try {
-    const updated = await prisma.boostRequest.update({
-      where: { id },
-      data,
-      include: {
-        user: {
-          select: {
-            id: true,
-            fullName: true,
-            email: true,
-            phone: true,
-            username: true,
-            avatarUrl: true,
+    const updated = Object.keys(data).length > 0
+      ? await prisma.boostRequest.update({
+          where: { id },
+          data,
+          include: {
+            user: {
+              select: {
+                id: true,
+                fullName: true,
+                email: true,
+                phone: true,
+                username: true,
+                avatarUrl: true,
+              },
+            },
           },
-        },
-      },
-    });
+        })
+      : await prisma.boostRequest.findUnique({
+          where: { id },
+          include: {
+            user: {
+              select: {
+                id: true,
+                fullName: true,
+                email: true,
+                phone: true,
+                username: true,
+                avatarUrl: true,
+              },
+            },
+          },
+        });
 
-    return NextResponse.json(updated);
+    if (!updated) {
+      return NextResponse.json({ error: 'Boost request not found' }, { status: 404 });
+    }
+
+    let sentMessageId: string | null = null;
+    if (hasAdminMessage) {
+      const chatMessage = await pushAdminMessageToChat({
+        adminId: admin.id,
+        adminName: admin.fullName,
+        targetUserId: updated.userId,
+        content: adminMessage,
+        req,
+      });
+      sentMessageId = chatMessage?.id ?? null;
+    }
+
+    return NextResponse.json({ ...updated, sentMessageId });
   } catch {
     return NextResponse.json({ error: 'Failed to update boost request' }, { status: 500 });
   }

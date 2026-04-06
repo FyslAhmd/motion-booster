@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import AdminShell from '../_components/AdminShell';
 import { AdminSectionSkeleton } from '@/components/ui/AdminSectionSkeleton';
 import { useConfirm } from '@/lib/admin/confirm';
+import { useAuth } from '@/lib/auth/context';
 import { toast } from 'sonner';
 import { CheckCircle2, Search, XCircle, Filter } from 'lucide-react';
 
@@ -58,6 +59,7 @@ function formatDateTime(value?: string | null) {
 
 export default function MetaStatusRequestsPage() {
   const { confirm } = useConfirm();
+  const { accessToken, refreshSession } = useAuth();
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<StatusRequestItem[]>([]);
   const [search, setSearch] = useState('');
@@ -77,6 +79,34 @@ export default function MetaStatusRequestsPage() {
     return () => window.clearTimeout(t);
   }, [search]);
 
+  const authFetch = useCallback(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const withTokenHeaders = new Headers(init?.headers || {});
+    if (accessToken) {
+      withTokenHeaders.set('Authorization', `Bearer ${accessToken}`);
+    }
+
+    let res = await fetch(input, {
+      ...init,
+      headers: withTokenHeaders,
+      credentials: 'include',
+    });
+
+    if (res.status === 401) {
+      const newToken = await refreshSession();
+      if (newToken) {
+        const retryHeaders = new Headers(init?.headers || {});
+        retryHeaders.set('Authorization', `Bearer ${newToken}`);
+        res = await fetch(input, {
+          ...init,
+          headers: retryHeaders,
+          credentials: 'include',
+        });
+      }
+    }
+
+    return res;
+  }, [accessToken, refreshSession]);
+
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
@@ -88,14 +118,13 @@ export default function MetaStatusRequestsPage() {
       });
       if (debouncedSearch) params.set('search', debouncedSearch);
 
-      const res = await fetch(`/api/v1/admin/meta-status-requests?${params.toString()}`, {
+      const res = await authFetch(`/api/v1/admin/meta-status-requests?${params.toString()}`, {
         cache: 'no-store',
-        credentials: 'include',
       });
-      const json = (await res.json()) as ApiResponse;
+      const json = (await res.json()) as ApiResponse & { error?: string };
 
       if (!res.ok || !json?.success) {
-        throw new Error('Failed to load status requests');
+        throw new Error(json?.error || (res.status === 401 ? 'Session expired. Please login again.' : 'Failed to load status requests'));
       }
 
       setRows(json.data || []);
@@ -109,7 +138,7 @@ export default function MetaStatusRequestsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, stateFilter, requestedStatusFilter, debouncedSearch]);
+  }, [page, stateFilter, requestedStatusFilter, debouncedSearch, authFetch]);
 
   useEffect(() => {
     loadData();
@@ -135,7 +164,7 @@ export default function MetaStatusRequestsPage() {
 
       setUpdatingId(requestId);
       try {
-        const res = await fetch('/api/v1/admin/meta-status-requests', {
+        const res = await authFetch('/api/v1/admin/meta-status-requests', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ requestId, decision }),
@@ -159,7 +188,7 @@ export default function MetaStatusRequestsPage() {
         setUpdatingId(null);
       }
     },
-    [confirm, updatingId, loadData],
+    [confirm, updatingId, loadData, authFetch],
   );
 
   return (

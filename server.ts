@@ -7,6 +7,7 @@ import { Server as SocketIOServer } from 'socket.io';
 import { jwtVerify } from 'jose';
 import { PrismaClient } from './lib/generated/prisma/index.js';
 import { notificationBus, type LiveNotificationEvent } from './lib/server/notification-bus.js';
+import { chatBus, type LiveChatMessageEvent } from './lib/server/chat-bus.js';
 import 'dotenv/config';
 
 const dev = process.env.NODE_ENV !== 'production';
@@ -145,6 +146,13 @@ app.prepare().then(() => {
 
   notificationBus.on('notification:new', (event: LiveNotificationEvent) => {
     io.to(`user:${event.userId}`).emit('notification:new', event.notification);
+  });
+
+  chatBus.on('chat:message:new', (event: LiveChatMessageEvent) => {
+    const userIds = Array.from(new Set(event.participantUserIds));
+    userIds.forEach((userId) => {
+      io.to(`user:${userId}`).emit('message:receive', event.message);
+    });
   });
 
   // ─── Socket.IO auth middleware ────────────────────────

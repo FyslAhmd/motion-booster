@@ -47,7 +47,7 @@ export const MoreDrawer = ({ open, onClose }: MoreDrawerProps) => {
   return (
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-200 lg:hidden">
+        <div className="fixed inset-0 z-200 lg:hidden" suppressHydrationWarning>
           {/* Backdrop */}
           <motion.div
             className="absolute inset-0 bg-black/50"

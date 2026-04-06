@@ -2,6 +2,19 @@ import nodemailer from 'nodemailer';
 
 let cachedTransporter: nodemailer.Transporter | null = null;
 
+function resetMailerTransporter() {
+  cachedTransporter = null;
+}
+
+function isTransientSmtpAuthError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+
+  const typed = error as { code?: string; response?: string; message?: string };
+  const details = `${typed.response || ''} ${typed.message || ''}`.toLowerCase();
+
+  return typed.code === 'EAUTH' && (details.includes('454') || details.includes('try again later'));
+}
+
 export function createMailerTransporter() {
   const smtpHost = process.env.SMTP_HOST;
   const smtpPort = Number(process.env.SMTP_PORT || 587);
@@ -35,7 +48,6 @@ export async function sendPasswordResetOtpEmail(input: {
   otp: string;
   expiresInMinutes: number;
 }) {
-  const transporter = getMailerTransporter();
   const fromEmail =
     process.env.EMAIL_FROM ||
     process.env.SMTP_USER ||
@@ -119,11 +131,37 @@ export async function sendPasswordResetOtpEmail(input: {
     </html>
   `;
 
-  await transporter.sendMail({
-    from: fromEmail,
-    to: input.to,
-    subject: 'Your Password Reset OTP',
-    text: plainText,
-    html,
-  });
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= 2; attempt += 1) {
+    try {
+      const transporter = getMailerTransporter();
+      const info = await transporter.sendMail({
+        from: fromEmail,
+        to: input.to,
+        subject: 'Your Password Reset OTP',
+        text: plainText,
+        html,
+      });
+
+      if (Array.isArray(info.rejected) && info.rejected.length > 0) {
+        throw new Error(`SMTP rejected recipients: ${info.rejected.join(', ')}`);
+      }
+
+      return;
+    } catch (error) {
+      lastError = error;
+
+      // Hostinger sometimes returns temporary auth throttling (EAUTH 454).
+      // Resetting cached transporter and retrying once often recovers.
+      if (attempt === 1 && isTransientSmtpAuthError(error)) {
+        resetMailerTransporter();
+        continue;
+      }
+
+      throw error;
+    }
+  }
+
+  throw lastError;
 }
