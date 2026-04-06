@@ -27,7 +27,11 @@ import {
   Download,
   Image as ImageIcon,
   Film,
-  Rocket,
+  Megaphone,
+  Palette,
+  PenSquare,
+  PhoneCall,
+  Headset,
   BadgeCheck,
   ChevronDown,
 } from 'lucide-react';
@@ -119,11 +123,20 @@ const createDefaultBoostData = (): BoostFormData => ({
 
 const SERVICE_DESK_OPTIONS: ServiceDeskOption[] = [
   {
+<<<<<<< HEAD
+    id: 'boost-ads',
+    title: 'Boost & Ads',
+    summary: 'Facebook and Instagram campaign setup, targeting, and optimization.',
+    eta: 'Average response: 2-5 min',
+    icon: Megaphone,
+    quickMessage: 'Hello admin, I need help with Boost & Ads service. Please guide me with packages and targeting steps.',
+=======
     id: 'boost-request',
     labelEn: 'Boost Request',
     labelBn: 'বুস্ট রিকোয়েস্ট',
     quickMessageEn: 'Hello admin, I want to submit a boost request. Please guide me.',
     quickMessageBn: 'হ্যালো অ্যাডমিন, আমি একটি বুস্ট রিকোয়েস্ট সাবমিট করতে চাই। আমাকে গাইড করুন।',
+>>>>>>> 872751813b1fd88e9e5649cbc52776e87f1397c4
     badgeGradient: 'linear-gradient(135deg, #ff7a18 0%, #ff2525 100%)',
   },
   {
@@ -135,11 +148,47 @@ const SERVICE_DESK_OPTIONS: ServiceDeskOption[] = [
     badgeGradient: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)',
   },
   {
+<<<<<<< HEAD
+    id: 'graphics-branding',
+    title: 'Graphics & Branding',
+    summary: 'Logo, social creatives, and brand identity design consultation.',
+    eta: 'Average response: 3-7 min',
+    icon: Palette,
+    quickMessage: 'Hello admin, I need Graphics & Branding service. Please suggest suitable package options.',
+    badgeGradient: 'linear-gradient(135deg, #10b981 0%, #06b6d4 100%)',
+  },
+  {
+    id: 'content-copy',
+    title: 'Content & Copy',
+    summary: 'Caption, campaign copywriting, and content planning support.',
+    eta: 'Average response: 4-8 min',
+    icon: PenSquare,
+    quickMessage: 'Hello admin, I need Content & Copy service. Please tell me the available deliverables and rates.',
+    badgeGradient: 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)',
+  },
+  {
+    id: 'voice-consultation',
+    title: 'Voice Consultation',
+    summary: 'Direct requirement discussion with voice-note based support.',
+    eta: 'Average response: 2-4 min',
+    icon: PhoneCall,
+    quickMessage: 'Hello admin, I want a voice consultation for my project requirements. Please connect and guide me.',
+    badgeGradient: 'linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)',
+  },
+  {
+    id: 'custom-support',
+    title: 'Custom Service',
+    summary: 'Not sure where to start? Get guided help for a custom requirement.',
+    eta: 'Average response: 2-5 min',
+    icon: Headset,
+    quickMessage: 'Hello admin, I need help choosing the right service for my goal. Please guide me with the best option.',
+=======
     id: 'others',
     labelEn: 'Others',
     labelBn: 'অন্যান্য',
     quickMessageEn: 'Hello admin, I have another inquiry. Please assist me.',
     quickMessageBn: 'হ্যালো অ্যাডমিন, আমার অন্য একটি বিষয়ে জানতে চাই। দয়া করে সহায়তা করুন।',
+>>>>>>> 872751813b1fd88e9e5649cbc52776e87f1397c4
     badgeGradient: 'linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%)',
   },
 ];
@@ -1070,6 +1119,7 @@ export default function MessagesPage() {
     boostData.placements.length > 0 &&
     boostData.audienceLanguages.length > 0,
   );
+  const ActiveServiceIcon = selectedServiceOption?.icon;
 
   const handleLiveChatLanguageSelect = useCallback((lang: 'en' | 'bn') => {
     setLiveChatLanguage(lang);
@@ -1195,7 +1245,7 @@ export default function MessagesPage() {
                   className="sm:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
                   title="Open service desk"
                 >
-                  <Rocket className="w-5 h-5 text-gray-600" />
+                  <Headset className="w-5 h-5 text-gray-600" />
                 </button>
               )}
 
@@ -1762,7 +1812,7 @@ export default function MessagesPage() {
                         <div className="p-5">
                           <div className="flex items-center gap-2 mb-3">
                             <div className="w-8 h-8 bg-linear-to-br from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
-                              <Rocket className="w-4 h-4 text-white" />
+                              <Megaphone className="w-4 h-4 text-white" />
                             </div>
                             <h3 className="text-sm font-bold text-gray-900">{boostLabels.langTitle}</h3>
                           </div>
@@ -1797,7 +1847,7 @@ export default function MessagesPage() {
                           <div className="px-5 pt-5 pb-3 border-b border-gray-100">
                             <div className="flex items-center gap-2">
                               <div className="w-8 h-8 bg-linear-to-br from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
-                                <Rocket className="w-4 h-4 text-white" />
+                                <Megaphone className="w-4 h-4 text-white" />
                               </div>
                               <div>
                                 <h3 className="text-sm font-bold text-gray-900">{boostLabels.title}</h3>
@@ -2007,6 +2057,31 @@ export default function MessagesPage() {
 
             {/* Message Input */}
             <div className="bg-gray-50 px-3 md:px-8 py-3 md:py-4">
+<<<<<<< HEAD
+                {selectedServiceOption && user?.role !== 'ADMIN' && (
+                  <div className="mb-3 mx-1 rounded-2xl border border-red-100 bg-white px-3 py-2.5 shadow-sm">
+                    <div className="flex items-center gap-2.5">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white" style={{ background: selectedServiceOption.badgeGradient }}>
+                        {ActiveServiceIcon && <ActiveServiceIcon className="h-4 w-4" />}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-xs font-semibold text-gray-900">
+                          Active service: {selectedServiceOption.title}
+                        </p>
+                        <p className="truncate text-[11px] text-gray-500">{selectedServiceOption.eta}</p>
+                      </div>
+                      <button
+                        onClick={() => setMessageInput((prev) => prev.trim() || selectedServiceOption.quickMessage)}
+                        className="rounded-lg border border-gray-200 px-2 py-1 text-[11px] font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        Use draft
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+=======
+>>>>>>> 872751813b1fd88e9e5649cbc52776e87f1397c4
               {/* Hidden file input */}
               <input
                 ref={fileInputRef}
@@ -2084,7 +2159,7 @@ export default function MessagesPage() {
                       title="Open Quick Process"
                       className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-red-500 text-white shadow-sm shadow-red-200/70 transition-all hover:bg-red-600 active:scale-95"
                     >
-                      <MessageSquarePlus className="h-5 w-5" />
+                      <Megaphone className="h-5 w-5" />
                     </button>
                   )}
 
