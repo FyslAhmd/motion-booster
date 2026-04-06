@@ -2,10 +2,11 @@
 
 import AdminShell from '../_components/AdminShell';
 import Image from 'next/image';
-import { useState, useEffect, useRef, useCallback, useMemo, type ComponentType } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useAuth } from '@/lib/auth/context';
 import { useSocket, type ChatMessage, type MessageType } from '@/lib/chat/use-socket';
 import { COUNTRY_CODES } from '@/lib/data/country-codes';
+import LiveChatGuidedFlow, { type LiveChatGuideOptionId } from './_components/LiveChatGuidedFlow';
 import { toast } from 'sonner';
 import { AdminSectionSkeleton } from '@/components/ui/AdminSectionSkeleton';
 import {
@@ -93,12 +94,11 @@ interface BoostFormData {
 }
 
 interface ServiceDeskOption {
-  id: string;
-  title: string;
-  summary: string;
-  eta: string;
-  icon: ComponentType<{ className?: string }>;
-  quickMessage: string;
+  id: LiveChatGuideOptionId;
+  labelEn: string;
+  labelBn: string;
+  quickMessageEn: string;
+  quickMessageBn: string;
   badgeGradient: string;
 }
 
@@ -123,24 +123,32 @@ const createDefaultBoostData = (): BoostFormData => ({
 
 const SERVICE_DESK_OPTIONS: ServiceDeskOption[] = [
   {
+<<<<<<< HEAD
     id: 'boost-ads',
     title: 'Boost & Ads',
     summary: 'Facebook and Instagram campaign setup, targeting, and optimization.',
     eta: 'Average response: 2-5 min',
     icon: Megaphone,
     quickMessage: 'Hello admin, I need help with Boost & Ads service. Please guide me with packages and targeting steps.',
+=======
+    id: 'boost-request',
+    labelEn: 'Boost Request',
+    labelBn: 'বুস্ট রিকোয়েস্ট',
+    quickMessageEn: 'Hello admin, I want to submit a boost request. Please guide me.',
+    quickMessageBn: 'হ্যালো অ্যাডমিন, আমি একটি বুস্ট রিকোয়েস্ট সাবমিট করতে চাই। আমাকে গাইড করুন।',
+>>>>>>> 872751813b1fd88e9e5649cbc52776e87f1397c4
     badgeGradient: 'linear-gradient(135deg, #ff7a18 0%, #ff2525 100%)',
   },
   {
-    id: 'video-editing',
-    title: 'Video Editing',
-    summary: 'Reel, promo, and business video editing support with creative direction.',
-    eta: 'Average response: 3-6 min',
-    icon: Film,
-    quickMessage: 'Hello admin, I need support for video editing service. Please share timeline and package details.',
+    id: 'support',
+    labelEn: 'Support',
+    labelBn: 'সাপোর্ট',
+    quickMessageEn: 'Hello admin, I need support with my current service. Please assist me.',
+    quickMessageBn: 'হ্যালো অ্যাডমিন, আমার বর্তমান সার্ভিস নিয়ে সাপোর্ট দরকার। দয়া করে সহায়তা করুন।',
     badgeGradient: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)',
   },
   {
+<<<<<<< HEAD
     id: 'graphics-branding',
     title: 'Graphics & Branding',
     summary: 'Logo, social creatives, and brand identity design consultation.',
@@ -174,36 +182,16 @@ const SERVICE_DESK_OPTIONS: ServiceDeskOption[] = [
     eta: 'Average response: 2-5 min',
     icon: Headset,
     quickMessage: 'Hello admin, I need help choosing the right service for my goal. Please guide me with the best option.',
+=======
+    id: 'others',
+    labelEn: 'Others',
+    labelBn: 'অন্যান্য',
+    quickMessageEn: 'Hello admin, I have another inquiry. Please assist me.',
+    quickMessageBn: 'হ্যালো অ্যাডমিন, আমার অন্য একটি বিষয়ে জানতে চাই। দয়া করে সহায়তা করুন।',
+>>>>>>> 872751813b1fd88e9e5649cbc52776e87f1397c4
     badgeGradient: 'linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%)',
   },
 ];
-
-const SERVICE_DESK_BN_COPY: Record<string, { title: string; quickMessage: string }> = {
-  'boost-ads': {
-    title: 'বুস্ট ও অ্যাডস',
-    quickMessage: 'হ্যালো অ্যাডমিন, আমি Boost & Ads সার্ভিস সম্পর্কে জানতে চাই। প্যাকেজ ও টার্গেটিং বিষয়ে গাইড করুন।',
-  },
-  'video-editing': {
-    title: 'ভিডিও এডিটিং',
-    quickMessage: 'হ্যালো অ্যাডমিন, আমি ভিডিও এডিটিং সার্ভিস নিতে চাই। টাইমলাইন এবং প্যাকেজ জানাবেন।',
-  },
-  'graphics-branding': {
-    title: 'গ্রাফিক্স ও ব্র্যান্ডিং',
-    quickMessage: 'হ্যালো অ্যাডমিন, আমি Graphics & Branding সার্ভিস সম্পর্কে জানতে চাই। উপযুক্ত প্যাকেজ সাজেস্ট করুন।',
-  },
-  'content-copy': {
-    title: 'কনটেন্ট ও কপি',
-    quickMessage: 'হ্যালো অ্যাডমিন, আমি Content & Copy সার্ভিস সম্পর্কে জানতে চাই। ডেলিভারেবল এবং রেট জানাবেন।',
-  },
-  'voice-consultation': {
-    title: 'ভয়েস কনসালটেশন',
-    quickMessage: 'হ্যালো অ্যাডমিন, আমি ভয়েস কনসালটেশন চাই। আমার প্রজেক্ট নিয়ে গাইড করবেন।',
-  },
-  'custom-support': {
-    title: 'কাস্টম সার্ভিস',
-    quickMessage: 'হ্যালো অ্যাডমিন, আমার প্রজেক্টের জন্য কাস্টম সাপোর্ট দরকার। কীভাবে শুরু করব জানাবেন।',
-  },
-};
 
 const LEGACY_AUTO_KICKOFF_MESSAGES = new Set([
   [
@@ -244,23 +232,6 @@ function formatTime(dateStr: string): string {
   } else {
     return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
   }
-}
-
-function getLiveChatGreeting(): string {
-  const hour = new Date().getHours();
-  if (hour < 12) return 'Good Morning!';
-  if (hour < 17) return 'Good Afternoon!';
-  return 'Good Evening!';
-}
-
-function getLocalizedServiceTitle(option: ServiceDeskOption, lang: 'en' | 'bn'): string {
-  if (lang === 'en') return option.title;
-  return SERVICE_DESK_BN_COPY[option.id]?.title || option.title;
-}
-
-function getLocalizedServiceDraft(option: ServiceDeskOption, lang: 'en' | 'bn'): string {
-  if (lang === 'en') return option.quickMessage;
-  return SERVICE_DESK_BN_COPY[option.id]?.quickMessage || option.quickMessage;
 }
 
 function formatClockLabel(date: Date = new Date()): string {
@@ -335,9 +306,9 @@ export default function MessagesPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [messageInput, setMessageInput] = useState('');
   const [selectedServiceOption, setSelectedServiceOption] = useState<ServiceDeskOption | null>(null);
-  const [openingServiceChat, setOpeningServiceChat] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showChat, setShowChat] = useState(false);
+  const [showLiveChatGuide, setShowLiveChatGuide] = useState(false);
   const [serviceDeskBootstrapped, setServiceDeskBootstrapped] = useState(false);
   const [loadingConversations, setLoadingConversations] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
@@ -389,17 +360,10 @@ export default function MessagesPage() {
 
   useEffect(() => {
     setLiveChatLanguage(null);
+    setSelectedServiceOption(null);
   }, [selectedConversation?.id]);
 
-  const liveChatOnboardingTime = useMemo(
-    () => formatClockLabel(),
-    [selectedConversation?.id],
-  );
-
-  const liveChatGreeting = useMemo(
-    () => getLiveChatGreeting(),
-    [selectedConversation?.id],
-  );
+  const liveChatOnboardingTime = formatClockLabel();
 
   // ─── Auth headers helper (uses context token) ──────
   const getAuthHeaders = useCallback((): Record<string, string> => {
@@ -502,7 +466,6 @@ export default function MessagesPage() {
         prev.map((m) => (m.senderId === user?.id ? { ...m, status: 'READ' as const } : m))
       );
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
   const {
@@ -977,67 +940,6 @@ export default function MessagesPage() {
     [conversationByParticipantId, selectConversation, startNewConversation],
   );
 
-  const supportAdmins = useMemo(() => {
-    const byId = new Map<string, ChatableUser>();
-
-    for (const person of directoryUsers) {
-      if (isRoleAdmin(person.role)) {
-        byId.set(person.id, person);
-      }
-    }
-
-    for (const person of chatableUsers) {
-      if (isRoleAdmin(person.role) && !byId.has(person.id)) {
-        byId.set(person.id, person);
-      }
-    }
-
-    return Array.from(byId.values()).sort((a, b) => a.fullName.localeCompare(b.fullName));
-  }, [directoryUsers, chatableUsers]);
-
-  const primarySupportAdmin = supportAdmins[0] ?? null;
-
-  const startServiceConversation = useCallback(
-    async (serviceOption: ServiceDeskOption) => {
-      if (user?.role === 'ADMIN') return;
-      if (!primarySupportAdmin) {
-        toast.error('No support admin is available right now. Please try again in a moment.');
-        return;
-      }
-
-      setOpeningServiceChat(true);
-      setSelectedServiceOption(serviceOption);
-
-      try {
-        const existingConversation = conversationByParticipantId.get(primarySupportAdmin.id);
-        const activeConversation = existingConversation || await startNewConversation(primarySupportAdmin);
-
-        if (!activeConversation) {
-          toast.error('Could not start support chat. Please try again.');
-          return;
-        }
-
-        if (existingConversation) {
-          await selectConversation(existingConversation);
-        }
-
-        toast.success(`Connected with admin for ${serviceOption.title}.`);
-      } catch (error) {
-        console.error('Failed to start service conversation:', error);
-        toast.error('Failed to connect with admin. Please try again.');
-      } finally {
-        setOpeningServiceChat(false);
-      }
-    },
-    [
-      user?.role,
-      primarySupportAdmin,
-      conversationByParticipantId,
-      startNewConversation,
-      selectConversation,
-    ],
-  );
-
   // ─── Filter user directory ─────────────────────────
   const filteredDirectoryUsers = directoryUsers.filter((person) => {
     const q = searchQuery.toLowerCase().trim();
@@ -1076,6 +978,25 @@ export default function MessagesPage() {
     user?.role !== 'ADMIN' &&
     (selectedConversation.participant.role || '').toUpperCase() === 'ADMIN',
   );
+
+  const startLiveChatWithGuide = useCallback(() => {
+    if (!clientLiveChatPerson) return;
+
+    setShowChat(true);
+    setShowLiveChatGuide(true);
+    setLiveChatLanguage(null);
+    setSelectedServiceOption(null);
+    openUserConversation(clientLiveChatPerson);
+  }, [clientLiveChatPerson, openUserConversation]);
+
+  const reopenLiveChatGuide = useCallback(() => {
+    if (!isClientLiveChatConversation || user?.role === 'ADMIN') return;
+
+    setShowLiveChatGuide(true);
+    setLiveChatLanguage(null);
+    setSelectedServiceOption(null);
+    setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+  }, [isClientLiveChatConversation, user?.role]);
 
   const visibleMessages = useMemo(
     () => messages.filter((message) => {
@@ -1200,9 +1121,6 @@ export default function MessagesPage() {
   );
   const ActiveServiceIcon = selectedServiceOption?.icon;
 
-  const liveChatMenuPrimaryOptions = useMemo(() => SERVICE_DESK_OPTIONS.slice(0, 3), []);
-  const liveChatMenuExtendedOptions = useMemo(() => SERVICE_DESK_OPTIONS.slice(3), []);
-
   const handleLiveChatLanguageSelect = useCallback((lang: 'en' | 'bn') => {
     setLiveChatLanguage(lang);
     setBoostLang(lang);
@@ -1217,14 +1135,16 @@ export default function MessagesPage() {
     setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
   }, []);
 
-  const handleLiveChatTopicSelect = useCallback((serviceOption: ServiceDeskOption) => {
+  const handleLiveChatTopicSelect = useCallback((topicId: LiveChatGuideOptionId) => {
     const preferredLang = liveChatLanguage ?? 'en';
+    const serviceOption = SERVICE_DESK_OPTIONS.find((option) => option.id === topicId);
+
+    if (!serviceOption) return;
+
     setSelectedServiceOption(serviceOption);
+    setShowLiveChatGuide(false);
 
-    const localizedDraft = getLocalizedServiceDraft(serviceOption, preferredLang);
-    setMessageInput((prev) => prev.trim() || localizedDraft);
-
-    if (serviceOption.id === 'boost-ads') {
+    if (serviceOption.id === 'boost-request') {
       openBoostForm(preferredLang);
       return;
     }
@@ -1460,7 +1380,7 @@ export default function MessagesPage() {
                 <button
                   onClick={() => {
                     if (clientLiveChatPerson) {
-                      openUserConversation(clientLiveChatPerson);
+                      startLiveChatWithGuide();
                     } else {
                       setShowChat(true);
                     }
@@ -1637,124 +1557,6 @@ export default function MessagesPage() {
                 <AdminSectionSkeleton variant="chatThread" />
               ) : (
                 <>
-                  {isClientLiveChatConversation && (
-                  <div className="space-y-3 py-3">
-                    <div className="flex justify-start">
-                      <div className="max-w-[85%] rounded-2xl rounded-tl-sm border border-gray-100 bg-white px-4 py-2.5 shadow-sm">
-                        <p className="text-sm text-gray-700">{liveChatGreeting}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex justify-start">
-                      <div className="max-w-[85%] rounded-2xl rounded-tl-sm border border-gray-100 bg-white px-4 py-2.5 shadow-sm">
-                        <p className="text-sm text-gray-700">Welcome to Motion Booster Customer Service</p>
-                      </div>
-                    </div>
-
-                    <p className="pl-1 text-xs text-gray-400">{liveChatOnboardingTime}</p>
-
-                    <div className="flex justify-start">
-                      <div className="max-w-[92%] rounded-2xl rounded-tl-sm border border-gray-100 bg-white p-3 shadow-sm">
-                        <div className="rounded-2xl bg-gray-50 px-4 py-3">
-                          <p className="text-sm leading-6 text-gray-700">Please select your preferred language</p>
-                          <p className="text-sm leading-6 text-gray-700">অনুগ্রহ করে আপনার পছন্দের ভাষা নির্বাচন করুন</p>
-
-                          <div className="mt-3 flex items-center gap-2">
-                            <button
-                              onClick={() => handleLiveChatLanguageSelect('en')}
-                              className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
-                                liveChatLanguage === 'en'
-                                  ? 'border-red-400 bg-red-50 text-red-600'
-                                  : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
-                              }`}
-                            >
-                              English
-                            </button>
-                            <button
-                              onClick={() => handleLiveChatLanguageSelect('bn')}
-                              className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
-                                liveChatLanguage === 'bn'
-                                  ? 'border-red-400 bg-red-50 text-red-600'
-                                  : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
-                              }`}
-                            >
-                              বাংলা
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {liveChatLanguage && (
-                      <>
-                        <div className="flex justify-start">
-                          <div className="max-w-[85%] rounded-2xl rounded-tl-sm border border-gray-100 bg-white px-4 py-2.5 shadow-sm">
-                            <p className="text-sm text-gray-700">
-                              {liveChatLanguage === 'bn' ? 'আপনি কোন বিষয়ে জানতে চান?' : 'What would you like to know about?'}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="flex justify-start">
-                          <div className="w-full max-w-[92%] overflow-hidden rounded-2xl rounded-tl-sm border border-gray-200 bg-white shadow-sm">
-                            <div className="border-b border-gray-200 bg-gray-50 px-4 py-2.5 text-sm font-medium text-gray-700">
-                              {liveChatLanguage === 'bn' ? 'বিষয় নির্বাচন করুন' : 'Please select'}
-                            </div>
-                            {liveChatMenuPrimaryOptions.map((serviceOption, index) => {
-                              const isActive = selectedServiceOption?.id === serviceOption.id;
-                              const isLast = index === liveChatMenuPrimaryOptions.length - 1;
-
-                              return (
-                                <button
-                                  key={`primary-${serviceOption.id}`}
-                                  type="button"
-                                  onClick={() => handleLiveChatTopicSelect(serviceOption)}
-                                  className={`w-full px-4 py-3 text-center text-[22px] leading-none font-medium transition-colors md:text-base md:leading-normal ${
-                                    isActive
-                                      ? 'bg-red-50 text-red-600'
-                                      : 'text-[#e91e63] hover:bg-rose-50/70'
-                                  } ${!isLast ? 'border-b border-gray-200' : ''}`}
-                                >
-                                  {getLocalizedServiceTitle(serviceOption, liveChatLanguage)}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-
-                        <div className="flex justify-start">
-                          <div className="w-full max-w-[92%] overflow-hidden rounded-2xl rounded-tl-sm border border-gray-200 bg-white shadow-sm">
-                            <div className="border-b border-gray-200 bg-gray-50 px-4 py-2.5 text-sm font-medium text-gray-700">
-                              {liveChatLanguage === 'bn' ? 'অতিরিক্ত সাপোর্ট' : 'Extended Support'}
-                            </div>
-                            {liveChatMenuExtendedOptions.map((serviceOption, index) => {
-                              const isActive = selectedServiceOption?.id === serviceOption.id;
-                              const isLast = index === liveChatMenuExtendedOptions.length - 1;
-
-                              return (
-                                <button
-                                  key={`extended-${serviceOption.id}`}
-                                  type="button"
-                                  onClick={() => handleLiveChatTopicSelect(serviceOption)}
-                                  className={`w-full px-4 py-3 text-center text-[22px] leading-none font-medium transition-colors md:text-base md:leading-normal ${
-                                    isActive
-                                      ? 'bg-red-50 text-red-600'
-                                      : 'text-[#e91e63] hover:bg-rose-50/70'
-                                  } ${!isLast ? 'border-b border-gray-200' : ''}`}
-                                >
-                                  {getLocalizedServiceTitle(serviceOption, liveChatLanguage)}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      </>
-                    )}
-
-                    <p className="pl-1 text-xs text-gray-400">{liveChatOnboardingTime}</p>
-                  </div>
-                  )}
-
                   {visibleMessages.length === 0 ? (
                     !isClientLiveChatConversation && (
                       <div className="flex items-center justify-center py-16 text-center">
@@ -2218,11 +2020,24 @@ export default function MessagesPage() {
                 </div>
               )}
 
+              {isClientLiveChatConversation && showLiveChatGuide && (
+                <LiveChatGuidedFlow
+                  userFullName={user?.fullName || 'Customer'}
+                  timestampLabel={liveChatOnboardingTime}
+                  selectedLanguage={liveChatLanguage}
+                  selectedOptionId={selectedServiceOption?.id ?? null}
+                  options={SERVICE_DESK_OPTIONS}
+                  onLanguageSelect={handleLiveChatLanguageSelect}
+                  onOptionSelect={handleLiveChatTopicSelect}
+                />
+              )}
+
               <div ref={messagesEndRef} />
             </div>
 
             {/* Message Input */}
             <div className="bg-gray-50 px-3 md:px-8 py-3 md:py-4">
+<<<<<<< HEAD
                 {selectedServiceOption && user?.role !== 'ADMIN' && (
                   <div className="mb-3 mx-1 rounded-2xl border border-red-100 bg-white px-3 py-2.5 shadow-sm">
                     <div className="flex items-center gap-2.5">
@@ -2245,6 +2060,8 @@ export default function MessagesPage() {
                   </div>
                 )}
 
+=======
+>>>>>>> 872751813b1fd88e9e5649cbc52776e87f1397c4
               {/* Hidden file input */}
               <input
                 ref={fileInputRef}
@@ -2314,12 +2131,12 @@ export default function MessagesPage() {
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
-                  {/* Boost button — visible only for non-admin users */}
-                  {user?.role !== 'ADMIN' && (
+                  {/* Quick process button — visible only for non-admin users */}
+                  {user?.role !== 'ADMIN' && isClientLiveChatConversation && (
                     <button
-                      onClick={() => openBoostForm(boostLang)}
-                      aria-label="Boost Request"
-                      title="Boost Request"
+                      onClick={reopenLiveChatGuide}
+                      aria-label="Open Quick Process"
+                      title="Open Quick Process"
                       className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-red-500 text-white shadow-sm shadow-red-200/70 transition-all hover:bg-red-600 active:scale-95"
                     >
                       <Megaphone className="h-5 w-5" />
@@ -2406,7 +2223,7 @@ export default function MessagesPage() {
                       <button
                         onClick={() => {
                           if (clientLiveChatPerson) {
-                            openUserConversation(clientLiveChatPerson);
+                            startLiveChatWithGuide();
                           }
                         }}
                         disabled={!clientLiveChatPerson}
