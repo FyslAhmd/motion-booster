@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateRequest } from '@/lib/auth/validate-request';
-import { writeFile, mkdir } from 'fs/promises';
-import { existsSync } from 'fs';
+import { mkdir } from 'fs/promises';
+import { createWriteStream, existsSync } from 'fs';
 import { join } from 'path';
+import { pipeline } from 'stream/promises';
+import { Readable } from 'stream';
+
+export const runtime = 'nodejs';
 
 // ─── Config ──────────────────────────────────────────
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+const MAX_FILE_SIZE = 1024 * 1024 * 1024; // 1 GB
 const UPLOAD_DIR = join(process.cwd(), 'uploads', 'chat');
 
 const ALLOWED_MIME_TYPES = new Set([
@@ -29,15 +33,6 @@ const ALLOWED_MIME_TYPES = new Set([
   'text/csv',
   'text/plain',
   // Audio / Voice
-  'audio/webm',
-  'audio/ogg',
-  'audio/mp4',
-  'audio/mpeg',
-  'audio/webm;codecs=opus',
-]);
-
-// Voice MIME types are exempt from the 10 MB limit
-const VOICE_MIME_TYPES = new Set([
   'audio/webm',
   'audio/ogg',
   'audio/mp4',
@@ -95,12 +90,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Validate file size (voice messages are exempt)
-    const isVoice = VOICE_MIME_TYPES.has(mimeType) || VOICE_MIME_TYPES.has(fullMimeType);
-    if (!isVoice && file.size > MAX_FILE_SIZE) {
+    // Validate file size
+    if (file.size > MAX_FILE_SIZE) {
       return NextResponse.json(
         {
-          error: `File size exceeds 10 MB limit. Your file is ${(file.size / (1024 * 1024)).toFixed(1)} MB.`,
+          error: `File size exceeds 1 GB limit. Your file is ${(file.size / (1024 * 1024)).toFixed(1)} MB.`,
         },
         { status: 413 }
       );
@@ -117,9 +111,10 @@ export async function POST(req: NextRequest) {
     const storedName = `${uniqueId}-${originalName}`;
     const filePath = join(UPLOAD_DIR, storedName);
 
-    // Write file to disk
-    const buffer = Buffer.from(await file.arrayBuffer());
-    await writeFile(filePath, buffer);
+    // Stream file to disk to avoid buffering large uploads in memory.
+    const input = Readable.fromWeb(file.stream() as unknown as ReadableStream<Uint8Array>);
+    const output = createWriteStream(filePath, { flags: 'wx' });
+    await pipeline(input, output);
 
     // Build public URL
     const fileUrl = `/uploads/chat/${storedName}`;

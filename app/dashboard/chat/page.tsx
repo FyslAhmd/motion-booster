@@ -213,12 +213,13 @@ function getAvatarColor(id: string): string {
   return colors[Math.abs(hash) % colors.length];
 }
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+const MAX_FILE_SIZE = 1024 * 1024 * 1024; // 1 GB
 
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
 }
 
 function detectMessageType(mimeType: string): MessageType {
@@ -626,11 +627,10 @@ export default function MessagesPage() {
     e.target.value = '';
 
     const msgType = detectMessageType(file.type);
-    const isVoice = file.type.startsWith('audio/');
 
-    // Size validation (voice exempt)
-    if (!isVoice && file.size > MAX_FILE_SIZE) {
-      toast.error(`File must be under 10 MB. Your file is ${formatFileSize(file.size)}.`);
+    // Size validation
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error(`File must be under 1 GB. Your file is ${formatFileSize(file.size)}.`);
       return;
     }
 

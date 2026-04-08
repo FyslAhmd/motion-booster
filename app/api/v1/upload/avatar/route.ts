@@ -1,14 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { validateRequest } from '@/lib/auth/validate-request';
-import cloudinary from '@/lib/cloudinary';
+import { mkdir, readdir, unlink, writeFile } from 'fs/promises';
+import { join } from 'path';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const AVATAR_UPLOAD_DIR = join(process.cwd(), 'uploads', 'avatars');
+
+const EXT_BY_MIME: Record<string, string> = {
+  'image/jpeg': '.jpg',
+  'image/png': '.png',
+  'image/webp': '.webp',
+  'image/gif': '.gif',
+};
 
 /**
  * POST /api/v1/upload/avatar
- * Uploads a profile picture to Cloudinary and stores the resulting URL in DB.
+ * Uploads a profile picture to local VPS storage and stores the URL in DB.
  * Body: multipart/form-data with field "file"
  */
 export async function POST(req: NextRequest) {
@@ -38,31 +47,34 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'File size must not exceed 5 MB' }, { status: 400 });
     }
 
-    // Upload to Cloudinary via base64 data URI — no disk I/O, no stream timeout
+    await mkdir(AVATAR_UPLOAD_DIR, { recursive: true });
+
     const buffer = Buffer.from(await file.arrayBuffer());
-    const b64 = buffer.toString('base64');
-    const dataUri = `data:${file.type};base64,${b64}`;
+    const fileExt = EXT_BY_MIME[file.type] || '.jpg';
+    const storedName = `${authUser.id}-${Date.now()}${fileExt}`;
+    const filePath = join(AVATAR_UPLOAD_DIR, storedName);
 
-    const result = await cloudinary.uploader.upload(dataUri, {
-      folder: 'motion-booster/avatars',
-      public_id: authUser.id,        // one file per user, re-uploads overwrite
-      overwrite: true,
-      resource_type: 'image',
-      transformation: [
-        { width: 256, height: 256, crop: 'fill', gravity: 'face' },
-        { fetch_format: 'auto', quality: 'auto' },
-      ],
-    });
+    await writeFile(filePath, buffer);
 
-    const avatarUrl = result.secure_url;
+    const avatarUrl = `/uploads/avatars/${storedName}`;
 
     await prisma.user.update({
       where: { id: authUser.id },
       data: { avatarUrl },
     });
 
+    // Remove older local avatars for this user to keep disk usage under control.
+    const userPrefix = `${authUser.id}-`;
+    try {
+      const files = await readdir(AVATAR_UPLOAD_DIR);
+      const staleFiles = files.filter((name) => name.startsWith(userPrefix) && name !== storedName);
+      await Promise.all(staleFiles.map((name) => unlink(join(AVATAR_UPLOAD_DIR, name)).catch(() => undefined)));
+    } catch {
+      // Non-fatal cleanup best-effort.
+    }
+
     return NextResponse.json({ success: true, data: { avatarUrl } });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[upload/avatar]', err);
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }

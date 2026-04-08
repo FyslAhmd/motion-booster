@@ -326,7 +326,7 @@ export default function AdminCompaniesPage() {
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={company.logoImage} alt={company.name} className="h-10 w-auto object-contain border border-gray-100 rounded-lg bg-gray-50 p-1.5" />
                       )}
-                      <div className="w-[140px] sm:w-[170px] shrink-0">
+                      <div className="w-35 sm:w-42.5 shrink-0">
                         <ImageUpload
                           value=""
                           onChange={v => update(company.id, 'logoImage', v)}
