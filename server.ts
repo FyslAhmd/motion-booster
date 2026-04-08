@@ -222,15 +222,31 @@ app.prepare().then(() => {
           return callback?.({ error: 'Invalid messageType' });
         }
         const messageType = normalizedMessageType as ChatMessageType;
+        const safeContent = typeof content === 'string' ? content.trim() : '';
+        const safeFileUrl = typeof fileUrl === 'string' ? fileUrl.trim() : '';
+        const safeFileName = typeof fileName === 'string' && fileName.trim().length > 0
+          ? fileName.trim()
+          : null;
+        const safeMimeType = typeof mimeType === 'string' && mimeType.trim().length > 0
+          ? mimeType.trim()
+          : null;
+        const parsedFileSize = Number(fileSize);
+        const safeFileSize = Number.isFinite(parsedFileSize) && parsedFileSize > 0
+          ? Math.trunc(parsedFileSize)
+          : null;
+        const parsedDuration = Number(duration);
+        const safeDuration = Number.isFinite(parsedDuration) && parsedDuration > 0
+          ? Math.trunc(parsedDuration)
+          : null;
 
         // For TEXT messages, content is required. For file/voice, content is optional (caption).
         if (!conversationId) {
           return callback?.({ error: 'Missing conversationId' });
         }
-        if (messageType === 'TEXT' && !content?.trim()) {
+        if (messageType === 'TEXT' && !safeContent) {
           return callback?.({ error: 'Missing content for text message' });
         }
-        if (messageType !== 'TEXT' && !fileUrl) {
+        if (messageType !== 'TEXT' && !safeFileUrl) {
           return callback?.({ error: 'Missing fileUrl for non-text message' });
         }
 
@@ -262,7 +278,13 @@ app.prepare().then(() => {
           data: {
             conversationId,
             senderId: user.id,
-            content: content?.trim() || '',
+            content: safeContent,
+            messageType,
+            fileUrl: messageType === 'TEXT' ? null : safeFileUrl,
+            fileName: messageType === 'TEXT' ? null : safeFileName,
+            fileSize: messageType === 'TEXT' ? null : safeFileSize,
+            mimeType: messageType === 'TEXT' ? null : safeMimeType,
+            duration: messageType === 'VOICE' ? safeDuration : null,
             status: 'SENT',
           },
           include: {
@@ -292,7 +314,7 @@ app.prepare().then(() => {
           const copy = getChatNotificationCopy({
             senderName: user.fullName,
             messageType,
-            content,
+            content: safeContent,
           });
 
           await Promise.all(
@@ -336,7 +358,7 @@ app.prepare().then(() => {
               senderEmail: user.email,
               senderRole: user.role,
               messageType,
-              content: content?.trim() || '',
+              content: safeContent,
               conversationId,
               messageId: message.id,
               createdAt: message.createdAt,

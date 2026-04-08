@@ -178,15 +178,31 @@ export async function POST(
       );
     }
     const safeMessageType = normalizedMessageType as ChatMessageType;
+    const safeContent = typeof content === 'string' ? content.trim() : '';
+    const safeFileUrl = typeof fileUrl === 'string' ? fileUrl.trim() : '';
+    const safeFileName = typeof fileName === 'string' && fileName.trim().length > 0
+      ? fileName.trim()
+      : null;
+    const safeMimeType = typeof mimeType === 'string' && mimeType.trim().length > 0
+      ? mimeType.trim()
+      : null;
+    const parsedFileSize = Number(fileSize);
+    const safeFileSize = Number.isFinite(parsedFileSize) && parsedFileSize > 0
+      ? Math.trunc(parsedFileSize)
+      : null;
+    const parsedDuration = Number(duration);
+    const safeDuration = Number.isFinite(parsedDuration) && parsedDuration > 0
+      ? Math.trunc(parsedDuration)
+      : null;
 
     // For TEXT messages, content is required. For file/voice, content is optional.
-    if (safeMessageType === 'TEXT' && !content?.trim()) {
+    if (safeMessageType === 'TEXT' && !safeContent) {
       return NextResponse.json(
         { error: 'Message content is required' },
         { status: 400 }
       );
     }
-    if (safeMessageType !== 'TEXT' && !fileUrl) {
+    if (safeMessageType !== 'TEXT' && !safeFileUrl) {
       return NextResponse.json(
         { error: 'fileUrl is required for non-text messages' },
         { status: 400 }
@@ -228,7 +244,13 @@ export async function POST(
       data: {
         conversationId,
         senderId: user.id,
-        content: content?.trim() || '',
+        content: safeContent,
+        messageType: safeMessageType,
+        fileUrl: safeMessageType === 'TEXT' ? null : safeFileUrl,
+        fileName: safeMessageType === 'TEXT' ? null : safeFileName,
+        fileSize: safeMessageType === 'TEXT' ? null : safeFileSize,
+        mimeType: safeMessageType === 'TEXT' ? null : safeMimeType,
+        duration: safeMessageType === 'VOICE' ? safeDuration : null,
         status: 'SENT',
       },
       include: {
@@ -252,7 +274,7 @@ export async function POST(
       const copy = getChatNotificationCopy({
         senderName: message.sender.fullName,
         messageType: safeMessageType,
-        content,
+          content: safeContent,
       });
 
       await Promise.all(
@@ -287,7 +309,7 @@ export async function POST(
           senderEmail: user.email,
           senderRole: user.role,
           messageType: safeMessageType,
-          content: content?.trim() || '',
+          content: safeContent,
           conversationId,
           messageId: message.id,
           createdAt: message.createdAt,
