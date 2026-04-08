@@ -113,8 +113,8 @@ export default function ReportsPage() {
       setItems(json.data || []);
       setTotalPages(json.pagination?.totalPages || 1);
       setTotalItems(json.pagination?.total || 0);
-    } catch (err: any) {
-      setError(err?.message || 'Failed to load budget history');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to load budget history');
       setItems([]);
       setTotalPages(1);
       setTotalItems(0);
@@ -193,8 +193,8 @@ export default function ReportsPage() {
       setReportRows(mapped);
       setInvoiceNo(await fetchNextInvoiceNumber());
       setBillDate(new Date().toLocaleDateString());
-    } catch (err: any) {
-      setError(err?.message || 'Failed to build report.');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to build report.');
     } finally {
       setReportLoading(false);
     }
@@ -430,8 +430,6 @@ export default function ReportsPage() {
               billDate={billDate}
               clientName={clientName}
               assignBy="Motion Booster Team"
-              fromDate={fromDate}
-              toDate={toDate}
               rows={reportRows}
             />
           )}

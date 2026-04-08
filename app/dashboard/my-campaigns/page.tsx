@@ -205,7 +205,6 @@ export default function MyCampaignsPage() {
   const [columnsDropdownOpen, setColumnsDropdownOpen] = useState(false);
   const reportInvoiceRef = useRef<HTMLDivElement>(null);
   const countsLoading = activeCampaignCount === null;
-  const reportTotalTk = reportRows.reduce((sum, row) => sum + row.spendTk, 0);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -735,11 +734,6 @@ export default function MyCampaignsPage() {
               </div>
             )}
 
-            {reportRows.length > 0 && (
-              <div className="mt-2 flex justify-end rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white">
-                Total Campaign Spend (Tk): {fmtTk(reportTotalTk)}
-              </div>
-            )}
           </div>
         </div>
       )}

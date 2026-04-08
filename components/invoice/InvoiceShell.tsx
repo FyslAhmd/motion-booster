@@ -3,6 +3,7 @@ import { ReactNode } from 'react';
 interface InvoiceShellProps {
   invoiceNo: string;
   billDate: string;
+  dateLabel?: string;
   clientName: string;
   assignBy: string;
   children: ReactNode;
@@ -13,6 +14,7 @@ interface InvoiceShellProps {
 export function InvoiceShell({
   invoiceNo,
   billDate,
+  dateLabel = 'Bill Date',
   clientName,
   assignBy,
   children,
@@ -81,7 +83,7 @@ export function InvoiceShell({
                 Invoice No. : {invoiceNo}
               </div>
               <div style={{ display: 'inline-block', background: '#dddddd', borderRadius: '3px', padding: '4px 8px', fontSize: '11px', color: '#000', fontWeight: 'normal' }}>
-                Bill Date: {billDate}
+                {dateLabel}: {billDate}
               </div>
             </div>
           </div>

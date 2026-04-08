@@ -135,16 +135,16 @@ export function CampaignReportInvoice({
   const activeCols = selectedColumns && selectedColumns.length > 0
     ? selectedColumns.filter((k: string) => COL_CONFIG[k])
     : ALL_COLUMNS;
-  const grandTotalTk = rows.reduce((sum, row) => sum + row.spendTk, 0);
-
+    const grandTotalTk = rows.reduce((sum, row) => sum + row.spendTk, 0);
   return (
     <InvoiceShell
       invoiceNo={invoiceNo}
       billDate={billDate}
+      dateLabel="Report Date"
       clientName={clientName}
       assignBy={assignBy}
-      title="Campaign Summary"
-      subtitle="Campaign Summary"
+      title="Report Summary"
+      subtitle="Report Summary"
     >
       {/* ── Header row ─────────────────────────────────────────────────── */}
       <div style={ROW}>
@@ -160,7 +160,7 @@ export function CampaignReportInvoice({
 
       {/* ── Data rows ──────────────────────────────────────────────────── */}
       {rows.map((row, idx) => {
-        const rowData: Record<string, any> = {
+        const rowData: Record<string, React.ReactNode> = {
           campaignName: (
             <div style={{ display: 'flex', flexDirection: 'column', padding: '2px 0', gap: '2px' }}>
               <span style={{ fontWeight: 600 }}>{row.campaignName}</span>

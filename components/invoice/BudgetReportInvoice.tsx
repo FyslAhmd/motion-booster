@@ -14,8 +14,6 @@ interface BudgetReportInvoiceProps {
   billDate: string;
   clientName: string;
   assignBy: string;
-  fromDate: string;
-  toDate: string;
   rows: BudgetReportRow[];
 }
 
@@ -134,8 +132,6 @@ export function BudgetReportInvoice({
   billDate,
   clientName,
   assignBy,
-  fromDate,
-  toDate,
   rows,
 }: BudgetReportInvoiceProps) {
   // Calculate grand total in Tk
@@ -152,18 +148,6 @@ export function BudgetReportInvoice({
       assignBy={assignBy}
       subtitle="Budget History"
     >
-      {/* Date range */}
-      <div
-        style={{
-          marginBottom: '6px',
-          fontSize: '9px',
-          color: '#555',
-          textAlign: 'right',
-        }}
-      >
-        Period: {fromDate} — {toDate}
-      </div>
-
       {/* ── Header row ─────────────────────────────────────────────────── */}
       <div style={ROW}>
         {ALL_COLS.map((key) => (
