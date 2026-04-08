@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { validateRequest } from '@/lib/auth/validate-request';
+import { getActiveCountsAcrossAccounts } from '@/lib/meta/active-counts';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -11,6 +12,9 @@ export async function GET(req: NextRequest) {
     if (!auth || auth.role !== 'ADMIN') {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
+
+    const { searchParams } = new URL(req.url);
+    const debugMeta = searchParams.get('debug_meta') === '1';
 
     const metaStatusRequestDelegate = (prisma as unknown as {
       metaStatusRequest?: { count: (args: { where: { state: 'PENDING'; requestedStatus: 'ACTIVE' } }) => Promise<number> };
@@ -27,6 +31,15 @@ export async function GET(req: NextRequest) {
       contactMessage?: { count: (args: { where: { isRead: false } }) => Promise<number> };
     }).contactMessage;
 
+    const activeCountsSummaryPromise = getActiveCountsAcrossAccounts({
+      source: '/api/v1/admin/stats',
+      verbose: true,
+      scope: 'campaigns-only',
+    }).catch((error) => {
+      console.error('[admin stats] meta active count aggregation failed', error);
+      return null;
+    });
+
     const [
       totalClients,
       unseenMessages,
@@ -35,7 +48,7 @@ export async function GET(req: NextRequest) {
       budgetIncreaseCount,
       mediaMessageCount,
       totalBudgetDeposits,
-      activeAds,
+      activeCountsSummary,
     ] = await Promise.all([
       prisma.user.count({ where: { role: 'USER' } }).catch(() => 0),
       // Count unread client messages for this admin's conversations only.
@@ -104,15 +117,22 @@ export async function GET(req: NextRequest) {
             `
             .then((rows) => Number(rows?.[0]?.total || 0))
             .catch(() => 0),
-      prisma
-        .$queryRaw<Array<{ total: unknown }>>`
-          SELECT COUNT(DISTINCT meta_object_id) AS total
-          FROM meta_ad_assignments
-          WHERE meta_object_type = 'CAMPAIGN'
-        `
-        .then((rows) => Number(rows?.[0]?.total || 0))
-        .catch(() => 0),
+      activeCountsSummaryPromise,
     ]);
+
+    const activeAds = activeCountsSummary?.totals.campaigns ?? 0;
+
+    console.log('[admin stats] meta campaign total snapshot', {
+      requesterAdminId: auth.id,
+      requesterAdminUsername: auth.username,
+      route: req.nextUrl.pathname,
+      activeAds,
+      accountsScanned: activeCountsSummary?.accountIds.length ?? 0,
+      accountIds: activeCountsSummary?.accountIds ?? [],
+      failures: activeCountsSummary?.failures ?? [],
+      env: activeCountsSummary?.env ?? null,
+      durationMs: activeCountsSummary?.durationMs ?? null,
+    });
 
     return NextResponse.json({
       success: true,
@@ -125,6 +145,11 @@ export async function GET(req: NextRequest) {
         mediaMessageCount,
         totalBudgetDeposits,
         activeAds,
+        ...(debugMeta
+          ? {
+              metaDebug: activeCountsSummary,
+            }
+          : {}),
       },
     });
   } catch (error) {
