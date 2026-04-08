@@ -217,14 +217,42 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
     setLastSeenAt(stored || null);
   }, [user?.id]);
 
+  const isNotificationsSocketConnected = useLiveNotifications({
+    token: accessToken,
+    enabled: Boolean(accessToken),
+    onNotification: (incoming: AppNotification) => {
+      const nextItem: DashboardNotificationItem = {
+        id: incoming.id,
+        title: incoming.title,
+        text: incoming.text,
+        href: incoming.href,
+        createdAt: incoming.createdAt,
+      };
+      setNotifications((prev) => {
+        if (prev.some((item) => item.id === nextItem.id)) return prev;
+        return [nextItem, ...prev].slice(0, 20);
+      });
+      toast.success(incoming.title, { description: incoming.text });
+    },
+  });
+
   useEffect(() => {
     if (!user?.id) return;
     void fetchNotifications();
+  }, [user?.id, fetchNotifications]);
+
+  useEffect(() => {
+    if (!user?.id || isNotificationsSocketConnected) return;
     const timer = window.setInterval(() => {
       void fetchNotifications();
-    }, 20000);
+    }, 120000);
     return () => window.clearInterval(timer);
-  }, [user?.id, fetchNotifications]);
+  }, [user?.id, fetchNotifications, isNotificationsSocketConnected]);
+
+  useEffect(() => {
+    if (!user?.id || !isNotificationsSocketConnected) return;
+    void fetchNotifications();
+  }, [user?.id, fetchNotifications, isNotificationsSocketConnected]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -247,25 +275,6 @@ function UserShell({ children, userName, avatarUrl, noPadding }: { children: Rea
     if (!lastSeenAt) return true;
     return new Date(item.createdAt).getTime() > new Date(lastSeenAt).getTime();
   }).length;
-
-  useLiveNotifications({
-    token: accessToken,
-    enabled: true,
-    onNotification: (incoming: AppNotification) => {
-      const nextItem: DashboardNotificationItem = {
-        id: incoming.id,
-        title: incoming.title,
-        text: incoming.text,
-        href: incoming.href,
-        createdAt: incoming.createdAt,
-      };
-      setNotifications((prev) => {
-        if (prev.some((item) => item.id === nextItem.id)) return prev;
-        return [nextItem, ...prev].slice(0, 20);
-      });
-      toast.success(incoming.title, { description: incoming.text });
-    },
-  });
 
   return (
     <div className="h-svh min-h-svh bg-gray-50 flex flex-col overflow-hidden lg:pl-64">
@@ -661,7 +670,7 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
   }, [showNotifications]);
 
   const fetchNotifications = useCallback(async () => {
-    if (!user?.id) return;
+    if (!isAdmin || !user?.id) return;
 
     setNotificationsLoading(true);
     try {
@@ -678,32 +687,18 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
     } finally {
       setNotificationsLoading(false);
     }
-  }, [user?.id]);
+  }, [isAdmin, user?.id]);
 
   useEffect(() => {
-    if (!user?.id || typeof window === 'undefined') return;
+    if (!isAdmin || !user?.id || typeof window === 'undefined') return;
     const key = `mb:dashboard:last-seen-notification:${user.id}`;
     const stored = window.localStorage.getItem(key);
     setLastSeenAt(stored || null);
-  }, [user?.id]);
+  }, [isAdmin, user?.id]);
 
-  useEffect(() => {
-    if (!user?.id) return;
-    void fetchNotifications();
-    const timer = window.setInterval(() => {
-      void fetchNotifications();
-    }, 20000);
-    return () => window.clearInterval(timer);
-  }, [user?.id, fetchNotifications]);
-
-  const unreadCount = notifications.filter((item) => {
-    if (!lastSeenAt) return true;
-    return new Date(item.createdAt).getTime() > new Date(lastSeenAt).getTime();
-  }).length;
-
-  useLiveNotifications({
+  const isNotificationsSocketConnected = useLiveNotifications({
     token: accessToken,
-    enabled: isAuthenticated,
+    enabled: isAuthenticated && isAdmin && Boolean(accessToken),
     onNotification: (incoming: AppNotification) => {
       const nextItem: DashboardNotificationItem = {
         id: incoming.id,
@@ -719,6 +714,29 @@ export default function AdminShell({ children, noPadding }: { children: React.Re
       toast.success(incoming.title, { description: incoming.text });
     },
   });
+
+  useEffect(() => {
+    if (!isAdmin || !user?.id) return;
+    void fetchNotifications();
+  }, [isAdmin, user?.id, fetchNotifications]);
+
+  useEffect(() => {
+    if (!isAdmin || !user?.id || isNotificationsSocketConnected) return;
+    const timer = window.setInterval(() => {
+      void fetchNotifications();
+    }, 120000);
+    return () => window.clearInterval(timer);
+  }, [isAdmin, user?.id, fetchNotifications, isNotificationsSocketConnected]);
+
+  useEffect(() => {
+    if (!isAdmin || !user?.id || !isNotificationsSocketConnected) return;
+    void fetchNotifications();
+  }, [isAdmin, user?.id, fetchNotifications, isNotificationsSocketConnected]);
+
+  const unreadCount = notifications.filter((item) => {
+    if (!lastSeenAt) return true;
+    return new Date(item.createdAt).getTime() > new Date(lastSeenAt).getTime();
+  }).length;
 
   // Track dashboard route visits for history timeline.
   useEffect(() => {

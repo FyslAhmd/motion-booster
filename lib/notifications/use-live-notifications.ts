@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
 import type { AppNotification } from '@/lib/notifications/types';
 
@@ -13,13 +13,17 @@ interface UseLiveNotificationsInput {
 export function useLiveNotifications(input: UseLiveNotificationsInput) {
   const { token, enabled, onNotification } = input;
   const callbackRef = useRef(onNotification);
+  const [isConnected, setIsConnected] = useState(false);
+  const shouldEnable = enabled && Boolean(token);
 
   useEffect(() => {
     callbackRef.current = onNotification;
   }, [onNotification]);
 
   useEffect(() => {
-    if (!enabled || !token) return;
+    if (!shouldEnable || !token) {
+      return;
+    }
 
     const socket = io({
       path: '/api/socket',
@@ -30,6 +34,14 @@ export function useLiveNotifications(input: UseLiveNotificationsInput) {
       reconnectionAttempts: 10,
       reconnectionDelay: 1000,
     });
+
+    const handleConnect = () => setIsConnected(true);
+    const handleDisconnect = () => setIsConnected(false);
+    const handleConnectError = () => setIsConnected(false);
+
+    socket.on('connect', handleConnect);
+    socket.on('disconnect', handleDisconnect);
+    socket.on('connect_error', handleConnectError);
 
     // Delay connect slightly so React dev strict-mode mount/unmount cycles
     // do not start and immediately tear down the websocket handshake.
@@ -43,7 +55,12 @@ export function useLiveNotifications(input: UseLiveNotificationsInput) {
 
     return () => {
       window.clearTimeout(connectTimer);
+      socket.off('connect', handleConnect);
+      socket.off('disconnect', handleDisconnect);
+      socket.off('connect_error', handleConnectError);
       socket.disconnect();
     };
-  }, [enabled, token]);
+  }, [shouldEnable, token]);
+
+  return shouldEnable && isConnected;
 }

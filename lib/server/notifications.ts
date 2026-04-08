@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/db/prisma';
 import { logActivity } from '@/lib/server/activity-history';
 import { notificationBus, type LiveNotificationPayload } from '@/lib/server/notification-bus';
+import { emitNotificationToUser } from '@/lib/server/socket-notification';
 import type { NotificationType, Prisma } from '@/lib/generated/prisma';
 
 export interface CreateNotificationInput {
@@ -78,10 +79,14 @@ export async function createNotification(input: CreateNotificationInput) {
     console.error('[notifications create]', error);
   }
 
-  notificationBus.emit('notification:new', {
-    userId: input.userId,
-    notification: payload,
-  });
+  const emittedDirectly = emitNotificationToUser(input.userId, payload);
+
+  if (!emittedDirectly) {
+    notificationBus.emit('notification:new', {
+      userId: input.userId,
+      notification: payload,
+    });
+  }
 
   void logActivity({
     userId: input.userId,

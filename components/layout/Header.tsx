@@ -149,23 +149,9 @@ export const Header = () => {
     setLastSeenAt(stored || null);
   }, [user?.id]);
 
-  useEffect(() => {
-    if (!user?.id) return;
-    void fetchNotifications();
-    const timer = window.setInterval(() => {
-      void fetchNotifications();
-    }, 20000);
-    return () => window.clearInterval(timer);
-  }, [user?.id, fetchNotifications]);
-
-  const unreadCount = notifications.filter((item) => {
-    if (!lastSeenAt) return true;
-    return new Date(item.createdAt).getTime() > new Date(lastSeenAt).getTime();
-  }).length;
-
-  useLiveNotifications({
+  const isNotificationsSocketConnected = useLiveNotifications({
     token: accessToken,
-    enabled: isAuthenticated,
+    enabled: isAuthenticated && Boolean(accessToken),
     onNotification: (notification) => {
       setNotifications((prev) => {
         if (prev.some((item) => item.id === notification.id)) return prev;
@@ -176,6 +162,29 @@ export const Header = () => {
       });
     },
   });
+
+  useEffect(() => {
+    if (!user?.id) return;
+    void fetchNotifications();
+  }, [user?.id, fetchNotifications]);
+
+  useEffect(() => {
+    if (!user?.id || isNotificationsSocketConnected) return;
+    const timer = window.setInterval(() => {
+      void fetchNotifications();
+    }, 120000);
+    return () => window.clearInterval(timer);
+  }, [user?.id, fetchNotifications, isNotificationsSocketConnected]);
+
+  useEffect(() => {
+    if (!user?.id || !isNotificationsSocketConnected) return;
+    void fetchNotifications();
+  }, [user?.id, fetchNotifications, isNotificationsSocketConnected]);
+
+  const unreadCount = notifications.filter((item) => {
+    if (!lastSeenAt) return true;
+    return new Date(item.createdAt).getTime() > new Date(lastSeenAt).getTime();
+  }).length;
 
   return (
     <header className="relative z-120 lg:fixed lg:top-0 lg:left-0 lg:right-0 lg:bg-white lg:shadow-md" suppressHydrationWarning>

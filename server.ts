@@ -7,6 +7,7 @@ import { Server as SocketIOServer } from 'socket.io';
 import { jwtVerify } from 'jose';
 import { PrismaClient } from './lib/generated/prisma/index.js';
 import { notificationBus, type LiveNotificationEvent } from './lib/server/notification-bus.js';
+import { emitNotificationToUser, setNotificationSocketServer } from './lib/server/socket-notification.js';
 import { chatBus, type LiveChatMessageEvent } from './lib/server/chat-bus.js';
 import { sendAdminChatAlertEmail } from './lib/server/mailer.js';
 import 'dotenv/config';
@@ -148,8 +149,10 @@ app.prepare().then(() => {
     },
   });
 
+  setNotificationSocketServer(io);
+
   notificationBus.on('notification:new', (event: LiveNotificationEvent) => {
-    io.to(`user:${event.userId}`).emit('notification:new', event.notification);
+    emitNotificationToUser(event.userId, event.notification);
   });
 
   chatBus.on('chat:message:new', (event: LiveChatMessageEvent) => {
