@@ -5,6 +5,7 @@ import { createWriteStream, existsSync } from 'fs';
 import { join } from 'path';
 import { pipeline } from 'stream/promises';
 import { Readable } from 'stream';
+import type { ReadableStream as NodeReadableStream } from 'stream/web';
 
 export const runtime = 'nodejs';
 
@@ -112,7 +113,8 @@ export async function POST(req: NextRequest) {
     const filePath = join(UPLOAD_DIR, storedName);
 
     // Stream file to disk to avoid buffering large uploads in memory.
-    const input = Readable.fromWeb(file.stream() as unknown as ReadableStream<Uint8Array>);
+    const webStream = file.stream() as unknown as NodeReadableStream<Uint8Array>;
+    const input = Readable.fromWeb(webStream);
     const output = createWriteStream(filePath, { flags: 'wx' });
     await pipeline(input, output);
 
