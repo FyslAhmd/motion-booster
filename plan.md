@@ -37,7 +37,7 @@
 Build a high-security SaaS platform using **Next.js 16 (monorepo)** with API Routes + Server Actions for the core backend, **PostgreSQL** for persistent data, **Redis** for caching/sessions/rate-limiting, **Socket.IO** as a separate microservice for real-time messaging, and **Meta Marketing API** for ad spend data.
 
 **Deployment targets:**
-- Next.js app → **Vercel**
+- Next.js app → **Self-hosted VPS (Node + PM2 + Nginx)**
 - Socket.IO server + PostgreSQL + Redis → **Railway/Render**
 - File storage → **AWS S3**
 
@@ -105,7 +105,7 @@ Build a high-security SaaS platform using **Next.js 16 (monorepo)** with API Rou
            ▼                          ▼
 ┌─────────────────────┐    ┌─────────────────────┐
 │   Next.js 16 App    │    │  Socket.IO Server   │
-│   (Vercel)          │    │  (Railway/Render)    │
+│ (Self-hosted VPS)   │    │  (Railway/Render)    │
 │                     │    │                      │
 │  ┌───────────────┐  │    │  • JWT auth on conn  │
 │  │ App Router    │  │    │  • Text messaging    │
@@ -1123,7 +1123,7 @@ Dashboard request for ad spend data
     - Return to client
 ```
 
-**Background refresh (Vercel Cron):**
+**Background refresh (Server Cron):**
 - Every 30 minutes: refresh data for all active meta_accounts
 - Token expiry check: refresh long-lived tokens 7 days before expiry
 
@@ -1611,8 +1611,8 @@ For validation errors (`VAL_001`):
 | Tool | Purpose | Coverage |
 |------|---------|----------|
 | Sentry | Error tracking | Frontend JS errors + backend API errors |
-| Vercel Analytics | Performance | Core Web Vitals, page load times |
-| Vercel Logs | Server logs | API route logs, Edge middleware logs |
+| OpenTelemetry + Grafana | Performance | Core Web Vitals, response times, request traces |
+| PM2 + Nginx Logs | Server logs | API route logs, middleware/proxy logs |
 | Railway Logs | Socket.IO logs | Connection events, message events |
 | Health endpoint | Uptime monitoring | `GET /api/health` → checks DB, Redis, S3 |
 
@@ -1678,14 +1678,14 @@ For validation errors (`VAL_001`):
 
 | Service | Platform | Plan | Cost (est.) |
 |---------|----------|------|-------------|
-| Next.js app | Vercel | Pro ($20/mo) | $20/mo |
+| Next.js app | VPS (Node + PM2 + Nginx) | 2 vCPU / 4 GB RAM | $10-25/mo |
 | Socket.IO server | Railway | Starter ($5/mo) | $5-15/mo |
 | PostgreSQL | Railway (or Neon) | Starter | $5-10/mo |
 | Redis | Railway (or Upstash) | Free/Starter | $0-10/mo |
 | File storage | AWS S3 | Pay-as-you-go | $1-5/mo |
 | Email | Resend (or AWS SES) | Free tier → Pro | $0-20/mo |
 | Monitoring | Sentry | Free tier | $0/mo |
-| Domain + SSL | Vercel (auto) | Included | $0/mo |
+| Domain + SSL | Nginx + Let's Encrypt | Included | $0/mo |
 | **Total** | | | **~$31-80/mo** |
 
 ### 9.2 — CI/CD Pipeline (GitHub Actions)
@@ -1704,7 +1704,7 @@ pull_request:
 push (main):
   - All PR checks +
   - E2E tests (Playwright against staging)
-  - Deploy Next.js to Vercel (auto via Vercel GitHub integration)
+  - Deploy Next.js to VPS (SSH/CI runner or Docker rollout)
   - Build & deploy Socket.IO server Docker image to Railway
   - Run Prisma migrations on production DB
   - Notify Sentry of new release
@@ -1851,7 +1851,7 @@ Every feature must pass ALL of these before being considered complete:
 
 **Rationale:** Simpler deployment, fewer moving parts, unified TypeScript codebase, Server Components for security-sensitive rendering, built-in API routes eliminate the need for a separate Express server. Server Actions provide type-safe mutations with automatic CSRF protection.
 
-**Trade-off:** Socket.IO requires a separate microservice since Vercel doesn't support persistent WebSocket connections.
+**Trade-off:** Socket.IO is best kept as a separate microservice for independent scaling and operational isolation.
 
 ### 2. PostgreSQL + Redis (over MongoDB)
 
@@ -1873,7 +1873,7 @@ Every feature must pass ALL of these before being considered complete:
 
 ### 6. Separate Socket.IO Server (over integrated WebSocket)
 
-**Rationale:** Vercel's serverless architecture doesn't support persistent WebSocket connections. A dedicated Socket.IO server on Railway/Render handles long-lived connections, can scale independently, and uses Redis adapter for horizontal scaling.
+**Rationale:** Some serverless/stateless environments do not support persistent WebSocket connections reliably. A dedicated Socket.IO server on Railway/Render handles long-lived connections, can scale independently, and uses Redis adapter for horizontal scaling.
 
 ### 7. AES-256-GCM for At-Rest Encryption
 
