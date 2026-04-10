@@ -16,7 +16,9 @@ export const metadata: Metadata = {
   description:
     "Enhance your customer interactions and streamline your sales processes with our powerful and intuitive CRM solution.",
   icons: {
-    icon: "/BlackMonogram1.svg",
+    icon: "/RedMonogram1.svg",
+    shortcut: "/RedMonogram1.svg",
+    apple: "/RedMonogram1.svg",
   },
 };
 
