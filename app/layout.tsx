@@ -15,11 +15,19 @@ export const metadata: Metadata = {
   title: "Grow Your Business Identity with Motion Booster",
   description:
     "Enhance your customer interactions and streamline your sales processes with our powerful and intuitive CRM solution.",
+  
   icons: {
-    icon: "/RedMono.png",
-    shortcut: "/RedMono.png",
-    apple: "/RedMono.png",
+    icon: [
+      { url: "/logo/RedMonogram1.ico" },
+      { url: "/logo/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/logo/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+    ],
+    apple: [
+      { url: "/logo/apple-touch-icon.png", sizes: "180x180" },
+    ],
   },
+
+  manifest: "/site.webmanifest",
 };
 
 export default function RootLayout({
