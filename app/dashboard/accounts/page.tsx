@@ -77,6 +77,8 @@ interface PreparedInvoice {
   totalAmount: number;
 }
 
+const USD_TO_TK_RATE = 145;
+
 function formatAmount(value: number): string {
   return value.toLocaleString('en-US', {
     minimumFractionDigits: 2,
@@ -208,7 +210,7 @@ export default function AccountsPage() {
           const budget = budgetsByUserId.get(userId);
           const account = accountsByUserId.get(userId);
 
-          const facebookSpend = Number(budget?.totalSpent || 0);
+          const facebookSpend = Number((Number(budget?.totalSpent || 0) * USD_TO_TK_RATE).toFixed(2));
           const othersTotal = Number(account?.othersTotal || 0);
           const totalAdjustmentTotal = Number(account?.totalAdjustmentTotal || 0);
 

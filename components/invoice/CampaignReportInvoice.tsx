@@ -4,7 +4,6 @@ interface ReportInvoiceRow {
   adCreateDate: string;
   adEndDate: string;
   campaignName: string;
-  pageName: string;
   spendUsd: number;
   spendTk: number;
   goal: string;
@@ -41,14 +40,13 @@ function fmt(value: number) {
 // Column Configuration with Flex Weights
 export const COL_CONFIG: Record<string, { label: string; flex: number; align: 'center' | 'left' | 'right' }> = {
   campaignName: { label: 'Campaign Name', flex: 18, align: 'left' },
-  pageName: { label: 'Page Name', flex: 14, align: 'left' },
-  spendUsd: { label: 'Spend ($)', flex: 7, align: 'right' },
-  spendTk: { label: 'Spend (Tk)', flex: 8, align: 'right' },
   goal: { label: 'Goal', flex: 10, align: 'center' },
   goalResult: { label: 'Goal Result', flex: 7, align: 'right' },
   costPerGoalResult: { label: 'Cost / Goal', flex: 7, align: 'right' },
   reach: { label: 'Reach', flex: 7, align: 'right' },
   impressions: { label: 'Impressions', flex: 7, align: 'right' },
+  spendUsd: { label: 'Spend ($)', flex: 7, align: 'right' },
+  spendTk: { label: 'Spend (Tk)', flex: 8, align: 'right' },
 };
 
 export const ALL_COLUMNS = Object.keys(COL_CONFIG);
@@ -169,7 +167,6 @@ export function CampaignReportInvoice({
               </span>
             </div>
           ),
-          pageName: row.pageName,
           spendUsd: fmt(row.spendUsd),
           spendTk: fmt(row.spendTk),
           goal: row.goal,

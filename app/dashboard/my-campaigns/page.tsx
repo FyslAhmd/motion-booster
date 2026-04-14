@@ -1,13 +1,17 @@
-'use client';
+"use client";
 
-import { useRef, useState, useEffect } from 'react';
-import AdminShell from '../_components/AdminShell';
-import { AdminSectionSkeleton } from '@/components/ui/AdminSectionSkeleton';
-import { CampaignsTable } from '../meta/_components';
-import { Search, Filter, RefreshCw } from 'lucide-react';
-import { useAuth } from '@/lib/auth/context';
-import { CampaignReportInvoice, ALL_COLUMNS, COL_CONFIG } from '@/components/invoice/CampaignReportInvoice';
-import { fetchNextInvoiceNumber } from '@/lib/invoice/client';
+import { useRef, useState, useEffect } from "react";
+import AdminShell from "../_components/AdminShell";
+import { AdminSectionSkeleton } from "@/components/ui/AdminSectionSkeleton";
+import { CampaignsTable } from "../meta/_components";
+import { Search, Filter, RefreshCw } from "lucide-react";
+import { useAuth } from "@/lib/auth/context";
+import {
+  CampaignReportInvoice,
+  ALL_COLUMNS,
+  COL_CONFIG,
+} from "@/components/invoice/CampaignReportInvoice";
+import { fetchNextInvoiceNumber } from "@/lib/invoice/client";
 
 interface CampaignLite {
   id: string;
@@ -33,7 +37,6 @@ interface ReportRow {
   adCreateDate: string;
   adEndDate: string;
   campaignName: string;
-  pageName: string;
   spendUsd: number;
   spendTk: number;
   goal: string;
@@ -47,78 +50,84 @@ const USD_TO_TK_RATE = 145;
 
 const GOAL_TO_DYNAMIC_METRIC: Record<string, GoalConfig> = {
   CONVERSATIONS: {
-    metricLabel: 'Messages',
-    costLabel: 'Cost / Message',
+    metricLabel: "Messages",
+    costLabel: "Cost / Message",
     actionTypes: [
-      'onsite_conversion.total_messaging_connection',
-      'onsite_conversion.messaging_conversation_started_7d',
+      "onsite_conversion.total_messaging_connection",
+      "onsite_conversion.messaging_conversation_started_7d",
     ],
   },
   MESSAGING_PURCHASE_CONVERSION: {
-    metricLabel: 'Messages',
-    costLabel: 'Cost / Message',
+    metricLabel: "Messages",
+    costLabel: "Cost / Message",
     actionTypes: [
-      'onsite_conversion.messaging_conversation_started_7d',
-      'onsite_conversion.total_messaging_connection',
+      "onsite_conversion.messaging_conversation_started_7d",
+      "onsite_conversion.total_messaging_connection",
     ],
   },
   LEAD_GENERATION: {
-    metricLabel: 'Leads',
-    costLabel: 'Cost / Lead',
-    actionTypes: ['lead', 'onsite_conversion.lead', 'onsite_web_lead'],
+    metricLabel: "Leads",
+    costLabel: "Cost / Lead",
+    actionTypes: ["lead", "onsite_conversion.lead", "onsite_web_lead"],
   },
   LINK_CLICKS: {
-    metricLabel: 'Link Clicks',
-    costLabel: 'Cost / Click',
-    actionTypes: ['link_click'],
+    metricLabel: "Link Clicks",
+    costLabel: "Cost / Click",
+    actionTypes: ["link_click"],
   },
   LANDING_PAGE_VIEWS: {
-    metricLabel: 'LPV',
-    costLabel: 'Cost / LPV',
-    actionTypes: ['landing_page_view', 'link_click'],
+    metricLabel: "LPV",
+    costLabel: "Cost / LPV",
+    actionTypes: ["landing_page_view", "link_click"],
   },
   OFFSITE_CONVERSIONS: {
-    metricLabel: 'Purchases',
-    costLabel: 'Cost / Purchase',
-    actionTypes: ['purchase', 'onsite_web_purchase'],
+    metricLabel: "Purchases",
+    costLabel: "Cost / Purchase",
+    actionTypes: ["purchase", "onsite_web_purchase"],
   },
   POST_ENGAGEMENT: {
-    metricLabel: 'Engagement',
-    costLabel: 'Cost / Engagement',
-    actionTypes: ['post_engagement', 'page_engagement'],
+    metricLabel: "Engagement",
+    costLabel: "Cost / Engagement",
+    actionTypes: ["post_engagement", "page_engagement"],
   },
   THRUPLAY: {
-    metricLabel: 'Video Views',
-    costLabel: 'Cost / View',
-    actionTypes: ['video_view', 'thruplay'],
+    metricLabel: "Video Views",
+    costLabel: "Cost / View",
+    actionTypes: ["video_view", "thruplay"],
   },
   REACH: {
-    metricLabel: 'Reach Result',
-    costLabel: 'Cost / Reach',
-    actionTypes: ['reach'],
+    metricLabel: "Reach Result",
+    costLabel: "Cost / Reach",
+    actionTypes: ["reach"],
   },
 };
 
 function fmtCurrency(value: number) {
-  return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return value.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 }
 
 function fmtTk(value: number) {
-  return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return value.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 }
 
 function fmtDate(value?: string) {
-  if (!value) return 'N/A';
-  return new Date(value).toLocaleDateString('en-US', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
+  if (!value) return "N/A";
+  return new Date(value).toLocaleDateString("en-US", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
   });
 }
 
 function getDateTs(value?: string, endOfDay = false) {
   if (!value) return Number.NaN;
-  const suffix = endOfDay ? 'T23:59:59' : 'T00:00:00';
+  const suffix = endOfDay ? "T23:59:59" : "T00:00:00";
   return new Date(`${value}${suffix}`).getTime();
 }
 
@@ -128,11 +137,20 @@ function parseCampaignInsight(raw: unknown) {
     reach?: string | number;
     impressions?: string | number;
     actions?: Array<{ action_type?: string; value?: string | number }>;
-    cost_per_action_type?: Array<{ action_type?: string; value?: string | number }>;
+    cost_per_action_type?: Array<{
+      action_type?: string;
+      value?: string | number;
+    }>;
   };
 
-  const rawRecord = (raw && typeof raw === 'object' ? raw : {}) as { data?: unknown[] };
-  const insight = Array.isArray(rawRecord.data) ? rawRecord.data[0] : Array.isArray(raw) ? raw[0] : raw;
+  const rawRecord = (raw && typeof raw === "object" ? raw : {}) as {
+    data?: unknown[];
+  };
+  const insight = Array.isArray(rawRecord.data)
+    ? rawRecord.data[0]
+    : Array.isArray(raw)
+      ? raw[0]
+      : raw;
   if (!insight) {
     return {
       spend: 0,
@@ -151,16 +169,27 @@ function parseCampaignInsight(raw: unknown) {
     spend: Number(typedInsight.spend || 0),
     reach: Number(typedInsight.reach || 0),
     impressions: Number(typedInsight.impressions || 0),
-    getAction: (type: string) => Number(actions.find((a) => a.action_type === type)?.value || 0),
-    getCost: (type: string) => Number(costs.find((a) => a.action_type === type)?.value || 0),
+    getAction: (type: string) =>
+      Number(actions.find((a) => a.action_type === type)?.value || 0),
+    getCost: (type: string) =>
+      Number(costs.find((a) => a.action_type === type)?.value || 0),
   };
 }
 
-function resolveGoalResult(goal: string, parsed: ReturnType<typeof parseCampaignInsight>) {
-  const cfg = GOAL_TO_DYNAMIC_METRIC[goal] || GOAL_TO_DYNAMIC_METRIC.LINK_CLICKS;
-  if (goal === 'REACH') {
+function resolveGoalResult(
+  goal: string,
+  parsed: ReturnType<typeof parseCampaignInsight>,
+) {
+  const cfg =
+    GOAL_TO_DYNAMIC_METRIC[goal] || GOAL_TO_DYNAMIC_METRIC.LINK_CLICKS;
+  if (goal === "REACH") {
     const cost = parsed.reach > 0 ? parsed.spend / parsed.reach : 0;
-    return { label: cfg.metricLabel, costLabel: cfg.costLabel, value: parsed.reach, costValue: cost };
+    return {
+      label: cfg.metricLabel,
+      costLabel: cfg.costLabel,
+      value: parsed.reach,
+      costValue: cost,
+    };
   }
 
   for (const actionType of cfg.actionTypes) {
@@ -185,22 +214,26 @@ function resolveGoalResult(goal: string, parsed: ReturnType<typeof parseCampaign
 
 export default function MyCampaignsPage() {
   const { user } = useAuth();
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('ACTIVE');
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ACTIVE");
   const [refreshTick, setRefreshTick] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const [assignedCampaignIds, setAssignedCampaignIds] = useState<string[]>([]);
-  const [campaignAccountById, setCampaignAccountById] = useState<Record<string, string>>({});
+  const [campaignAccountById, setCampaignAccountById] = useState<
+    Record<string, string>
+  >({});
   const [assignmentsLoaded, setAssignmentsLoaded] = useState(false);
-  const [activeCampaignCount, setActiveCampaignCount] = useState<number | null>(null);
+  const [activeCampaignCount, setActiveCampaignCount] = useState<number | null>(
+    null,
+  );
   const [reportOpen, setReportOpen] = useState(false);
-  const [reportFromDate, setReportFromDate] = useState('');
-  const [reportToDate, setReportToDate] = useState('');
+  const [reportFromDate, setReportFromDate] = useState("");
+  const [reportToDate, setReportToDate] = useState("");
   const [reportLoading, setReportLoading] = useState(false);
-  const [reportError, setReportError] = useState('');
+  const [reportError, setReportError] = useState("");
   const [reportRows, setReportRows] = useState<ReportRow[]>([]);
-  const [reportGeneratedAt, setReportGeneratedAt] = useState('');
-  const [reportInvoiceNo, setReportInvoiceNo] = useState('');
+  const [reportGeneratedAt, setReportGeneratedAt] = useState("");
+  const [reportInvoiceNo, setReportInvoiceNo] = useState("");
   const [selectedColumns, setSelectedColumns] = useState<string[]>(ALL_COLUMNS);
   const [columnsDropdownOpen, setColumnsDropdownOpen] = useState(false);
   const reportInvoiceRef = useRef<HTMLDivElement>(null);
@@ -216,17 +249,24 @@ export default function MyCampaignsPage() {
       .then((json) => {
         if (cancelled || !json?.success) return;
 
-        const campaigns = Array.isArray(json?.data?.campaigns) ? json.data.campaigns : [];
+        const campaigns = Array.isArray(json?.data?.campaigns)
+          ? json.data.campaigns
+          : [];
         const ids = campaigns
           .map((c: { metaObjectId?: string }) => c?.metaObjectId)
-          .filter((id: string | undefined): id is string => typeof id === 'string' && id.length > 0);
+          .filter(
+            (id: string | undefined): id is string =>
+              typeof id === "string" && id.length > 0,
+          );
 
         const accountMap: Record<string, string> = {};
-        campaigns.forEach((c: { metaObjectId?: string; metaAccountId?: string }) => {
-          if (c?.metaObjectId && c?.metaAccountId) {
-            accountMap[c.metaObjectId] = c.metaAccountId;
-          }
-        });
+        campaigns.forEach(
+          (c: { metaObjectId?: string; metaAccountId?: string }) => {
+            if (c?.metaObjectId && c?.metaAccountId) {
+              accountMap[c.metaObjectId] = c.metaAccountId;
+            }
+          },
+        );
 
         setAssignedCampaignIds(Array.from(new Set(ids)));
         setCampaignAccountById(accountMap);
@@ -263,7 +303,10 @@ export default function MyCampaignsPage() {
 
         for (let i = 0; i < uniqueIds.length; i += chunkSize) {
           const chunk = uniqueIds.slice(i, i + chunkSize);
-          const params = new URLSearchParams({ type: 'CAMPAIGN', ids: chunk.join(',') });
+          const params = new URLSearchParams({
+            type: "CAMPAIGN",
+            ids: chunk.join(","),
+          });
           const res = await fetch(`/api/v1/meta/by-ids?${params.toString()}`);
           const json = await res.json();
           if (json?.success && Array.isArray(json.data)) {
@@ -275,7 +318,7 @@ export default function MyCampaignsPage() {
           // Use derived_status.key (same as UI badge) — not raw status/effective_status.
           // A Completed/Not Delivering campaign still has effective_status='ACTIVE' from
           // Meta, but derived_status.key correctly reflects its true delivery state.
-          (c) => (c?.derived_status?.key || c?.effective_status) === 'ACTIVE',
+          (c) => (c?.derived_status?.key || c?.effective_status) === "ACTIVE",
         ).length;
 
         if (!cancelled) {
@@ -313,7 +356,10 @@ export default function MyCampaignsPage() {
 
     for (let i = 0; i < uniqueIds.length; i += chunkSize) {
       const chunk = uniqueIds.slice(i, i + chunkSize);
-      const params = new URLSearchParams({ type: 'CAMPAIGN', ids: chunk.join(',') });
+      const params = new URLSearchParams({
+        type: "CAMPAIGN",
+        ids: chunk.join(","),
+      });
       const res = await fetch(`/api/v1/meta/by-ids?${params.toString()}`);
       const json = await res.json();
       if (json?.success && Array.isArray(json.data)) {
@@ -326,62 +372,53 @@ export default function MyCampaignsPage() {
 
   const getDominantGoalForCampaign = async (campaignId: string) => {
     // Use mode=by_campaign: queries /{campaignId}/adsets directly, no account_id needed
-    const params = new URLSearchParams({ mode: 'by_campaign', campaign_id: campaignId, limit: '50' });
+    const params = new URLSearchParams({
+      mode: "by_campaign",
+      campaign_id: campaignId,
+      limit: "50",
+    });
     const res = await fetch(`/api/v1/meta/adsets?${params.toString()}`);
     const json = await res.json();
     const adSets = Array.isArray(json?.data) ? json.data : [];
 
     const counts = new Map<string, number>();
     adSets.forEach((a: { optimization_goal?: string }) => {
-      const key = a?.optimization_goal || 'LINK_CLICKS';
+      const key = a?.optimization_goal || "LINK_CLICKS";
       counts.set(key, (counts.get(key) || 0) + 1);
     });
 
-    return [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || 'LINK_CLICKS';
-  };
-
-  const fetchPageNamesByCampaignIds = async (campaignIds: string[]) => {
-    const uniqueIds = Array.from(new Set(campaignIds.filter(Boolean)));
-    if (uniqueIds.length === 0) return {} as Record<string, string>;
-
-    const params = new URLSearchParams({ ids: uniqueIds.join(',') });
-    const res = await fetch(`/api/v1/meta/page-names?${params.toString()}`);
-    const json = await res.json();
-
-    if (!json?.success || !json?.map || typeof json.map !== 'object') {
-      return {} as Record<string, string>;
-    }
-
-    return json.map as Record<string, string>;
+    return (
+      [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || "LINK_CLICKS"
+    );
   };
 
   const buildReportRows = async () => {
     if (!reportFromDate || !reportToDate) {
-      setReportError('Please select both from and to dates.');
+      setReportError("Please select both from and to dates.");
       return;
     }
 
     const fromTs = getDateTs(reportFromDate);
     const toTs = getDateTs(reportToDate, true);
     if (Number.isNaN(fromTs) || Number.isNaN(toTs) || fromTs > toTs) {
-      setReportError('Please select a valid date range.');
+      setReportError("Please select a valid date range.");
       return;
     }
 
     try {
       setReportLoading(true);
-      setReportError('');
+      setReportError("");
       setReportRows([]);
-      setReportInvoiceNo('');
+      setReportInvoiceNo("");
 
       const campaigns = await fetchCampaignsByIds(assignedCampaignIds);
       const filtered = campaigns.filter((c) => {
-        const startTs = c.start_time ? new Date(c.start_time).getTime() : Number.NaN;
+        const startTs = c.start_time
+          ? new Date(c.start_time).getTime()
+          : Number.NaN;
         if (Number.isNaN(startTs)) return false;
         return startTs >= fromTs && startTs <= toTs;
       });
-
-      const pageNameMap = await fetchPageNamesByCampaignIds(filtered.map((campaign) => campaign.id));
 
       const rows = await Promise.all(
         filtered.map(async (campaign) => {
@@ -399,7 +436,6 @@ export default function MyCampaignsPage() {
             adCreateDate: fmtDate(campaign.start_time || campaign.created_time),
             adEndDate: fmtDate(campaign.stop_time),
             campaignName: campaign.name || campaign.id,
-            pageName: pageNameMap[campaign.id] || 'N/A',
             spendUsd: parsed.spend,
             spendTk: parsed.spend * USD_TO_TK_RATE,
             goal,
@@ -411,15 +447,17 @@ export default function MyCampaignsPage() {
         }),
       );
 
-      const nextInvoiceNo = rows.length > 0 ? await fetchNextInvoiceNumber() : '';
+      const nextInvoiceNo =
+        rows.length > 0 ? await fetchNextInvoiceNumber() : "";
       setReportRows(rows);
       setReportGeneratedAt(new Date().toISOString());
       setReportInvoiceNo(nextInvoiceNo);
       if (rows.length === 0) {
-        setReportError('No campaigns matched this date range.');
+        setReportError("No campaigns matched this date range.");
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to build report.';
+      const message =
+        err instanceof Error ? err.message : "Failed to build report.";
       setReportError(message);
     } finally {
       setReportLoading(false);
@@ -430,42 +468,48 @@ export default function MyCampaignsPage() {
     if (reportRows.length === 0 || !reportInvoiceRef.current) return;
 
     const [{ jsPDF }, { toPng }] = await Promise.all([
-      import('jspdf'),
-      import('html-to-image'),
+      import("jspdf"),
+      import("html-to-image"),
     ]);
 
     const wrapper = reportInvoiceRef.current.parentElement as HTMLElement;
     const el = reportInvoiceRef.current;
 
     // ── Step 1: Show invoice on-screen (invisible) so browser computes layout ──
-    wrapper.style.position = 'fixed';
-    wrapper.style.top = '0';
-    wrapper.style.left = '0';
-    wrapper.style.zIndex = '-1';
-    wrapper.style.opacity = '0';
-    wrapper.style.pointerEvents = 'none';
+    wrapper.style.position = "fixed";
+    wrapper.style.top = "0";
+    wrapper.style.left = "0";
+    wrapper.style.zIndex = "-1";
+    wrapper.style.opacity = "0";
+    wrapper.style.pointerEvents = "none";
 
     // Wait for fonts + paint
     await document.fonts.ready;
-    await new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
+    await new Promise<void>((r) =>
+      requestAnimationFrame(() => requestAnimationFrame(() => r())),
+    );
 
     // ── Step 2: Capture using html-to-image (browser's OWN renderer) ──────────
     // html-to-image uses SVG foreignObject — the browser renders the DOM natively,
     // producing pixel-perfect output identical to screen. No html2canvas text bugs.
     const imgData = await toPng(el, {
       pixelRatio: 2,
-      backgroundColor: '#d9d9d9',
+      backgroundColor: "#d9d9d9",
     });
 
     // ── Step 3: Restore off-screen position ───────────────────────────────────
-    wrapper.style.position = 'absolute';
-    wrapper.style.top = '-9999px';
-    wrapper.style.left = '-9999px';
-    wrapper.style.zIndex = '-1';
-    wrapper.style.opacity = '';
+    wrapper.style.position = "absolute";
+    wrapper.style.top = "-9999px";
+    wrapper.style.left = "-9999px";
+    wrapper.style.zIndex = "-1";
+    wrapper.style.opacity = "";
 
     // ── Step 4: Build PDF ─────────────────────────────────────────────────────
-    const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+    const doc = new jsPDF({
+      orientation: "portrait",
+      unit: "pt",
+      format: "a4",
+    });
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 16;
@@ -482,13 +526,13 @@ export default function MyCampaignsPage() {
 
     let heightLeft = renderHeight;
     let y = margin;
-    doc.addImage(imgData, 'PNG', margin, y, renderWidth, renderHeight);
+    doc.addImage(imgData, "PNG", margin, y, renderWidth, renderHeight);
     heightLeft -= pageHeight - margin * 2;
 
     while (heightLeft > 0) {
       doc.addPage();
       y = margin - (renderHeight - heightLeft);
-      doc.addImage(imgData, 'PNG', margin, y, renderWidth, renderHeight);
+      doc.addImage(imgData, "PNG", margin, y, renderWidth, renderHeight);
       heightLeft -= pageHeight - margin * 2;
     }
 
@@ -545,14 +589,14 @@ export default function MyCampaignsPage() {
                 className="flex items-center justify-center gap-2 rounded-lg border border-emerald-200 bg-linear-to-b from-emerald-50 to-white px-3 py-2 text-sm font-semibold text-emerald-700 shadow-sm"
               >
                 {/* <Activity className="h-4 w-4" /> */}
-                {countsLoading ? 'Active ...' : `Active ${activeCampaignCount}`}
+                {countsLoading ? "Active ..." : `Active ${activeCampaignCount}`}
               </button>
 
               <button
                 type="button"
                 onClick={() => {
                   setReportOpen(true);
-                  setReportError('');
+                  setReportError("");
                 }}
                 className="flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
               >
@@ -568,7 +612,9 @@ export default function MyCampaignsPage() {
                 title="Refresh campaigns"
                 className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-blue-700 shadow-sm transition-colors hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+                <RefreshCw
+                  className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+                />
               </button>
             </div>
           </div>
@@ -597,7 +643,9 @@ export default function MyCampaignsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-4xl rounded-2xl bg-white p-4 shadow-2xl sm:p-5">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-gray-900">Campaign Report</h2>
+              <h2 className="text-lg font-bold text-gray-900">
+                Campaign Report
+              </h2>
               <button
                 type="button"
                 onClick={() => setReportOpen(false)}
@@ -608,7 +656,8 @@ export default function MyCampaignsPage() {
             </div>
 
             <p className="mt-1 text-sm text-gray-600">
-              Select from and to date, then generate a report PDF in A4 format using your invoice design.
+              Select from and to date, then generate a report PDF in A4 format
+              using your invoice design.
             </p>
 
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -645,13 +694,20 @@ export default function MyCampaignsPage() {
                   {columnsDropdownOpen && (
                     <div className="absolute top-full left-0 mt-1 w-full sm:w-56 rounded-lg bg-white shadow-xl border border-gray-200 p-2 z-10 flex flex-col gap-1 max-h-60 overflow-y-auto">
                       {ALL_COLUMNS.map((col) => (
-                        <label key={col} className="flex items-center gap-2 px-2 py-1 hover:bg-gray-50 rounded cursor-pointer text-sm text-gray-700">
+                        <label
+                          key={col}
+                          className="flex items-center gap-2 px-2 py-1 hover:bg-gray-50 rounded cursor-pointer text-sm text-gray-700"
+                        >
                           <input
                             type="checkbox"
                             checked={selectedColumns.includes(col)}
                             onChange={(e) => {
-                              if (e.target.checked) setSelectedColumns(prev => [...prev, col]);
-                              else setSelectedColumns(prev => prev.filter(c => c !== col));
+                              if (e.target.checked)
+                                setSelectedColumns((prev) => [...prev, col]);
+                              else
+                                setSelectedColumns((prev) =>
+                                  prev.filter((c) => c !== col),
+                                );
                             }}
                             className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                           />
@@ -671,7 +727,7 @@ export default function MyCampaignsPage() {
                   disabled={reportLoading}
                   className="flex-1 rounded-lg border border-blue-200 bg-blue-50 px-3.5 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {reportLoading ? 'Generating...' : 'Generate Report'}
+                  {reportLoading ? "Generating..." : "Generate Report"}
                 </button>
               </div>
 
@@ -699,41 +755,102 @@ export default function MyCampaignsPage() {
                 <table className="w-full min-w-7xl border-separate border-spacing-0 text-xs">
                   <thead className="sticky top-0 bg-gray-100">
                     <tr>
-                      {selectedColumns.includes('campaignName') && <th className="border-b border-gray-200 px-2 py-2 text-left">Campaign Name</th>}
-                      {selectedColumns.includes('pageName') && <th className="border-b border-gray-200 px-2 py-2 text-left">Page Name</th>}
-                      {selectedColumns.includes('spendUsd') && <th className="border-b border-gray-200 px-2 py-2 text-right">Spend ($)</th>}
-                      {selectedColumns.includes('spendTk') && <th className="border-b border-gray-200 px-2 py-2 text-right">Spend (Tk)</th>}
-                      {selectedColumns.includes('goal') && <th className="border-b border-gray-200 px-2 py-2 text-left">Goal</th>}
-                      {selectedColumns.includes('goalResult') && <th className="border-b border-gray-200 px-2 py-2 text-right">Goal Result</th>}
-                      {selectedColumns.includes('costPerGoalResult') && <th className="border-b border-gray-200 px-2 py-2 text-right">Cost / Goal</th>}
-                      {selectedColumns.includes('reach') && <th className="border-b border-gray-200 px-2 py-2 text-right">Reach</th>}
-                      {selectedColumns.includes('impressions') && <th className="border-b border-gray-200 px-2 py-2 text-right">Impressions</th>}
+                      {selectedColumns.includes("campaignName") && (
+                        <th className="border-b border-gray-200 px-2 py-2 text-left">
+                          Campaign Name
+                        </th>
+                      )}
+                      {selectedColumns.includes("goal") && (
+                        <th className="border-b border-gray-200 px-2 py-2 text-left">
+                          Goal
+                        </th>
+                      )}
+                      {selectedColumns.includes("goalResult") && (
+                        <th className="border-b border-gray-200 px-2 py-2 text-right">
+                          Goal Result
+                        </th>
+                      )}
+                      {selectedColumns.includes("costPerGoalResult") && (
+                        <th className="border-b border-gray-200 px-2 py-2 text-right">
+                          Cost / Goal
+                        </th>
+                      )}
+                      {selectedColumns.includes("reach") && (
+                        <th className="border-b border-gray-200 px-2 py-2 text-right">
+                          Reach
+                        </th>
+                      )}
+                      {selectedColumns.includes("impressions") && (
+                        <th className="border-b border-gray-200 px-2 py-2 text-right">
+                          Impressions
+                        </th>
+                      )}
+                      {selectedColumns.includes("spendUsd") && (
+                        <th className="border-b border-gray-200 px-2 py-2 text-right">
+                          Spend ($)
+                        </th>
+                      )}
+                      {selectedColumns.includes("spendTk") && (
+                        <th className="border-b border-gray-200 px-2 py-2 text-right">
+                          Spend (Tk)
+                        </th>
+                      )}
                     </tr>
                   </thead>
                   <tbody>
                     {reportRows.map((row, index) => (
                       <tr key={`${row.campaignName}-${index}`}>
-                        {selectedColumns.includes('campaignName') && (
+                        {selectedColumns.includes("campaignName") && (
                           <td className="border-b border-gray-100 px-2 py-2">
-                            <div className="font-semibold text-gray-900">{row.campaignName}</div>
-                            <div className="text-[10px] text-gray-500">({row.adCreateDate} to {row.adEndDate})</div>
+                            <div className="font-semibold text-gray-900">
+                              {row.campaignName}
+                            </div>
+                            <div className="text-[10px] text-gray-500">
+                              ({row.adCreateDate} to {row.adEndDate})
+                            </div>
                           </td>
                         )}
-                        {selectedColumns.includes('pageName') && <td className="border-b border-gray-100 px-2 py-2">{row.pageName}</td>}
-                        {selectedColumns.includes('spendUsd') && <td className="border-b border-gray-100 px-2 py-2 text-right">{fmtCurrency(row.spendUsd)}</td>}
-                        {selectedColumns.includes('spendTk') && <td className="border-b border-gray-100 px-2 py-2 text-right">{fmtTk(row.spendTk)}</td>}
-                        {selectedColumns.includes('goal') && <td className="border-b border-gray-100 px-2 py-2">{row.goal}</td>}
-                        {selectedColumns.includes('goalResult') && <td className="border-b border-gray-100 px-2 py-2 text-right">{row.goalResult}</td>}
-                        {selectedColumns.includes('costPerGoalResult') && <td className="border-b border-gray-100 px-2 py-2 text-right">{fmtCurrency(row.costPerGoalResult)}</td>}
-                        {selectedColumns.includes('reach') && <td className="border-b border-gray-100 px-2 py-2 text-right">{row.reach}</td>}
-                        {selectedColumns.includes('impressions') && <td className="border-b border-gray-100 px-2 py-2 text-right">{row.impressions}</td>}
+                        {selectedColumns.includes("goal") && (
+                          <td className="border-b border-gray-100 px-2 py-2">
+                            {row.goal}
+                          </td>
+                        )}
+                        {selectedColumns.includes("goalResult") && (
+                          <td className="border-b border-gray-100 px-2 py-2 text-right">
+                            {row.goalResult}
+                          </td>
+                        )}
+                        {selectedColumns.includes("costPerGoalResult") && (
+                          <td className="border-b border-gray-100 px-2 py-2 text-right">
+                            {fmtCurrency(row.costPerGoalResult)}
+                          </td>
+                        )}
+                        {selectedColumns.includes("reach") && (
+                          <td className="border-b border-gray-100 px-2 py-2 text-right">
+                            {row.reach}
+                          </td>
+                        )}
+                        {selectedColumns.includes("impressions") && (
+                          <td className="border-b border-gray-100 px-2 py-2 text-right">
+                            {row.impressions}
+                          </td>
+                        )}
+                        {selectedColumns.includes("spendUsd") && (
+                          <td className="border-b border-gray-100 px-2 py-2 text-right">
+                            {fmtCurrency(row.spendUsd)}
+                          </td>
+                        )}
+                        {selectedColumns.includes("spendTk") && (
+                          <td className="border-b border-gray-100 px-2 py-2 text-right">
+                            {fmtTk(row.spendTk)}
+                          </td>
+                        )}
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
             )}
-
           </div>
         </div>
       )}
@@ -746,18 +863,18 @@ export default function MyCampaignsPage() {
         <div
           aria-hidden="true"
           style={{
-            position: 'absolute',
-            top: '-9999px',
-            left: '-9999px',
-            pointerEvents: 'none',
+            position: "absolute",
+            top: "-9999px",
+            left: "-9999px",
+            pointerEvents: "none",
             zIndex: -1,
           }}
         >
           <div ref={reportInvoiceRef} style={{ width: 794 }}>
             <CampaignReportInvoice
-              invoiceNo={reportInvoiceNo || 'MB-00000'}
+              invoiceNo={reportInvoiceNo || "MB-00000"}
               billDate={fmtDate(reportGeneratedAt || new Date().toISOString())}
-              clientName={user?.fullName || user?.username || 'Assigned User'}
+              clientName={user?.fullName || user?.username || "Assigned User"}
               assignBy="Motion Booster Team"
               rows={reportRows}
               selectedColumns={selectedColumns}
