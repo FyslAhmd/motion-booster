@@ -2,25 +2,34 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { validateRequest } from '@/lib/auth/validate-request';
 import { metaFetchPage } from '@/lib/meta/client';
+import { cachedFetch } from '@/lib/meta/cache';
 
 type UserCounts = { campaigns: number; adSets: number; ads: number };
 type CampaignChildCounts = { adSets: number; ads: number };
 
-async function fetchCampaignChildCounts(campaignId: string): Promise<CampaignChildCounts> {
-  try {
-    const [adSetsRes, adsRes] = await Promise.all([
-      metaFetchPage(`/${campaignId}/adsets`, { fields: 'id', limit: '1', summary: 'true' }),
-      metaFetchPage(`/${campaignId}/ads`, { fields: 'id', limit: '1', summary: 'true' }),
-    ]);
+const CACHE_TTL_CHILD_COUNTS = 15 * 60 * 1000; // 15 minutes
 
-    return {
-      adSets: Number(adSetsRes?.summary?.total_count ?? 0),
-      ads: Number(adsRes?.summary?.total_count ?? 0),
-    };
-  } catch (err) {
-    console.error('[meta-assignments/users campaign-children]', campaignId, err);
-    return { adSets: 0, ads: 0 };
-  }
+async function fetchCampaignChildCounts(campaignId: string): Promise<CampaignChildCounts> {
+  return cachedFetch(
+    `meta:campaign-child-counts:${campaignId}`,
+    async () => {
+      try {
+        const [adSetsRes, adsRes] = await Promise.all([
+          metaFetchPage(`/${campaignId}/adsets`, { fields: 'id', limit: '1', summary: 'true' }),
+          metaFetchPage(`/${campaignId}/ads`, { fields: 'id', limit: '1', summary: 'true' }),
+        ]);
+
+        return {
+          adSets: Number(adSetsRes?.summary?.total_count ?? 0),
+          ads: Number(adsRes?.summary?.total_count ?? 0),
+        };
+      } catch (err: any) {
+        console.warn(`[meta-assignments/users] Failed child count for ${campaignId}: ${err?.message || err}`);
+        return { adSets: 0, ads: 0 };
+      }
+    },
+    CACHE_TTL_CHILD_COUNTS,
+  );
 }
 
 /**
@@ -87,11 +96,9 @@ export async function GET(req: NextRequest) {
     ));
 
     const campaignChildCounts = new Map<string, CampaignChildCounts>();
-    await Promise.all(
-      uniqueCampaignIds.map(async (campaignId) => {
-        campaignChildCounts.set(campaignId, await fetchCampaignChildCounts(campaignId));
-      }),
-    );
+    for (const campaignId of uniqueCampaignIds) {
+      campaignChildCounts.set(campaignId, await fetchCampaignChildCounts(campaignId));
+    }
 
     const data = users.map((user) => {
       const direct = directCountsByUser.get(user.id) ?? { campaigns: 0, adSets: 0, ads: 0 };

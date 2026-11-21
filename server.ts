@@ -10,6 +10,7 @@ import { notificationBus, type LiveNotificationEvent } from './lib/server/notifi
 import { emitNotificationToUser, setNotificationSocketServer } from './lib/server/socket-notification.js';
 import { chatBus, type LiveChatMessageEvent } from './lib/server/chat-bus.js';
 import { sendAdminChatAlertEmail } from './lib/server/mailer.js';
+import { initDailySpendCron } from './lib/server/daily-cron.js';
 import 'dotenv/config';
 
 const dev = process.env.NODE_ENV !== 'production';
@@ -479,5 +480,6 @@ app.prepare().then(() => {
   httpServer.listen(port, hostname, () => {
     console.log(`\n  ▲ Server ready on http://${hostname}:${port}`);
     console.log(`  ⚡ Socket.IO running on /api/socket\n`);
+    initDailySpendCron();
   });
 });
