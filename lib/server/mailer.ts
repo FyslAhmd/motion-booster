@@ -258,6 +258,7 @@ export async function sendAdminChatAlertEmail(input: {
       const transporter = getMailerTransporter();
       const info = await transporter.sendMail({
         from: fromEmail,
+        replyTo: process.env.SMTP_USER || fromEmail,
         to: recipient,
         subject,
         text: plainText,
@@ -556,6 +557,7 @@ export async function sendDailySpendReportEmail(input: SendDailySpendEmailInput)
       const transporter = getMailerTransporter();
       const info = await transporter.sendMail({
         from: fromEmail,
+        replyTo: process.env.SMTP_USER || fromEmail,
         to: recipient,
         subject,
         text: plainText,
