@@ -9,6 +9,7 @@
     "start": "prisma generate && tsx server.ts",
     "start:next": "next start",
     "lint": "eslint",
+    "seed": "tsx prisma/seed.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {
@@ -54,5 +55,8 @@
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
     "typescript": "^5"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   }
 }

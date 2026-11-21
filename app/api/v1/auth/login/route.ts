@@ -42,9 +42,21 @@ export async function POST(request: NextRequest) {
 
     const { phone, password } = validatedData;
 
-    // 3. Find user by phone
-    const user = await prisma.user.findUnique({
-      where: { phone },
+    // 3. Find user by phone (supports both exact match and international/local prefix variations)
+    const phoneCandidates = [phone];
+    if (phone.startsWith('+8801')) {
+      phoneCandidates.push('0' + phone.slice(4)); // +88016... -> 016...
+      phoneCandidates.push(phone.slice(1));       // +88016... -> 88016...
+    } else if (phone.startsWith('8801')) {
+      phoneCandidates.push('+' + phone);          // 88016... -> +88016...
+      phoneCandidates.push('0' + phone.slice(3)); // 88016... -> 016...
+    } else if (phone.startsWith('01')) {
+      phoneCandidates.push('+88' + phone);        // 016... -> +88016...
+      phoneCandidates.push('88' + phone);         // 016... -> 88016...
+    }
+
+    const user = await prisma.user.findFirst({
+      where: { phone: { in: phoneCandidates } },
       select: {
         id: true,
         username: true,
