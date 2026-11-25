@@ -5,6 +5,7 @@ import {
   fetchAdSetsByCampaign,
   type TimeRange,
 } from '@/lib/meta/client';
+import { deriveDeliveryStatus } from '@/lib/meta/derive-status';
 import { sendDailySpendReportEmail } from '@/lib/server/mailer';
 import { logActivity } from '@/lib/server/activity-history';
 
@@ -309,24 +310,51 @@ export async function fetchCampaignDailyMetrics(
   const timeRange: TimeRange = { since: dateStr, until: dateStr };
 
   try {
-    // 1. Fetch insights for this specific calendar day
-    const insightsPromise = fetchSingleCampaignInsights(campaignId, undefined, timeRange).catch(() => null);
-
-    // 2. Fetch basic campaign details (name, status, objective)
-    const basicPromise = metaFetch<{
+    // 1. Fetch campaign details to evaluate its delivery status
+    const basic = await metaFetch<{
       name?: string;
       status?: string;
       effective_status?: string;
+      configured_status?: string;
+      stop_time?: string;
+      start_time?: string;
+      daily_budget?: string;
+      lifetime_budget?: string;
+      budget_remaining?: string;
+      spend_cap?: string;
       objective?: string;
-    }>(`/${campaignId}`, { fields: 'name,status,effective_status,objective' }).catch(() => null);
+    }>(`/${campaignId}`, {
+      fields: 'name,status,effective_status,configured_status,stop_time,start_time,daily_budget,lifetime_budget,budget_remaining,spend_cap,objective',
+    }).catch(() => null);
 
-    // 3. Try to fetch adsets to detect dominant optimization_goal (cached 10m)
-    const adSetsPromise = fetchAdSetsByCampaign(campaignId, 25).catch(() => null);
+    const delivery = basic ? deriveDeliveryStatus(basic as any) : null;
+    const status = delivery?.key || basic?.effective_status || basic?.status || 'UNKNOWN';
 
-    const [insights, basic, adSetsRes] = await Promise.all([
-      insightsPromise,
-      basicPromise,
-      adSetsPromise,
+    // Fast-path: If the campaign is NOT active, do not waste API calls on insights & adsets
+    if (status !== 'ACTIVE') {
+      return {
+        campaignId,
+        campaignName: basic?.name || `Campaign ${campaignId}`,
+        status,
+        objective: basic?.objective,
+        resultLabel: 'Results',
+        resultValue: 0,
+        costLabel: 'Cost / Result',
+        costPerResultUsd: 0,
+        costPerResultBdt: 0,
+        spendUsd: 0,
+        spendBdt: 0,
+        impressions: 0,
+        clicks: 0,
+        cpc: 0,
+        ctr: 0,
+      };
+    }
+
+    // 2. For ACTIVE campaigns, fetch yesterday's insights and adsets (cached)
+    const [insights, adSetsRes] = await Promise.all([
+      fetchSingleCampaignInsights(campaignId, undefined, timeRange).catch(() => null),
+      fetchAdSetsByCampaign(campaignId, 25).catch(() => null),
     ]);
 
     const adSets = (adSetsRes?.data || []) as Array<{ optimization_goal?: string }>;
@@ -347,7 +375,6 @@ export async function fetchCampaignDailyMetrics(
     }
 
     const campaignName = basic?.name || `Campaign ${campaignId}`;
-    const status = basic?.effective_status || basic?.status || 'ACTIVE';
 
     if (Array.isArray(insights) && insights.length > 0) {
       const row = insights[0] as Record<string, any>;
@@ -372,7 +399,7 @@ export async function fetchCampaignDailyMetrics(
       return {
         campaignId,
         campaignName: row.campaign_name || campaignName,
-        status,
+        status: 'ACTIVE',
         objective: basic?.objective,
         resultLabel: dynamic.metricLabel,
         resultValue: dynamic.metricValue,
@@ -388,13 +415,13 @@ export async function fetchCampaignDailyMetrics(
       };
     }
 
-    // Fallback: No insights recorded yesterday (spend is $0)
+    // Fallback: Active campaign with 0 spend/impressions yesterday
     const emptyDynamic = resolveDynamicInsightMetric(null, dominantGoal);
 
     return {
       campaignId,
       campaignName,
-      status: status || 'PAUSED',
+      status: 'ACTIVE',
       objective: basic?.objective,
       resultLabel: emptyDynamic.metricLabel,
       resultValue: 0,
@@ -489,11 +516,22 @@ export async function generateUserDailySpendReport(
   // Process campaigns sequentially with gentle throttling (120ms)
   for (const cid of campaignIds) {
     const metric = await fetchCampaignDailyMetrics(cid, dateStr);
+
+    // STRICT FILTER: Only include campaigns that are currently ACTIVE
+    if (metric.status !== 'ACTIVE') {
+      continue;
+    }
+
     campaignMetrics.push(metric);
     totalSpendUsd += metric.spendUsd;
     totalImpressions += metric.impressions;
     totalClicks += metric.clicks;
     await sleep(120);
+  }
+
+  // If user has no active campaigns, return null so no email is sent
+  if (campaignMetrics.length === 0) {
+    return null;
   }
 
   const totalSpendBdt = Math.round(totalSpendUsd * FX_RATE_BDT_PER_USD * 100) / 100;

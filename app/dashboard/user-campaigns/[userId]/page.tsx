@@ -311,7 +311,7 @@ export default function UserCampaignDetailPage({
       if (json.success && firstResult?.status === 'SENT') {
         toast.success(`Yesterday's spend report ($${firstResult.totalSpendUsd} / ৳${firstResult.totalSpendBdt}) sent to ${user.email}!`);
       } else if (firstResult?.status === 'NO_CAMPAIGNS') {
-        toast.error('User has no assigned campaigns.');
+        toast.error('User has no active assigned campaigns.');
       } else {
         toast.error(json.error || firstResult?.error || 'Failed to send report.');
       }
