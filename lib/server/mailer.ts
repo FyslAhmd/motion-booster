@@ -333,47 +333,24 @@ export async function sendDailySpendReportEmail(input: SendDailySpendEmailInput)
       const statusBg = c.status === 'ACTIVE' ? '#dcfce7' : '#fef3c7';
       const statusColor = c.status === 'ACTIVE' ? '#15803d' : '#b45309';
 
-      const hasResults = typeof c.resultValue === 'number' && c.resultValue > 0;
-      const resultDisplay = hasResults
-        ? `<div style="font-size:14px;font-weight:700;color:#111827;">${c.resultValue!.toLocaleString()}</div><div style="font-size:11px;color:#4b5563;font-weight:600;">${escapeHtml(c.resultLabel || 'Results')}</div>`
-        : `<span style="font-size:12px;color:#9ca3af;">0 ${escapeHtml(c.resultLabel || 'Results')}</span>`;
-
-      const hasCost = hasResults && typeof c.costPerResultUsd === 'number' && c.costPerResultUsd > 0;
-      const costDisplay = hasCost
-        ? `<div style="font-size:13px;font-weight:700;color:#111827;">$${c.costPerResultUsd!.toFixed(2)}</div><div style="font-size:11px;color:#dc2626;font-weight:600;">৳${(c.costPerResultBdt || c.costPerResultUsd! * 145).toFixed(2)}</div>`
-        : `<span style="color:#9ca3af;font-size:12px;">—</span>`;
-
       return `
         <tr style="background-color:${isEven ? '#ffffff' : '#f9fafb'};">
-          <td style="padding:10px 12px;font-size:13px;color:#111827;border-bottom:1px solid #e5e7eb;font-weight:600;max-width:180px;word-break:break-word;">
+          <td style="padding:12px 14px;font-size:13px;color:#111827;border-bottom:1px solid #e5e7eb;font-weight:600;">
             ${escapeHtml(c.campaignName)}
           </td>
-          <td style="padding:10px 10px;font-size:12px;border-bottom:1px solid #e5e7eb;white-space:nowrap;">
+          <td style="padding:12px 14px;font-size:12px;border-bottom:1px solid #e5e7eb;white-space:nowrap;">
             <span style="display:inline-block;padding:2px 8px;border-radius:9999px;font-size:10px;font-weight:700;text-transform:uppercase;background-color:${statusBg};color:${statusColor};">
               ${escapeHtml(c.status)}
             </span>
           </td>
-          <td style="padding:10px 10px;font-size:13px;border-bottom:1px solid #e5e7eb;">
-            ${resultDisplay}
-          </td>
-          <td style="padding:10px 10px;font-size:13px;border-bottom:1px solid #e5e7eb;text-align:right;">
-            ${costDisplay}
-          </td>
-          <td style="padding:10px 12px;font-size:13px;border-bottom:1px solid #e5e7eb;text-align:right;">
+          <td style="padding:12px 14px;font-size:13px;border-bottom:1px solid #e5e7eb;text-align:right;">
             <div style="font-weight:700;color:#111827;">$${c.spendUsd.toFixed(2)}</div>
             <div style="font-size:11px;color:#dc2626;font-weight:700;">৳${c.spendBdt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-          </td>
-          <td style="padding:10px 12px;font-size:13px;color:#4b5563;border-bottom:1px solid #e5e7eb;text-align:right;font-weight:600;">
-            ${c.impressions.toLocaleString()}
           </td>
         </tr>
       `;
     })
     .join('');
-
-  const resultsSummaryText = input.resultsSummary && input.resultsSummary.length > 0
-    ? `- Key Results: ${input.resultsSummary.map((r) => `${r.value.toLocaleString()} ${r.label}`).join(', ')}`
-    : '';
 
   const plainText = [
     `Motion Booster: Daily Ad Spend Report`,
@@ -383,35 +360,14 @@ export async function sendDailySpendReportEmail(input: SendDailySpendEmailInput)
     `Summary:`,
     `- Total Spend (USD): $${input.totalSpendUsd.toFixed(2)}`,
     `- Total Spend (BDT): ৳${input.totalSpendBdt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (1 USD = 145 BDT)`,
-    ...(resultsSummaryText ? [resultsSummaryText] : []),
-    `- Impressions: ${input.totalImpressions.toLocaleString()}`,
-    `- Clicks: ${input.totalClicks.toLocaleString()}`,
     '',
     `Campaigns Breakdown:`,
     ...input.campaigns.map((c) => {
-      const resultPart = c.resultValue && c.resultValue > 0
-        ? `Result: ${c.resultValue} ${c.resultLabel || 'Results'} (Cost: $${(c.costPerResultUsd || 0).toFixed(2)} / ৳${(c.costPerResultBdt || 0).toFixed(2)})`
-        : `Result: 0 ${c.resultLabel || 'Results'}`;
-      return `* ${c.campaignName} [${c.status}]:\n  - ${resultPart}\n  - Spend: $${c.spendUsd.toFixed(2)} (৳${c.spendBdt.toFixed(2)}) | ${c.impressions} Impr | ${c.clicks} Clicks`;
+      return `* ${c.campaignName} [${c.status}]: $${c.spendUsd.toFixed(2)} (৳${c.spendBdt.toFixed(2)})`;
     }),
     '',
     `Dashboard: ${input.dashboardUrl || 'https://motionbooster.com'}/dashboard/my-campaigns`,
   ].join('\n');
-
-  const resultsSummaryHtml = input.resultsSummary && input.resultsSummary.length > 0
-    ? `
-      <div style="margin-top:6px;padding:6px 10px;background-color:#ffffff;border:1px solid #e5e7eb;border-radius:8px;">
-        <span style="font-size:10px;color:#6b7280;text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">Key Results:</span>
-        <div style="font-size:13px;font-weight:800;color:#111827;margin-top:2px;">
-          ${input.resultsSummary.map((r) => `${r.value.toLocaleString()} ${escapeHtml(r.label)}`).join(' • ')}
-        </div>
-      </div>
-    `
-    : '';
-
-  const totalResultsColHtml = input.resultsSummary && input.resultsSummary.length > 0
-    ? input.resultsSummary.map((r) => `<span style="font-weight:800;color:#991b1b;">${r.value.toLocaleString()}</span> <span style="font-size:10px;color:#7f1d1d;font-weight:600;">${escapeHtml(r.label)}</span>`).join('<br/>')
-    : '—';
 
   const html = `
     <!doctype html>
@@ -425,14 +381,14 @@ export async function sendDailySpendReportEmail(input: SendDailySpendEmailInput)
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#f3f4f6;padding:24px 12px;">
           <tr>
             <td align="center">
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:680px;background-color:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e5e7eb;box-shadow:0 4px 6px -1px rgba(0,0,0,0.05);">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;background-color:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e5e7eb;box-shadow:0 4px 6px -1px rgba(0,0,0,0.05);">
                 
-                <!-- Header -->
+                <!-- Header: Light Red Background matching Yesterday Total Spend -->
                 <tr>
-                  <td style="background:linear-gradient(135deg, #111827 0%, #1f2937 60%, #dc2626 100%);padding:26px 28px;color:#ffffff;">
-                    <p style="margin:0;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;color:#fca5a5;">MOTION BOOSTER • DAILY PERFORMANCE</p>
-                    <h1 style="margin:8px 0 4px;font-size:22px;line-height:1.2;font-weight:800;color:#ffffff;">Daily Ad Spend Report</h1>
-                    <p style="margin:0;font-size:13px;color:#d1d5db;">${escapeHtml(input.reportDateFormatted)}</p>
+                  <td style="background-color:#fef2f2;border-bottom:1px solid #fecaca;padding:26px 28px;">
+                    <p style="margin:0;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;color:#991b1b;">MOTION BOOSTER • DAILY PERFORMANCE</p>
+                    <h1 style="margin:8px 0 4px;font-size:22px;line-height:1.2;font-weight:800;color:#b91c1c;">Daily Ad Spend Report</h1>
+                    <p style="margin:0;font-size:13px;color:#dc2626;font-weight:600;">${escapeHtml(input.reportDateFormatted)}</p>
                   </td>
                 </tr>
 
@@ -444,35 +400,18 @@ export async function sendDailySpendReportEmail(input: SendDailySpendEmailInput)
                       Here is the full performance and ad spend breakdown for your assigned campaigns yesterday.
                     </p>
 
-                    <!-- Summary KPI Cards -->
+                    <!-- Summary KPI Card: Yesterday Total Spend -->
                     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom:20px;">
                       <tr>
-                        <td width="48%" style="padding:14px;background-color:#fef2f2;border:1px solid #fecaca;border-radius:12px;vertical-align:top;">
+                        <td style="padding:16px 20px;background-color:#fef2f2;border:1px solid #fecaca;border-radius:12px;">
                           <p style="margin:0;font-size:11px;font-weight:700;text-transform:uppercase;color:#991b1b;letter-spacing:0.5px;">Yesterday Total Spend</p>
-                          <p style="margin:6px 0 0;font-size:24px;font-weight:800;color:#b91c1c;line-height:1;">
+                          <p style="margin:8px 0 0;font-size:26px;font-weight:800;color:#b91c1c;line-height:1;">
                             $${input.totalSpendUsd.toFixed(2)}
                           </p>
-                          <p style="margin:4px 0 0;font-size:13px;font-weight:700;color:#dc2626;">
+                          <p style="margin:6px 0 0;font-size:14px;font-weight:700;color:#dc2626;">
                             ৳${input.totalSpendBdt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </p>
                           <p style="margin:4px 0 0;font-size:10px;color:#7f1d1d;opacity:0.8;">Rate: 1 USD = 145 BDT</p>
-                        </td>
-                        <td width="4%"></td>
-                        <td width="48%" style="padding:14px;background-color:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;vertical-align:top;">
-                          <p style="margin:0;font-size:11px;font-weight:700;text-transform:uppercase;color:#4b5563;letter-spacing:0.5px;">Performance Overview</p>
-                          ${resultsSummaryHtml}
-                          <div style="margin-top:6px;">
-                            <span style="font-size:13px;color:#6b7280;">Impressions:</span>
-                            <span style="font-size:14px;font-weight:700;color:#111827;margin-left:4px;">${input.totalImpressions.toLocaleString()}</span>
-                          </div>
-                          <div style="margin-top:4px;">
-                            <span style="font-size:13px;color:#6b7280;">Clicks:</span>
-                            <span style="font-size:14px;font-weight:700;color:#111827;margin-left:4px;">${input.totalClicks.toLocaleString()}</span>
-                          </div>
-                          <div style="margin-top:4px;">
-                            <span style="font-size:13px;color:#6b7280;">Active Campaigns:</span>
-                            <span style="font-size:14px;font-weight:700;color:#111827;margin-left:4px;">${input.campaigns.length}</span>
-                          </div>
                         </td>
                       </tr>
                     </table>
@@ -483,33 +422,21 @@ export async function sendDailySpendReportEmail(input: SendDailySpendEmailInput)
                       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-collapse:collapse;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
                         <thead>
                           <tr style="background-color:#f3f4f6;">
-                            <th align="left" style="padding:9px 12px;font-size:11px;font-weight:700;color:#4b5563;text-transform:uppercase;border-bottom:1px solid #e5e7eb;">Campaign</th>
-                            <th align="left" style="padding:9px 10px;font-size:11px;font-weight:700;color:#4b5563;text-transform:uppercase;border-bottom:1px solid #e5e7eb;">Status</th>
-                            <th align="left" style="padding:9px 10px;font-size:11px;font-weight:700;color:#4b5563;text-transform:uppercase;border-bottom:1px solid #e5e7eb;">Results</th>
-                            <th align="right" style="padding:9px 10px;font-size:11px;font-weight:700;color:#4b5563;text-transform:uppercase;border-bottom:1px solid #e5e7eb;">Cost / Result</th>
-                            <th align="right" style="padding:9px 12px;font-size:11px;font-weight:700;color:#4b5563;text-transform:uppercase;border-bottom:1px solid #e5e7eb;">Spend</th>
-                            <th align="right" style="padding:9px 12px;font-size:11px;font-weight:700;color:#4b5563;text-transform:uppercase;border-bottom:1px solid #e5e7eb;">Impr.</th>
+                            <th align="left" style="padding:10px 14px;font-size:11px;font-weight:700;color:#4b5563;text-transform:uppercase;border-bottom:1px solid #e5e7eb;">Campaign</th>
+                            <th align="left" style="padding:10px 14px;font-size:11px;font-weight:700;color:#4b5563;text-transform:uppercase;border-bottom:1px solid #e5e7eb;">Status</th>
+                            <th align="right" style="padding:10px 14px;font-size:11px;font-weight:700;color:#4b5563;text-transform:uppercase;border-bottom:1px solid #e5e7eb;">Spend</th>
                           </tr>
                         </thead>
                         <tbody>
                           ${campaignRowsHtml}
                           <!-- Total Row -->
                           <tr style="background-color:#fee2e2;">
-                            <td colspan="2" style="padding:10px 12px;font-size:12px;font-weight:800;color:#991b1b;border-top:2px solid #f87171;">
+                            <td colspan="2" style="padding:12px 14px;font-size:12px;font-weight:800;color:#991b1b;border-top:2px solid #f87171;">
                               TOTAL
                             </td>
-                            <td style="padding:10px 10px;font-size:12px;border-top:2px solid #f87171;">
-                              ${totalResultsColHtml}
-                            </td>
-                            <td align="right" style="padding:10px 10px;font-size:12px;font-weight:700;color:#991b1b;border-top:2px solid #f87171;">
-                              —
-                            </td>
-                            <td align="right" style="padding:10px 12px;border-top:2px solid #f87171;">
+                            <td align="right" style="padding:12px 14px;border-top:2px solid #f87171;">
                               <div style="font-size:13px;font-weight:800;color:#991b1b;">$${input.totalSpendUsd.toFixed(2)}</div>
                               <div style="font-size:11px;font-weight:800;color:#991b1b;">৳${input.totalSpendBdt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                            </td>
-                            <td align="right" style="padding:10px 12px;font-size:12px;font-weight:700;color:#991b1b;border-top:2px solid #f87171;">
-                              ${input.totalImpressions.toLocaleString()}
                             </td>
                           </tr>
                         </tbody>
