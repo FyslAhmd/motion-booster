@@ -161,8 +161,11 @@ function parseCampaignInsights(insight: any) {
   const getCost = (type: string) =>
     Number(costs.find((a: any) => a.action_type === type)?.value || 0);
 
+  const rawSpend = Number.parseFloat(String(insight.spend ?? '0'));
+  const spend = Number.isFinite(rawSpend) ? rawSpend : 0;
+
   return {
-    spend: Number(insight.spend || 0),
+    spend,
     reach: Number(insight.reach || 0),
     impressions: Number(insight.impressions || 0),
     clicks: Number(insight.clicks || 0),
@@ -337,8 +340,8 @@ export async function fetchCampaignDailyMetrics(
     const parsed = parseCampaignInsights(row);
     const spendUsd = parsed?.spend || 0;
 
-    // Fast-path: If campaign is NOT active AND had 0 spend yesterday, skip further processing
-    if (status !== 'ACTIVE' && spendUsd <= 0) {
+    // Fast-path: If campaign is NOT active AND had zero spend (< $0.005) yesterday, skip further processing
+    if (status !== 'ACTIVE' && spendUsd < 0.005) {
       return {
         campaignId,
         campaignName: basic?.name || `Campaign ${campaignId}`,
@@ -490,8 +493,9 @@ export async function generateUserDailySpendReport(
   for (const cid of campaignIds) {
     const metric = await fetchCampaignDailyMetrics(cid, dateStr);
 
-    // Include campaigns that are currently ACTIVE, or paused/inactive with spend > $0 yesterday
-    const shouldInclude = metric.status === 'ACTIVE' || metric.spendUsd > 0;
+    // Include campaigns that are currently ACTIVE, or paused/inactive with spend >= $0.01 (or any spend > 0)
+    const hasSpend = metric.spendUsd >= 0.01 || metric.spendUsd > 0.0001;
+    const shouldInclude = metric.status === 'ACTIVE' || hasSpend;
     if (!shouldInclude) {
       continue;
     }

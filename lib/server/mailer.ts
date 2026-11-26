@@ -455,7 +455,7 @@ export async function sendDailySpendReportEmail(input: SendDailySpendEmailInput)
                     </table>
 
                     <p style="margin:22px 0 0;font-size:12px;line-height:1.5;color:#6b7280;text-align:center;">
-                      This report is generated automatically at 1:00 AM every night.<br/>
+                      This report is generated automatically at 8:00 AM every morning.<br/>
                       If you have questions or need to add balance, contact your Motion Booster manager.
                     </p>
                   </td>
